@@ -16,8 +16,7 @@ std::ostream& operator<<(std::ostream& out, pixel_pos const& p) {
   return out << p.x_ << "|" << p.y_;
 }
 
-void network::print(std::ostream& out,
-                    std::vector<edge*> const& highlight_edges) const {
+void network::print(std::vector<edge*> const& highlight_edges) const {
   cr::hash_set<pixel_pos> highlight;
   auto const add_highlight = [&](auto const& el) {
     if (el != nullptr) {
@@ -73,7 +72,7 @@ void network::print(std::ostream& out,
 }
 
 std::ostream& operator<<(std::ostream& out, network const& n) {
-  n.print(out);
+  n.print();
   return out;
 }
 

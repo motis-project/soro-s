@@ -7,9 +7,9 @@
 
 namespace rapid {
 
-std::vector<edge*> dijkstra(node* from, node* to) {
+std::vector<edge*> dijkstra(network const& net, node* from, node* to) {
   struct queue_entry {
-    bool operator<(queue_entry const& o) const { return dist_ < o.dist_; }
+    bool operator<(queue_entry const& o) const { return dist_ > o.dist_; }
     std::vector<edge*> pred_;
     node* node_{nullptr};
     unsigned dist_{0U};
@@ -27,7 +27,7 @@ std::vector<edge*> dijkstra(node* from, node* to) {
     }
 
     if (auto const it = dist_.find(curr.node_);
-        it == end(dist_) || it->second > curr.dist_) {
+        it == end(dist_) || it->second >= curr.dist_) {
       dist_[curr.node_] = curr.dist_;
     } else {
       continue;
@@ -42,7 +42,13 @@ std::vector<edge*> dijkstra(node* from, node* to) {
         next.pred_ = curr.pred_;
         next.pred_.emplace_back(edge);
         next.node_ = edge->opposite(curr.node_);
-        next.dist_ += edge->dist_;
+        next.dist_ = curr.dist_;
+        next.dist_ += edge->draw_representation_.size();
+        next.dist_ += curr.node_->draw_representation_.size();
+        auto const diagonal_penalty = std::count_if(
+            begin(edge->draw_representation_), end(edge->draw_representation_),
+            [](auto&& c) { return c.content_ == '\\' || c.content_ == '/'; });
+        next.dist_ += diagonal_penalty;
         q.emplace(next);
       }
     };
@@ -71,7 +77,7 @@ std::vector<edge*> dijkstra(network const& net, std::string_view from,
               from);
   utl::verify(to_it != end(net.nodes_), "dijstra: to node {} not found", to);
 
-  return dijkstra(from_it->get(), to_it->get());
+  return dijkstra(net, from_it->get(), to_it->get());
 }
 
 }  // namespace rapid

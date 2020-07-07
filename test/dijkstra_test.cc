@@ -21,10 +21,10 @@ TEST_CASE("dijkstra") {
                                    *=======M>==*
 )");
 
-  net.print(std::cout, dijkstra(net, "a", "b"));
-  net.print(std::cout, dijkstra(net, "i", "j"));
-  net.print(std::cout, dijkstra(net, "a", "j"));
-  net.print(std::cout, dijkstra(net, "FF", "AA"));
-  net.print(std::cout, dijkstra(net, "b", "P"));
-  net.print(std::cout, dijkstra(net, "P", "a"));
+  net.print(dijkstra(net, "j", "Q"));
+  net.print(dijkstra(net, "Q", "a"));
+  net.print(dijkstra(net, "i", "j"));
+  net.print(dijkstra(net, "a", "j"));
+  net.print(dijkstra(net, "FF", "AA"));
+  net.print(dijkstra(net, "b", "P"));
 }

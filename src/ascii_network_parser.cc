@@ -235,41 +235,6 @@ struct ascii_network_parser {
     connect_directionals();
     connect_edges();
 
-    for (auto const& e : net_.edges_) {
-      std::cout << e.get()->from_ << " ("
-                << e.get()->from_->draw_representation_[0].pos_ << ") -> "
-                << e.get()->to_ << " ("
-                << e.get()->to_->draw_representation_[0].pos_
-                << "):  (dist=" << e->dist_ << ")  ";
-      for (auto const& e : e->draw_representation_) {
-        std::cout << e.content_;
-      }
-      std::cout << "  " << e->draw_representation_[0].pos_;
-      std::cout << "\n";
-    }
-
-    for (auto const& n : net_.nodes_) {
-      std::cout << "name='" << n->name_ << "' "
-                << n->draw_representation_[0].content_ << " at "
-                << n->draw_representation_[0].pos_ << "+++\n";
-      for (auto const& [from, to] : n->traversals_) {
-        std::cout << "  " << from->draw_representation_.front().pos_ << " -> "
-                  << from->draw_representation_.back().pos_ << " ";
-        for (auto const& p : from->draw_representation_) {
-          std::cout << p.content_;
-        }
-        std::cout << ":\n";
-        for (auto const& t : to) {
-          std::cout << "    " << t->draw_representation_.front().pos_ << " -> "
-                    << t->draw_representation_.back().pos_ << " ";
-          for (auto const& p : t->draw_representation_) {
-            std::cout << p.content_;
-          }
-          std::cout << "\n";
-        }
-      }
-    }
-
     return std::move(net_);
   }
 

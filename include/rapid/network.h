@@ -67,8 +67,7 @@ std::string_view type_str(node::type const t);
 std::ostream& operator<<(std::ostream&, node::type const);
 
 struct network {
-  void print(std::ostream&,
-             std::vector<edge*> const& highlight_edges = {}) const;
+  void print(std::vector<edge*> const& highlight_edges = {}) const;
   friend std::ostream& operator<<(std::ostream&, network const&);
   std::vector<std::unique_ptr<node>> nodes_;
   std::vector<std::unique_ptr<edge>> edges_;
