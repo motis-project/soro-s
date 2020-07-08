@@ -160,6 +160,19 @@ struct ascii_network_parser {
     }
   }
 
+  constexpr dir get_opposite(dir const d) {
+    switch (d) {
+      case dir::LEFT: return dir::RIGHT;
+      case dir::RIGHT: return dir::LEFT;
+      case dir::TOP: return dir::BOTTOM;
+      case dir::BOTTOM: return dir::TOP;
+      case dir::TOP_LEFT: return dir::BOTTOM_RIGHT;
+      case dir::BOTTOM_RIGHT: return dir::TOP_LEFT;
+      case dir::BOTTOM_LEFT: return dir::TOP_RIGHT;
+      case dir::TOP_RIGHT: return dir::BOTTOM_LEFT;
+    }
+  }
+
   explicit ascii_network_parser(std::string_view s)
       : lines_{begin(utl::lines{s}), end(utl::lines{s})} {}
 
@@ -229,6 +242,7 @@ struct ascii_network_parser {
       }
     }
 
+    connect_level_junctions();
     connect_switches();
     connect_single_slip_switches();
     connect_signals();
@@ -506,27 +520,27 @@ struct ascii_network_parser {
     }
   }
 
-  void connect_single_slip_switches() {
-    auto const get_edge = [&](pixel_pos const p,
-                              std::initializer_list<dir> directions) {
-      edge* e{nullptr};
-      type orientation{KNOT};
-      for (auto const dir : directions) {
-        auto const el = get_map_el(next(p, dir), get_orientation(dir));
-        if (!el.has_value()) {
-          continue;
-        }
-        utl::verify(cista::holds_alternative<edge*>(*el),
-                    "single slip neighbor {} not an edge", next(p, dir));
-        utl::verify(e == nullptr, "double edge");
-        e = cista::get<edge*>(*el);
-        orientation = get_orientation(dir);
+  std::pair<edge*, type> get_edge(pixel_pos const p,
+                                  std::initializer_list<dir> directions) {
+    edge* e{nullptr};
+    type orientation{KNOT};
+    for (auto const dir : directions) {
+      auto const el = get_map_el(next(p, dir), get_orientation(dir));
+      if (!el.has_value()) {
+        continue;
       }
-      utl::verify(e != nullptr, "single slip {} edge missing {}", p,
-                  *directions.begin());
-      return std::pair{e, orientation};
-    };
+      utl::verify(cista::holds_alternative<edge*>(*el),
+                  "single slip neighbor {} not an edge", next(p, dir));
+      utl::verify(e == nullptr, "double edge");
+      e = cista::get<edge*>(*el);
+      orientation = get_orientation(dir);
+    }
+    utl::verify(e != nullptr, "single slip {} edge missing {}", p,
+                *directions.begin());
+    return std::pair{e, orientation};
+  }
 
+  void connect_single_slip_switches() {
     for (auto const& [p, el] : map_) {
       auto const pos = p;
 
@@ -572,6 +586,29 @@ struct ascii_network_parser {
           n->traversals_[bottom].emplace(left);
         }
       }
+    }
+  }
+
+  void connect_level_junctions() {
+    for (auto const& [p, el] : map_) {
+      auto const pos = p;
+
+      if (el.size() != 1U ||
+          !cista::holds_alternative<node*>(begin(el)->second)) {
+        continue;
+      }
+
+      auto const n = cista::get<node*>(begin(el)->second);
+      if (n->type_ != node::type::LEVEL_JUNCTION) {
+        continue;
+      }
+
+      for_each_neighbor<edge>(p, [&](edge* e, dir const d) {
+        auto const opposite_e =
+            get_edge(next(pos, get_opposite(d)), get_orientation(d));
+        n->traversals_[e].emplace(opposite_e);
+        n->traversals_[opposite_e].emplace(e);
+      });
     }
   }
 
