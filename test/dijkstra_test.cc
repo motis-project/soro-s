@@ -28,3 +28,21 @@ TEST_CASE("dijkstra") {
   net.print(dijkstra(net, "FF", "AA"));
   net.print(dijkstra(net, "b", "P"));
 }
+
+TEST_CASE("dijkstra") {
+  auto const net = parse_network(R"(
+# 1 Simple Double Track Station
+
+           *============*
+      *=*  |            |
+      | |  |            |
+      | *==#==FF>=======*
+      |    |
+      *====*
+     /
+  a=*
+
+)");
+
+  net.print(dijkstra(net, "a", "FF"));
+}
