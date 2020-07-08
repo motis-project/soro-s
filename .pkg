@@ -1,11 +1,11 @@
 [cista]
   url=git@github.com:felixguendling/cista.git
   branch=master
-  commit=3b71fa46f932aa343d5cea477f5a3b881d1971aa
+  commit=0bf928f7ce9fb8273d365dc319e9c8605f819a36
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=80a0cf23cebe753736f26ba9dbe08e892e429b45
+  commit=1cbe94142c164d1ae8a37a0d760c7545fc676085
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
