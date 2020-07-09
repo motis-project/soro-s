@@ -224,6 +224,7 @@ struct ascii_network_parser {
           case END_OF_TRAIN_DETECTOR_L:
             do_directional_node(p, dir::RIGHT, dir::LEFT,
                                 node::type::END_OF_TRAIN_DETECTOR, c);
+            break;
           case END_OF_TRAIN_DETECTOR_R:
             do_directional_node(p, dir::LEFT, dir::RIGHT,
                                 node::type::END_OF_TRAIN_DETECTOR, c);
