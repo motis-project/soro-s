@@ -16,7 +16,7 @@ using pixel_coord_t = int32_t;
 using distance_in_m = uint32_t;
 
 struct pixel_pos {
-  bool valid() const { return x_ != -1 && y_ != -1; }
+  bool valid() const { return x_ >= 0 && y_ >= 0; }
   friend std::ostream& operator<<(std::ostream&, pixel_pos const&);
   pixel_coord_t x_{-1}, y_{-1};
 };

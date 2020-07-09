@@ -22,6 +22,30 @@ add_library(rapid-lib ${rapid-lib-files})
 target_link_libraries(rapid-lib utl cista)
 target_compile_features(rapid-lib PUBLIC cxx_std_20)
 target_include_directories(rapid-lib PUBLIC include)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  target_compile_options(rapid-lib PRIVATE
+    -fno-strict-aliasing
+    -Weverything
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-newline-eof
+    -Wno-missing-prototypes
+    -Wno-padded
+    -Wno-double-promotion
+    -Wno-undef
+    -Wno-undefined-reinterpret-cast
+    -Wno-float-conversion
+    -Wno-global-constructors
+    -Wno-exit-time-destructors
+    -Werror
+  )
+elseif(NOT MSVC)
+  target_compile_options(rapid-lib PRIVATE
+    -Wall
+    -Wextra
+    -Werror
+  )
+endif()
 
 file(GLOB_RECURSE rapid-test-files test/*.cc)
 add_executable(rapid-test ${rapid-test-files})

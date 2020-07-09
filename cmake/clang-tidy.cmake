@@ -10,7 +10,7 @@ else()
   find_program(CLANG_TIDY_COMMAND NAMES clang-tidy clang-tidy-9 clang-tidy-10)
 endif()
 
-if(NOT CLANG_TIDY_COMMAND)
+if(NOT RAPID_CLANG_TIDY_COMMAND)
   message(FATAL_ERROR "CMake_RUN_CLANG_TIDY is ON but clang-tidy is not found!")
 endif()
 

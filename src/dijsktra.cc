@@ -9,7 +9,7 @@ namespace cr = cista::raw;
 
 namespace rapid {
 
-std::vector<edge*> dijkstra(network const& net, node* from, node* to) {
+std::vector<edge*> dijkstra(network const&, node* from, node* to) {
   struct queue_entry {
     bool operator>(queue_entry const& o) const { return dist_ > o.dist_; }
     std::vector<edge*> pred_;
@@ -17,12 +17,10 @@ std::vector<edge*> dijkstra(network const& net, node* from, node* to) {
     edge* prev_edge_{nullptr};
     unsigned dist_{0U};
   };
-  std::priority_queue<queue_entry, std::vector<queue_entry>,
-                      std::greater<queue_entry>>
-      q;
-  q.emplace(queue_entry{std::vector<edge*>{}, from, 0});
+  std::priority_queue<queue_entry, std::vector<queue_entry>, std::greater<>> q;
+  q.emplace(queue_entry{std::vector<edge*>{}, from});
 
-  cr::hash_map<node*, cr::hash_map<edge*, unsigned>> dist_;
+  cr::hash_map<node*, cr::hash_map<edge*, unsigned>> dist;
   while (!q.empty()) {
     auto const curr = q.top();
     q.pop();
@@ -31,14 +29,14 @@ std::vector<edge*> dijkstra(network const& net, node* from, node* to) {
       return curr.pred_;
     }
 
-    if (auto const node_it = dist_.find(curr.node_); node_it != end(dist_)) {
+    if (auto const node_it = dist.find(curr.node_); node_it != end(dist)) {
       if (auto const edge_it = node_it->second.find(curr.prev_edge_);
           edge_it != end(node_it->second) && edge_it->second < curr.dist_) {
         continue;
       }
     }
 
-    dist_[curr.node_][curr.prev_edge_] = curr.dist_;
+    dist[curr.node_][curr.prev_edge_] = curr.dist_;
 
     auto const expand_edges = [&](auto const& edges) {
       for (auto const& edge : edges) {
