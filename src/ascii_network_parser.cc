@@ -75,7 +75,7 @@ struct ascii_network_parser {
     std::vector<pixel_pos> positions_;
   };
 
-  constexpr pixel_pos next(pixel_pos const p, dir const d) {
+  static constexpr pixel_pos next(pixel_pos const p, dir const d) {
     switch (d) {
       case dir::TOP_LEFT: return {p.x_ - 1, p.y_ - 1};
       case dir::TOP: return {p.x_, p.y_ - 1};
@@ -86,9 +86,11 @@ struct ascii_network_parser {
       case dir::BOTTOM: return {p.x_, p.y_ + 1};
       case dir::BOTTOM_RIGHT: return {p.x_ + 1, p.y_ + 1};
     }
+    assert(false);
+    return p;
   }
 
-  constexpr type get_orientation(dir const d) {
+  static constexpr type get_orientation(dir const d) {
     switch (d) {
       case dir::TOP_LEFT: [[fallthrough]];
       case dir::BOTTOM_RIGHT: return DIAGONAL_LR;
@@ -102,9 +104,11 @@ struct ascii_network_parser {
       case dir::LEFT: [[fallthrough]];
       case dir::RIGHT: return HORIZONTAL;
     }
+    assert(false);
+    return HORIZONTAL;
   }
 
-  constexpr bool is_diagonal(dir const d) {
+  static constexpr bool is_diagonal(dir const d) {
     switch (d) {
       case dir::TOP_LEFT:
       case dir::BOTTOM_RIGHT:
@@ -112,10 +116,12 @@ struct ascii_network_parser {
       case dir::BOTTOM_LEFT: return true;
       default: return false;
     }
+    assert(false);
+    return false;
   }
 
   template <typename Fn>
-  constexpr void for_each_opposite(dir const d, Fn&& f) {
+  static constexpr void for_each_opposite(dir const d, Fn&& f) {
     switch (d) {
       case dir::TOP_LEFT:
         f(dir::BOTTOM);
@@ -160,7 +166,7 @@ struct ascii_network_parser {
     }
   }
 
-  constexpr dir get_opposite(dir const d) {
+  static constexpr dir get_opposite(dir const d) {
     switch (d) {
       case dir::LEFT: return dir::RIGHT;
       case dir::RIGHT: return dir::LEFT;
@@ -171,6 +177,8 @@ struct ascii_network_parser {
       case dir::BOTTOM_LEFT: return dir::TOP_RIGHT;
       case dir::TOP_RIGHT: return dir::BOTTOM_LEFT;
     }
+    assert(false);
+    return d;
   }
 
   explicit ascii_network_parser(std::string_view s)
@@ -216,6 +224,7 @@ struct ascii_network_parser {
           case END_OF_TRAIN_DETECTOR_L:
             do_directional_node(p, dir::RIGHT, dir::LEFT,
                                 node::type::END_OF_TRAIN_DETECTOR, c);
+            break;
           case END_OF_TRAIN_DETECTOR_R:
             do_directional_node(p, dir::LEFT, dir::RIGHT,
                                 node::type::END_OF_TRAIN_DETECTOR, c);
@@ -231,11 +240,11 @@ struct ascii_network_parser {
             break;
 
           default:
-            if (std::isdigit(c)) {
-              do_digit(p, c - '0');
+            if (std::isdigit(c) != 0) {
+              do_digit(p, static_cast<unsigned>(c - '0'));
             } else if (c >= 'a' && c <= 'z') {
               do_end_node(p, c);
-            } else if (std::isalpha(c)) {
+            } else if (std::isalpha(c) != 0) {
               do_main_signal(p, static_cast<type>(c), false);
             }
         }
@@ -281,9 +290,10 @@ struct ascii_network_parser {
   }
 
   bool is_valid_and_non_empty(pixel_pos const p) const {
-    return p.x_ >= 0 && p.y_ >= 0 && p.y_ < lines_.size() &&
-           p.x_ < lines_[p.y_].len && lines_[p.y_][0] != '#' &&
-           lines_[p.y_][p.x_] != EMPTY;
+    assert(p.valid());
+    return static_cast<size_t>(p.y_) < lines_.size() &&
+           static_cast<size_t>(p.x_) < lines_[p.y_].len &&
+           lines_[p.y_][0] != '#' && lines_[p.y_][p.x_] != EMPTY;
   }
 
   std::optional<char> get_char(pixel_pos const p) const {
@@ -305,7 +315,7 @@ struct ascii_network_parser {
     return std::nullopt;
   }
 
-  void do_digit(pixel_pos const p, int digit) {
+  void do_digit(pixel_pos const p, unsigned digit) {
     digit_ = digit;
     cr::hash_map<type, edge*> els;
     for_each_neighbor_pos(p, [&](pixel_pos const neighbor_pos, dir const d) {
@@ -366,8 +376,8 @@ struct ascii_network_parser {
     cr::hash_set<edge*> edges;
     for_each_neighbor_pos(p, [&](pixel_pos const pos, dir const d) {
       auto const el = get_map_el(pos, get_orientation(d));
-      neighbor_edges += is_edge(pos);
-      built_edge_positions += el.has_value();
+      neighbor_edges += static_cast<unsigned>(is_edge(pos));
+      built_edge_positions += static_cast<unsigned>(el.has_value());
       if (el.has_value() && cista::holds_alternative<edge*>(*el)) {
         edges.emplace(cista::get<edge*>(*el));
       }
@@ -698,7 +708,7 @@ struct ascii_network_parser {
   unsigned digit_{0U};
   station* curr_station_{nullptr};
   network net_;
-};  // namespace rapid
+};
 
 network parse_network(std::string_view str) {
   return ascii_network_parser{str}.parse();
