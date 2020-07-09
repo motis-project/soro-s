@@ -37,10 +37,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-float-conversion
     -Wno-global-constructors
     -Wno-exit-time-destructors
+    -Wno-switch-enum
     -Werror
   )
 elseif(MSVC)
-elseif(NOT MSVC)
   target_compile_options(rapid-lib PRIVATE
     /WX
   )
