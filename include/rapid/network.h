@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <limits>
 #include <ostream>
 #include <set>
 #include <string>
@@ -12,13 +13,14 @@
 
 namespace rapid {
 
-using pixel_coord_t = int32_t;
+using pixel_coord_t = uint32_t;
 using distance_in_m = uint32_t;
 
 struct pixel_pos {
   bool valid() const { return x_ >= 0 && y_ >= 0; }
   friend std::ostream& operator<<(std::ostream&, pixel_pos const&);
-  pixel_coord_t x_{-1}, y_{-1};
+  pixel_coord_t x_{std::numeric_limits<pixel_coord_t>::max()},
+      y_{std::numeric_limits<pixel_coord_t>::max()};
 };
 
 struct pixel {

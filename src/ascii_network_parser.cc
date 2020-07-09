@@ -377,8 +377,8 @@ struct ascii_network_parser {
     cr::hash_set<edge*> edges;
     for_each_neighbor_pos(p, [&](pixel_pos const pos, dir const d) {
       auto const el = get_map_el(pos, get_orientation(d));
-      neighbor_edges += static_cast<int>(is_edge(pos));
-      built_edge_positions += static_cast<int>(el.has_value());
+      neighbor_edges += static_cast<unsigned>(is_edge(pos));
+      built_edge_positions += static_cast<unsigned>(el.has_value());
       if (el.has_value() && cista::holds_alternative<edge*>(*el)) {
         edges.emplace(cista::get<edge*>(*el));
       }

@@ -41,10 +41,10 @@ void network::print(std::vector<edge*> const& highlight_edges) const {
     assert(pix.pos_.valid());
     auto const [p, c] = pix;
     if (lines.size() <= static_cast<size_t>(p.y_)) {
-      lines.resize(p.y_ + 1);
+      lines.resize(p.y_ + 1U);
     }
     if (lines[p.y_].size() <= static_cast<size_t>(p.x_)) {
-      lines[p.y_].resize(p.x_ + 1);
+      lines[p.y_].resize(p.x_ + 1U);
     }
     lines[p.y_][p.x_] = {c, highlight.find(pix.pos_) != end(highlight)
                                 ? std::make_optional(fmt::color::red)
