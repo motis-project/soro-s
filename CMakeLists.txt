@@ -39,7 +39,12 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-exit-time-destructors
     -Werror
   )
+elseif(MSVC)
 elseif(NOT MSVC)
+  target_compile_options(rapid-lib PRIVATE
+    /WX
+  )
+else()
   target_compile_options(rapid-lib PRIVATE
     -Wall
     -Wextra
