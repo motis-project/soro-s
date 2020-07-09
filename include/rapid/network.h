@@ -19,7 +19,7 @@ using distance_in_m = uint32_t;
 struct pixel_pos {
   static constexpr auto const INVALID =
       std::numeric_limits<pixel_coord_t>::max();
-  bool valid() const { return x_ != INVALID && y_ >= INVALID; }
+  bool valid() const { return x_ != INVALID && y_ != INVALID; }
   friend std::ostream& operator<<(std::ostream&, pixel_pos const&);
   pixel_coord_t x_{INVALID}, y_{INVALID};
 };
