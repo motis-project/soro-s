@@ -241,7 +241,7 @@ struct ascii_network_parser {
 
           default:
             if (std::isdigit(c) != 0) {
-              do_digit(p, c - '0');
+              do_digit(p, static_cast<unsigned>(c - '0'));
             } else if (c >= 'a' && c <= 'z') {
               do_end_node(p, c);
             } else if (std::isalpha(c) != 0) {
@@ -315,7 +315,7 @@ struct ascii_network_parser {
     return std::nullopt;
   }
 
-  void do_digit(pixel_pos const p, int digit) {
+  void do_digit(pixel_pos const p, unsigned digit) {
     digit_ = digit;
     cr::hash_map<type, edge*> els;
     for_each_neighbor_pos(p, [&](pixel_pos const neighbor_pos, dir const d) {
