@@ -291,8 +291,7 @@ struct ascii_network_parser {
 
   bool is_valid_and_non_empty(pixel_pos const p) const {
     assert(p.valid());
-    return p.x_ >= 0 && p.y_ >= 0 &&
-           static_cast<size_t>(p.y_) < lines_.size() &&
+    return static_cast<size_t>(p.y_) < lines_.size() &&
            static_cast<size_t>(p.x_) < lines_[p.y_].len &&
            lines_[p.y_][0] != '#' && lines_[p.y_][p.x_] != EMPTY;
   }
