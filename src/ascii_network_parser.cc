@@ -195,7 +195,12 @@ struct ascii_network_parser {
       }
 
       for (auto const [x, c] : utl::enumerate(l)) {
-        utl::verify(curr_station_ != nullptr, "line {}: station not set", y);
+        if (curr_station_ == nullptr) {
+          curr_station_ =
+              net_.stations_.emplace_back(std::make_unique<station>()).get();
+          curr_station_->name_ = "dummy";
+        }
+
         auto const p = pixel_pos{static_cast<pixel_coord_t>(x),
                                  static_cast<pixel_coord_t>(y)};
         digit_ = 0U;
@@ -290,8 +295,7 @@ struct ascii_network_parser {
   }
 
   bool is_valid_and_non_empty(pixel_pos const p) const {
-    assert(p.valid());
-    return static_cast<size_t>(p.y_) < lines_.size() &&
+    return p.valid() && static_cast<size_t>(p.y_) < lines_.size() &&
            static_cast<size_t>(p.x_) < lines_[p.y_].len &&
            lines_[p.y_][0] != '#' && lines_[p.y_][p.x_] != EMPTY;
   }
