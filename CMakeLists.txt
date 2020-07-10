@@ -19,7 +19,7 @@ endif()
 
 file(GLOB_RECURSE rapid-lib-files src/*.cc)
 add_library(rapid-lib ${rapid-lib-files})
-target_link_libraries(rapid-lib utl cista date tz ianatzdb-res)
+target_link_libraries(rapid-lib utl cista date)
 target_compile_features(rapid-lib PUBLIC cxx_std_20)
 target_include_directories(rapid-lib PUBLIC include)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
