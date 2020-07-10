@@ -664,7 +664,7 @@ struct ascii_network_parser {
       utl::verify(from != nullptr, "signal {} from not found", pos);
       utl::verify(to != nullptr, "signal {} to not found", pos);
 
-      signal->action_traversals_[from] = to;
+      signal->action_traversal_ = {from, to};
       signal->traversals_[from].emplace(to);
       signal->traversals_[to].emplace(from);
     }
@@ -684,7 +684,7 @@ struct ascii_network_parser {
       auto const to_edge = get_edge(next(pos, to), get_orientation(to));
       n->traversals_[from_edge].emplace(to_edge);
       n->traversals_[to_edge].emplace(from_edge);
-      n->action_traversals_[from_edge] = to_edge;
+      n->action_traversal_ = {from_edge, to_edge};
     }
   }
 
