@@ -58,7 +58,8 @@ Checks: "*,\
 -readability-braces-around-statements,\
 -google-readability-avoid-underscore-in-googletest-name,\
 -readability-misleading-indentation,\
--llvm-qualified-auto"
+-llvm-qualified-auto,
+-readability-qualified-auto"
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^${RELATIVE_SOURCE_DIR}(base|modules|test)/'
 AnalyzeTemporaryDtors: false
