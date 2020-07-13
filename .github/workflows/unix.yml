@@ -15,8 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install clang-format-10
+        run: |
+          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo apt-get install -y --no-install-recommends clang-format-10
+
       - name: Format files
-        run: find include src test -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-9 -i
+        run: find include src test -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-10 -i
 
       - name: Check for differences
         run: |
