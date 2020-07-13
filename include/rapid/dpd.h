@@ -61,7 +61,6 @@ struct dpb {};
 
 template <typename T>
 struct dpb<T> {
-  static_assert(std::is_integral_v<T>);
   using primary_t = T;
   using container_type = std::vector<probability_t>;
 
