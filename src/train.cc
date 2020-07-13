@@ -58,7 +58,7 @@ void train::build_routes(network const& net) {
   start.entry_dpd_ = start.exit_dpd_ =
       decltype(start.entry_dpd_){timetable_.front().time_, speed_t{speed_}};
   start.eotd_dpd_ = decltype(start.eotd_dpd_){timetable_.front().time_};
-  start.to_ = timetable_[1].node_;
+  start.to_ = timetable_.front().node_;
   auto pred = routes_.emplace_back(std::make_unique<route>(start)).get();
 
   for (auto const [source, dest] : utl::pairwise(timetable_)) {
