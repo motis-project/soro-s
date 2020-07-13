@@ -125,12 +125,8 @@ void route::compute_dists() {
   for (auto const& in : in_) {
     if (in->train_ == train_) {
       start = std::max(start, in->exit_dpd_.first_);
-      std::cout << tag() << ": " << in->tag() << " - " << in->exit_dpd_.first_
-                << "\n";
     } else {
       start = std::max(start, in->eotd_dpd_.first_);
-      std::cout << tag() << ": " << in->tag() << " - " << in->eotd_dpd_.first_
-                << "\n";
     }
   }
   entry_dpd_ = decltype(entry_dpd_){start, train_->speed_};
@@ -153,8 +149,9 @@ std::ostream& operator<<(std::ostream& out, train const& t) {
   }
   std::cout << "  ],\n  routes = [\n";
   for (auto const& r : t.routes_) {
-    std::cout << "    " << r->from_->name_ << "@" << r->from_time_ << " -> "
-              << r->to_->name_ << "@" << r->to_time_ << ",\n";
+    std::cout << "    " << (r->from_ == nullptr ? "" : r->from_->name_) << "@"
+              << r->from_time_ << " -> " << r->to_->name_ << "@" << r->to_time_
+              << ",\n";
   }
   return out << "  ]\n}";
 }

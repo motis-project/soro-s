@@ -50,7 +50,7 @@ struct prob_dist_iter : utl::iterator_facade<prob_dist_iter<T>> {
 
 template <typename T>
 prob_dist_iter(T const&, typename T::container_type::const_iterator)
-    -> prob_dist_iter<T>;
+    ->prob_dist_iter<T>;
 
 template <typename... Ts>
 struct dpb {};
