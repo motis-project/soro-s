@@ -10,22 +10,23 @@
 #include "utl/pipes.h"
 
 #include "rapid/network.h"
+#include "rapid/speed_t.h"
 
 namespace rapid {
 
-time_t parse_time(utl::cstr source) {
+unixtime parse_time(utl::cstr source) {
   date::sys_seconds t;
   std::istringstream{source.to_str()} >> date::parse("%F %T", t);
-  return static_cast<time_t>(std::chrono::duration_cast<std::chrono::seconds>(
-                                 t - date::sys_seconds(std::chrono::seconds{0}))
-                                 .count());
+  return unixtime(std::chrono::duration_cast<std::chrono::seconds>(
+                      t - date::sys_seconds(std::chrono::seconds{0}))
+                      .count());
 }
 
 timetable parse_timetable(network const& net, std::string_view trains_csv,
                           std::string_view timetable_csv) {
   struct train_row {
     utl::csv_col<utl::cstr, UTL_NAME("TRAIN")> name_;
-    utl::csv_col<float, UTL_NAME("SPEED")> speed_;
+    utl::csv_col<speed_t, UTL_NAME("SPEED")> speed_;
   };
   auto tt = utl::line_range{utl::buf_reader{trains_csv}}  //
             | utl::csv<train_row>()  //
@@ -34,7 +35,8 @@ timetable parse_timetable(network const& net, std::string_view trains_csv,
               return cista::pair{row.name_.val().to_str(),
                                  cista::raw::make_unique<train>(
                                      row.name_.val().to_str(), row.speed_.val(),
-                                     std::vector<std::pair<time_t, node*>>{})};
+                                     std::vector<train::timetable_entry>{},
+                                     std::vector<std::unique_ptr<route>>{})};
             })  //
             | utl::to<timetable>();
 
@@ -56,9 +58,13 @@ timetable parse_timetable(network const& net, std::string_view trains_csv,
           utl::verify(pos_it != end(net.nodes_), "position {} not found",
                       row.pos_.val().view());
 
-          train_it->second->timetable_.emplace_back(parse_time(row.time_.val()),
-                                                    pos_it->get());
+          train_it->second->timetable_.emplace_back(train::timetable_entry{
+              parse_time(row.time_.val()), pos_it->get()});
         });
+
+  for (auto& [name, t] : tt) {
+    t->build_routes(net);
+  }
 
   return tt;
 }
