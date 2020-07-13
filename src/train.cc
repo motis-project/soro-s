@@ -66,7 +66,8 @@ void train::build_routes(network const& net) {
     utl::verify(!edges.empty(), "path for {} from {} to {} not found", name_,
                 source.node_->name_, dest.node_->name_);
     node* curr_node{source.node_};
-    route curr_route{.from_ = source.node_}, next_route;
+    route curr_route, next_route;
+    curr_route.from_ = source.node_;
     for (auto const& e : edges) {
       curr_route.path_.emplace_back(e);
       auto const edge_to = e->opposite(curr_node);

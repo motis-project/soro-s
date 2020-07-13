@@ -34,7 +34,7 @@ struct route {
   route *pred_{nullptr}, *succ_{nullptr};
   unixtime from_time_{0}, to_time_{0};
   std::vector<edge*> path_;
-  train* train_;
+  train* train_{nullptr};
   cista::raw::hash_set<route*> in_, out_;
   unsigned dist_to_eotd_{0U}, total_dist_{0U};
   dpb<unixtime, speed_t> entry_dpd_;

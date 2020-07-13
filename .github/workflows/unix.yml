@@ -91,7 +91,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
           sudo apt-get install -y --no-install-recommends libc++-10-dev libc++abi-10-dev clang-tidy-10
 
       - name: Install Valgrind
