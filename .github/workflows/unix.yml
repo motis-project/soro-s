@@ -17,7 +17,7 @@ jobs:
 
       - name: Install clang-format-10
         run: |
-          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
           sudo apt-get install -y --no-install-recommends clang-format-10
 
       - name: Format files
@@ -133,8 +133,7 @@ jobs:
           echo "using clang : 10 : /usr/bin/${{ matrix.config.cxx }} ;" > $HOME/user-config.jam
           wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
           tar xf boost_1_72_0.tar.bz2
-          mv boost_1_72_0 boost_1_72_0
-          cd boost_1_72_0_asan
+          cd boost_1_72_0
           ./bootstrap.sh
           ./b2 -j6 \
             link=static threading=multi variant=release \

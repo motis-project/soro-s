@@ -31,8 +31,8 @@ struct route {
   node* approach_signal_{nullptr};  // contained in previous route
   node* end_of_train_detector_{nullptr};  // contained in next route
   node *from_{nullptr}, *to_{nullptr};
-  route *pred_, *succ_;
-  unixtime from_time_{0}, to_time_{0U};
+  route *pred_{nullptr}, *succ_{nullptr};
+  unixtime from_time_{0}, to_time_{0};
   std::vector<edge*> path_;
   train* train_;
   cista::raw::hash_set<route*> in_, out_;
