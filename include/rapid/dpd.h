@@ -5,8 +5,6 @@
 
 #include "cista/containers/hash_map.h"
 
-#include "utl/iterator_facade.h"
-
 #include "rapid/time_util.h"
 
 namespace rapid {
@@ -14,7 +12,7 @@ namespace rapid {
 using probability_t = float;
 
 template <typename T>
-struct prob_dist_iter : utl::iterator_facade<prob_dist_iter<T>> {
+struct prob_dist_iter {
   using container_type = typename T::container_type;
   using base_iterator_t = typename container_type::const_iterator;
   using primary_t = typename T::primary_t;
@@ -23,25 +21,30 @@ struct prob_dist_iter : utl::iterator_facade<prob_dist_iter<T>> {
   explicit prob_dist_iter(T const& dist, base_iterator_t it)
       : t_{dist.first_}, it_(std::move(it)) {}
 
-  void increment() {
+  prob_dist_iter& operator++() {
     ++it_;
     ++t_;
+    return *this;
   }
-  void decrement() {
+
+  prob_dist_iter& operator--() {
     --it_;
     --t_;
+    return *this;
   }
-  void advance(int off) {
+
+  prob_dist_iter& operator+=(int off) {
     it_ += off;
     t_ += off;
+    return *this;
   }
 
-  std::pair<primary_t, value_type> dereference() const { return {t_, *it_}; }
+  std::pair<primary_t, value_type> operator*() const { return {t_, *it_}; }
 
-  bool equal_to(prob_dist_iter o) const { return it_ == o.it_; }
+  bool operator==(prob_dist_iter const& o) const { return it_ == o.it_; }
 
-  ssize_t distance_to(prob_dist_iter other) const {
-    return std::distance(it_, other.it_);
+  ssize_t operator-(prob_dist_iter const& o) const {
+    return std::distance(it_, o.it_);
   }
 
   typename T::primary_t t_;
@@ -50,7 +53,7 @@ struct prob_dist_iter : utl::iterator_facade<prob_dist_iter<T>> {
 
 template <typename T>
 prob_dist_iter(T const&, typename T::container_type::const_iterator)
-    ->prob_dist_iter<T>;
+    -> prob_dist_iter<T>;
 
 template <typename... Ts>
 struct dpb {};
