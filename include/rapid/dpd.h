@@ -44,7 +44,7 @@ struct prob_dist_iter {
   bool operator==(prob_dist_iter const& o) const { return it_ == o.it_; }
   bool operator!=(prob_dist_iter const& o) const { return it_ != o.it_; }
 
-  ssize_t operator-(prob_dist_iter const& o) const {
+  int operator-(prob_dist_iter const& o) const {
     return std::distance(it_, o.it_);
   }
 
