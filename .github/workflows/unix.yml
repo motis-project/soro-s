@@ -15,8 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install clang-format-10
+        run: |
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo apt-get install -y --no-install-recommends clang-format-10
+
       - name: Format files
-        run: find include src test -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-9 -i
+        run: find include src test -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-10 -i
 
       - name: Check for differences
         run: |
@@ -46,24 +51,24 @@ jobs:
             cc: gcc-9
             mode: Debug
             os: ubuntu-latest
-          - name: Clang 9 Release
-            cxx: clang++-9
-            cc: clang-9
+          - name: Clang 10 Release
+            cxx: clang++-10
+            cc: clang-10
             mode: Release
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
             os: ubuntu-latest
           - name: Clang Tidy
-            cxx: clang++-9
-            cc: clang-9
+            cxx: clang++-10
+            cc: clang-10
             mode: Debug
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
             lint: true
             os: ubuntu-latest
-          - key: Clang 9 Sanitizer
-            cxx: clang++-9
-            cc: clang-9
+          - key: Clang 10 Sanitizer
+            cxx: clang++-10
+            cc: clang-10
             mode: Release
             cflags: -fsanitize=address,undefined -fno-omit-frame-pointer
             cxxflags: -fsanitize=address,undefined -fno-omit-frame-pointer -stdlib=libc++
@@ -82,10 +87,12 @@ jobs:
 
       # ==== INSTALL ====
       - name: Install LLVM
-        if: matrix.config.os != 'macos-latest' && matrix.config.cc == 'clang-9'
+        if: matrix.config.os != 'macos-latest' && matrix.config.cc == 'clang-10'
         env:
           DEBIAN_FRONTEND: noninteractive
-        run: sudo apt-get install -y --no-install-recommends libc++-9-dev libc++abi-9-dev clang-tidy-9
+        run: |
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo apt-get install -y --no-install-recommends libc++-10-dev libc++abi-10-dev clang-tidy-10
 
       - name: Install Valgrind
         if: matrix.config.mode == 'Debug' && matrix.config.cc == 'gcc-9'
@@ -114,53 +121,23 @@ jobs:
       - name: libc++ Boost Cache
         uses: actions/cache@v1
         id: libcxxboostcache
-        if: contains(matrix.config.cxxflags, 'libc++') && !contains(matrix.config.cxxflags, '-fsanitize=address')
+        if: contains(matrix.config.cxxflags, 'libc++')
         with:
           path: boost_1_72_0
-          key: boost_1_72_0-${{ matrix.config.os }}
-
-      - name: libc++ Boost asan Cache
-        uses: actions/cache@v1
-        id: libcxxboostasancache
-        if: contains(matrix.config.cxxflags, 'libc++') && contains(matrix.config.cxxflags, '-fsanitize=address')
-        with:
-          path: boost_1_72_0_asan
-          key: boost_1_72_0_asan-${{ matrix.config.os }}
+          key: boost_1_72_0-${{ matrix.config.os }}-${{ matrix.config.cxx }}-${{ contains(matrix.config.cxxflags, '-fsanitize=address') }}
 
       # ==== BOOST FOR LIBCXX ====
       - name: Boost for libc++
-        if: contains(matrix.config.cxxflags, 'libc++') && !contains(matrix.config.cxxflags, '-fsanitize=address') && steps.libcxxboostcache.outputs.cache-hit != 'true'
+        if: contains(matrix.config.cxxflags, 'libc++') && steps.libcxxboostcache.outputs.cache-hit != 'true'
         run: |
-          echo "using clang : 9 : ${{ matrix.config.cxx }} ;" > $HOME/user-config.jam
+          echo "using clang : 10 : /usr/bin/${{ matrix.config.cxx }} ;" > $HOME/user-config.jam
           wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
           tar xf boost_1_72_0.tar.bz2
           cd boost_1_72_0
           ./bootstrap.sh
           ./b2 -j6 \
             link=static threading=multi variant=release \
-            toolset=clang-9 cxxflags="-stdlib=libc++" \
-            --with-system \
-            --with-filesystem \
-            --with-iostreams \
-            --with-program_options \
-            --with-thread \
-            --with-date_time \
-            --with-regex \
-            --with-serialization \
-            -s NO_BZIP2=1
-
-      - name: Boost for libc++ asan
-        if: contains(matrix.config.cxxflags, 'libc++') && contains(matrix.config.cxxflags, '-fsanitize=address') && steps.libcxxboostasancache.outputs.cache-hit != 'true'
-        run: |
-          echo "using clang : 9 : /usr/bin/${{ matrix.config.cxx }} ;" > $HOME/user-config.jam
-          wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
-          tar xf boost_1_72_0.tar.bz2
-          mv boost_1_72_0 boost_1_72_0_asan
-          cd boost_1_72_0_asan
-          ./bootstrap.sh
-          ./b2 -j6 \
-            link=static threading=multi variant=release \
-            toolset=clang-9 cxxflags="-fsanitize=address,undefined -fno-omit-frame-pointer -stdlib=libc++" \
+            toolset=clang-10 cxxflags="${{ matrix.config.cxxflags }}" \
             --with-system \
             --with-filesystem \
             --with-iostreams \
@@ -176,12 +153,8 @@ jobs:
         run: echo "::set-env name=BOOST_ROOT::$BOOST_ROOT_1_72_0"
 
       - name: Set BOOST_ROOT
-        if: contains(matrix.config.cxxflags, 'libc++') && !contains(matrix.config.cxxflags, '-fsanitize=address')
+        if: contains(matrix.config.cxxflags, 'libc++')
         run: echo "::set-env name=BOOST_ROOT::`pwd`/boost_1_72_0"
-
-      - name: Set BOOST_ROOT asan
-        if: contains(matrix.config.cxxflags, 'libc++') && contains(matrix.config.cxxflags, '-fsanitize=address')
-        run: echo "::set-env name=BOOST_ROOT::`pwd`/boost_1_72_0_asan"
 
       # ==== BUILD ====
       - name: CMake

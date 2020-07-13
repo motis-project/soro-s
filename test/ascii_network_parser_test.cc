@@ -495,14 +495,12 @@ TEST_CASE("horizontal_signal") {
     CHECK(s1->traversals_.size() == 2);
     CHECK(s1->traversals_[e1] == cr::hash_set<edge*>{e2});
     CHECK(s1->traversals_[e2] == cr::hash_set<edge*>{e1});
-    CHECK(s1->action_traversals_.size() == 1);
-    CHECK(s1->action_traversals_[e1] == e2);
+    CHECK(s1->action_traversal_ == std::pair{e1, e2});
 
     CHECK(s2->traversals_.size() == 2);
     CHECK(s2->traversals_[e2] == cr::hash_set<edge*>{e3});
     CHECK(s2->traversals_[e3] == cr::hash_set<edge*>{e2});
-    CHECK(s2->action_traversals_.size() == 1);
-    CHECK(s2->action_traversals_[e3] == e2);
+    CHECK(s2->action_traversal_ == std::pair{e3, e2});
   }
 }
 
@@ -537,15 +535,15 @@ TEST_CASE("approach_signal_signal_end_of_train_detector") {
 
   CHECK(n0->traversals_.at(e0) == cr::hash_set<edge*>{e1});
   CHECK(n0->traversals_.at(e1) == cr::hash_set<edge*>{e0});
-  CHECK(n0->action_traversals_.at(e0) == e1);
+  CHECK(n0->action_traversal_ == std::pair{e0, e1});
 
   CHECK(n1->traversals_.at(e1) == cr::hash_set<edge*>{e2});
   CHECK(n1->traversals_.at(e2) == cr::hash_set<edge*>{e1});
-  CHECK(n1->action_traversals_.at(e1) == e2);
+  CHECK(n1->action_traversal_ == std::pair{e1, e2});
 
   CHECK(n2->traversals_.at(e2) == cr::hash_set<edge*>{e3});
   CHECK(n2->traversals_.at(e3) == cr::hash_set<edge*>{e2});
-  CHECK(n2->action_traversals_.at(e2) == e3);
+  CHECK(n2->action_traversal_ == std::pair{e2, e3});
 }
 
 TEST_CASE("station") {

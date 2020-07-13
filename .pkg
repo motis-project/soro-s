@@ -1,12 +1,16 @@
 [cista]
   url=git@github.com:felixguendling/cista.git
   branch=master
-  commit=0bf928f7ce9fb8273d365dc319e9c8605f819a36
+  commit=ef4cbd5a0d1f67bd08e6beffd674e0de7f52635e
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=2f86dd41439e562d1af15f646526fb9e2378479d
+  commit=afa07cc6101cf30937a83177ea7c00fbd021039d
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
   commit=421f520ea0f6d81a1eff303ae926f39cc04d07fa
+[date]
+  url=git@github.com:motis-project/date.git
+  branch=master
+  commit=6de941079a68b29753c430fb19c3b110c8499c97

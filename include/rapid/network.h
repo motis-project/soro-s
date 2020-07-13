@@ -60,14 +60,14 @@ struct node {
   station* station_;
   std::string name_;
   cista::raw::hash_map<edge*, cista::raw::hash_set<edge*>> traversals_;
-  cista::raw::hash_map<edge*, edge*> action_traversals_;
-  edge* end_node_edge_;
+  std::pair<edge*, edge*> action_traversal_;
+  edge* end_node_edge_{nullptr};
   cista::raw::vector<pixel> draw_representation_;
 };
 
-std::string_view type_str(node::type const t);
+std::string_view type_str(node::type);
 
-std::ostream& operator<<(std::ostream&, node::type const);
+std::ostream& operator<<(std::ostream&, node::type);
 
 struct network {
   void print(std::vector<edge*> const& highlight_edges = {}) const;

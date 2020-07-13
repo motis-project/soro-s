@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "doctest/doctest.h"
 
 #include "rapid/ascii_network_parser.h"
@@ -7,7 +5,7 @@
 
 using namespace rapid;
 
-TEST_CASE("dijkstra") {
+TEST_CASE("dijkstra_1") {
   auto const net = parse_network(R"(
 # 1 Simple Double Track Station
                                    *=<Q========*
@@ -21,17 +19,17 @@ TEST_CASE("dijkstra") {
                                    *=======M>==*
 )");
 
-  net.print(dijkstra(net, "j", "Q"));
-  net.print(dijkstra(net, "Q", "a"));
-  net.print(dijkstra(net, "i", "j"));
-  net.print(dijkstra(net, "a", "j"));
-  net.print(dijkstra(net, "FF", "AA"));
-  net.print(dijkstra(net, "b", "P"));
+  CHECK(dijkstra(net, "j", "Q").size() != 0U);
+  CHECK(dijkstra(net, "Q", "a").size() != 0U);
+  CHECK(dijkstra(net, "i", "j").size() != 0U);
+  CHECK(dijkstra(net, "a", "j").size() != 0U);
+  CHECK(dijkstra(net, "FF", "AA").size() != 0U);
+  CHECK(dijkstra(net, "b", "P").size() != 0U);
 }
 
-TEST_CASE("dijkstra") {
+TEST_CASE("dijkstra_node_per_incoming_edge_test") {
   auto const net = parse_network(R"(
-# 1 Simple Double Track Station
+# 1 Sepearate Nodes Test
 
            *============*
       *=*  |            |
@@ -43,6 +41,5 @@ TEST_CASE("dijkstra") {
   a=*
 
 )");
-
-  net.print(dijkstra(net, "a", "FF"));
+  CHECK(dijkstra(net, "a", "FF").size() != 0U);
 }

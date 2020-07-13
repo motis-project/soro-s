@@ -195,7 +195,12 @@ struct ascii_network_parser {
       }
 
       for (auto const [x, c] : utl::enumerate(l)) {
-        utl::verify(curr_station_ != nullptr, "line {}: station not set", y);
+        if (curr_station_ == nullptr) {
+          curr_station_ =
+              net_.stations_.emplace_back(std::make_unique<station>()).get();
+          curr_station_->name_ = "dummy";
+        }
+
         auto const p = pixel_pos{static_cast<pixel_coord_t>(x),
                                  static_cast<pixel_coord_t>(y)};
         digit_ = 0U;
@@ -290,8 +295,7 @@ struct ascii_network_parser {
   }
 
   bool is_valid_and_non_empty(pixel_pos const p) const {
-    assert(p.valid());
-    return static_cast<size_t>(p.y_) < lines_.size() &&
+    return p.valid() && static_cast<size_t>(p.y_) < lines_.size() &&
            static_cast<size_t>(p.x_) < lines_[p.y_].len &&
            lines_[p.y_][0] != '#' && lines_[p.y_][p.x_] != EMPTY;
   }
@@ -660,7 +664,7 @@ struct ascii_network_parser {
       utl::verify(from != nullptr, "signal {} from not found", pos);
       utl::verify(to != nullptr, "signal {} to not found", pos);
 
-      signal->action_traversals_[from] = to;
+      signal->action_traversal_ = {from, to};
       signal->traversals_[from].emplace(to);
       signal->traversals_[to].emplace(from);
     }
@@ -680,7 +684,7 @@ struct ascii_network_parser {
       auto const to_edge = get_edge(next(pos, to), get_orientation(to));
       n->traversals_[from_edge].emplace(to_edge);
       n->traversals_[to_edge].emplace(from_edge);
-      n->action_traversals_[from_edge] = to_edge;
+      n->action_traversal_ = {from_edge, to_edge};
     }
   }
 
