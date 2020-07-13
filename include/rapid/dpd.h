@@ -80,8 +80,6 @@ struct dpb<T, Ts...> {
   using primary_t = T;
   using container_type = std::vector<dpb<Ts...>>;
 
-  static_assert(std::is_integral_v<T> && (std::is_integral_v<Ts> && ...));
-
   dpb() = default;
 
   explicit dpb(T head, Ts... tail) : first_{std::move(head)} {

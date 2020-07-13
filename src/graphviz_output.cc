@@ -33,7 +33,7 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
           << (r->from_ == nullptr ? "START" : r->from_->name_) << " -> "
           << r->to_->name_ << "\\n"
           << "sched=" << r->from_time_ << "\\n";
-      for (auto const [t, speed_dpb] : r->entry_dpd_) {
+      for (auto const& [t, speed_dpb] : r->entry_dpd_) {
         for (auto const [speed, prob] : speed_dpb) {
           out << t << " @ " << speed << "km/h"
               << ": " << (prob * 100) << "%\\n";
