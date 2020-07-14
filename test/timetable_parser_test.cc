@@ -5,13 +5,13 @@
 #include "utl/pairwise.h"
 #include "utl/verify.h"
 
-#include "rapid/ascii_network_parser.h"
-#include "rapid/graphviz_output.h"
-#include "rapid/propagator.h"
-#include "rapid/route_train_order.h"
-#include "rapid/timetable_parser.h"
+#include "soro/ascii_network_parser.h"
+#include "soro/graphviz_output.h"
+#include "soro/propagator.h"
+#include "soro/route_train_order.h"
+#include "soro/timetable_parser.h"
 
-using namespace rapid;
+using namespace soro;
 
 struct r {
   cista::raw::hash_set<route*> in_;

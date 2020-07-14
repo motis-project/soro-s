@@ -1,4 +1,4 @@
-#include "rapid/network.h"
+#include "soro/network.h"
 
 #include <optional>
 
@@ -10,7 +10,7 @@
 
 namespace cr = cista::raw;
 
-namespace rapid {
+namespace soro {
 
 std::ostream& operator<<(std::ostream& out, pixel_pos const& p) {
   return out << p.x_ << "|" << p.y_;
@@ -101,4 +101,4 @@ void edge::add_node(node* n) {
 
 node* edge::opposite(node* n) const { return n == from_ ? to_ : from_; }
 
-}  // namespace rapid
+}  // namespace soro

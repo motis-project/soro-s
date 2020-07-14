@@ -1,11 +1,11 @@
-#include "rapid/graphviz_output.h"
+#include "soro/graphviz_output.h"
 
 #include <ostream>
 
-#include "rapid/network.h"
-#include "rapid/train.h"
+#include "soro/network.h"
+#include "soro/train.h"
 
-namespace rapid {
+namespace soro {
 
 void graphiz_output(std::ostream& out, timetable const& tt) {
   out << "digraph world {\n";
@@ -53,4 +53,4 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
   out << "}\n";
 }
 
-}  // namespace rapid
+}  // namespace soro

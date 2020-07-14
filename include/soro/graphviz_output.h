@@ -4,8 +4,8 @@
 
 #include "train.h"
 
-namespace rapid {
+namespace soro {
 
 void graphiz_output(std::ostream&, timetable const&);
 
-}  // namespace rapid
+}  // namespace soro

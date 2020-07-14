@@ -2,9 +2,9 @@
 
 #include "cista/containers/hash_set.h"
 
-#include "rapid/network.h"
+#include "soro/network.h"
 
-namespace rapid {
+namespace soro {
 
 template <typename Fn>
 cista::raw::hash_set<node*> bfs_find_nodes(node* start, Fn&& predicate) {
@@ -26,4 +26,4 @@ cista::raw::hash_set<node*> bfs_find_nodes(node* start, Fn&& predicate) {
   return found;
 }
 
-}  // namespace rapid
+}  // namespace soro

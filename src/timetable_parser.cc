@@ -1,4 +1,4 @@
-#include "rapid/timetable_parser.h"
+#include "soro/timetable_parser.h"
 
 #include <sstream>
 
@@ -9,10 +9,10 @@
 #include "utl/parser/line_range.h"
 #include "utl/pipes.h"
 
-#include "rapid/network.h"
-#include "rapid/speed_t.h"
+#include "soro/network.h"
+#include "soro/speed_t.h"
 
-namespace rapid {
+namespace soro {
 
 unixtime parse_time(utl::cstr source) {
   date::sys_seconds t;
@@ -69,4 +69,4 @@ timetable parse_timetable(network const& net, std::string_view trains_csv,
   return tt;
 }
 
-}  // namespace rapid
+}  // namespace soro

@@ -174,36 +174,36 @@ jobs:
       - name: Build
         run: |
           ./build/bin/buildcache -z
-          cmake --build build --target rapid-test
+          cmake --build build --target soro-test
           ./build/bin/buildcache -s
 
       # ==== TESTS ====
       - name: Run Tests
-        run: ./build/rapid-test
+        run: ./build/soro-test
 
       # ==== VALGRIND ====
       - name: Run Tests Valgrind
         if: matrix.config.mode == 'Debug' && matrix.config.cc == 'gcc-9'
-        run: valgrind --error-exitcode=1 --show-reachable=yes --leak-check=full ./build/rapid-test
+        run: valgrind --error-exitcode=1 --show-reachable=yes --leak-check=full ./build/soro-test
 
       # ==== DISTRIBUTION ====
       - name: Strip Executable
         if: matrix.config.mode == 'Release' && (matrix.config.cc == 'gcc-9' || matrix.config.os == 'macos-latest')
-        run: strip build/rapid-test
+        run: strip build/soro-test
 
       - name: Create Distribution
         if: matrix.config.mode == 'Release' && (matrix.config.cc == 'gcc-9' || matrix.config.os == 'macos-latest')
         run: |
-          mkdir rapid
-          mv build/rapid-test rapid
-          tar cjf rapid-${{ matrix.config.artifact }}.tar.bz2 rapid
+          mkdir soro
+          mv build/soro-test soro
+          tar cjf soro-${{ matrix.config.artifact }}.tar.bz2 soro
 
       - name: Upload Distribution
         if: matrix.config.mode == 'Release' && (matrix.config.cc == 'gcc-9' || matrix.config.os == 'macos-latest')
         uses: actions/upload-artifact@v1
         with:
-          name: rapid-${{ matrix.config.artifact }}
-          path: rapid-${{ matrix.config.artifact }}.tar.bz2
+          name: soro-${{ matrix.config.artifact }}
+          path: soro-${{ matrix.config.artifact }}.tar.bz2
 
       # ==== RELEASE ====
       - name: Upload Release
@@ -213,6 +213,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./rapid-${{ matrix.config.artifact }}.tar.bz2
-          asset_name: rapid-${{ matrix.config.artifact }}.tar.bz2
+          asset_path: ./soro-${{ matrix.config.artifact }}.tar.bz2
+          asset_name: soro-${{ matrix.config.artifact }}.tar.bz2
           asset_content_type: application/x-tar

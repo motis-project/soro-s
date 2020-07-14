@@ -1,4 +1,4 @@
-#include "rapid/ascii_network_parser.h"
+#include "soro/ascii_network_parser.h"
 
 #include <iostream>
 #include <optional>
@@ -17,7 +17,7 @@
 #include "utl/pipes.h"
 #include "utl/verify.h"
 
-namespace rapid {
+namespace soro {
 
 namespace cr = cista::raw;
 
@@ -718,4 +718,4 @@ network parse_network(std::string_view str) {
   return ascii_network_parser{str}.parse();
 }
 
-}  // namespace rapid
+}  // namespace soro

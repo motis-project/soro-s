@@ -1,4 +1,4 @@
-#include "rapid/train.h"
+#include "soro/train.h"
 
 #include <numeric>
 #include <ostream>
@@ -9,11 +9,11 @@
 
 #include "date/date.h"
 
-#include "rapid/dijkstra.h"
-#include "rapid/network.h"
-#include "rapid/time_util.h"
+#include "soro/dijkstra.h"
+#include "soro/network.h"
+#include "soro/time_util.h"
 
-namespace rapid {
+namespace soro {
 
 std::ostream& operator<<(std::ostream& out, route const& r) {
   return out << "{ train=" << r.train_->name_ << ", "
@@ -157,4 +157,4 @@ std::ostream& operator<<(std::ostream& out, train const& t) {
   return out << "  ]\n}";
 }
 
-}  // namespace rapid
+}  // namespace soro

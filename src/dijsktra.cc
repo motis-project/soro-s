@@ -1,4 +1,4 @@
-#include "rapid/dijkstra.h"
+#include "soro/dijkstra.h"
 
 #include <iostream>
 #include <queue>
@@ -7,7 +7,7 @@
 
 namespace cr = cista::raw;
 
-namespace rapid {
+namespace soro {
 
 std::vector<edge*> dijkstra(network const&, node* from, node* to) {
   struct queue_entry {
@@ -86,4 +86,4 @@ std::vector<edge*> dijkstra(network const& net, std::string_view from,
   return dijkstra(net, from_it->get(), to_it->get());
 }
 
-}  // namespace rapid
+}  // namespace soro

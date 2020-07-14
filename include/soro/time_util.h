@@ -3,7 +3,7 @@
 #include <iosfwd>
 #include <string>
 
-namespace rapid {
+namespace soro {
 
 struct unixtime {
   constexpr unixtime() = default;
@@ -63,21 +63,21 @@ struct unixtime {
 
 std::string format_unix_time(time_t, char const* format = "%m/%d %H:%M:%OS");
 
-}  // namespace rapid
+}  // namespace soro
 
 namespace std {
 
 template <>
-struct numeric_limits<rapid::unixtime> {
-  static constexpr rapid::unixtime max() {
-    return rapid::unixtime{std::numeric_limits<time_t>::max()};
+struct numeric_limits<soro::unixtime> {
+  static constexpr soro::unixtime max() {
+    return soro::unixtime{std::numeric_limits<time_t>::max()};
   }
-  static constexpr rapid::unixtime min() {
-    return rapid::unixtime{std::numeric_limits<time_t>::min()};
+  static constexpr soro::unixtime min() {
+    return soro::unixtime{std::numeric_limits<time_t>::min()};
   }
 };
 
 template <>
-struct is_integral<rapid::unixtime> : std::true_type {};
+struct is_integral<soro::unixtime> : std::true_type {};
 
 }  // namespace std

@@ -2,10 +2,10 @@
 
 #include <string_view>
 
-#include "rapid/network.h"
+#include "soro/network.h"
 
-namespace rapid {
+namespace soro {
 
 network parse_network(std::string_view);
 
-}  // namespace rapid
+}  // namespace soro

@@ -1,7 +1,7 @@
 #pragma once
 
-namespace rapid {
+namespace soro {
 
 using speed_t = unsigned;  // km/h
 
-}  // namespace rapid
+}  // namespace soro

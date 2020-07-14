@@ -5,9 +5,9 @@
 
 #include "cista/containers/hash_map.h"
 
-#include "rapid/time_util.h"
+#include "soro/time_util.h"
 
-namespace rapid {
+namespace soro {
 
 using probability_t = float;
 
@@ -92,4 +92,4 @@ struct dpb<T, Ts...> {
   std::vector<dpb<Ts...>> dpd_;
 };
 
-}  // namespace rapid
+}  // namespace soro

@@ -1,9 +1,9 @@
 #include "doctest/doctest.h"
 
-#include "rapid/ascii_network_parser.h"
-#include "rapid/dijkstra.h"
+#include "soro/ascii_network_parser.h"
+#include "soro/dijkstra.h"
 
-using namespace rapid;
+using namespace soro;
 
 TEST_CASE("dijkstra_1") {
   auto const net = parse_network(R"(

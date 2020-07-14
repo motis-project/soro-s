@@ -3,9 +3,9 @@
 
 #include "doctest/doctest.h"
 
-#include "rapid/ascii_network_parser.h"
+#include "soro/ascii_network_parser.h"
 
-using namespace rapid;
+using namespace soro;
 namespace cr = cista::raw;
 
 TEST_CASE("simple_track_horizontal") {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(rapid)
+project(soro)
 
 option(RAPID_LINT "Run clang-tidy with the compiler." OFF)
 
@@ -17,13 +17,13 @@ if(RAPID_LINT)
   include(cmake/clang-tidy.cmake)
 endif()
 
-file(GLOB_RECURSE rapid-lib-files src/*.cc)
-add_library(rapid-lib ${rapid-lib-files})
-target_link_libraries(rapid-lib utl cista date)
-target_compile_features(rapid-lib PUBLIC cxx_std_20)
-target_include_directories(rapid-lib PUBLIC include)
+file(GLOB_RECURSE soro-lib-files src/*.cc)
+add_library(soro-lib ${soro-lib-files})
+target_link_libraries(soro-lib utl cista date)
+target_compile_features(soro-lib PUBLIC cxx_std_20)
+target_include_directories(soro-lib PUBLIC include)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  target_compile_options(rapid-lib PRIVATE
+  target_compile_options(soro-lib PRIVATE
     -fno-strict-aliasing
     -Weverything
     -Wno-c++98-compat
@@ -41,17 +41,17 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Werror
   )
 elseif(MSVC)
-  target_compile_options(rapid-lib PRIVATE
+  target_compile_options(soro-lib PRIVATE
     /WX
   )
 else()
-  target_compile_options(rapid-lib PRIVATE
+  target_compile_options(soro-lib PRIVATE
     -Wall
     -Wextra
     -Werror
   )
 endif()
 
-file(GLOB_RECURSE rapid-test-files test/*.cc)
-add_executable(rapid-test ${rapid-test-files})
-target_link_libraries(rapid-test doctest rapid-lib)
+file(GLOB_RECURSE soro-test-files test/*.cc)
+add_executable(soro-test ${soro-test-files})
+target_link_libraries(soro-test doctest soro-lib)

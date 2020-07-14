@@ -1,10 +1,10 @@
-#include "rapid/propagator.h"
+#include "soro/propagator.h"
 
 #include "cista/containers/hash_set.h"
 
 namespace cr = cista::raw;
 
-namespace rapid {
+namespace soro {
 
 void propagate(train_order_map const& route_train_order) {
   // Init queue.
@@ -34,4 +34,4 @@ void propagate(train_order_map const& route_train_order) {
   }
 }
 
-}  // namespace rapid
+}  // namespace soro

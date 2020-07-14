@@ -1,12 +1,12 @@
 #pragma once
 
-#include "rapid/train.h"
+#include "soro/train.h"
 
-namespace rapid {
+namespace soro {
 
 struct network;
 
 timetable parse_timetable(network const&, std::string_view trains,
                           std::string_view timetable);
 
-}  // namespace rapid
+}  // namespace soro

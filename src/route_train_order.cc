@@ -1,8 +1,8 @@
-#include "rapid/route_train_order.h"
+#include "soro/route_train_order.h"
 
 #include "utl/pairwise.h"
 
-namespace rapid {
+namespace soro {
 
 train_order_map compute_route_train_order(timetable const& tt) {
   train_order_map route_train_order;
@@ -41,4 +41,4 @@ train_order_map compute_route_train_order(timetable const& tt) {
   return route_train_order;
 }
 
-}  // namespace rapid
+}  // namespace soro

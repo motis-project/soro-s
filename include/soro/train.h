@@ -8,11 +8,11 @@
 #include "cista/containers/hash_set.h"
 #include "cista/containers/unique_ptr.h"
 
-#include "rapid/dpd.h"
-#include "rapid/speed_t.h"
-#include "rapid/time_util.h"
+#include "soro/dpd.h"
+#include "soro/speed_t.h"
+#include "soro/time_util.h"
 
-namespace rapid {
+namespace soro {
 
 struct node;
 struct edge;
@@ -67,4 +67,4 @@ struct train {
 using timetable =
     cista::raw::hash_map<std::string, cista::raw::unique_ptr<train>>;
 
-}  // namespace rapid
+}  // namespace soro

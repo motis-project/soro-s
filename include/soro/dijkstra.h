@@ -2,12 +2,12 @@
 
 #include <vector>
 
-#include "rapid/network.h"
+#include "soro/network.h"
 
-namespace rapid {
+namespace soro {
 
 std::vector<edge*> dijkstra(network const&, node* from, node* to);
 std::vector<edge*> dijkstra(network const& net, std::string_view from,
                             std::string_view to);
 
-}  // namespace rapid
+}  // namespace soro

@@ -11,7 +11,7 @@
 #include "cista/containers/hash_set.h"
 #include "cista/containers/vector.h"
 
-namespace rapid {
+namespace soro {
 
 using pixel_coord_t = uint32_t;
 using distance_in_m = uint32_t;
@@ -77,4 +77,4 @@ struct network {
   std::vector<std::unique_ptr<station>> stations_;
 };
 
-}  // namespace rapid
+}  // namespace soro
