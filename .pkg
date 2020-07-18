@@ -5,7 +5,7 @@
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=afa07cc6101cf30937a83177ea7c00fbd021039d
+  commit=46efb27d4a92e640a59de4a5ecff70168c5b7087
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
