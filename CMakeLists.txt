@@ -3,14 +3,6 @@ project(soro)
 
 option(RAPID_LINT "Run clang-tidy with the compiler." OFF)
 
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-if (MSVC)
-  set(Boost_USE_STATIC_RUNTIME ON)
-endif()
-find_package(Boost 1.70.0 REQUIRED COMPONENTS filesystem)
-find_package(Threads)
-
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)
 if(RAPID_LINT)
@@ -50,6 +42,22 @@ else()
     -Wextra
     -Werror
   )
+endif()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+  file(GLOB_RECURSE soro-web-files web/*.cc)
+  add_executable(soro-web ${soro-web-files})
+  set_target_properties(soro-web PROPERTIES SUFFIX ".wasm.js")
+  set_target_properties(soro-web PROPERTIES LINK_FLAGS "-s WASM=1 -s --bind")
+  set_target_properties(soro-web PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/web)
+  target_link_libraries(soro-web soro-lib)
+  configure_file(web/index.html ${CMAKE_CURRENT_BINARY_DIR}/web/index.html COPYONLY)
+  configure_file(web/worker.js ${CMAKE_CURRENT_BINARY_DIR}/web/worker.js COPYONLY)
+  configure_file(web/ace.js ${CMAKE_CURRENT_BINARY_DIR}/web/ace.js COPYONLY)
+  configure_file(web/viz.js ${CMAKE_CURRENT_BINARY_DIR}/web/viz.js COPYONLY)
+  configure_file(web/fabric.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/fabric.min.js COPYONLY)
+  configure_file(web/split.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/split.min.js COPYONLY)
+  configure_file(web/svg-pan-zoom.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/svg-pan-zoom.min.js COPYONLY)
 endif()
 
 file(GLOB_RECURSE soro-test-files test/*.cc)
