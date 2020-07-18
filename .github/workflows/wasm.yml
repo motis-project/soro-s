@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: soro-web
-          path: soro-web.tar.bz2
+          path: build/soro-web.tar.bz2
 
       # ==== RELEASE ====
       - name: Upload Release
@@ -64,6 +64,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-web.tar.bz2
+          asset_path: ./build/soro-web.tar.bz2
           asset_name: soro-web.tar.bz2
           asset_content_type: application/x-tar
