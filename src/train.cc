@@ -11,7 +11,7 @@
 
 #include "soro/dijkstra.h"
 #include "soro/network.h"
-#include "soro/time_util.h"
+#include "soro/unixtime.h"
 
 namespace soro {
 

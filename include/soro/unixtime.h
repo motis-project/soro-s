@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <iosfwd>
 #include <string>
 

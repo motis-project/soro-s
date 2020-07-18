@@ -3,14 +3,6 @@ project(soro)
 
 option(RAPID_LINT "Run clang-tidy with the compiler." OFF)
 
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-if (MSVC)
-  set(Boost_USE_STATIC_RUNTIME ON)
-endif()
-find_package(Boost 1.70.0 REQUIRED COMPONENTS filesystem)
-find_package(Threads)
-
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)
 if(RAPID_LINT)

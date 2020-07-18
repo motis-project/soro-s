@@ -10,7 +10,7 @@
 
 #include "soro/dpd.h"
 #include "soro/speed_t.h"
-#include "soro/time_util.h"
+#include "soro/unixtime.h"
 
 namespace soro {
 
@@ -52,10 +52,10 @@ struct train {
   friend std::ostream& operator<<(std::ostream&, train const&);
 
   unixtime arrival_time(unixtime const start, unsigned total_dist) {
-    return start + unixtime{static_cast<unsigned>(
-                       (static_cast<float>(total_dist) /
-                        (static_cast<float>(speed_) / 100.0)) *
-                       60)};
+    return start +
+           unixtime{static_cast<time_t>((static_cast<float>(total_dist) /
+                                         (static_cast<float>(speed_) / 100.0)) *
+                                        60)};
   }
 
   std::string name_;

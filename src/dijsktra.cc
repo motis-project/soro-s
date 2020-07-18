@@ -51,9 +51,9 @@ std::vector<edge*> dijkstra(network const&, node* from, node* to) {
         next.dist_ = curr.dist_;
         next.dist_ += edge->draw_representation_.size();
         next.dist_ += curr.node_->draw_representation_.size();
-        auto const diagonal_penalty = std::count_if(
+        auto const diagonal_penalty = static_cast<unsigned>(std::count_if(
             begin(edge->draw_representation_), end(edge->draw_representation_),
-            [](auto&& c) { return c.content_ == '\\' || c.content_ == '/'; });
+            [](auto&& c) { return c.content_ == '\\' || c.content_ == '/'; }));
         next.dist_ += diagonal_penalty;
         q.emplace(next);
       }

@@ -17,9 +17,10 @@ namespace soro {
 unixtime parse_time(utl::cstr source) {
   date::sys_seconds t;
   std::istringstream{source.to_str()} >> date::parse("%F %T", t);
-  return unixtime(std::chrono::duration_cast<std::chrono::seconds>(
-                      t - date::sys_seconds(std::chrono::seconds{0}))
-                      .count());
+  return unixtime{
+      static_cast<time_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                              t - date::sys_seconds(std::chrono::seconds{0}))
+                              .count())};
 }
 
 timetable parse_timetable(network const& net, std::string_view trains_csv,
