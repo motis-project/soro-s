@@ -15,7 +15,7 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
       fontname=Monospace,
       fontsize=12,
       height=2,
-      width=3
+      width=2.5
     ];
 )--";
   for (auto const& [name, t] : tt) {

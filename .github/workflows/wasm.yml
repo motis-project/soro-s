@@ -36,7 +36,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 
       - name: Build
-        run: cmake --build build --target soro-test
+        run: cmake --build build --target soro-test soro-web
 
       - name: Run Tests
         run: node ./build/soro-test.js

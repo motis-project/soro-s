@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Viz.js</title>
+    <style>
+        #app {
+            display: flex;
+            display: -webkit-flex;
+            flex-direction: column;
+            -webkit-flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #panes {
+            display: flex;
+            display: -webkit-flex;
+            flex: 1 1 auto;
+            -webkit-flex: 1 1 auto;
+        }
+
+        #graph {
+            display: flex;
+            display: -webkit-flex;
+            flex-direction: column;
+            -webkit-flex-direction: column;
+        }
+
+        #output {
+            flex: 1 1 auto;
+            -webkit-flex: 1 1 auto;
+            position: relative;
+            overflow: auto;
+        }
+
+
+        #editor {
+            border-right: 1px solid #ccc;
+        }
+
+        #options label {
+            margin-right: 8px;
+        }
+
+        #options #raw.disabled {
+            opacity: 0.5;
+        }
+
+        #output svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #output.working svg, #output.error svg {
+            opacity: 0.4;
+        }
+
+        #output.error #error {
+            display: inherit;
+        }
+
+        #output #error {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            margin-right: 20px;
+            background: red;
+            color: white;
+            z-index: 1;
+        }
+
+        .gutter {
+            background-color: #eee;
+            background-repeat: no-repeat;
+            background-position: 50%;
+        }
+
+        .split {
+            box-sizing: border-box;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .split.split-horizontal {
+            height: 100%;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="panes" class="split split-horizontal">
+        <div id="editor" class="split"><pre>NET
+a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b
+
+TRAIN,SPEED
+X,50
+Y,100
+Z,200
+
+TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 14:09:00
+Y,a,2020-01-01 13:32:00
+Y,b,2020-01-01 14:07:00
+Z,a,2020-01-01 13:49:00
+Z,b,2020-01-01 14:07:00</pre>
+        </div>
+        <div id="graph" class="split">
+            <div id="output">
+                <div id="error"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="http://viz-js.com/js/ace/ace.js"></script>
+<script src="http://viz-js.com/bower_components/viz.js/viz.js"></script>
+<script src="http://viz-js.com/bower_components/fabric.js/dist/fabric.min.js"></script>
+<script src="http://viz-js.com/bower_components/Split.js/split.min.js"></script>
+<script src="http://viz-js.com/bower_components/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+<script type="text/javascript">
+    function parseInput(str) {
+        const netToken = "NET";
+        let netStart = str.indexOf(netToken)
+        if (netStart === -1) {
+            throw "net start not found";
+        }
+        netStart += netToken.length;
+
+        const trainsToken = "TRAIN,SPEED";
+        const trainsStart = str.indexOf(trainsToken);
+        if (trainsStart === -1) {
+            throw "trains not found";
+        }
+
+        const timetableToken = "TRAIN,POSITION,TIME";
+        const timetableStart = str.indexOf(timetableToken);
+        if (timetableStart === -1) {
+            throw "timetable not found";
+        }
+
+        return {
+            net: str.substring(netStart, trainsStart).trim(),
+            trains: str.substring(trainsStart, timetableStart).trim(),
+            timetable: str.substring(timetableStart).trim()
+        };
+    }
+
+    function init() {
+        var resizeEvent = new Event("paneresize");
+        Split(['#editor', '#graph'], {
+            sizes: [25, 75],
+            onDragEnd: function () {
+                const svgOutput = document.getElementById("svg_output");
+                if (svgOutput != null) {
+                    svgOutput.dispatchEvent(resizeEvent);
+                }
+            }
+        });
+
+        var editor = ace.edit("editor");
+        editor.getSession().setMode("ace/mode/dot");
+
+        var worker;
+        var domParser = new DOMParser();
+        var svgResult;
+
+        function updateGraph() {
+            if (worker) {
+                worker.terminate();
+            }
+
+            document.querySelector("#output").classList.add("working");
+            document.querySelector("#output").classList.remove("error");
+
+            worker = new Worker("worker.js");
+
+            worker.onmessage = e => {
+                document.querySelector("#output").classList.remove("working");
+                document.querySelector("#output").classList.remove("error");
+                svgResult = e.data;
+                updateOutput();
+            }
+
+            worker.onerror = e => {
+                document.querySelector("#output").classList.remove("working");
+                document.querySelector("#output").classList.add("error");
+                var message = e.message === undefined ? "An error occurred while processing the graph input." : e.message;
+                var error = document.querySelector("#error");
+                while (error.firstChild) {
+                    error.removeChild(error.firstChild);
+                }
+                document.querySelector("#error").appendChild(document.createTextNode(message));
+                e.preventDefault();
+            }
+
+            const parsed = parseInput(editor.getSession().getDocument().getValue());
+            const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
+            worker.postMessage({src: dot});
+        }
+
+        function updateOutput() {
+            let graph = document.querySelector("#output");
+
+            let svg = graph.querySelector("svg");
+            if (svg) {
+                graph.removeChild(svg);
+            }
+
+            if (!svgResult) {
+                return;
+            }
+
+            svg = domParser.parseFromString(svgResult, "image/svg+xml").documentElement;
+            svg.id = "svg_output";
+            graph.appendChild(svg);
+
+            panZoom = svgPanZoom(svg, {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.1
+            });
+
+            svg.addEventListener('paneresize', () => panZoom.resize(), false);
+            window.addEventListener('resize', () => panZoom.resize());
+        }
+
+        editor.on("change", updateGraph);
+
+        updateGraph();
+    }
+
+    var Module = {
+        onRuntimeInitialized: init
+    };
+</script>
+<script async type="text/javascript" src="soro-web.wasm.js?2"></script>
+</body>
+</html>

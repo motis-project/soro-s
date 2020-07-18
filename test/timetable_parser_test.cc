@@ -2,9 +2,6 @@
 
 #include <iostream>
 
-#include "utl/pairwise.h"
-#include "utl/verify.h"
-
 #include "soro/ascii_network_parser.h"
 #include "soro/graphviz_output.h"
 #include "soro/propagator.h"

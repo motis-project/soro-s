@@ -62,7 +62,7 @@ struct unixtime {
   time_t t_{0U};
 };
 
-std::string format_unix_time(time_t, char const* format = "%m/%d %H:%M:%OS");
+std::string format_unix_time(time_t, char const* format = "%H:%M:%OS");
 
 }  // namespace soro
 
