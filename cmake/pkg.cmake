@@ -1,6 +1,8 @@
 set(pkg-bin "${CMAKE_BINARY_DIR}/dl/pkg")
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set(pkg-url "pkg")
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+  set(pkg-url "pkg")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set(pkg-url "pkg.exe")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
