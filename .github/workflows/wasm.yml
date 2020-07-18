@@ -46,7 +46,9 @@ jobs:
 
       # ==== DISTRIBUTION ====
       - name: Create Distribution
-        run: tar cjf soro-web.tar.bz2 build/web
+        run: |
+          cd build
+          tar cjf soro-web.tar.bz2 web
 
       - name: Upload Distribution
         uses: actions/upload-artifact@v1
