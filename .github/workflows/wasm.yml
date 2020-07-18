@@ -29,8 +29,8 @@ jobs:
       - name: CMake
         run: |
           cmake \
-            -GNinja -S . -B build
-            -DNO_BUILDCACHE=On
+            -GNinja -S . -B build \
+            -DNO_BUILDCACHE=On \
             -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 
       - name: Build
