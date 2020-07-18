@@ -1,0 +1,37 @@
+name: WASM Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+
+      - name: CMake
+        run: |
+          cmake \
+            -GNinja -S . -B build
+            -DNO_BUILDCACHE=On
+            -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+
+      - name: Build
+        run: cmake --build build --target soro-test
+
+      - name: Run Tests
+        run: node ./build/soro-test.js
