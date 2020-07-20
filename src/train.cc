@@ -16,15 +16,32 @@
 namespace soro {
 
 std::ostream& operator<<(std::ostream& out, route const& r) {
-  return out << "{ train=" << r.train_->name_ << ", "
-             << (r.from_ == nullptr ? "" : r.from_->name_) << "@"
-             << r.from_time_ << " -> " << r.to_->name_ << "@" << r.to_time_
-             << " }";
+  out << "{ " << r.train_->name_ << ":"
+      << (r.from_ == nullptr ? "START" : r.from_->name_) << "->" << r.to_->name_
+      << " (" << r.from_time_ << " -> " << r.to_time_ << "), IN=[";
+  for (auto const [i, in_route] : utl::enumerate(r.in_)) {
+    if (i != 0) {
+      out << ", ";
+    }
+    out << in_route->train_->name_ << ":"
+        << (in_route->from_ != nullptr ? in_route->from_->name_ : "START")
+        << "->" << in_route->to_->name_;
+  }
+  out << "], OUT=[";
+  for (auto const [i, out_route] : utl::enumerate(r.out_)) {
+    if (i != 0) {
+      out << ", ";
+    }
+    out << out_route->train_->name_ << ":"
+        << (out_route->from_ != nullptr ? out_route->from_->name_ : "START")
+        << "->" << out_route->to_->name_;
+  }
+  return out << "] }";
 }
 
 std::string route::tag() const {
   return from_ == nullptr
-             ? train_->name_ + "_START"
+             ? train_->name_ + "_START_" + to_->name_
              : train_->name_ + "_" + from_->name_ + "_" + to_->name_;
 }
 
@@ -52,21 +69,29 @@ std::vector<std::string> route::warnings() const {
   return warnings;
 }
 
-void train::build_routes(network const& net) {
-  route start;
-  start.train_ = this;
-  start.entry_dpd_ = start.exit_dpd_ =
-      decltype(start.entry_dpd_){timetable_.front().time_, speed_t{speed_}};
-  start.eotd_dpd_ = decltype(start.eotd_dpd_){timetable_.front().time_};
-  start.to_ = timetable_.front().node_;
-  auto pred = routes_.emplace_back(std::make_unique<route>(start)).get();
+void route::compute_sched_times(unixtime const no_pred_start_time) {
+  total_dist_ = std::accumulate(
+      cbegin(path_), cend(path_), 0U,
+      [](unsigned dist, edge const* e) { return dist + e->dist_; });
+  from_time_ = pred_ == nullptr ? no_pred_start_time : pred_->to_time_;
+  to_time_ = train_->arrival_time(from_time_, total_dist_);
+}
 
+void train::build_routes(network const& net) {
+  route curr_route, next_route;
+  route* pred{nullptr};
   for (auto const [source, dest] : utl::pairwise(timetable_)) {
+    auto const start = routes_.emplace_back(std::make_unique<route>()).get();
+    start->train_ = this;
+    start->entry_dpd_ = start->exit_dpd_ = dpd{source.time_, speed_t{speed_}};
+    start->eotd_dpd_ = dpd{source.time_};
+    start->to_ = source.node_;
+    start->from_time_ = start->to_time_ = source.time_;
+
     auto const edges = dijkstra(net, source.node_, dest.node_);
     utl::verify(!edges.empty(), "path for {} from {} to {} not found", name_,
                 source.node_->name_, dest.node_->name_);
     node* curr_node{source.node_};
-    route curr_route, next_route;
     curr_route.from_ = source.node_;
     for (auto const& e : edges) {
       curr_route.path_.emplace_back(e);
@@ -76,16 +101,26 @@ void train::build_routes(network const& net) {
           next_route.approach_signal_ = e->to_;
           break;
 
-        case node::type::MAIN_SIGNAL:
+        case node::type::MAIN_SIGNAL: {
           curr_route.to_ = edge_to;
           curr_route.train_ = this;
-          pred->succ_ =
+          auto const r =
               routes_.emplace_back(std::make_unique<route>(curr_route)).get();
-          pred->succ_->pred_ = pred;
-          pred = pred->succ_;
+          r->pred_ = pred;
+          r->compute_sched_times(source.time_);
+          if (pred != nullptr) {
+            pred->out_.emplace(r);
+            r->in_.emplace(pred);
+          }
+          if (start->out_.empty()) {
+            start->out_.emplace(r);
+            r->in_.emplace(start);
+          }
+          pred = r;
           curr_route = next_route;
           curr_route.from_ = edge_to;
           break;
+        }
 
         case node::type::END_OF_TRAIN_DETECTOR:
           if (!routes_.empty()) {
@@ -98,25 +133,24 @@ void train::build_routes(network const& net) {
 
         default:;
       }
-      if (edge_to == dest.node_) {
+      if (edge_to == dest.node_ && curr_route.from_ != dest.node_) {
         curr_route.to_ = dest.node_;
         curr_route.train_ = this;
-        pred->succ_ =
+        auto const r =
             routes_.emplace_back(std::make_unique<route>(curr_route)).get();
-        pred->succ_->pred_ = pred;
+        r->pred_ = pred;
+        r->compute_sched_times(source.time_);
+        if (pred != nullptr) {
+          pred->out_.emplace(r);
+          r->in_.emplace(pred);
+        }
+        if (start->out_.empty()) {
+          start->out_.emplace(r);
+          r->in_.emplace(start);
+        }
+        pred = r;
       }
       curr_node = edge_to;
-    }
-
-    auto time = source.time_;
-    for (auto& r : routes_) {
-      r->from_time_ = time;
-      auto const total_dist = std::accumulate(
-          cbegin(r->path_), cend(r->path_), 0U,
-          [](unsigned dist, edge const* e) { return dist + e->dist_; });
-      time = r->train_->arrival_time(time, total_dist);
-      r->total_dist_ = total_dist;
-      r->to_time_ = time;
     }
   }
 }
@@ -130,10 +164,9 @@ void route::compute_dists() {
       start = std::max(start, in->eotd_dpd_.first_);
     }
   }
-  entry_dpd_ = decltype(entry_dpd_){start, train_->speed_};
-  eotd_dpd_ = decltype(eotd_dpd_){train_->arrival_time(start, dist_to_eotd_)};
-  exit_dpd_ = decltype(exit_dpd_){train_->arrival_time(start, total_dist_),
-                                  train_->speed_};
+  entry_dpd_ = dpd{start, train_->speed_};
+  eotd_dpd_ = dpd{train_->arrival_time(start, dist_to_eotd_)};
+  exit_dpd_ = dpd{train_->arrival_time(start, total_dist_), train_->speed_};
 }
 
 std::ostream& operator<<(std::ostream& out, train const& t) {
@@ -144,15 +177,13 @@ std::ostream& operator<<(std::ostream& out, train const& t) {
         << date::format("%F %T",
                         date::sys_seconds{std::chrono::seconds{entry.time_}});
     if (i != t.timetable_.size() - 1) {
-      std::cout << ",";
+      out << ",";
     }
-    std::cout << "\n";
+    out << "\n";
   }
-  std::cout << "  ],\n  routes = [\n";
+  out << "  ],\n  routes = [\n";
   for (auto const& r : t.routes_) {
-    std::cout << "    " << (r->from_ == nullptr ? "" : r->from_->name_) << "@"
-              << r->from_time_ << " -> " << r->to_->name_ << "@" << r->to_time_
-              << ",\n";
+    out << "    " << *r << "\n";
   }
   return out << "  ]\n}";
 }

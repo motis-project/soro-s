@@ -57,15 +57,15 @@ prob_dist_iter(T const&, typename T::container_type::const_iterator)
     -> prob_dist_iter<T>;
 
 template <typename... Ts>
-struct dpb {};
+struct dpd {};
 
 template <typename T>
-struct dpb<T> {
+struct dpd<T> {
   using primary_t = T;
   using container_type = std::vector<probability_t>;
 
-  dpb() = default;
-  explicit dpb(T t) : first_{std::move(t)}, dpd_({probability_t{1.0}}) {}
+  dpd() = default;
+  explicit dpd(T t) : first_{std::move(t)}, dpd_({probability_t{1.0}}) {}
   auto begin() const { return prob_dist_iter{*this, std::cbegin(dpd_)}; }
   auto end() const { return prob_dist_iter{*this, std::cend(dpd_)}; }
   bool empty() const { return dpd_.empty(); }
@@ -75,13 +75,13 @@ struct dpb<T> {
 };
 
 template <typename T, typename... Ts>
-struct dpb<T, Ts...> {
+struct dpd<T, Ts...> {
   using primary_t = T;
-  using container_type = std::vector<dpb<Ts...>>;
+  using container_type = std::vector<dpd<Ts...>>;
 
-  dpb() = default;
+  dpd() = default;
 
-  explicit dpb(T head, Ts... tail) : first_{std::move(head)} {
+  explicit dpd(T head, Ts... tail) : first_{std::move(head)} {
     dpd_.emplace_back(tail...);
   }
   auto begin() const { return prob_dist_iter{*this, std::cbegin(dpd_)}; }
@@ -89,7 +89,10 @@ struct dpb<T, Ts...> {
   bool empty() const { return dpd_.empty(); }
 
   T first_{std::numeric_limits<primary_t>::max()};
-  std::vector<dpb<Ts...>> dpd_;
+  std::vector<dpd<Ts...>> dpd_;
 };
+
+template <typename... Ts>
+dpd(Ts...) -> dpd<Ts...>;
 
 }  // namespace soro

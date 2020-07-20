@@ -2,6 +2,8 @@
 
 #include <ostream>
 
+#include "utl/enumerate.h"
+
 #include "soro/network.h"
 #include "soro/train.h"
 
@@ -15,15 +17,23 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
       fontname=Monospace,
       fontsize=12,
       height=2,
-      width=2.5
+      width=2.5,
+      style=bold,
+      fillcolor=white
     ];
 )--";
   for (auto const& [name, t] : tt) {
-    out << "    {rank=same; ";
-    for (auto const& r : t->routes_) {
-      out << r->tag() << " ";
+    out << "    subgraph cluster_" << t->name_ << " {\n";
+    out << "        style=filled;";
+    out << "        color=lightgrey;";
+    out << "        label=\"Train " << t->name_ << "\"\n";
+    out << "        rank=\"same\"\n";
+    for (auto const [i, r] : utl::enumerate(t->routes_)) {
+      if (r->from_ != nullptr) {
+        out << "        " << r->tag() << "\n";
+      }
     }
-    out << ";}\n";
+    out << "    }\n";
   }
   for (auto const& [name, t] : tt) {
     for (auto const& r : t->routes_) {
@@ -32,7 +42,9 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
           << r->train_->name_ << ": "
           << (r->from_ == nullptr ? "START" : r->from_->name_) << " -> "
           << r->to_->name_ << "\\n"
-          << "sched=" << r->from_time_ << "\\n";
+          << "sched@" << (r->from_ == nullptr ? "START" : r->from_->name_)
+          << " = " << r->from_time_ << "\\n"
+          << "sched@" << r->to_->name_ << " = " << r->to_time_ << "\\n";
       for (auto const& [t, speed_dpb] : r->entry_dpd_) {
         for (auto const [speed, prob] : speed_dpb) {
           out << t << " @ " << speed << "km/h"
