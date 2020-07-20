@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 project(soro)
 
 option(RAPID_LINT "Run clang-tidy with the compiler." OFF)
