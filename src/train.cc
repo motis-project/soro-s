@@ -73,12 +73,9 @@ void route::compute_sched_times() {
   total_dist_ = std::accumulate(
       cbegin(path_), cend(path_), 0U,
       [](unsigned dist, edge const* e) { return dist + e->dist_; });
-
   auto const latest_in = std::max_element(
       cbegin(in_), cend(in_),
       [](route const* a, route const* b) { return a->to_time_ < b->to_time_; });
-  std::cout << tag() << ": " << in_.size() << ": found=" << std::boolalpha
-            << (latest_in != cend(in_)) << "\n";
   utl::verify(latest_in != cend(in_),
               "{}: cannot compute schedule time without predecessor", tag());
   from_time_ = (*latest_in)->to_time_;
