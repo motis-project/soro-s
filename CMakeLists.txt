@@ -58,6 +58,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
   configure_file(web/fabric.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/fabric.min.js COPYONLY)
   configure_file(web/split.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/split.min.js COPYONLY)
   configure_file(web/svg-pan-zoom.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/svg-pan-zoom.min.js COPYONLY)
+  configure_file(web/plotly.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/plotly.min.js COPYONLY)
 endif()
 
 file(GLOB_RECURSE soro-test-files test/*.cc)
