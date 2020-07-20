@@ -7,9 +7,8 @@ namespace soro {
 train_order_map compute_route_train_order(timetable const& tt) {
   train_order_map route_train_order;
 
-  // Make map: (route from, route to) -> [train, ...]
+  // Build map: (route from, route to) -> [train, ...]
   for (auto& [name, t] : tt) {
-    route* pred{nullptr};
     for (auto const& r : t->routes_) {
       if (r->from_ != nullptr) {
         auto& train_order = route_train_order[{r->from_, r->to_}];
@@ -20,7 +19,6 @@ train_order_map compute_route_train_order(timetable const& tt) {
                              }),
             r.get());
       }
-      pred = r.get();
     }
   }
 
