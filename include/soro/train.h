@@ -24,7 +24,7 @@ struct route {
   std::string tag() const;
   bool finished() const;
   void compute_dists();
-  void compute_sched_times(unixtime no_pred_start_time);
+  void compute_sched_times();
   bool ready() const;
 
   friend std::ostream& operator<<(std::ostream&, route const&);

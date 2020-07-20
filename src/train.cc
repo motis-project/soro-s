@@ -69,11 +69,19 @@ std::vector<std::string> route::warnings() const {
   return warnings;
 }
 
-void route::compute_sched_times(unixtime const no_pred_start_time) {
+void route::compute_sched_times() {
   total_dist_ = std::accumulate(
       cbegin(path_), cend(path_), 0U,
       [](unsigned dist, edge const* e) { return dist + e->dist_; });
-  from_time_ = pred_ == nullptr ? no_pred_start_time : pred_->to_time_;
+
+  auto const latest_in = std::max_element(
+      cbegin(in_), cend(in_),
+      [](route const* a, route const* b) { return a->to_time_ < b->to_time_; });
+  std::cout << tag() << ": " << in_.size() << ": found=" << std::boolalpha
+            << (latest_in != cend(in_)) << "\n";
+  utl::verify(latest_in != cend(in_),
+              "{}: cannot compute schedule time without predecessor", tag());
+  from_time_ = (*latest_in)->to_time_;
   to_time_ = train_->arrival_time(from_time_, total_dist_);
 }
 
@@ -95,19 +103,18 @@ void train::build_routes(network const& net) {
     curr_route.from_ = source.node_;
     for (auto const& e : edges) {
       curr_route.path_.emplace_back(e);
-      auto const edge_to = e->opposite(curr_node);
-      switch (edge_to->type_) {
+      auto const edge_target = e->opposite(curr_node);
+      switch (edge_target->type_) {
         case node::type::APPROACH_SIGNAL:
           next_route.approach_signal_ = e->to_;
           break;
 
         case node::type::MAIN_SIGNAL: {
-          curr_route.to_ = edge_to;
+          curr_route.to_ = edge_target;
           curr_route.train_ = this;
           auto const r =
               routes_.emplace_back(std::make_unique<route>(curr_route)).get();
           r->pred_ = pred;
-          r->compute_sched_times(source.time_);
           if (pred != nullptr) {
             pred->out_.emplace(r);
             r->in_.emplace(pred);
@@ -116,9 +123,10 @@ void train::build_routes(network const& net) {
             start->out_.emplace(r);
             r->in_.emplace(start);
           }
+          r->compute_sched_times();
           pred = r;
           curr_route = next_route;
-          curr_route.from_ = edge_to;
+          curr_route.from_ = edge_target;
           break;
         }
 
@@ -133,13 +141,12 @@ void train::build_routes(network const& net) {
 
         default:;
       }
-      if (edge_to == dest.node_ && curr_route.from_ != dest.node_) {
+      if (edge_target == dest.node_ && curr_route.from_ != dest.node_) {
         curr_route.to_ = dest.node_;
         curr_route.train_ = this;
         auto const r =
             routes_.emplace_back(std::make_unique<route>(curr_route)).get();
         r->pred_ = pred;
-        r->compute_sched_times(source.time_);
         if (pred != nullptr) {
           pred->out_.emplace(r);
           r->in_.emplace(pred);
@@ -148,9 +155,10 @@ void train::build_routes(network const& net) {
           start->out_.emplace(r);
           r->in_.emplace(start);
         }
+        r->compute_sched_times();
         pred = r;
       }
-      curr_node = edge_to;
+      curr_node = edge_target;
     }
   }
 }

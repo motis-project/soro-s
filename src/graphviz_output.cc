@@ -71,8 +71,10 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
         if (r->from_ == nullptr) {
           out << " [color=darkviolet, style=\"bold\"]";
         } else if (r->train_ != o->train_) {
-          out << " [color=red, style=\"bold\", label=\"" << r->eotd_dpd_.first_
+          out << R"( [color=red, style="bold", label=")" << r->eotd_dpd_.first_
               << "\"]";
+        } else {
+          out << " [label=\"" << r->exit_dpd_.first_ << "\"]";
         }
         out << ";\n";
       }
