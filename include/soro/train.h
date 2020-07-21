@@ -24,6 +24,7 @@ struct route {
   std::string tag() const;
   bool finished() const;
   void compute_dists();
+  void compute_sched_times();
   bool ready() const;
 
   friend std::ostream& operator<<(std::ostream&, route const&);
@@ -31,15 +32,15 @@ struct route {
   node* approach_signal_{nullptr};  // contained in previous route
   node* end_of_train_detector_{nullptr};  // contained in next route
   node *from_{nullptr}, *to_{nullptr};
-  route *pred_{nullptr}, *succ_{nullptr};
+  route* pred_{nullptr};
   unixtime from_time_{0}, to_time_{0};
   std::vector<edge*> path_;
   train* train_{nullptr};
   cista::raw::hash_set<route*> in_, out_;
   unsigned dist_to_eotd_{0U}, total_dist_{0U};
-  dpb<unixtime, speed_t> entry_dpd_;
-  dpb<unixtime, speed_t> exit_dpd_;
-  dpb<unixtime> eotd_dpd_;
+  dpd<unixtime, speed_t> entry_dpd_;
+  dpd<unixtime, speed_t> exit_dpd_;
+  dpd<unixtime> eotd_dpd_;
 };
 
 struct train {

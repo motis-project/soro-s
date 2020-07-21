@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <title>SORO-S</title>
     <style>
+        #plot {
+            height: 30%;
+            min-height: 400px;
+            border-top: 10px solid #eee;
+        }
+
         #app {
             display: flex;
             display: -webkit-flex;
@@ -36,7 +42,6 @@
             position: relative;
             overflow: auto;
         }
-
 
         #editor {
             border-right: 1px solid #ccc;
@@ -109,8 +114,10 @@ Z,200
 
 TRAIN,POSITION,TIME
 X,a,2020-01-01 13:00:00
+X,B,2020-01-01 13:08:00
 X,b,2020-01-01 14:09:00
 Y,a,2020-01-01 13:32:00
+Y,B,2020-01-01 13:46:00
 Y,b,2020-01-01 14:07:00
 Z,a,2020-01-01 13:49:00
 Z,b,2020-01-01 14:07:00</pre>
@@ -118,6 +125,8 @@ Z,b,2020-01-01 14:07:00</pre>
         <div id="graph" class="split">
             <div id="output">
                 <div id="error"></div>
+            </div>
+            <div id="plot">
             </div>
         </div>
     </div>
@@ -128,6 +137,7 @@ Z,b,2020-01-01 14:07:00</pre>
 <script src="fabric.min.js"></script>
 <script src="split.min.js"></script>
 <script src="svg-pan-zoom.min.js"></script>
+<script src="plotly.min.js"></script>
 <script type="text/javascript">
     function parseInput(str) {
         const netToken = "NET";
@@ -209,6 +219,54 @@ Z,b,2020-01-01 14:07:00</pre>
             worker.postMessage({src: dot});
         }
 
+        function showStats() {
+            var y = [0, 110, 111, 112, 112, 113];
+            var x = [new Date(120 * 1000), new Date(0), new Date(6 * 1000), new Date(6 * 1000), new Date(18 * 1000)];
+            var z = [0.2, 0.4, 0.2, 0.1, 0.1];
+
+            var xA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    xA.push(x[i]);
+                }
+            }
+
+            var yA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    yA.push(y[i]);
+                }
+            }
+
+            var trace1 = {
+                x: xA,
+                y: yA,
+                histnorm: 'probability',
+                type: 'histogram2d',
+                colorscale: 'Jet',
+                ybins: {
+                    size: 1
+                },
+                xbins: {
+                    size: 6000
+                }
+            };
+            var data = [trace1];
+            var layout = {
+                height: 400,
+                width: 400,
+                xaxis: {
+                    tickformat: "%H:%M:%S",
+                    tickmode: "array",
+                    nticks: new Date(6000)
+                },
+                yaxis: {
+                    ticksuffix: " km/h"
+                }
+            };
+            Plotly.newPlot('plot', data, layout);
+        }
+
         function updateOutput() {
             let graph = document.querySelector("#output");
 
@@ -235,6 +293,8 @@ Z,b,2020-01-01 14:07:00</pre>
 
             svg.addEventListener('paneresize', () => panZoom.resize(), false);
             window.addEventListener('resize', () => panZoom.resize());
+
+            showStats();
         }
 
         editor.on("change", updateGraph);

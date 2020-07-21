@@ -9,8 +9,10 @@ std::ostream& operator<<(std::ostream& out, unixtime const& t) {
 }
 
 std::string format_unix_time(time_t const t, char const* format) {
-  return date::format(
-      format, std::chrono::system_clock::time_point{std::chrono::seconds{t}});
+  return t == std::numeric_limits<time_t>::max()
+             ? "MAX"
+             : date::format(format, std::chrono::system_clock::time_point{
+                                        std::chrono::seconds{t}});
 }
 
 }  // namespace soro
