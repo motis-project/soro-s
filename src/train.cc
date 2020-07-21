@@ -88,8 +88,9 @@ void train::build_routes(network const& net) {
   for (auto const [source, dest] : utl::pairwise(timetable_)) {
     auto const start = routes_.emplace_back(std::make_unique<route>()).get();
     start->train_ = this;
-    start->entry_dpd_ = start->exit_dpd_ = dpd{source.time_, speed_t{speed_}};
-    start->eotd_dpd_ = dpd{source.time_};
+    start->entry_dpd_ = start->exit_dpd_ =
+        decltype(start->entry_dpd_){source.time_, speed_t{speed_}};
+    start->eotd_dpd_ = decltype(start->eotd_dpd_){source.time_};
     start->to_ = source.node_;
     start->from_time_ = start->to_time_ = source.time_;
 
@@ -169,9 +170,10 @@ void route::compute_dists() {
       start = std::max(start, in->eotd_dpd_.first_);
     }
   }
-  entry_dpd_ = dpd{start, train_->speed_};
-  eotd_dpd_ = dpd{train_->arrival_time(start, dist_to_eotd_)};
-  exit_dpd_ = dpd{train_->arrival_time(start, total_dist_), train_->speed_};
+  entry_dpd_ = decltype(entry_dpd_){start, train_->speed_};
+  eotd_dpd_ = decltype(eotd_dpd_){train_->arrival_time(start, dist_to_eotd_)};
+  exit_dpd_ = decltype(exit_dpd_){train_->arrival_time(start, total_dist_),
+                                  train_->speed_};
 }
 
 std::ostream& operator<<(std::ostream& out, train const& t) {

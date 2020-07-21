@@ -19,6 +19,21 @@ struct edge;
 struct network;
 struct train;
 
+struct Granularity {
+  template <size_t Index>
+  constexpr size_t get();
+
+  template <>
+  constexpr size_t get<0>() {
+    return 10;
+  }
+
+  template <>
+  constexpr size_t get<1>() {
+    return 20;
+  }
+};
+
 struct route {
   std::vector<std::string> warnings() const;
   std::string tag() const;
@@ -38,9 +53,9 @@ struct route {
   train* train_{nullptr};
   cista::raw::hash_set<route*> in_, out_;
   unsigned dist_to_eotd_{0U}, total_dist_{0U};
-  dpd<unixtime, speed_t> entry_dpd_;
-  dpd<unixtime, speed_t> exit_dpd_;
-  dpd<unixtime> eotd_dpd_;
+  dpd<Granularity, unixtime, speed_t> entry_dpd_;
+  dpd<Granularity, unixtime, speed_t> exit_dpd_;
+  dpd<Granularity, unixtime> eotd_dpd_;
 };
 
 struct train {

@@ -1,11 +1,7 @@
 #pragma once
 
-#include <iostream>
+#include <limits>
 #include <vector>
-
-#include "cista/containers/hash_map.h"
-
-#include "soro/unixtime.h"
 
 namespace soro {
 
@@ -56,11 +52,11 @@ template <typename T>
 prob_dist_iter(T const&, typename T::container_type::const_iterator)
     -> prob_dist_iter<T>;
 
-template <typename... Ts>
+template <typename Granularity, typename... Ts>
 struct dpd {};
 
-template <typename T>
-struct dpd<T> {
+template <typename Granularity, typename T>
+struct dpd<Granularity, T> {
   using primary_t = T;
   using container_type = std::vector<probability_t>;
 
@@ -70,14 +66,21 @@ struct dpd<T> {
   auto end() const { return prob_dist_iter{*this, std::cend(dpd_)}; }
   bool empty() const { return dpd_.empty(); }
 
+  probability_t& operator[](primary_t const i) { return dpd_[to_idx(i)]; }
+
+  static constexpr primary_t to_idx(primary_t const i) {
+    constexpr auto const granularity = Granularity{}.template get<0>();
+    return i / granularity;
+  }
+
   T first_{std::numeric_limits<T>::max()};
   std::vector<probability_t> dpd_;
 };
 
-template <typename T, typename... Ts>
-struct dpd<T, Ts...> {
+template <typename Granularity, typename T, typename... Ts>
+struct dpd<Granularity, T, Ts...> {
   using primary_t = T;
-  using container_type = std::vector<dpd<Ts...>>;
+  using container_type = std::vector<dpd<Granularity, Ts...>>;
 
   dpd() = default;
 
@@ -88,11 +91,17 @@ struct dpd<T, Ts...> {
   auto end() const { return prob_dist_iter{*this, std::cend(dpd_)}; }
   bool empty() const { return dpd_.empty(); }
 
-  T first_{std::numeric_limits<primary_t>::max()};
-  std::vector<dpd<Ts...>> dpd_;
-};
+  dpd<Granularity, Ts...>& operator[](primary_t const i) {
+    return dpd_[to_idx(i)];
+  }
 
-template <typename... Ts>
-dpd(Ts...) -> dpd<Ts...>;
+  static constexpr primary_t to_idx(primary_t const i) {
+    constexpr auto const granularity = Granularity{}.template get<0>();
+    return i / granularity;
+  }
+
+  T first_{std::numeric_limits<primary_t>::max()};
+  std::vector<dpd<Granularity, Ts...>> dpd_;
+};
 
 }  // namespace soro
