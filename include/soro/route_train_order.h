@@ -7,10 +7,8 @@
 
 namespace soro {
 
-using route_id_t = cista::raw::pair<node*, node*>;
+using train_order_map = cista::raw::hash_map<route::id_t, std::vector<route*>>;
 
-using train_order_map = cista::raw::hash_map<route_id_t, std::vector<route*>>;
-
-train_order_map compute_route_train_order(timetable const&);
+void compute_route_train_order(timetable const&);
 
 }  // namespace soro

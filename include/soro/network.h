@@ -38,8 +38,8 @@ struct station {
 
 struct edge {
   void add_node(node*);
-
   node* opposite(node*) const;
+
   unsigned id_{0U};
   node *from_{nullptr}, *to_{nullptr};
   distance_in_m dist_{0U};

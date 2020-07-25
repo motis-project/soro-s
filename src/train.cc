@@ -45,6 +45,8 @@ std::string route::tag() const {
              : train_->name_ + "_" + from_->name_ + "_" + to_->name_;
 }
 
+route::id_t route::id() const { return {from_, to_}; }
+
 bool route::finished() const { return !entry_dpd_.empty(); }
 
 bool route::ready() const {
@@ -113,6 +115,7 @@ void train::build_routes(network const& net) {
           auto const r =
               routes_.emplace_back(std::make_unique<route>(curr_route)).get();
           r->pred_ = pred;
+          r->pred_->succ_ = r;
           if (pred != nullptr) {
             pred->out_.emplace(r);
             r->in_.emplace(pred);
@@ -145,6 +148,7 @@ void train::build_routes(network const& net) {
         auto const r =
             routes_.emplace_back(std::make_unique<route>(curr_route)).get();
         r->pred_ = pred;
+        r->pred_->succ_ = r;
         if (pred != nullptr) {
           pred->out_.emplace(r);
           r->in_.emplace(pred);

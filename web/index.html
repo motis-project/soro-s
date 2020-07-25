@@ -102,25 +102,20 @@
 </head>
 <body>
 
+<div style="z-index: 100; position: fixed; bottom: 1em; left: 5em;">
+    <select id="example-select" onchange="setExample()">
+        <option value="crossover">Crossover</option>
+        <option value="following">Following</option>
+    </select>
+</div>
+
+<div style="z-index: 100; position: fixed; bottom: 1em; left: 12em;">
+    <button onclick="updateGraph()">Run</button>
+</div>
+
 <div id="app">
     <div id="panes" class="split split-horizontal">
-        <div id="editor" class="split"><pre>NET
-a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b
-
-TRAIN,SPEED
-X,50
-Y,100
-Z,200
-
-TRAIN,POSITION,TIME
-X,a,2020-01-01 13:00:00
-X,B,2020-01-01 13:08:00
-X,b,2020-01-01 14:09:00
-Y,a,2020-01-01 13:32:00
-Y,B,2020-01-01 13:46:00
-Y,b,2020-01-01 14:07:00
-Z,a,2020-01-01 13:49:00
-Z,b,2020-01-01 14:07:00</pre>
+        <div id="editor" class="split">
         </div>
         <div id="graph" class="split">
             <div id="output">
@@ -139,6 +134,9 @@ Z,b,2020-01-01 14:07:00</pre>
 <script src="svg-pan-zoom.min.js"></script>
 <script src="plotly.min.js"></script>
 <script type="text/javascript">
+    var editor;
+    var updateGraph;
+
     function parseInput(str) {
         const netToken = "NET";
         let netStart = str.indexOf(netToken)
@@ -178,14 +176,13 @@ Z,b,2020-01-01 14:07:00</pre>
             }
         });
 
-        var editor = ace.edit("editor");
-        editor.getSession().setMode("ace/mode/dot");
+        editor = ace.edit("editor");
 
         var worker;
         var domParser = new DOMParser();
         var svgResult;
 
-        function updateGraph() {
+        updateGraph = () => {
             if (worker) {
                 worker.terminate();
             }
@@ -214,7 +211,7 @@ Z,b,2020-01-01 14:07:00</pre>
                 e.preventDefault();
             }
 
-            const parsed = parseInput(editor.getSession().getDocument().getValue());
+            const parsed = parseInput(editor.getValue());
             const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
             worker.postMessage({src: dot});
         }
@@ -297,14 +294,66 @@ Z,b,2020-01-01 14:07:00</pre>
             showStats();
         }
 
-        editor.on("change", updateGraph);
-
+        setExample();
         updateGraph();
     }
 
     var Module = {
         onRuntimeInitialized: init
     };
+
+    function setExample() {
+        const following = "NET\n" +
+            "a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,50\n" +
+            "Y,100\n" +
+            "Z,200\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,B,2020-01-01 13:08:00\n" +
+            "X,b,2020-01-01 14:09:00\n" +
+            "Y,a,2020-01-01 13:32:00\n" +
+            "Y,B,2020-01-01 13:46:00\n" +
+            "Y,b,2020-01-01 14:07:00\n" +
+            "Z,a,2020-01-01 13:49:00\n" +
+            "Z,b,2020-01-01 14:07:00\n";
+
+        const crossover = "NET\n" +
+            "=a=)==U>=]=========)==A>=]==*   *=)===D>=]===)==Y>==]=d=\n" +
+            "                             \\ /\n" +
+            "                              X\n" +
+            "                             / \\\n" +
+            "=c=)==V>=]=========)==C>=]==*   *=)===B>=]===)==Z>==]=b=\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,b,2020-01-01 13:08:00\n" +
+            "Y,c,2020-01-01 13:01:00\n" +
+            "Y,d,2020-01-01 13:08:00\n";
+
+        if (!editor) {
+            return;
+        }
+        var example = document.getElementById("example-select");
+        switch (example.selectedIndex) {
+            default:
+            case 0:
+                editor.setValue(crossover);
+                break;
+
+            case 1:
+                editor.setValue(following);
+                break;
+
+        }
+    }
 </script>
 <script async type="text/javascript" src="soro-web.wasm.js"></script>
 </body>

@@ -7,6 +7,7 @@
 #include "cista/containers/hash_map.h"
 #include "cista/containers/hash_set.h"
 #include "cista/containers/unique_ptr.h"
+#include "cista/reflection/comparable.h"
 
 #include "soro/dpd.h"
 #include "soro/speed_t.h"
@@ -35,19 +36,25 @@ struct Granularity {
 };
 
 struct route {
+  struct id_t {
+    CISTA_COMPARABLE()
+    node *from_, *to_;
+  };
+
   std::vector<std::string> warnings() const;
   std::string tag() const;
   bool finished() const;
   void compute_dists();
   void compute_sched_times();
   bool ready() const;
+  id_t id() const;
 
   friend std::ostream& operator<<(std::ostream&, route const&);
 
   node* approach_signal_{nullptr};  // contained in previous route
   node* end_of_train_detector_{nullptr};  // contained in next route
   node *from_{nullptr}, *to_{nullptr};
-  route* pred_{nullptr};
+  route *pred_{nullptr}, *succ_{nullptr};
   unixtime from_time_{0}, to_time_{0};
   std::vector<edge*> path_;
   train* train_{nullptr};
