@@ -106,6 +106,7 @@
     <select id="example-select" onchange="setExample()">
         <option value="crossover">Crossover</option>
         <option value="following">Following</option>
+        <option value="join">Join</option>
     </select>
 </div>
 
@@ -338,6 +339,23 @@
             "Y,c,2020-01-01 13:01:00\n" +
             "Y,d,2020-01-01 13:08:00\n";
 
+        const join = "NET\n" +
+            "a==)=F>==*\n" +
+            "          \\\n" +
+            "           *==)==S>=]======)=T>=]==c\n" +
+            "          /\n" +
+            "b==)=G>==*\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,c,2020-01-01 13:08:00\n" +
+            "Y,b,2020-01-01 13:01:00\n" +
+            "Y,c,2020-01-01 13:08:00\n";
+
         if (!editor) {
             return;
         }
@@ -352,6 +370,9 @@
                 editor.setValue(following);
                 break;
 
+            case 2:
+                editor.setValue(join);
+                break;
         }
     }
 </script>
