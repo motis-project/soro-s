@@ -67,3 +67,32 @@ Y,d,2020-01-01 13:08:00
   }
   graphiz_output(std::cout, tt);
 }
+
+TEST_CASE("timetable_parser_3") {
+  auto const net = parse_network(R"(
+           *=[=<C=(====*
+          /             \
+a=)=A>=]=*               *=[=<D=(=b
+          \             /
+           *===)=B>=]==*
+)");
+  auto const tt = parse_timetable(net, R"(TRAIN,SPEED
+X,100
+Y,100
+)",
+                                  R"(TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,B,2020-01-01 13:01:00
+X,b,2020-01-01 13:02:00
+Y,b,2020-01-01 13:01:00
+Y,C,2020-01-01 13:02:00
+Y,a,2020-01-01 13:03:00
+)");
+
+  compute_route_train_order(tt);
+  propagate(tt);
+  for (auto const& [train_name, train] : tt) {
+    std::cout << *train << "\n";
+  }
+  graphiz_output(std::cout, tt);
+}

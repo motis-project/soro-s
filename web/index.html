@@ -107,6 +107,7 @@
         <option value="crossover">Crossover</option>
         <option value="following">Following</option>
         <option value="join">Join</option>
+        <option value="cross">Cross</option>
     </select>
 </div>
 
@@ -356,6 +357,25 @@
             "Y,b,2020-01-01 13:01:00\n" +
             "Y,c,2020-01-01 13:08:00\n";
 
+        const singleTrackCrossing = "NET\n" +
+            "           *=[=<C=(====*\n" +
+            "          /             \\\n" +
+            "a=)=A>=]=*               *=[=<D=(=b\n" +
+            "          \\             /\n" +
+            "           *===)=B>=]==*\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,B,2020-01-01 13:01:00\n" +
+            "X,b,2020-01-01 13:02:00\n" +
+            "Y,b,2020-01-01 13:01:00\n" +
+            "Y,C,2020-01-01 13:02:00\n" +
+            "Y,a,2020-01-01 13:03:00\n";
+
         if (!editor) {
             return;
         }
@@ -372,6 +392,10 @@
 
             case 2:
                 editor.setValue(join);
+                break;
+
+            case 3:
+                editor.setValue(singleTrackCrossing);
                 break;
         }
     }

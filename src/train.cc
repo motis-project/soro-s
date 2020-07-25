@@ -115,7 +115,9 @@ void train::build_routes(network const& net) {
           auto const r =
               routes_.emplace_back(std::make_unique<route>(curr_route)).get();
           r->pred_ = pred;
-          r->pred_->succ_ = r;
+          if (pred != nullptr) {
+            r->pred_->succ_ = r;
+          }
           if (pred != nullptr) {
             pred->out_.emplace(r);
             r->in_.emplace(pred);
@@ -148,7 +150,9 @@ void train::build_routes(network const& net) {
         auto const r =
             routes_.emplace_back(std::make_unique<route>(curr_route)).get();
         r->pred_ = pred;
-        r->pred_->succ_ = r;
+        if (pred != nullptr) {
+          r->pred_->succ_ = r;
+        }
         if (pred != nullptr) {
           pred->out_.emplace(r);
           r->in_.emplace(pred);

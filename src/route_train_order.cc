@@ -6,7 +6,6 @@
 #include "cista/containers/hash_set.h"
 #include "cista/containers/variant.h"
 
-#include "utl/emplace_sorted.h"
 #include "utl/enumerate.h"
 #include "utl/pairwise.h"
 
@@ -15,6 +14,18 @@
 namespace cr = cista::raw;
 
 namespace soro {
+
+template <typename Vec, typename BinaryPredicate, typename... Args>
+void emplace_unique_sorted(Vec& v, BinaryPredicate&& cmp, Args&&... args) {
+  using std::begin;
+  using std::end;
+  typename Vec::value_type val{std::forward<Args>(args)...};
+  auto const it = std::lower_bound(begin(v), end(v), val, cmp);
+  if (it != end(v) && val == *it) {
+    return;
+  }
+  v.emplace(it, std::move(val));
+}
 
 bool connected_transitively(route const* source, route const* target) {
   cr::hash_set<route const*> q{source}, done;
@@ -44,8 +55,8 @@ void compute_route_train_order(timetable const& tt) {
     for (auto const& r : t->routes_) {
       for (auto const [i, e] : utl::enumerate(r->path_)) {
         if (i != 0) {
-          utl::emplace_sorted(route_nodes[e->from_], cmp, r.get());
-          utl::emplace_sorted(route_nodes[e->to_], cmp, r.get());
+          emplace_unique_sorted(route_nodes[e->from_], cmp, r.get());
+          emplace_unique_sorted(route_nodes[e->to_], cmp, r.get());
         }
       }
     }
