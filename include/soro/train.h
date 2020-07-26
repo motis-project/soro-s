@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ctime>
+#include <array>
 #include <iosfwd>
 #include <vector>
 
@@ -22,16 +23,9 @@ struct train;
 
 struct Granularity {
   template <size_t Index>
-  constexpr size_t get();
-
-  template <>
-  constexpr size_t get<0>() {
-    return 10;
-  }
-
-  template <>
-  constexpr size_t get<1>() {
-    return 20;
+  constexpr size_t get() {
+    constexpr auto const s = std::array<size_t, 2>{size_t{6}, size_t{1}};
+    return s[Index];
   }
 };
 
