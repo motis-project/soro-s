@@ -105,8 +105,9 @@
 <div style="z-index: 100; position: fixed; bottom: 1em; left: 5em;">
     <select id="example-select" onchange="setExample()">
         <option value="crossover">Crossover</option>
+        <option selected value="crossover4">Crossover 4</option>
         <option value="following">Following</option>
-        <option selected value="join">Join</option>
+        <option value="join">Join</option>
         <option value="cross">Cross</option>
         <option value="two1">Two Stations 1</option>
         <option value="two2">Two Stations 2</option>
@@ -414,8 +415,8 @@
 
         const singleTrackCrossing = "NET\n" +
             "                       *=[=<CC=(=======[=<C===(==*\n" +
-            "                      /                           \\\n" +
-            "a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==K>=]===b\n" +
+            "                      /                            \\n" +
+            "a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b\n" +
             "                      \\                           /\n" +
             "                       *===)==B>=]======)=BB>=]==*\n" +
             "\n" +
@@ -430,6 +431,34 @@
             "Y,b,2020-01-01 13:01:00\n" +
             "Y,CC,2020-01-01 13:02:00\n" +
             "Y,a,2020-01-01 13:03:00\n";
+
+        const crossover4 = String.raw`NET
+                       *=[=<CC=(=======[=<C===(==*
+                      /                           \
+a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b
+                      \                           /
+                       *===)==B>=]======)=BB>=]==*
+
+TRAIN,SPEED
+ab1,100
+ab2,100
+ba1,50
+ba2,50
+
+TRAIN,POSITION,TIME
+ab1,a,2020-01-01 13:00:00
+ab1,BB,2020-01-01 13:00:00
+ab1,b,2020-01-01 13:45:00
+ab2,a,2020-01-01 13:15:00
+ab2,BB,2020-01-01 13:15:00
+ab2,b,2020-01-01 14:00:00
+ba1,b,2020-01-01 13:00:00
+ba1,CC,2020-01-01 13:00:00
+ba1,a,2020-01-01 14:30:00
+ba2,b,2020-01-01 14:00:00
+ba2,CC,2020-01-01 14:00:00
+ba2,a,2020-01-01 15:30:00
+`;
 
         const twoStationsCrossing1 = String.raw`NET
                       *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
@@ -477,22 +506,26 @@ Y,a,2020-01-01 13:03:00
                 break;
 
             case 1:
-                editor.setValue(following);
+                editor.setValue(crossover4);
                 break;
 
             case 2:
-                editor.setValue(join);
+                editor.setValue(following);
                 break;
 
             case 3:
-                editor.setValue(singleTrackCrossing);
+                editor.setValue(join);
                 break;
 
             case 4:
-                editor.setValue(twoStationsCrossing1);
+                editor.setValue(singleTrackCrossing);
                 break;
 
             case 5:
+                editor.setValue(twoStationsCrossing1);
+                break;
+
+            case 6:
                 editor.setValue(twoStationsCrossing2);
                 break;
         }

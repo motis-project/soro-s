@@ -99,7 +99,6 @@ void train::build_routes(network const& net) {
     auto const edges = dijkstra(net, source.node_, dest.node_);
     utl::verify(!edges.empty(), "path for {} from {} to {} not found", name_,
                 source.node_->name_, dest.node_->name_);
-    net.print(edges);
 
     node* curr_node{source.node_};
     curr_route.from_ = source.node_;
