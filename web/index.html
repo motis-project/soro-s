@@ -106,8 +106,10 @@
     <select id="example-select" onchange="setExample()">
         <option value="crossover">Crossover</option>
         <option value="following">Following</option>
-        <option value="join">Join</option>
-        <option selected value="cross">Cross</option>
+        <option selected value="join">Join</option>
+        <option value="cross">Cross</option>
+        <option value="two1">Two Stations 1</option>
+        <option value="two2">Two Stations 2</option>
     </select>
 </div>
 
@@ -381,6 +383,41 @@
             "Y,CC,2020-01-01 13:02:00\n" +
             "Y,a,2020-01-01 13:03:00\n";
 
+        const twoStationsCrossing1 = String.raw`NET
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \\                     /                                             \\
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+
+TRAIN,SPEED
+X,100
+Y,50
+
+TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,CC,2020-01-01 15:00:00
+X,b,2020-01-01 15:00:00
+Y,b,2020-01-01 13:00:00
+Y,PP,2020-01-01 13:58:00
+Y,a,2020-01-01 13:03:00
+`;
+
+        const twoStationsCrossing2 = String.raw`NET
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \                     /                                             \
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+
+TRAIN,SPEED
+X,100
+Y,50
+
+TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 15:00:00
+Y,b,2020-01-01 12:50:00
+Y,LL,2020-01-01 13:58:00
+Y,a,2020-01-01 13:03:00
+`;
+
         if (!editor) {
             return;
         }
@@ -401,6 +438,14 @@
 
             case 3:
                 editor.setValue(singleTrackCrossing);
+                break;
+
+            case 4:
+                editor.setValue(twoStationsCrossing1);
+                break;
+
+            case 5:
+                editor.setValue(twoStationsCrossing2);
                 break;
         }
     }

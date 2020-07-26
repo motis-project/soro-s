@@ -96,3 +96,29 @@ Y,a,2020-01-01 13:03:00
   }
   graphiz_output(std::cout, tt);
 }
+
+TEST_CASE("timetable_parser_4") {
+  auto const net = parse_network(R"(
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \                     /                                             \
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+)");
+  auto const tt = parse_timetable(net, R"(TRAIN,SPEED
+X,100
+Y,50
+)",
+                                  R"(TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 15:00:00
+Y,b,2020-01-01 12:50:00
+Y,LL,2020-01-01 13:58:00
+Y,a,2020-01-01 13:03:00
+)");
+
+  compute_route_train_order(tt);
+  propagate(tt);
+  for (auto const& [train_name, train] : tt) {
+    std::cout << *train << "\n";
+  }
+  graphiz_output(std::cout, tt);
+}
