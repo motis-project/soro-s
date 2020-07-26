@@ -44,10 +44,26 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
     }
     out << "    }\n";
   }
+
+  auto const is_delayed_by_other = [&](route const* r) {
+    auto maybe = false;
+    for (auto const& in : r->in_) {
+      maybe |= in->train_ != r->train_ &&
+               r->entry_dpd_.first_ == in->eotd_dpd_.first_;
+      if (in->train_ == r->train_ &&
+          r->entry_dpd_.first_ == in->exit_dpd_.first_) {
+        return false;
+      }
+    }
+    return maybe;
+  };
   for (auto const& [name, t] : tt) {
     for (auto const& r : t->routes_) {
       out << "    " << r->tag() << R"([URL="#)" << r->tag() << "\""
-          << (r->from_ == nullptr ? R"(, color=darkviolet, shape=ellipse)" : "")
+          << (r->from_ == nullptr
+                  ? R"(, color=darkviolet, shape=ellipse)"
+                  : is_delayed_by_other(r.get()) ? ", color=red, fontcolor=red"
+                                                 : ", color=green3")
           << R"(, label=")" << r->train_->name_ << ": "
           << (r->from_ == nullptr ? "START" : r->from_->name_) << " -> "
           << r->to_->name_ << "\\n"

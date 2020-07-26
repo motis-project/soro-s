@@ -213,9 +213,14 @@
                 e.preventDefault();
             }
 
-            const parsed = parseInput(editor.getValue());
-            const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
-            worker.postMessage({src: dot});
+            try {
+                const parsed = parseInput(editor.getValue());
+                const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
+                worker.postMessage({src: dot});
+            } catch (e) {
+                alert("An error occurred.");
+                console.log(e);
+            }
         }
 
         function showStats() {
@@ -358,11 +363,11 @@
             "Y,c,2020-01-01 13:08:00\n";
 
         const singleTrackCrossing = "NET\n" +
-            "           *=[=<C=(====*\n" +
-            "          /             \\\n" +
-            "a=)=A>=]=*               *=[=<D=(=b\n" +
-            "          \\             /\n" +
-            "           *===)=B>=]==*\n" +
+            "                       *=[=<CC=(=======[=<C===(==*\n" +
+            "                      /                           \\\n" +
+            "a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==K>=]===b\n" +
+            "                      \\                           /\n" +
+            "                       *===)==B>=]======)=BB>=]==*\n" +
             "\n" +
             "TRAIN,SPEED\n" +
             "X,100\n" +
@@ -370,10 +375,10 @@
             "\n" +
             "TRAIN,POSITION,TIME\n" +
             "X,a,2020-01-01 13:00:00\n" +
-            "X,B,2020-01-01 13:01:00\n" +
+            "X,BB,2020-01-01 13:01:00\n" +
             "X,b,2020-01-01 13:02:00\n" +
             "Y,b,2020-01-01 13:01:00\n" +
-            "Y,C,2020-01-01 13:02:00\n" +
+            "Y,CC,2020-01-01 13:02:00\n" +
             "Y,a,2020-01-01 13:03:00\n";
 
         if (!editor) {
