@@ -150,6 +150,7 @@ void train::build_routes(network const& net) {
 
         default:;
       }
+
       if (edge_target == dest.node_ && curr_route.from_ != dest.node_) {
         curr_route.to_ = dest.node_;
         curr_route.train_ = this;
@@ -171,7 +172,7 @@ void train::build_routes(network const& net) {
       curr_node = edge_target;
     }
   }
-}
+}  // namespace soro
 
 void route::compute_dists() {
   unixtime start{std::numeric_limits<unixtime>::min()};

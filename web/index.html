@@ -273,6 +273,54 @@
             Plotly.newPlot('plot', data, layout);
         }
 
+        function showStats() {
+            var y = [0, 110, 111, 112, 112, 113];
+            var x = [new Date(120 * 1000), new Date(0), new Date(6 * 1000), new Date(6 * 1000), new Date(18 * 1000)];
+            var z = [0.2, 0.4, 0.2, 0.1, 0.1];
+
+            var xA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    xA.push(x[i]);
+                }
+            }
+
+            var yA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    yA.push(y[i]);
+                }
+            }
+
+            var trace1 = {
+                x: xA,
+                y: yA,
+                histnorm: 'probability',
+                type: 'histogram2d',
+                colorscale: 'Jet',
+                ybins: {
+                    size: 1
+                },
+                xbins: {
+                    size: 6000
+                }
+            };
+            var data = [trace1];
+            var layout = {
+                height: 400,
+                width: 400,
+                xaxis: {
+                    tickformat: "%H:%M:%S",
+                    tickmode: "array",
+                    nticks: new Date(6000)
+                },
+                yaxis: {
+                    ticksuffix: " km/h"
+                }
+            };
+            Plotly.newPlot('plot', data, layout);
+        }
+
         function updateOutput() {
             let graph = document.querySelector("#output");
 
@@ -385,7 +433,7 @@
 
         const twoStationsCrossing1 = String.raw`NET
                       *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
-                     /                                             \\                     /                                             \\
+                     /                                             \                     /                                             \
 a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
 
 TRAIN,SPEED
@@ -394,11 +442,11 @@ Y,50
 
 TRAIN,POSITION,TIME
 X,a,2020-01-01 13:00:00
-X,CC,2020-01-01 15:00:00
-X,b,2020-01-01 15:00:00
+X,CC,2020-01-01 14:28:01
+X,b,2020-01-01 14:28:01
 Y,b,2020-01-01 13:00:00
-Y,PP,2020-01-01 13:58:00
-Y,a,2020-01-01 13:03:00
+Y,PP,2020-01-01 13:00:00
+Y,a,2020-01-01 13:00:00
 `;
 
         const twoStationsCrossing2 = String.raw`NET
