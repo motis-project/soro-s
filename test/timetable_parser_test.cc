@@ -14,7 +14,7 @@ struct r {
   cista::raw::hash_set<route*> in_;
 };
 
-TEST_CASE("timetable_parser") {
+TEST_CASE("timetable_parser_1") {
   auto const net =
       parse_network("a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED

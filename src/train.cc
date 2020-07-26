@@ -16,7 +16,7 @@
 namespace soro {
 
 std::ostream& operator<<(std::ostream& out, route const& r) {
-  out << "{ " << r.train_->name_ << ":"
+  out << "{" << &r << "  " << r.train_->name_ << ":"
       << (r.from_ == nullptr ? "START" : r.from_->name_) << "->" << r.to_->name_
       << " (" << r.from_time_ << " -> " << r.to_time_ << "), IN=[";
   for (auto const [i, in_route] : utl::enumerate(r.in_)) {
@@ -95,10 +95,14 @@ void train::build_routes(network const& net) {
     start->eotd_dpd_ = decltype(start->eotd_dpd_){source.time_};
     start->to_ = source.node_;
     start->from_time_ = start->to_time_ = source.time_;
+    std::cout << "\n"
+              << source.node_->name_ << " -> " << dest.node_->name_ << "\n";
 
     auto const edges = dijkstra(net, source.node_, dest.node_);
     utl::verify(!edges.empty(), "path for {} from {} to {} not found", name_,
                 source.node_->name_, dest.node_->name_);
+    net.print(edges);
+
     node* curr_node{source.node_};
     curr_route.from_ = source.node_;
     for (auto const& e : edges) {
@@ -106,39 +110,54 @@ void train::build_routes(network const& net) {
       auto const edge_target = e->opposite(curr_node);
       switch (edge_target->type_) {
         case node::type::APPROACH_SIGNAL:
-          next_route.approach_signal_ = e->to_;
+          if (edge_target->action_traversal_.first == e) {
+            std::cout << "APPROACH SIGNAL\n";
+            next_route.approach_signal_ = e->to_;
+          } else {
+            std::cout << "APPROACH SIGNAL WRONG DIR\n";
+          }
           break;
 
         case node::type::MAIN_SIGNAL: {
-          curr_route.to_ = edge_target;
-          curr_route.train_ = this;
-          auto const r =
-              routes_.emplace_back(std::make_unique<route>(curr_route)).get();
-          r->pred_ = pred;
-          if (pred != nullptr) {
-            r->pred_->succ_ = r;
+          if (edge_target->action_traversal_.first != e) {
+            std::cout << "MAIN SIGNAL " << edge_target->name_ << " WRONG DIR\n";
+            break;
+          } else {
+            std::cout << "MAIN SIGNAL " << edge_target->name_
+                      << " ACTION  TRAVERSAL\n";
+            curr_route.to_ = edge_target;
+            curr_route.train_ = this;
+            auto const r =
+                routes_.emplace_back(std::make_unique<route>(curr_route)).get();
+            r->pred_ = pred;
+            if (pred != nullptr) {
+              r->pred_->succ_ = r;
+              pred->out_.emplace(r);
+              r->in_.emplace(pred);
+            }
+            if (start->out_.empty()) {
+              start->out_.emplace(r);
+              r->in_.emplace(start);
+            }
+            r->compute_sched_times();
+            pred = r;
+            curr_route = next_route;
+            curr_route.from_ = edge_target;
+            break;
           }
-          if (pred != nullptr) {
-            pred->out_.emplace(r);
-            r->in_.emplace(pred);
-          }
-          if (start->out_.empty()) {
-            start->out_.emplace(r);
-            r->in_.emplace(start);
-          }
-          r->compute_sched_times();
-          pred = r;
-          curr_route = next_route;
-          curr_route.from_ = edge_target;
-          break;
         }
 
         case node::type::END_OF_TRAIN_DETECTOR:
-          if (!routes_.empty()) {
-            curr_route.dist_to_eotd_ = std::accumulate(
-                cbegin(curr_route.path_), cend(curr_route.path_), 0U,
-                [](unsigned dist, edge const* a) { return dist + a->dist_; });
-            routes_.back()->end_of_train_detector_ = e->to_;
+          if (edge_target->action_traversal_.first == e) {
+            std::cout << "END OF TRAIN DETECTOR\n";
+            if (!routes_.empty()) {
+              curr_route.dist_to_eotd_ = std::accumulate(
+                  cbegin(curr_route.path_), cend(curr_route.path_), 0U,
+                  [](unsigned dist, edge const* a) { return dist + a->dist_; });
+              routes_.back()->end_of_train_detector_ = e->to_;
+            }
+          } else {
+            std::cout << "END OF TRAIN DETECTOR WRONG DIR\n";
           }
           break;
 
@@ -152,14 +171,15 @@ void train::build_routes(network const& net) {
         r->pred_ = pred;
         if (pred != nullptr) {
           r->pred_->succ_ = r;
-        }
-        if (pred != nullptr) {
           pred->out_.emplace(r);
           r->in_.emplace(pred);
         }
         if (start->out_.empty()) {
           start->out_.emplace(r);
           r->in_.emplace(start);
+          std::cout << "END: connecting    " << start->tag() << " -> "
+                    << r->tag() << ":\n    " << *r << "\n    " << *start
+                    << "\n";
         }
         r->compute_sched_times();
         pred = r;

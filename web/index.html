@@ -107,7 +107,7 @@
         <option value="crossover">Crossover</option>
         <option value="following">Following</option>
         <option value="join">Join</option>
-        <option value="cross">Cross</option>
+        <option selected value="cross">Cross</option>
     </select>
 </div>
 
@@ -160,7 +160,7 @@
         }
 
         return {
-            net: str.substring(netStart, trainsStart).trim(),
+            net: str.substring(netStart, trainsStart),
             trains: str.substring(trainsStart, timetableStart).trim(),
             timetable: str.substring(timetableStart).trim()
         };

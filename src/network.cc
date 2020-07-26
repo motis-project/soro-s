@@ -13,7 +13,7 @@ namespace cr = cista::raw;
 namespace soro {
 
 std::ostream& operator<<(std::ostream& out, pixel_pos const& p) {
-  return out << p.x_ << "|" << p.y_;
+  return p.valid() ? (out << p.x_ << "|" << p.y_) : (out << "INVALID");
 }
 
 void network::print(std::vector<edge*> const& highlight_edges) const {

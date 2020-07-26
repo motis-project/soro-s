@@ -79,17 +79,17 @@ void compute_route_train_order(timetable const& tt) {
 
   // Remove transitive edges.
   // Example: (A->C) not necessary if (A->B) and (B->C) exist.
-  for (auto const& [train_name, train] : tt) {
-    for (auto& r : train->routes_) {
-      for (auto out_it = begin(r->out_); out_it != end(r->out_);) {
-        if (connected_transitively(r.get(), *out_it)) {
-          r->out_.erase(out_it++);
-        } else {
-          ++out_it;
-        }
-      }
-    }
-  }
+  //  for (auto const& [train_name, train] : tt) {
+  //    for (auto& r : train->routes_) {
+  //      for (auto out_it = begin(r->out_); out_it != end(r->out_);) {
+  //        if (connected_transitively(r.get(), *out_it)) {
+  //          r->out_.erase(out_it++);
+  //        } else {
+  //          ++out_it;
+  //        }
+  //      }
+  //    }
+  //  }
 }
 
 }  // namespace soro
