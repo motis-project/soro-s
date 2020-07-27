@@ -2,20 +2,22 @@
 
 #include "cista/containers/hash_set.h"
 
+#include "soro/timetable_parser.h"
+
 namespace cr = cista::raw;
 
 namespace soro {
 
-void propagate(train_order_map const& route_train_order) {
+void propagate(timetable const& tt) {
   // Init queue.
   cr::hash_set<route*> todo;
-  for (auto const& [fromto, routes] : route_train_order) {
-    for (auto const& r : routes) {
+  for (auto const& [train_name, t] : tt) {
+    for (auto const& r : t->routes_) {
       if (r->finished()) {
         continue;
       } else {
         if (r->ready()) {
-          todo.emplace(r);
+          todo.emplace(r.get());
         }
       }
     }

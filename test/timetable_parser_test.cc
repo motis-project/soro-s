@@ -14,7 +14,7 @@ struct r {
   cista::raw::hash_set<route*> in_;
 };
 
-TEST_CASE("timetable_parser") {
+TEST_CASE("timetable_parser_1") {
   auto const net =
       parse_network("a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED
@@ -33,8 +33,90 @@ Z,a,2020-01-01 13:49:00
 Z,b,2020-01-01 14:07:00
 )");
 
-  auto const route_train_order = compute_route_train_order(tt);
-  propagate(route_train_order);
+  compute_route_train_order(tt);
+  propagate(tt);
+  for (auto const& [train_name, train] : tt) {
+    std::cout << *train << "\n";
+  }
+  graphiz_output(std::cout, tt);
+}
+
+TEST_CASE("timetable_parser_2") {
+  auto const net = parse_network(R"(
+=a=)==U>=]=========)==A>=]==*   *=)===D>=]===)==Y>==]=d=
+                             \ /
+                              X
+                             / \
+=c=)==V>=]=========)==C>=]==*   *=)===B>=]===)==Z>==]=b=
+)");
+  auto const tt = parse_timetable(net, R"(TRAIN,SPEED
+X,100
+Y,100
+)",
+                                  R"(TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 13:08:00
+Y,c,2020-01-01 13:01:00
+Y,d,2020-01-01 13:08:00
+)");
+
+  compute_route_train_order(tt);
+  propagate(tt);
+  for (auto const& [train_name, train] : tt) {
+    std::cout << *train << "\n";
+  }
+  graphiz_output(std::cout, tt);
+}
+
+TEST_CASE("timetable_parser_3") {
+  auto const net = parse_network(R"(
+           *=[=<C=(====*
+          /             \
+a=)=A>=]=*               *=[=<D=(=b
+          \             /
+           *===)=B>=]==*
+)");
+  auto const tt = parse_timetable(net, R"(TRAIN,SPEED
+X,100
+Y,100
+)",
+                                  R"(TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,B,2020-01-01 13:01:00
+X,b,2020-01-01 13:02:00
+Y,b,2020-01-01 13:01:00
+Y,C,2020-01-01 13:02:00
+Y,a,2020-01-01 13:03:00
+)");
+
+  compute_route_train_order(tt);
+  propagate(tt);
+  for (auto const& [train_name, train] : tt) {
+    std::cout << *train << "\n";
+  }
+  graphiz_output(std::cout, tt);
+}
+
+TEST_CASE("timetable_parser_4") {
+  auto const net = parse_network(R"(
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \                     /                                             \
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+)");
+  auto const tt = parse_timetable(net, R"(TRAIN,SPEED
+X,100
+Y,50
+)",
+                                  R"(TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 15:00:00
+Y,b,2020-01-01 12:50:00
+Y,LL,2020-01-01 13:58:00
+Y,a,2020-01-01 13:03:00
+)");
+
+  compute_route_train_order(tt);
+  propagate(tt);
   for (auto const& [train_name, train] : tt) {
     std::cout << *train << "\n";
   }

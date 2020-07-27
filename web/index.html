@@ -102,25 +102,25 @@
 </head>
 <body>
 
+<div style="z-index: 100; position: fixed; bottom: 1em; left: 5em;">
+    <select id="example-select" onchange="setExample()">
+        <option value="crossover">Crossover</option>
+        <option selected value="crossover4">Crossover 4</option>
+        <option value="following">Following</option>
+        <option value="join">Join</option>
+        <option value="cross">Cross</option>
+        <option value="two1">Two Stations 1</option>
+        <option value="two2">Two Stations 2</option>
+    </select>
+</div>
+
+<div style="z-index: 100; position: fixed; bottom: 1em; left: 12em;">
+    <button onclick="updateGraph()">Run</button>
+</div>
+
 <div id="app">
     <div id="panes" class="split split-horizontal">
-        <div id="editor" class="split"><pre>NET
-a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b
-
-TRAIN,SPEED
-X,50
-Y,100
-Z,200
-
-TRAIN,POSITION,TIME
-X,a,2020-01-01 13:00:00
-X,B,2020-01-01 13:08:00
-X,b,2020-01-01 14:09:00
-Y,a,2020-01-01 13:32:00
-Y,B,2020-01-01 13:46:00
-Y,b,2020-01-01 14:07:00
-Z,a,2020-01-01 13:49:00
-Z,b,2020-01-01 14:07:00</pre>
+        <div id="editor" class="split">
         </div>
         <div id="graph" class="split">
             <div id="output">
@@ -139,6 +139,9 @@ Z,b,2020-01-01 14:07:00</pre>
 <script src="svg-pan-zoom.min.js"></script>
 <script src="plotly.min.js"></script>
 <script type="text/javascript">
+    var editor;
+    var updateGraph;
+
     function parseInput(str) {
         const netToken = "NET";
         let netStart = str.indexOf(netToken)
@@ -160,7 +163,7 @@ Z,b,2020-01-01 14:07:00</pre>
         }
 
         return {
-            net: str.substring(netStart, trainsStart).trim(),
+            net: str.substring(netStart, trainsStart),
             trains: str.substring(trainsStart, timetableStart).trim(),
             timetable: str.substring(timetableStart).trim()
         };
@@ -178,14 +181,13 @@ Z,b,2020-01-01 14:07:00</pre>
             }
         });
 
-        var editor = ace.edit("editor");
-        editor.getSession().setMode("ace/mode/dot");
+        editor = ace.edit("editor");
 
         var worker;
         var domParser = new DOMParser();
         var svgResult;
 
-        function updateGraph() {
+        updateGraph = () => {
             if (worker) {
                 worker.terminate();
             }
@@ -214,9 +216,62 @@ Z,b,2020-01-01 14:07:00</pre>
                 e.preventDefault();
             }
 
-            const parsed = parseInput(editor.getSession().getDocument().getValue());
-            const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
-            worker.postMessage({src: dot});
+            try {
+                const parsed = parseInput(editor.getValue());
+                const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
+                worker.postMessage({src: dot});
+            } catch (e) {
+                alert("An error occurred.");
+                console.log(e);
+            }
+        }
+
+        function showStats() {
+            var y = [0, 110, 111, 112, 112, 113];
+            var x = [new Date(120 * 1000), new Date(0), new Date(6 * 1000), new Date(6 * 1000), new Date(18 * 1000)];
+            var z = [0.2, 0.4, 0.2, 0.1, 0.1];
+
+            var xA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    xA.push(x[i]);
+                }
+            }
+
+            var yA = [];
+            for (let i = 0; i < x.length; ++i) {
+                for (let j = 0.0; j < z[i]; j += 0.01) {
+                    yA.push(y[i]);
+                }
+            }
+
+            var trace1 = {
+                x: xA,
+                y: yA,
+                histnorm: 'probability',
+                type: 'histogram2d',
+                colorscale: 'Jet',
+                ybins: {
+                    size: 1
+                },
+                xbins: {
+                    size: 6000
+                }
+            };
+            var data = [trace1];
+            var layout = {
+                height: 400,
+                width: 400,
+                xaxis: {
+                    tickformat: "%H:%M:%S",
+                    tickmode: "array",
+                    nticks: new Date(6000)
+                },
+                yaxis: {
+                    ticksuffix: " km/h"
+                }
+            };
+            Plotly.newPlot('plot', data, layout);
         }
 
         function showStats() {
@@ -297,14 +352,184 @@ Z,b,2020-01-01 14:07:00</pre>
             showStats();
         }
 
-        editor.on("change", updateGraph);
-
+        setExample();
         updateGraph();
     }
 
     var Module = {
         onRuntimeInitialized: init
     };
+
+    function setExample() {
+        const following = "NET\n" +
+            "a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,50\n" +
+            "Y,100\n" +
+            "Z,200\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,B,2020-01-01 13:08:00\n" +
+            "X,b,2020-01-01 14:09:00\n" +
+            "Y,a,2020-01-01 13:32:00\n" +
+            "Y,B,2020-01-01 13:46:00\n" +
+            "Y,b,2020-01-01 14:07:00\n" +
+            "Z,a,2020-01-01 13:49:00\n" +
+            "Z,b,2020-01-01 14:07:00\n";
+
+        const crossover = "NET\n" +
+            "=a=)==U>=]=========)==A>=]==*   *=)===D>=]===)==Y>==]=d=\n" +
+            "                             \\ /\n" +
+            "                              X\n" +
+            "                             / \\\n" +
+            "=c=)==V>=]=========)==C>=]==*   *=)===B>=]===)==Z>==]=b=\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,b,2020-01-01 13:08:00\n" +
+            "Y,c,2020-01-01 13:01:00\n" +
+            "Y,d,2020-01-01 13:08:00\n";
+
+        const join = "NET\n" +
+            "a==)=F>==*\n" +
+            "          \\\n" +
+            "           *==)==S>=]======)=T>=]==c\n" +
+            "          /\n" +
+            "b==)=G>==*\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,c,2020-01-01 13:08:00\n" +
+            "Y,b,2020-01-01 13:01:00\n" +
+            "Y,c,2020-01-01 13:08:00\n";
+
+        const singleTrackCrossing = "NET\n" +
+            "                       *=[=<CC=(=======[=<C===(==*\n" +
+            "                      /                            \\n" +
+            "a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b\n" +
+            "                      \\                           /\n" +
+            "                       *===)==B>=]======)=BB>=]==*\n" +
+            "\n" +
+            "TRAIN,SPEED\n" +
+            "X,100\n" +
+            "Y,100\n" +
+            "\n" +
+            "TRAIN,POSITION,TIME\n" +
+            "X,a,2020-01-01 13:00:00\n" +
+            "X,BB,2020-01-01 13:01:00\n" +
+            "X,b,2020-01-01 13:02:00\n" +
+            "Y,b,2020-01-01 13:01:00\n" +
+            "Y,CC,2020-01-01 13:02:00\n" +
+            "Y,a,2020-01-01 13:03:00\n";
+
+        const crossover4 = String.raw`NET
+                       *=[=<CC=(=======[=<C===(==*
+                      /                           \
+a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b
+                      \                           /
+                       *===)==B>=]======)=BB>=]==*
+
+TRAIN,SPEED
+ab1,100
+ab2,100
+ba1,50
+ba2,50
+
+TRAIN,POSITION,TIME
+ab1,a,2020-01-01 13:00:00
+ab1,BB,2020-01-01 13:00:00
+ab1,b,2020-01-01 13:45:00
+ab2,a,2020-01-01 13:15:00
+ab2,BB,2020-01-01 13:15:00
+ab2,b,2020-01-01 14:00:00
+ba1,b,2020-01-01 13:00:00
+ba1,CC,2020-01-01 13:00:00
+ba1,a,2020-01-01 14:30:00
+ba2,b,2020-01-01 14:00:00
+ba2,CC,2020-01-01 14:00:00
+ba2,a,2020-01-01 15:30:00
+`;
+
+        const twoStationsCrossing1 = String.raw`NET
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \                     /                                             \
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+
+TRAIN,SPEED
+X,100
+Y,50
+
+TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,CC,2020-01-01 14:28:01
+X,b,2020-01-01 14:28:01
+Y,b,2020-01-01 13:00:00
+Y,PP,2020-01-01 13:00:00
+Y,a,2020-01-01 13:00:00
+`;
+
+        const twoStationsCrossing2 = String.raw`NET
+                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                     /                                             \                     /                                             \
+a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+
+TRAIN,SPEED
+X,100
+Y,50
+
+TRAIN,POSITION,TIME
+X,a,2020-01-01 13:00:00
+X,b,2020-01-01 15:00:00
+Y,b,2020-01-01 12:50:00
+Y,LL,2020-01-01 13:58:00
+Y,a,2020-01-01 13:03:00
+`;
+
+        if (!editor) {
+            return;
+        }
+        var example = document.getElementById("example-select");
+        switch (example.selectedIndex) {
+            default:
+            case 0:
+                editor.setValue(crossover);
+                break;
+
+            case 1:
+                editor.setValue(crossover4);
+                break;
+
+            case 2:
+                editor.setValue(following);
+                break;
+
+            case 3:
+                editor.setValue(join);
+                break;
+
+            case 4:
+                editor.setValue(singleTrackCrossing);
+                break;
+
+            case 5:
+                editor.setValue(twoStationsCrossing1);
+                break;
+
+            case 6:
+                editor.setValue(twoStationsCrossing2);
+                break;
+        }
+    }
 </script>
 <script async type="text/javascript" src="soro-web.wasm.js"></script>
 </body>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "soro/route_train_order.h"
+#include "timetable_parser.h"
 
 namespace soro {
 
-void propagate(train_order_map const&);
+void propagate(timetable const&);
 
 }  // namespace soro
