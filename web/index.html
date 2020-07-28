@@ -104,11 +104,11 @@
 
 <div style="z-index: 100; position: fixed; bottom: 1em; left: 5em;">
     <select id="example-select" onchange="setExample()">
-        <option value="crossover">Crossover</option>
-        <option selected value="crossover4">Crossover 4</option>
+        <option selected value="crossover">Crossover</option>
         <option value="following">Following</option>
         <option value="join">Join</option>
         <option value="cross">Cross</option>
+        <option value="crossover4">Cross 4</option>
         <option value="two1">Two Stations 1</option>
         <option value="two2">Two Stations 2</option>
     </select>
@@ -413,12 +413,12 @@
             "Y,b,2020-01-01 13:01:00\n" +
             "Y,c,2020-01-01 13:08:00\n";
 
-        const singleTrackCrossing = "NET\n" +
-            "                       *=[=<CC=(=======[=<C===(==*\n" +
-            "                      /                            \\n" +
-            "a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b\n" +
-            "                      \\                           /\n" +
-            "                       *===)==B>=]======)=BB>=]==*\n" +
+        const singleTrackCrossing = String.raw`NET
+                       *=[=<CC=(=======[=<C===(==*
+                      /                           \
+a=)===[=<K=(====A>=]=*                             *=[=<D=(=====)==L>=]===b
+                      \                           /
+                       *===)==B>=]======)=BB>=]==*` +
             "\n" +
             "TRAIN,SPEED\n" +
             "X,100\n" +
@@ -495,39 +495,17 @@ Y,LL,2020-01-01 13:58:00
 Y,a,2020-01-01 13:03:00
 `;
 
-        if (!editor) {
-            return;
-        }
-        var example = document.getElementById("example-select");
-        switch (example.selectedIndex) {
-            default:
-            case 0:
-                editor.setValue(crossover);
-                break;
-
-            case 1:
-                editor.setValue(crossover4);
-                break;
-
-            case 2:
-                editor.setValue(following);
-                break;
-
-            case 3:
-                editor.setValue(join);
-                break;
-
-            case 4:
-                editor.setValue(singleTrackCrossing);
-                break;
-
-            case 5:
-                editor.setValue(twoStationsCrossing1);
-                break;
-
-            case 6:
-                editor.setValue(twoStationsCrossing2);
-                break;
+        const inputs = [
+            crossover,
+            following,
+            join,
+            singleTrackCrossing,
+            crossover4,
+            twoStationsCrossing1,
+            twoStationsCrossing2
+        ];
+        if (editor) {
+            editor.setValue(inputs[document.getElementById("example-select").selectedIndex]);
         }
     }
 </script>
