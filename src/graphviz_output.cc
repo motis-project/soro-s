@@ -1,6 +1,7 @@
 #include "soro/graphviz_output.h"
 
 #include <ostream>
+#include <sstream>
 
 #include "utl/enumerate.h"
 
@@ -17,9 +18,9 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
     node [
       fixedsize=false,
       fontname=Monospace,
-      fontsize=12,
+      fontsize=11,
       height=2,
-      width=2.5,
+      width=3.2,
       style=bold,
       color=white,
       fillcolor=white,
@@ -57,6 +58,22 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
     }
     return maybe;
   };
+  auto const printable_delay = [](unixtime const diff) {
+    auto const total_seconds = static_cast<time_t>(diff);
+    auto const sec = total_seconds % 60;
+    auto const min = total_seconds / 60;
+    std::stringstream ss;
+    if (total_seconds > 0) {
+      ss << "+";
+    }
+    if (min != 0) {
+      ss << min << "min";
+    }
+    if (sec != 0) {
+      ss << (min == 0 ? "" : " ") << sec << "s";
+    }
+    return ss.str();
+  };
   for (auto const& [name, t] : tt) {
     for (auto const& r : t->routes_) {
       out << "    " << r->tag() << R"([URL="#)" << r->tag() << "\""
@@ -72,7 +89,11 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
           << "sched@" << r->to_->name_ << " = " << r->to_time_ << "\\n";
       for (auto const& [t, speed_dpb] : r->entry_dpd_) {
         for (auto const [speed, prob] : speed_dpb) {
-          out << t << " @ " << speed << "km/h"
+          out << t
+              << (t - r->from_time_ == 0
+                      ? ""
+                      : " (" + printable_delay(t - r->from_time_) + ")")
+              << " @ " << speed << "km/h"
               << ": " << (prob * 100) << "%\\n";
         }
       }
