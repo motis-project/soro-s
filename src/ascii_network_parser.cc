@@ -40,8 +40,7 @@ struct ascii_network_parser {
     DIRECTION_BOTTOM = '!',
 
     // End of train detectors.
-    END_OF_TRAIN_DETECTOR_L = '[',
-    END_OF_TRAIN_DETECTOR_R = ']',
+    END_OF_TRAIN_DETECTOR = '%',
 
     // Approach signals.
     APPROACH_SIGNAL_L = '(',
@@ -226,14 +225,7 @@ struct ascii_network_parser {
           case SINGLE_SLIP: [[fallthrough]];
           case SINGLE_SLIP_INVERTED: do_single_slip(p, c); break;
 
-          case END_OF_TRAIN_DETECTOR_L:
-            do_directional_node(p, dir::RIGHT, dir::LEFT,
-                                node::type::END_OF_TRAIN_DETECTOR, c);
-            break;
-          case END_OF_TRAIN_DETECTOR_R:
-            do_directional_node(p, dir::LEFT, dir::RIGHT,
-                                node::type::END_OF_TRAIN_DETECTOR, c);
-            break;
+          case END_OF_TRAIN_DETECTOR: do_eotd(p); break;
 
           case APPROACH_SIGNAL_L:
             do_directional_node(p, dir::RIGHT, dir::LEFT,
@@ -262,6 +254,7 @@ struct ascii_network_parser {
     connect_signals();
     connect_directionals();
     connect_edges();
+    connect_eotds();
 
     return std::move(net_);
   }
@@ -434,6 +427,13 @@ struct ascii_network_parser {
     }
   }
 
+  void do_eotd(pixel_pos const p) {
+    auto const n = net_.nodes_.emplace_back(std::make_unique<node>()).get();
+    n->draw_representation_.emplace_back(p, END_OF_TRAIN_DETECTOR);
+    n->type_ = node::type::END_OF_TRAIN_DETECTOR;
+    map_[p][KNOT] = n;
+  }
+
   void do_level_junction(pixel_pos const p) {
     auto const n = net_.nodes_.emplace_back(std::make_unique<node>()).get();
     n->draw_representation_.emplace_back(p, LEVEL_JUNCTION);
@@ -600,6 +600,34 @@ struct ascii_network_parser {
           n->traversals_[bottom].emplace(left);
         }
       }
+    }
+  }
+
+  void connect_eotds() {
+    for (auto const& [p, el] : map_) {
+      auto const pos = p;
+
+      if (el.size() != 1U ||
+          !cista::holds_alternative<node*>(begin(el)->second)) {
+        continue;
+      }
+
+      auto const n = cista::get<node*>(begin(el)->second);
+      if (n->type_ != node::type::END_OF_TRAIN_DETECTOR) {
+        continue;
+      }
+
+      auto const orientation = KNOT;
+      for_each_neighbor<edge>(p, [&](edge* e, dir const d) {
+        utl::verify(
+            get_orientation(d) == orientation || orientation == KNOT,
+            "too many orientations for end of train connector at {}: {} and {}",
+            orientation, get_orientation(d));
+        auto const opposite_e =
+            get_edge(next(pos, get_opposite(d)), get_orientation(d));
+        n->traversals_[e].emplace(opposite_e);
+        n->traversals_[opposite_e].emplace(e);
+      });
     }
   }
 

@@ -508,7 +508,7 @@ TEST_CASE("approach_signal_signal_end_of_train_detector") {
   auto const net = parse_network(R"(
 # 1 Approach Signal -> Signal -> End of Train Detector
 
- a==1===)======2======AA>=====3==========]==4==b
+ a==1===)======2======AA>=====3==========%==4==b
 
 )");
 
@@ -543,20 +543,19 @@ TEST_CASE("approach_signal_signal_end_of_train_detector") {
 
   CHECK(n2->traversals_.at(e2) == cr::hash_set<edge*>{e3});
   CHECK(n2->traversals_.at(e3) == cr::hash_set<edge*>{e2});
-  CHECK(n2->action_traversal_ == std::pair{e2, e3});
 }
 
 TEST_CASE("station") {
   parse_network(R"(
 # 1 Simple Double Track Station
-                                 *=<Q=====O>=*
-                                /             \
-=)=====[=====AA>=)=*===*=======*===<P=====L>===*=*=========*=(=<F====]=======(==
-                    \ /                           \       /
-                     X                             \     /
-                    / \                             \   /
-=)=====[======A>=)=*===*=======*===<S====N>====*=====*=*=====(=<FF===]=======(==
-                                \             /
-                                 *=<R====M>==*
+                                 *=====<Q=%=========%=O>======*
+                                /                              \
+=)=%========AA>=%=)=*=%=*=%=====*======<P=%=========%=L>========*=====%====*======%======*=(=<F====%=======(==
+                     \ /                                                    \           /
+                      X                                                      %         %
+                     / \                                                      \       /
+=)=%=========A>=%=)=*=%=*=%=====*======<S=%=========%=N>========*=====%========*==%==*=====(=<FF===%=======(==
+                                \                              /
+                                 *=====<R=%=========%=M>======*
 )");
 }
