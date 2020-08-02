@@ -103,9 +103,10 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
   for (auto const& [name, t] : tt) {
     for (auto const& r : t->routes_) {
       out << "    " << r->tag() << R"([URL="#)" << r->tag() << "\""
-          << (r->from_ == nullptr ? R"(, color=darkviolet, shape=ellipse)"
-              : is_delayed_by_other(r.get()) ? ", color=red, fontcolor=red"
-                                             : ", color=green3")
+          << (r->from_ == nullptr
+                  ? R"(, color=darkviolet, shape=ellipse)"
+                  : is_delayed_by_other(r.get()) ? ", color=red, fontcolor=red"
+                                                 : ", color=green3")
           << R"(, label=")" << r->train_->name_ << ": "
           << (r->from_ == nullptr ? "START" : r->from_->name_) << " -> "
           << r->to_->name_ << "\\n"
