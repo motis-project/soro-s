@@ -70,8 +70,9 @@ void compute_route_train_order(timetable const& tt) {
       for (auto j = std::next(i); j != end(route_order); ++j) {
         auto const& r2 = *j;
         if (r1->succ_ != nullptr) {
-          r1->succ_->out_.emplace(r2);
-          r2->in_.emplace(r1->succ_);
+          auto const r2_main = r2->main_ != nullptr ? r2->main_ : r2;
+          r1->succ_->out_.emplace(r2_main);
+          r2_main->in_.emplace(r1->succ_);
         }
       }
     }

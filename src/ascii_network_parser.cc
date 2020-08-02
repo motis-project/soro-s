@@ -429,6 +429,7 @@ struct ascii_network_parser {
 
   void do_eotd(pixel_pos const p) {
     auto const n = net_.nodes_.emplace_back(std::make_unique<node>()).get();
+    n->name_ = fmt::format("EOTD{}_{}", p.x_, p.y_);
     n->draw_representation_.emplace_back(p, END_OF_TRAIN_DETECTOR);
     n->type_ = node::type::END_OF_TRAIN_DETECTOR;
     map_[p][KNOT] = n;
