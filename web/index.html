@@ -133,7 +133,6 @@
 </div>
 
 <script src="ace.js"></script>
-<script src="viz.js"></script>
 <script src="fabric.min.js"></script>
 <script src="split.min.js"></script>
 <script src="svg-pan-zoom.min.js"></script>
@@ -219,6 +218,7 @@
             try {
                 const parsed = parseInput(editor.getValue());
                 const dot = Module.soros(parsed.net, parsed.trains, parsed.timetable);
+                console.log(dot);
                 worker.postMessage({src: dot});
             } catch (e) {
                 alert("An error occurred.");
@@ -380,11 +380,11 @@
             "Z,b,2020-01-01 14:07:00\n";
 
         const crossover = String.raw`NET
-=a=)==U>=%==)==A>===%====%==*   *=)=%=D>=%===)==Y>==%=d=
+=a=)==U>=%==)==A>===%====%==*   *=)=%==%==D>=%===)==Y>==%=d=
                              \ /
                               X
                              / \
-=c=)==V>=%==)==C>===%====%==*   *=)=%=B>=%===)==Z>==%=b=
+=c=)==V>=%==)==C>===%====%==*   *=)=%==%==B>=%===)==Z>==%=b=
 
 TRAIN,SPEED
 X,100

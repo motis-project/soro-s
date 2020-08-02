@@ -41,7 +41,6 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
     out << "        style=filled;\n";
     out << "        color=lightgrey;\n";
     out << "        label=\"Train " << t->name_ << "\"\n";
-    out << "        rank=\"same\"\n";
 
     cr::hash_map<route*, std::vector<route*>> main;
     for (auto const& r : t->routes_) {
@@ -62,7 +61,6 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
         out << "            label=\"Route " << name << ": "
             << routes.front()->from_->name_ << " -> "
             << routes.back()->to_->name_ << "\"\n";
-        out << "            rank=\"same\"\n";
         for (auto const& r : routes) {
           out << "            " << r->tag() << "\n";
         }
