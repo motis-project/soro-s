@@ -618,7 +618,7 @@ struct ascii_network_parser {
         continue;
       }
 
-      auto const orientation = KNOT;
+      auto orientation = KNOT;
       for_each_neighbor<edge>(p, [&](edge* e, dir const d) {
         utl::verify(
             get_orientation(d) == orientation || orientation == KNOT,
@@ -628,7 +628,9 @@ struct ascii_network_parser {
             get_edge(next(pos, get_opposite(d)), get_orientation(d));
         n->traversals_[e].emplace(opposite_e);
         n->traversals_[opposite_e].emplace(e);
+        orientation = get_orientation(d);
       });
+      utl::verify(orientation != KNOT, "eotd at {} has no neighbors", p);
     }
   }
 
