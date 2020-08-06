@@ -50,9 +50,9 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
     auto maybe = false;
     for (auto const& in : r->in_) {
       maybe |= in->train_ != r->train_ &&
-               r->entry_dpd_.first_ == in->eotd_dpd_.first_;
+               r->entry_dpd_.offset_ == in->eotd_dpd_.offset_;
       if (in->train_ == r->train_ &&
-          r->entry_dpd_.first_ == in->exit_dpd_.first_) {
+          r->entry_dpd_.offset_ == in->exit_dpd_.offset_) {
         return false;
       }
     }
@@ -111,9 +111,9 @@ void graphiz_output(std::ostream& out, timetable const& tt) {
               << r->to_time_ << "\"]";
         } else if (r->train_ != o->train_) {
           out << R"( [fontcolor=red, color=red, style="bold", label=")"
-              << r->eotd_dpd_.first_ << "\"]";
+              << r->eotd_dpd_.offset_ << "\"]";
         } else {
-          out << " [fontcolor=white, label=\"" << r->exit_dpd_.first_ << "\"]";
+          out << " [fontcolor=white, label=\"" << r->exit_dpd_.offset_ << "\"]";
         }
         out << ";\n";
       }

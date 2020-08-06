@@ -177,9 +177,9 @@ void route::compute_dists() {
   unixtime start{std::numeric_limits<unixtime>::min()};
   for (auto const& in : in_) {
     if (in->train_ == train_) {
-      start = std::max(start, in->exit_dpd_.first_);
+      start = std::max(start, in->exit_dpd_.offset_);
     } else {
-      start = std::max(start, in->eotd_dpd_.first_);
+      start = std::max(start, in->eotd_dpd_.offset_);
     }
   }
   entry_dpd_ = decltype(entry_dpd_){start, train_->speed_};

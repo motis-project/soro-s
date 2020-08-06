@@ -11,6 +11,7 @@
 #include "cista/reflection/comparable.h"
 
 #include "soro/dpd.h"
+#include "soro/granularity.h"
 #include "soro/speed_t.h"
 #include "soro/unixtime.h"
 
@@ -20,14 +21,6 @@ struct node;
 struct edge;
 struct network;
 struct train;
-
-struct Granularity {
-  template <size_t Index>
-  constexpr size_t get() {
-    constexpr auto const s = std::array<size_t, 2>{size_t{6}, size_t{1}};
-    return s[Index];
-  }
-};
 
 struct route {
   struct id_t {

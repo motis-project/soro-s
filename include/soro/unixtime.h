@@ -6,28 +6,40 @@
 
 namespace soro {
 
+struct duration {
+  constexpr duration() = default;
+  explicit constexpr duration(time_t t) : t_{t} {} // NOLINT
+
+  friend std::ostream& operator<<(std::ostream&, duration const&);
+
+  duration& operator+=(duration const o) {
+    t_ += o.t_;
+    return *this;
+  }
+
+  duration& operator-=(duration const o) {
+    t_ -= o.t_;
+    return *this;
+  }
+
+  time_t t_;
+};
+
 struct unixtime {
   constexpr unixtime() = default;
   explicit constexpr unixtime(time_t t) : t_{t} {}  // NOLINT
 
   friend std::ostream& operator<<(std::ostream&, unixtime const&);
 
-  unixtime& operator+=(unixtime const o) {
+  unixtime& operator+=(duration const o) {
     t_ += o.t_;
     return *this;
   }
-  unixtime& operator-=(unixtime const o) {
+  unixtime& operator-=(duration const o) {
     t_ -= o.t_;
     return *this;
   }
-  unixtime& operator*=(unixtime const o) {
-    t_ -= o.t_;
-    return *this;
-  }
-  unixtime& operator/=(unixtime const o) {
-    t_ -= o.t_;
-    return *this;
-  }
+
   unixtime& operator++() {
     ++t_;
     return *this;
@@ -46,10 +58,9 @@ struct unixtime {
     --t_;
     return copy;
   }
-  unixtime operator+(unixtime const o) const { return unixtime{t_ + o.t_}; }
-  unixtime operator-(unixtime const o) const { return unixtime{t_ - o.t_}; }
-  unixtime operator*(unixtime const o) const { return unixtime{t_ * o.t_}; }
-  unixtime operator/(unixtime const o) const { return unixtime{t_ / o.t_}; }
+  unixtime operator+(duration const o) const { return unixtime{t_ + o.t_}; }
+  unixtime operator-(duration const o) const { return unixtime{t_ - o.t_}; }
+
   bool operator<(unixtime const o) const { return t_ < o.t_; }
   bool operator>(unixtime const o) const { return t_ > o.t_; }
   bool operator<=(unixtime const o) const { return t_ <= o.t_; }
