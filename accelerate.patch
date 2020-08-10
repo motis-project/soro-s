@@ -1,0 +1,605 @@
+From e01730d9155d5dcc1974895fa983e6f8046533e5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Felix=20G=C3=BCndling?= <felix.guendling@gmail.com>
+Date: Sun, 9 Aug 2020 19:42:06 +0200
+Subject: [PATCH 1/2] experimenting with running times
+
+---
+ .pkg                                    |   4 +
+ CMakeLists.txt                          |   6 +-
+ include/soro/parse_train_data.h         |  30 +++++
+ include/soro/running_time_calculation.h |  11 ++
+ src/compute_running_time.cc             |  61 ++++++++++
+ src/parse_train_data.cc                 |  94 +++++++++++++++
+ web/embind.cc                           |  27 ++++-
+ web/running_time_calc.html              | 195 ++++++++++++++++++++++++++++++++
+ 8 files changed, 425 insertions(+), 3 deletions(-)
+ create mode 100644 include/soro/parse_train_data.h
+ create mode 100644 include/soro/running_time_calculation.h
+ create mode 100644 src/compute_running_time.cc
+ create mode 100644 src/parse_train_data.cc
+ create mode 100644 web/running_time_calc.html
+
+diff --git a/.pkg b/.pkg
+index 688d9ef..62f5a26 100644
+--- a/.pkg
++++ b/.pkg
+@@ -14,3 +14,7 @@
+   url=git@github.com:motis-project/date.git
+   branch=master
+   commit=6de941079a68b29753c430fb19c3b110c8499c97
++[pugixml]
++  url=git@github.com:motis-project/pugixml.git
++  branch=master
++  commit=60175e80e2f5e97e027ac78f7e14c5acc009ce50
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5c89353..6086442 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -11,8 +11,8 @@ endif()
+ 
+ file(GLOB_RECURSE soro-lib-files src/*.cc)
+ add_library(soro-lib ${soro-lib-files})
+-target_link_libraries(soro-lib utl cista date)
+ target_compile_features(soro-lib PUBLIC cxx_std_20)
++target_link_libraries(soro-lib utl cista date pugixml)
+ target_include_directories(soro-lib PUBLIC include)
+ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+   target_compile_options(soro-lib PRIVATE
+@@ -30,6 +30,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+     -Wno-global-constructors
+     -Wno-exit-time-destructors
+     -Wno-switch-enum
++    -Wno-c++20-designator
+     -Werror
+   )
+ elseif(MSVC)
+@@ -48,7 +49,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+   file(GLOB_RECURSE soro-web-files web/*.cc)
+   add_executable(soro-web ${soro-web-files})
+   set_target_properties(soro-web PROPERTIES SUFFIX ".wasm.js")
+-  set_target_properties(soro-web PROPERTIES LINK_FLAGS "-s WASM=1 -s --bind")
++  set_target_properties(soro-web PROPERTIES LINK_FLAGS "-s TOTAL_MEMORY=1024MB -s WASM=1 -s --bind")
+   set_target_properties(soro-web PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/web)
+   target_link_libraries(soro-web soro-lib)
+   configure_file(web/index.html ${CMAKE_CURRENT_BINARY_DIR}/web/index.html COPYONLY)
+@@ -59,6 +60,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+   configure_file(web/split.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/split.min.js COPYONLY)
+   configure_file(web/svg-pan-zoom.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/svg-pan-zoom.min.js COPYONLY)
+   configure_file(web/plotly.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/plotly.min.js COPYONLY)
++  configure_file(web/running_time_calc.html ${CMAKE_CURRENT_BINARY_DIR}/web/running_time_calc.html COPYONLY)
+ endif()
+ 
+ file(GLOB_RECURSE soro-test-files test/*.cc)
+diff --git a/include/soro/parse_train_data.h b/include/soro/parse_train_data.h
+new file mode 100644
+index 0000000..abb4de2
+--- /dev/null
++++ b/include/soro/parse_train_data.h
+@@ -0,0 +1,30 @@
++#pragma once
++
++#include <array>
++#include <iosfwd>
++#include <string>
++#include <vector>
++
++namespace soro {
++
++using meter_per_second = float;
++
++struct tractive_force {
++  friend std::ostream& operator<<(std::ostream& out, tractive_force const& f);
++  bool operator<(tractive_force const& o) const;
++  meter_per_second from_, to_;
++  std::array<float, 3> tracitive_force_;
++};
++
++struct train_physics {
++  friend std::ostream& operator<<(std::ostream& out, train_physics const& tp);
++  std::string name_;
++  float weight_;
++  meter_per_second max_speed_;
++  std::array<float, 3> running_resistance_;
++  std::vector<tractive_force> tracitive_force_;
++};
++
++std::vector<train_physics> parse_train_data(std::string const&);
++
++}  // namespace soro
+\ No newline at end of file
+diff --git a/include/soro/running_time_calculation.h b/include/soro/running_time_calculation.h
+new file mode 100644
+index 0000000..9dd8472
+--- /dev/null
++++ b/include/soro/running_time_calculation.h
+@@ -0,0 +1,11 @@
++#pragma once
++
++#include <string>
++
++namespace soro {
++
++struct train_physics;
++
++std::string compute_running_time(train_physics const&);
++
++}  // namespace soro
+diff --git a/src/compute_running_time.cc b/src/compute_running_time.cc
+new file mode 100644
+index 0000000..edb1a01
+--- /dev/null
++++ b/src/compute_running_time.cc
+@@ -0,0 +1,61 @@
++#include "soro/running_time_calculation.h"
++
++#include <sstream>
++
++#include "utl/verify.h"
++
++#include "soro/parse_train_data.h"
++
++namespace soro {
++
++constexpr auto const DELTA_T = 0.01F;
++constexpr auto const G_M_S2 = 9.81F;
++constexpr auto const M_S2_TO_KM_H2 = (1.0F / 1000.0F) * (3600 * 3600);
++constexpr auto const KM_H2_TO_M_S2 = 1.0F / M_S2_TO_KM_H2;
++constexpr auto const KILO_NEWTON_TO_NEWTON = 1000.0F;
++constexpr auto const BETA = 1.06F;
++
++std::string compute_running_time(train_physics const& i) {
++  std::stringstream out;
++  out << "TIME,DISTANCE,SPEED\n";
++
++  auto coefficients_it = begin(i.tracitive_force_);
++  auto t = 0.0F;
++  auto speed = 0.0F;
++  auto distance = 0.0F;
++  while (true) {
++    if (speed * 3.6 >= i.max_speed_) {
++      break;
++    }
++
++    if (speed * 3.6 >= coefficients_it->to_) {
++      ++coefficients_it;
++      utl::verify(coefficients_it != end(i.tracitive_force_),
++                  "no force coefficient for {}", speed);
++    }
++
++    auto const speed_km_h = speed * 3.6;
++    auto const tractive_force =
++        (coefficients_it->tracitive_force_[0] +
++         coefficients_it->tracitive_force_[1] * speed_km_h +
++         coefficients_it->tracitive_force_[2] * speed_km_h * speed_km_h) *
++        KILO_NEWTON_TO_NEWTON;
++    auto const resistive_force =
++        (i.running_resistance_[0] * i.weight_ * G_M_S2 +
++         i.running_resistance_[1] * i.weight_ * G_M_S2 * speed_km_h +
++         i.running_resistance_[2] * G_M_S2 * speed_km_h * speed_km_h) *
++        KM_H2_TO_M_S2;
++    auto const acceleration =
++        (tractive_force - resistive_force) / (i.weight_ * BETA);
++
++    speed += static_cast<float>(acceleration * DELTA_T);
++    distance += speed * DELTA_T * 0.5F;
++    t += DELTA_T;
++
++    out << t << "," << distance << "," << (speed * 3.6F) << "\n";
++  }
++
++  return out.str();
++}
++
++}  // namespace soro
+\ No newline at end of file
+diff --git a/src/parse_train_data.cc b/src/parse_train_data.cc
+new file mode 100644
+index 0000000..753afd4
+--- /dev/null
++++ b/src/parse_train_data.cc
+@@ -0,0 +1,94 @@
++#include "soro/parse_train_data.h"
++
++#include <ostream>
++
++#include "pugixml.hpp"
++
++#include "utl/to_vec.h"
++#include "utl/verify.h"
++
++namespace soro {
++
++std::ostream& operator<<(std::ostream& out, tractive_force const& f) {
++  return out << f.from_ << " - " << f.to_ << ": " << f.tracitive_force_[0]
++             << ", " << f.tracitive_force_[1] << ", " << f.tracitive_force_[2];
++}
++
++bool tractive_force::operator<(tractive_force const& o) const {
++  return from_ < o.from_;
++}
++
++float parse_float(std::string s) {
++  auto const i_comma = s.find(',');
++  if (i_comma != std::string::npos) {
++    s[i_comma] = '.';
++  }
++  try {
++    return std::stof(s);
++  } catch (std::exception const& e) {
++    std::cout << "stof: " << e.what() << ", in=\"" << s << "\"\n";
++    return 0;
++  }
++}
++
++std::ostream& operator<<(std::ostream& out, train_physics const& tp) {
++  out << tp.name_ << ":\n";
++  out << "  max_speed=" << tp.max_speed_ << "\n";
++  out << "  weight=" << tp.weight_ << "\n";
++  out << "  running_resistance=" << tp.running_resistance_[0] << ", "
++      << tp.running_resistance_[1] << ", " << tp.running_resistance_[2] << "\n";
++  for (auto const f : tp.tracitive_force_) {
++    out << "  " << f << "\n";
++  }
++  return out;
++}
++
++inline float ton_to_kg(float ton) { return ton * 1000.0F; }
++
++std::vector<train_physics> parse_train_data(std::string const& train_spec) {
++  using namespace pugi;
++
++  xml_document d;
++  auto r = d.load_buffer(reinterpret_cast<void const*>(train_spec.data()),
++                         train_spec.size());
++  utl::verify(r, "bad xml: {}", r.description());
++
++  return utl::to_vec(
++      d.child("Triebfahrzeugbaureihe")
++          .child("Triebfahrzeugbaureihenvarianten")
++          .children("Triebfahrzeugbaureihenvariante"),
++      [&](auto&& variant) {
++        return train_physics{
++            .name_ = variant.child("Bezeichnung").child_value(),
++            .weight_ = ton_to_kg(
++                parse_float(variant.child("EigenGewicht").child_value())),
++            .max_speed_ = parse_float(
++                variant.child("ZulaessigeGeschwindigkeit").child_value()),
++            .running_resistance_ =
++                {parse_float(
++                     variant.child("Laufwiderstandsfaktor1").child_value()) /
++                     1000.0F,
++                 parse_float(
++                     variant.child("Laufwiderstandsfaktor2").child_value()),
++                 parse_float(
++                     variant.child("Laufwiderstandsfaktor3").child_value())},
++            .tracitive_force_ = utl::to_vec(
++                variant.child("Stromartausruestungen")
++                    .child("Stromartausruestung")
++                    .child("Zugkraftfaktoren")
++                    .children("Zugkraftfaktor"),
++                [&](auto&& el) {
++                  return tractive_force{
++                      .from_ = parse_float(
++                          el.child("GeschwindigkeitVon").child_value()),
++                      .to_ = parse_float(
++                          el.child("GeschwindigkeitBis").child_value()),
++                      .tracitive_force_ = {
++                          parse_float(el.child("Faktor1").child_value()),
++                          parse_float(el.child("Faktor2").child_value()),
++                          parse_float(el.child("Faktor3").child_value())}};
++                })};
++      });
++}
++
++}  // namespace soro
+\ No newline at end of file
+diff --git a/web/embind.cc b/web/embind.cc
+index c8866b0..1271d32 100644
+--- a/web/embind.cc
++++ b/web/embind.cc
+@@ -1,16 +1,27 @@
++#include <iostream>
+ #include <sstream>
+ #include <string>
+ 
+ #include "emscripten/bind.h"
+ 
++#include "utl/to_vec.h"
++#include "utl/verify.h"
++
+ #include "soro/ascii_network_parser.h"
+ #include "soro/graphviz_output.h"
++#include "soro/parse_train_data.h"
+ #include "soro/propagator.h"
+ #include "soro/route_train_order.h"
++#include "soro/running_time_calculation.h"
+ #include "soro/timetable_parser.h"
+ 
+ using namespace soro;
+ 
++struct train_variant {
++  std::string name_;
++  std::string csv_;
++};
++
+ std::string simulate(std::string const& network_input,
+                      std::string const& trains_input,
+                      std::string const& timetable_input) {
+@@ -25,4 +36,18 @@ std::string simulate(std::string const& network_input,
+   return ss.str();
+ }
+ 
+-EMSCRIPTEN_BINDINGS(module) { emscripten::function("soros", &simulate); }
+\ No newline at end of file
++std::vector<train_variant> running_time_calculation(
++    std::string const& train_spec) {
++  return utl::to_vec(parse_train_data(train_spec), [](auto&& i) {
++    return train_variant{.name_ = i.name_, .csv_ = compute_running_time(i)};
++  });
++}
++
++EMSCRIPTEN_BINDINGS(module) {
++  emscripten::class_<train_variant>("TrainVariant")
++      .property("name", &train_variant::name_)
++      .property("csv", &train_variant::csv_);
++  emscripten::register_vector<train_variant>("TrainVariantList");
++  emscripten::function("soros", &simulate);
++  emscripten::function("running_time_calculation", &running_time_calculation);
++}
+\ No newline at end of file
+diff --git a/web/running_time_calc.html b/web/running_time_calc.html
+new file mode 100644
+index 0000000..1c2cf65
+--- /dev/null
++++ b/web/running_time_calc.html
+@@ -0,0 +1,195 @@
++<!DOCTYPE html>
++<html lang="en">
++<head>
++    <meta charset="utf-8">
++    <title>SORO-S</title>
++    <style>
++        #plot {
++            height: 30%;
++            min-height: 400px;
++            border-top: 10px solid #eee;
++        }
++
++        #app {
++            display: flex;
++            display: -webkit-flex;
++            flex-direction: column;
++            -webkit-flex-direction: column;
++            position: absolute;
++            top: 0;
++            left: 0;
++            width: 100%;
++            height: 100%;
++        }
++
++        #panes {
++            display: flex;
++            display: -webkit-flex;
++            flex: 1 1 auto;
++            -webkit-flex: 1 1 auto;
++        }
++
++        #graph {
++            display: flex;
++            display: -webkit-flex;
++            flex-direction: column;
++            -webkit-flex-direction: column;
++        }
++
++        #output {
++            flex: 1 1 auto;
++            -webkit-flex: 1 1 auto;
++            position: relative;
++            overflow: auto;
++        }
++
++        #editor {
++            border-right: 1px solid #ccc;
++        }
++
++        #options label {
++            margin-right: 8px;
++        }
++
++        #options #raw.disabled {
++            opacity: 0.5;
++        }
++
++        #output svg {
++            position: absolute;
++            top: 0;
++            left: 0;
++            width: 100%;
++            height: 100%;
++        }
++
++        #output.working svg, #output.error svg {
++            opacity: 0.4;
++        }
++
++        #output.error #error {
++            display: inherit;
++        }
++
++        #output #error {
++            display: none;
++            position: absolute;
++            top: 20px;
++            left: 20px;
++            margin-right: 20px;
++            background: red;
++            color: white;
++            z-index: 1;
++        }
++
++        .gutter {
++            background-color: #eee;
++            background-repeat: no-repeat;
++            background-position: 50%;
++        }
++
++        .split {
++            box-sizing: border-box;
++            overflow-y: auto;
++            overflow-x: hidden;
++        }
++
++        .split.split-horizontal {
++            height: 100%;
++            float: left;
++        }
++    </style>
++</head>
++<body>
++
++<div style="z-index: 100; position: fixed; bottom: 1em; left: 12em;">
++    <button onclick="updateGraph()">Run</button>
++</div>
++
++<div id="app">
++    <div id="panes" class="split split-horizontal">
++        <div id="editor" class="split">
++        </div>
++        <div id="graph" class="split">
++            <div id="output">
++                <div id="error">
++                </div>
++            </div>
++        </div>
++    </div>
++</div>
++
++<script src="ace.js"></script>
++<script src="fabric.min.js"></script>
++<script src="split.min.js"></script>
++<script src="svg-pan-zoom.min.js"></script>
++<script src="plotly.min.js"></script>
++<script type="text/javascript">
++    var editor;
++    var updateGraph;
++
++    function init() {
++        var resizeEvent = new Event("paneresize");
++        Split(['#editor', '#graph'], {
++            sizes: [25, 75],
++            onDragEnd: function () {
++                const svgOutput = document.getElementById("svg_output");
++                if (svgOutput != null) {
++                    svgOutput.dispatchEvent(resizeEvent);
++                }
++            }
++        });
++
++        editor = ace.edit("editor");
++
++        updateGraph = () => {
++            function unpack(rows, key) {
++                return rows.map(function (row) {
++                    return row[key];
++                });
++            }
++
++            const COLORS = ['red', 'yellow', 'green', 'blue', 'purple'];
++            const times = Module.running_time_calculation(editor.getValue());
++            var data = [];
++            for (var i = 0; i < times.size(); ++i) {
++                const rows = Plotly.d3.csv.parse(times.get(i).csv);
++
++                data.push({
++                    type: "scatter",
++                    mode: "lines",
++                    name: times.get(i).name + ' Speed [km/h]',
++                    x: unpack(rows, 'TIME'),
++                    y: unpack(rows, 'SPEED'),
++                    line: {color: COLORS[i]}
++                });
++
++                data.push({
++                    type: "scatter",
++                    mode: "lines",
++                    name: times.get(i).name + ' Distance [m]',
++                    x: unpack(rows, 'TIME'),
++                    y: unpack(rows, 'DISTANCE'),
++                    line: {color: COLORS[i]}
++                });
++
++                times.get(i).delete();
++                delete times.get(i);
++            }
++
++            Plotly.purge('output');
++            Plotly.newPlot('output', data, {
++                title: 'Running Time Calculation',
++            });
++        }
++
++        //editor.setValue(String.raw``);
++    }
++
++    var Module = {
++        onRuntimeInitialized: init
++    };
++</script>
++<script async type="text/javascript" src="soro-web.wasm.js"></script>
++</body>
++</html>
+\ No newline at end of file
+-- 
+2.12.2
+
+
+From 99fbac786e21a4179e6eccb346cbef40d0f40ec3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Felix=20G=C3=BCndling?= <felix.guendling@gmail.com>
+Date: Sun, 9 Aug 2020 20:35:39 +0200
+Subject: [PATCH 2/2] different axis for distance and speed
+
+---
+ web/running_time_calc.html | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/web/running_time_calc.html b/web/running_time_calc.html
+index 1c2cf65..68ce730 100644
+--- a/web/running_time_calc.html
++++ b/web/running_time_calc.html
+@@ -149,7 +149,8 @@
+                 });
+             }
+ 
+-            const COLORS = ['red', 'yellow', 'green', 'blue', 'purple'];
++            const COLORS = ['DeepPink', 'Yellow', 'GreenYellow', 'DeepSkyBlue', 'Violet'];
++            const COLORS_1 = ['Fuchsia', 'Orange', 'ForestGreen', 'DodgerBlue', 'Purple'];
+             const times = Module.running_time_calculation(editor.getValue());
+             var data = [];
+             for (var i = 0; i < times.size(); ++i) {
+@@ -170,7 +171,8 @@
+                     name: times.get(i).name + ' Distance [m]',
+                     x: unpack(rows, 'TIME'),
+                     y: unpack(rows, 'DISTANCE'),
+-                    line: {color: COLORS[i]}
++                    yaxis: 'y2',
++                    line: {color: COLORS_1[i]}
+                 });
+ 
+                 times.get(i).delete();
+@@ -180,6 +182,12 @@
+             Plotly.purge('output');
+             Plotly.newPlot('output', data, {
+                 title: 'Running Time Calculation',
++                yaxis: {title: 'Speed [km/h]'},
++                yaxis2: {
++                    title: 'Distance [m]',
++                    overlaying: 'y',
++                    side: 'right'
++                }
+             });
+         }
+ 
+-- 
+2.12.2
+
