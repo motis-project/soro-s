@@ -11,8 +11,8 @@ endif()
 
 file(GLOB_RECURSE soro-lib-files src/*.cc)
 add_library(soro-lib ${soro-lib-files})
-target_link_libraries(soro-lib utl cista date)
 target_compile_features(soro-lib PUBLIC cxx_std_20)
+target_link_libraries(soro-lib utl cista date pugixml)
 target_include_directories(soro-lib PUBLIC include)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(soro-lib PRIVATE
@@ -30,6 +30,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-global-constructors
     -Wno-exit-time-destructors
     -Wno-switch-enum
+    -Wno-c++20-designator
     -Werror
   )
 elseif(MSVC)
@@ -48,7 +49,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
   file(GLOB_RECURSE soro-web-files web/*.cc)
   add_executable(soro-web ${soro-web-files})
   set_target_properties(soro-web PROPERTIES SUFFIX ".wasm.js")
-  set_target_properties(soro-web PROPERTIES LINK_FLAGS "-s WASM=1 -s --bind")
+  set_target_properties(soro-web PROPERTIES LINK_FLAGS "-s TOTAL_MEMORY=1024MB -s WASM=1 -s --bind")
   set_target_properties(soro-web PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/web)
   target_link_libraries(soro-web soro-lib)
   configure_file(web/index.html ${CMAKE_CURRENT_BINARY_DIR}/web/index.html COPYONLY)
@@ -59,6 +60,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
   configure_file(web/split.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/split.min.js COPYONLY)
   configure_file(web/svg-pan-zoom.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/svg-pan-zoom.min.js COPYONLY)
   configure_file(web/plotly.min.js ${CMAKE_CURRENT_BINARY_DIR}/web/plotly.min.js COPYONLY)
+  configure_file(web/running_time_calc.html ${CMAKE_CURRENT_BINARY_DIR}/web/running_time_calc.html COPYONLY)
 endif()
 
 file(GLOB_RECURSE soro-test-files test/*.cc)
