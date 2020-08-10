@@ -34,10 +34,10 @@ float parse_float(std::string s) {
 std::ostream& operator<<(std::ostream& out, train_physics const& tp) {
   out << tp.name_ << ":\n";
   out << "  max_speed=" << tp.max_speed_ << "\n";
-  out << "  weight=" << tp.weight_ << "\n";
+  out << "  weight=" << tp.weight_kg_ << "\n";
   out << "  running_resistance=" << tp.running_resistance_[0] << ", "
       << tp.running_resistance_[1] << ", " << tp.running_resistance_[2] << "\n";
-  for (auto const f : tp.tracitive_force_) {
+  for (auto const f : tp.tractive_force_) {
     out << "  " << f << "\n";
   }
   return out;
@@ -60,7 +60,7 @@ std::vector<train_physics> parse_train_data(std::string const& train_spec) {
       [&](auto&& variant) {
         return train_physics{
             .name_ = variant.child("Bezeichnung").child_value(),
-            .weight_ = ton_to_kg(
+            .weight_kg_ = ton_to_kg(
                 parse_float(variant.child("EigenGewicht").child_value())),
             .max_speed_ = parse_float(
                 variant.child("ZulaessigeGeschwindigkeit").child_value()),
@@ -72,7 +72,7 @@ std::vector<train_physics> parse_train_data(std::string const& train_spec) {
                      variant.child("Laufwiderstandsfaktor2").child_value()),
                  parse_float(
                      variant.child("Laufwiderstandsfaktor3").child_value())},
-            .tracitive_force_ = utl::to_vec(
+            .tractive_force_ = utl::to_vec(
                 variant.child("Stromartausruestungen")
                     .child("Stromartausruestung")
                     .child("Zugkraftfaktoren")

@@ -19,10 +19,10 @@ struct tractive_force {
 struct train_physics {
   friend std::ostream& operator<<(std::ostream& out, train_physics const& tp);
   std::string name_;
-  float weight_;
+  float weight_kg_;
   meter_per_second max_speed_;
   std::array<float, 3> running_resistance_;
-  std::vector<tractive_force> tracitive_force_;
+  std::vector<tractive_force> tractive_force_;
 };
 
 std::vector<train_physics> parse_train_data(std::string const&);
