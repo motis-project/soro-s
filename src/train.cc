@@ -136,13 +136,15 @@ void train::build_routes(network const& net) {
       auto const edge_target = e->opposite(curr_node);
       switch (edge_target->type_) {
         case node::type::APPROACH_SIGNAL:
-          if (edge_target->action_traversal_.first == e) {
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
             next_route.approach_signal_ = e->to_;
           }
           break;
 
         case node::type::MAIN_SIGNAL:
-          if (edge_target->action_traversal_.first == e) {
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
             make_route(edge_target);
             curr_route = next_route;
             curr_route.from_ = edge_target;
@@ -150,16 +152,19 @@ void train::build_routes(network const& net) {
           break;
 
         case node::type::END_OF_TRAIN_DETECTOR:
-          if (curr_route.end_of_train_detector_ == nullptr) {
-            curr_route.dist_to_eotd_ = std::accumulate(
-                cbegin(curr_route.path_), cend(curr_route.path_), 0U,
-                [](unsigned dist, edge const* a) { return dist + a->dist_; });
-            curr_route.end_of_train_detector_ = edge_target;
-          } else {
-            make_route(edge_target);
-            curr_route = next_route;
-            curr_route.from_ = edge_target;
-            curr_route.end_of_train_detector_ = edge_target;
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
+            if (curr_route.end_of_train_detector_ == nullptr) {
+              curr_route.dist_to_eotd_ = std::accumulate(
+                  cbegin(curr_route.path_), cend(curr_route.path_), 0U,
+                  [](unsigned dist, edge const* a) { return dist + a->dist_; });
+              curr_route.end_of_train_detector_ = edge_target;
+            } else {
+              make_route(edge_target);
+              curr_route = next_route;
+              curr_route.from_ = edge_target;
+              curr_route.end_of_train_detector_ = edge_target;
+            }
           }
           break;
 

@@ -60,7 +60,7 @@ struct node {
   station* station_;
   std::string name_;
   cista::raw::hash_map<edge*, cista::raw::hash_set<edge*>> traversals_;
-  std::pair<edge*, edge*> action_traversal_;
+  cista::raw::hash_map<edge*, edge*> action_traversal_;
   edge* end_node_edge_{nullptr};
   cista::raw::vector<pixel> draw_representation_;
 };

@@ -1,5 +1,6 @@
 #include "soro/ascii_network_parser.h"
 
+#include <cassert>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -41,6 +42,8 @@ struct ascii_network_parser {
 
     // End of train detectors.
     END_OF_TRAIN_DETECTOR = '%',
+    END_OF_TRAIN_DETECTOR_L = '[',
+    END_OF_TRAIN_DETECTOR_R = ']',
 
     // Approach signals.
     APPROACH_SIGNAL_L = '(',
@@ -225,7 +228,9 @@ struct ascii_network_parser {
           case SINGLE_SLIP: [[fallthrough]];
           case SINGLE_SLIP_INVERTED: do_single_slip(p, c); break;
 
-          case END_OF_TRAIN_DETECTOR: do_eotd(p); break;
+          case END_OF_TRAIN_DETECTOR_R:
+          case END_OF_TRAIN_DETECTOR_L: [[fallthrough]];
+          case END_OF_TRAIN_DETECTOR: do_eotd(p, c); break;
 
           case APPROACH_SIGNAL_L:
             do_directional_node(p, dir::RIGHT, dir::LEFT,
@@ -427,10 +432,10 @@ struct ascii_network_parser {
     }
   }
 
-  void do_eotd(pixel_pos const p) {
+  void do_eotd(pixel_pos const p, char const type) {
     auto const n = net_.nodes_.emplace_back(std::make_unique<node>()).get();
     n->name_ = fmt::format("EOTD{}_{}", p.x_, p.y_);
-    n->draw_representation_.emplace_back(p, END_OF_TRAIN_DETECTOR);
+    n->draw_representation_.emplace_back(p, type);
     n->type_ = node::type::END_OF_TRAIN_DETECTOR;
     map_[p][KNOT] = n;
   }
@@ -628,6 +633,28 @@ struct ascii_network_parser {
             get_edge(next(pos, get_opposite(d)), get_orientation(d));
         n->traversals_[e].emplace(opposite_e);
         n->traversals_[opposite_e].emplace(e);
+
+        switch (n->draw_representation_.front().content_) {
+          case END_OF_TRAIN_DETECTOR:
+            n->action_traversal_[e] = opposite_e;
+            n->action_traversal_[opposite_e] = e;
+            break;
+
+          case END_OF_TRAIN_DETECTOR_L:
+            if (d == dir::RIGHT) {
+              n->action_traversal_[e] = opposite_e;
+            }
+            break;
+
+          case END_OF_TRAIN_DETECTOR_R:
+            if (d == dir::LEFT) {
+              n->action_traversal_[e] = opposite_e;
+            }
+            break;
+
+          default: assert(false);
+        }
+
         orientation = get_orientation(d);
       });
       utl::verify(orientation != KNOT, "eotd at {} has no neighbors", p);
@@ -695,7 +722,7 @@ struct ascii_network_parser {
       utl::verify(from != nullptr, "signal {} from not found", pos);
       utl::verify(to != nullptr, "signal {} to not found", pos);
 
-      signal->action_traversal_ = {from, to};
+      signal->action_traversal_[from] = to;
       signal->traversals_[from].emplace(to);
       signal->traversals_[to].emplace(from);
     }
@@ -715,7 +742,7 @@ struct ascii_network_parser {
       auto const to_edge = get_edge(next(pos, to), get_orientation(to));
       n->traversals_[from_edge].emplace(to_edge);
       n->traversals_[to_edge].emplace(from_edge);
-      n->action_traversal_ = {from_edge, to_edge};
+      n->action_traversal_[from_edge] = to_edge;
     }
   }
 
