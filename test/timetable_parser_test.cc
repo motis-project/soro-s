@@ -16,7 +16,7 @@ struct r {
 
 TEST_CASE("timetable_parser_1") {
   auto const net =
-      parse_network("a===)=A>=]======)=B>=]======)=C>=]======)=D>=]===b");
+      parse_network("a===)=A>=%======)=B>=%======)=C>=%======)=D>=%===b");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED
 X,50
 Y,100
@@ -43,11 +43,11 @@ Z,b,2020-01-01 14:07:00
 
 TEST_CASE("timetable_parser_2") {
   auto const net = parse_network(R"(
-=a=)==U>=]=========)==A>=]==*   *=)===D>=]===)==Y>==]=d=
+=a=)==U>=%=========)==A>=%==*   *=)===D>=%===)==Y>==%=d=
                              \ /
                               X
                              / \
-=c=)==V>=]=========)==C>=]==*   *=)===B>=]===)==Z>==]=b=
+=c=)==V>=%=========)==C>=%==*   *=)===B>=%===)==Z>==%=b=
 )");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED
 X,100
@@ -70,11 +70,11 @@ Y,d,2020-01-01 13:08:00
 
 TEST_CASE("timetable_parser_3") {
   auto const net = parse_network(R"(
-           *=[=<C=(====*
+           *=%=<C=(====*
           /             \
-a=)=A>=]=*               *=[=<D=(=b
+a=)=A>=%=*               *=%=<D=(=b
           \             /
-           *===)=B>=]==*
+           *===)=B>=%==*
 )");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED
 X,100
@@ -99,9 +99,9 @@ Y,a,2020-01-01 13:03:00
 
 TEST_CASE("timetable_parser_4") {
   auto const net = parse_network(R"(
-                      *=[=)=<PP==B>=]=(=========)=[=<P==(=BB>=]===*                       *=[=)=<LL==F>=]=(=========)=[=<L==(=FF>=]===*
+                      *=%=)=<PP==B>=%=(=========)=%=<P==(=BB>=%===*                       *=%=)=<LL==F>=%=(=========)=%=<L==(=FF>=%===*
                      /                                             \                     /                                             \
-a=)===[=<R===U>=]=(=*===[=)=<QQ==C>=]=(=========)=[=<Q==(=CC>=]=====*==)===[=<W==A>=]=(=*===[=)=<MM==E>=]=(=========)=[=<M==(=EE>=]=====*=)===[=<G=(=K>==b
+a=)===%=<R===U>=%=(=*===%=)=<QQ==C>=%=(=========)=%=<Q==(=CC>=%=====*==)===%=<W==A>=%=(=*===%=)=<MM==E>=%=(=========)=%=<M==(=EE>=%=====*=)===%=<G=(=K>==b
 )");
   auto const tt = parse_timetable(net, R"(TRAIN,SPEED
 X,100
