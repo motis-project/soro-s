@@ -17,7 +17,6 @@ constexpr auto const NEWTON_TO_KILO_NEWTON = 1 / 1000.0;
 
 double analytical(train_physics const& i, std::array<float, 3> const& f,
                   double const t0, double const v0_kmh, double const v1_kmh) {
-  auto const& c = i.running_resistance_;
   auto const c0 = (f[0] - (i.running_resistance_[0] * i.weight_t_ * G_M_S2)) /
                   (i.weight_t_ * BETA);
   auto const c1 = (f[1] - (i.running_resistance_[1] * i.weight_t_ * G_M_S2 *
