@@ -13,7 +13,8 @@ struct tractive_force {
   friend std::ostream& operator<<(std::ostream& out, tractive_force const& f);
   bool operator<(tractive_force const& o) const;
   meter_per_second from_, to_;
-  std::array<float, 3> tracitive_force_;
+  std::array<float, 3> tractive_force_;
+  std::array<float, 3> coefficients_;
 };
 
 struct train_physics {

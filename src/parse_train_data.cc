@@ -10,8 +10,8 @@
 namespace soro {
 
 std::ostream& operator<<(std::ostream& out, tractive_force const& f) {
-  return out << f.from_ << " - " << f.to_ << ": " << f.tracitive_force_[0]
-             << ", " << f.tracitive_force_[1] << ", " << f.tracitive_force_[2];
+  return out << f.from_ << " - " << f.to_ << ": " << f.tractive_force_[0]
+             << ", " << f.tractive_force_[1] << ", " << f.tractive_force_[2];
 }
 
 bool tractive_force::operator<(tractive_force const& o) const {
@@ -58,35 +58,49 @@ std::vector<train_physics> parse_train_data(std::string const& train_spec) {
           .child("Triebfahrzeugbaureihenvarianten")
           .children("Triebfahrzeugbaureihenvariante"),
       [&](auto&& variant) {
+        auto const running_resistence = std::array<float, 3>{
+            parse_float(variant.child("Laufwiderstandsfaktor1").child_value()) /
+                1000.0F,
+            parse_float(variant.child("Laufwiderstandsfaktor2").child_value()) /
+                1000.0F,
+            parse_float(variant.child("Laufwiderstandsfaktor3").child_value()) /
+                1000.0F};
+        auto const weight =
+            parse_float(variant.child("EigenGewicht").child_value());
         return train_physics{
             .name_ = variant.child("Bezeichnung").child_value(),
-            .weight_t_ =
-                parse_float(variant.child("EigenGewicht").child_value()),
+            .weight_t_ = weight,
             .max_speed_ = parse_float(
                 variant.child("ZulaessigeGeschwindigkeit").child_value()),
-            .running_resistance_ =
-                {parse_float(
-                     variant.child("Laufwiderstandsfaktor1").child_value()) /
-                     1000.0F,
-                 parse_float(
-                     variant.child("Laufwiderstandsfaktor2").child_value()),
-                 parse_float(
-                     variant.child("Laufwiderstandsfaktor3").child_value())},
+            .running_resistance_ = running_resistence,
             .tractive_force_ = utl::to_vec(
                 variant.child("Stromartausruestungen")
                     .child("Stromartausruestung")
                     .child("Zugkraftfaktoren")
                     .children("Zugkraftfaktor"),
                 [&](auto&& el) {
+                  auto const f = std::array<float, 3>{
+                      parse_float(el.child("Faktor1").child_value()),
+                      parse_float(el.child("Faktor2").child_value()),
+                      parse_float(el.child("Faktor3").child_value())};
+
+                  constexpr auto const G_M_S2 = 9.81F;
+                  constexpr auto const BETA = 1.06F;
+                  auto const coefficients = std::array<float, 3>{
+                      (f[0] - (running_resistence[0] * weight * G_M_S2)) /
+                          (weight * BETA),
+                      (f[1] - (running_resistence[1] * weight * G_M_S2)) /
+                          (weight * BETA),
+                      (f[2] - (running_resistence[2] * G_M_S2)) /
+                          (weight * BETA)};
+
                   return tractive_force{
                       .from_ = parse_float(
                           el.child("GeschwindigkeitVon").child_value()),
                       .to_ = parse_float(
                           el.child("GeschwindigkeitBis").child_value()),
-                      .tracitive_force_ = {
-                          parse_float(el.child("Faktor1").child_value()),
-                          parse_float(el.child("Faktor2").child_value()),
-                          parse_float(el.child("Faktor3").child_value())}};
+                      .tractive_force_ = f,
+                      .coefficients_ = coefficients};
                 })};
       });
 }
