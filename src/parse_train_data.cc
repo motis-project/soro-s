@@ -33,8 +33,8 @@ float parse_float(std::string s) {
 
 std::ostream& operator<<(std::ostream& out, train_physics const& tp) {
   out << tp.name_ << ":\n";
-  out << "  max_speed=" << tp.max_speed_ << "\n";
-  out << "  weight=" << tp.weight_kg_ << "\n";
+  out << "  max_speed=" << tp.max_speed_ << "km/h\n";
+  out << "  weight=" << tp.weight_t_ << "t\n";
   out << "  running_resistance=" << tp.running_resistance_[0] << ", "
       << tp.running_resistance_[1] << ", " << tp.running_resistance_[2] << "\n";
   for (auto const f : tp.tractive_force_) {
@@ -60,8 +60,8 @@ std::vector<train_physics> parse_train_data(std::string const& train_spec) {
       [&](auto&& variant) {
         return train_physics{
             .name_ = variant.child("Bezeichnung").child_value(),
-            .weight_kg_ = ton_to_kg(
-                parse_float(variant.child("EigenGewicht").child_value())),
+            .weight_t_ =
+                parse_float(variant.child("EigenGewicht").child_value()),
             .max_speed_ = parse_float(
                 variant.child("ZulaessigeGeschwindigkeit").child_value()),
             .running_resistance_ =
