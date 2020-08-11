@@ -1,7 +1,6 @@
 #include "soro/running_time_calculation.h"
 
 #include <complex>
-#include <iostream>
 #include <sstream>
 
 #include "utl/verify.h"
@@ -46,6 +45,7 @@ double time_until(train_physics const& i, double const target_speed_kmh) {
     }
   }
   assert(false);
+  throw std::runtime_error{"error in running time calculation"};
 }
 
 std::string compute_running_time(train_physics const& i) {
