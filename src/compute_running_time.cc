@@ -15,19 +15,20 @@ constexpr auto const M_S_TO_KM_H = 3.6F;
 constexpr auto const BETA = 1.06F;
 constexpr auto const NEWTON_TO_KILO_NEWTON = 1 / 1000.0;
 
-double analytical(train_physics const& i, std::array<float, 3> const& F,
+double analytical(train_physics const& i, std::array<float, 3> const& f,
                   double const t0, double const v0_kmh, double const v1_kmh) {
-  auto const C0 = (F[0] - (i.running_resistance_[0] * i.weight_t_ * G_M_S2)) /
+  auto const& c = i.running_resistance_;
+  auto const c0 = (f[0] - (i.running_resistance_[0] * i.weight_t_ * G_M_S2)) /
                   (i.weight_t_ * BETA);
-  auto const C1 = (F[1] - (i.running_resistance_[1] * i.weight_t_ * G_M_S2 *
+  auto const c1 = (f[1] - (i.running_resistance_[1] * i.weight_t_ * G_M_S2 *
                            NEWTON_TO_KILO_NEWTON)) /
                   (i.weight_t_ * BETA);
-  auto const C2 =
-      (F[2] - (i.running_resistance_[2] * G_M_S2 * NEWTON_TO_KILO_NEWTON)) /
+  auto const c2 =
+      (f[2] - (i.running_resistance_[2] * G_M_S2 * NEWTON_TO_KILO_NEWTON)) /
       (i.weight_t_ * BETA);
-  auto const o = std::sqrt(std::complex<double>(4.0 * C0 * C2 - C1 * C1));
-  auto const a = std::atan(std::complex<double>{C1 + 2.0 * C2 * v1_kmh} / o);
-  auto const b = std::atan(std::complex<double>{C1 + 2.0 * C2 * v0_kmh} / o);
+  auto const o = std::sqrt(std::complex<double>(4.0 * c0 * c2 - c1 * c1));
+  auto const a = std::atan(std::complex<double>{c1 + 2.0 * c2 * v1_kmh} / o);
+  auto const b = std::atan(std::complex<double>{c1 + 2.0 * c2 * v0_kmh} / o);
   return t0 + ((2.0 / (3.6 * o)) * (a - b)).real();
 }
 
