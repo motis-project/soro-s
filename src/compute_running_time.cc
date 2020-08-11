@@ -50,7 +50,7 @@ double time_until(train_physics const& i, double const target_speed_kmh) {
 
 std::string compute_running_time(train_physics const& i) {
   std::stringstream out;
-  out << "TIME,DISTANCE,SPEED,ANALYTICAL,ANALYTICAL_1\n";
+  out << "TIME,DISTANCE,SPEED,ANALYTICAL\n";
 
   auto coefficients_it = begin(i.tractive_force_);
   auto time_sec = 0.0F;
