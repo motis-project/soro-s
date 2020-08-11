@@ -36,7 +36,13 @@ std::ostream& operator<<(std::ostream& out, route const& r) {
         << (out_route->from_ != nullptr ? out_route->from_->name_ : "START")
         << "->" << out_route->to_->name_;
   }
-  return out << "] }";
+  out << "]";
+  return out << ", EOTD="
+             << (r.end_of_train_detector_ == nullptr
+                     ? "null"
+                     : r.end_of_train_detector_->name_)
+             << ", MAIN=" << (r.main_ == nullptr ? "null" : r.main_->tag())
+             << " }";
 }
 
 std::string route::tag() const {
@@ -86,7 +92,7 @@ void route::compute_sched_times() {
 
 void train::build_routes(network const& net) {
   route curr_route, next_route;
-  route* pred{nullptr};
+  route *pred{nullptr}, *main{nullptr};
   for (auto const [source, dest] : utl::pairwise(timetable_)) {
     auto const start = routes_.emplace_back(std::make_unique<route>()).get();
     start->train_ = this;
@@ -100,6 +106,29 @@ void train::build_routes(network const& net) {
     utl::verify(!edges.empty(), "path for {} from {} to {} not found", name_,
                 source.node_->name_, dest.node_->name_);
 
+    auto const make_route = [&](node* to) {
+      curr_route.to_ = to;
+      curr_route.train_ = this;
+      auto const r =
+          routes_.emplace_back(std::make_unique<route>(curr_route)).get();
+      if (curr_route.from_->type_ != node::type::END_OF_TRAIN_DETECTOR) {
+        main = r;
+      }
+      r->main_ = main;
+      r->pred_ = pred;
+      if (pred != nullptr) {
+        r->pred_->succ_ = r;
+        pred->out_.emplace(r);
+        r->in_.emplace(pred);
+      }
+      if (start->out_.empty()) {
+        start->out_.emplace(r);
+        r->in_.emplace(start);
+      }
+      r->compute_sched_times();
+      pred = r;
+    };
+
     node* curr_node{source.node_};
     curr_route.from_ = source.node_;
     for (auto const& e : edges) {
@@ -107,42 +136,34 @@ void train::build_routes(network const& net) {
       auto const edge_target = e->opposite(curr_node);
       switch (edge_target->type_) {
         case node::type::APPROACH_SIGNAL:
-          if (edge_target->action_traversal_.first == e) {
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
             next_route.approach_signal_ = e->to_;
           }
           break;
 
         case node::type::MAIN_SIGNAL:
-          if (edge_target->action_traversal_.first == e) {
-            curr_route.to_ = edge_target;
-            curr_route.train_ = this;
-            auto const r =
-                routes_.emplace_back(std::make_unique<route>(curr_route)).get();
-            r->pred_ = pred;
-            if (pred != nullptr) {
-              r->pred_->succ_ = r;
-              pred->out_.emplace(r);
-              r->in_.emplace(pred);
-            }
-            if (start->out_.empty()) {
-              start->out_.emplace(r);
-              r->in_.emplace(start);
-            }
-            r->compute_sched_times();
-            pred = r;
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
+            make_route(edge_target);
             curr_route = next_route;
             curr_route.from_ = edge_target;
-            break;
           }
           break;
 
         case node::type::END_OF_TRAIN_DETECTOR:
-          if (edge_target->action_traversal_.first == e) {
-            if (!routes_.empty()) {
+          if (edge_target->action_traversal_.find(e) !=
+              end(edge_target->action_traversal_)) {
+            if (curr_route.end_of_train_detector_ == nullptr) {
               curr_route.dist_to_eotd_ = std::accumulate(
                   cbegin(curr_route.path_), cend(curr_route.path_), 0U,
                   [](unsigned dist, edge const* a) { return dist + a->dist_; });
-              routes_.back()->end_of_train_detector_ = e->to_;
+              curr_route.end_of_train_detector_ = edge_target;
+            } else {
+              make_route(edge_target);
+              curr_route = next_route;
+              curr_route.from_ = edge_target;
+              curr_route.end_of_train_detector_ = edge_target;
             }
           }
           break;
@@ -151,27 +172,12 @@ void train::build_routes(network const& net) {
       }
 
       if (edge_target == dest.node_ && curr_route.from_ != dest.node_) {
-        curr_route.to_ = dest.node_;
-        curr_route.train_ = this;
-        auto const r =
-            routes_.emplace_back(std::make_unique<route>(curr_route)).get();
-        r->pred_ = pred;
-        if (pred != nullptr) {
-          r->pred_->succ_ = r;
-          pred->out_.emplace(r);
-          r->in_.emplace(pred);
-        }
-        if (start->out_.empty()) {
-          start->out_.emplace(r);
-          r->in_.emplace(start);
-        }
-        r->compute_sched_times();
-        pred = r;
+        make_route(edge_target);
       }
       curr_node = edge_target;
     }
   }
-}  // namespace soro
+}
 
 void route::compute_dists() {
   unixtime start{std::numeric_limits<unixtime>::min()};

@@ -495,12 +495,12 @@ TEST_CASE("horizontal_signal") {
     CHECK(s1->traversals_.size() == 2);
     CHECK(s1->traversals_[e1] == cr::hash_set<edge*>{e2});
     CHECK(s1->traversals_[e2] == cr::hash_set<edge*>{e1});
-    CHECK(s1->action_traversal_ == std::pair{e1, e2});
+    CHECK(s1->action_traversal_.at(e1) == e2);
 
     CHECK(s2->traversals_.size() == 2);
     CHECK(s2->traversals_[e2] == cr::hash_set<edge*>{e3});
     CHECK(s2->traversals_[e3] == cr::hash_set<edge*>{e2});
-    CHECK(s2->action_traversal_ == std::pair{e3, e2});
+    CHECK(s2->action_traversal_.at(e3) == e2);
   }
 }
 
@@ -508,55 +508,65 @@ TEST_CASE("approach_signal_signal_end_of_train_detector") {
   auto const net = parse_network(R"(
 # 1 Approach Signal -> Signal -> End of Train Detector
 
- a==1===)======2======AA>=====3==========]==4==b
+ a==1===)======2======AA>=====3==========%=4=]==5==b
 
 )");
 
-  REQUIRE(net.nodes_.size() == 5);
-  REQUIRE(net.edges_.size() == 4);
+  REQUIRE(net.nodes_.size() == 6);
+  REQUIRE(net.edges_.size() == 5);
 
   auto const e0 = net.edges_[0].get();
   auto const e1 = net.edges_[1].get();
   auto const e2 = net.edges_[2].get();
   auto const e3 = net.edges_[3].get();
+  auto const e4 = net.edges_[4].get();
 
   CHECK(e0->id_ == 1);
   CHECK(e1->id_ == 2);
   CHECK(e2->id_ == 3);
   CHECK(e3->id_ == 4);
+  CHECK(e4->id_ == 5);
 
   auto const n0 = net.nodes_[1].get();
   auto const n1 = net.nodes_[2].get();
   auto const n2 = net.nodes_[3].get();
+  auto const n3 = net.nodes_[4].get();
 
   CHECK(n0->type_ == node::type::APPROACH_SIGNAL);
   CHECK(n1->type_ == node::type::MAIN_SIGNAL);
   CHECK(n2->type_ == node::type::END_OF_TRAIN_DETECTOR);
+  CHECK(n3->type_ == node::type::END_OF_TRAIN_DETECTOR);
 
   CHECK(n0->traversals_.at(e0) == cr::hash_set<edge*>{e1});
   CHECK(n0->traversals_.at(e1) == cr::hash_set<edge*>{e0});
-  CHECK(n0->action_traversal_ == std::pair{e0, e1});
+  CHECK(n0->action_traversal_.at(e0) == e1);
 
   CHECK(n1->traversals_.at(e1) == cr::hash_set<edge*>{e2});
   CHECK(n1->traversals_.at(e2) == cr::hash_set<edge*>{e1});
-  CHECK(n1->action_traversal_ == std::pair{e1, e2});
+  CHECK(n1->action_traversal_.at(e1) == e2);
 
   CHECK(n2->traversals_.at(e2) == cr::hash_set<edge*>{e3});
   CHECK(n2->traversals_.at(e3) == cr::hash_set<edge*>{e2});
-  CHECK(n2->action_traversal_ == std::pair{e2, e3});
+  CHECK(n2->action_traversal_.at(e3) == e2);
+  CHECK(n2->action_traversal_.at(e2) == e3);
+
+  CHECK(n3->traversals_.at(e3) == cr::hash_set<edge*>{e4});
+  CHECK(n3->traversals_.at(e4) == cr::hash_set<edge*>{e3});
+  CHECK(n3->action_traversal_.at(e3) == e4);
+  CHECK(n3->action_traversal_.size() == 1);
 }
 
 TEST_CASE("station") {
   parse_network(R"(
 # 1 Simple Double Track Station
-                                 *=<Q=====O>=*
-                                /             \
-=)=====[=====AA>=)=*===*=======*===<P=====L>===*=*=========*=(=<F====]=======(==
-                    \ /                           \       /
-                     X                             \     /
-                    / \                             \   /
-=)=====[======A>=)=*===*=======*===<S====N>====*=====*=*=====(=<FF===]=======(==
-                                \             /
-                                 *=<R====M>==*
+                                 *=====<Q=%=========%=O>======*
+                                /                              \
+=)=%========AA>=%=)=*=%=*=%=====*======<P=%=========%=L>========*=====%====*======%======*=(=<F====%=======(==
+                     \ /                                                    \           /
+                      X                                                      %         %
+                     / \                                                      \       /
+=)=%=========A>=%=)=*=%=*=%=====*======<S=%=========%=N>========*=====%========*==%==*=====(=<FF===%=======(==
+                                \                              /
+                                 *=====<R=%=========%=M>======*
 )");
 }

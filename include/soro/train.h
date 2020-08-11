@@ -48,7 +48,7 @@ struct route {
   node* approach_signal_{nullptr};  // contained in previous route
   node* end_of_train_detector_{nullptr};  // contained in next route
   node *from_{nullptr}, *to_{nullptr};
-  route *pred_{nullptr}, *succ_{nullptr};
+  route *main_{nullptr}, *pred_{nullptr}, *succ_{nullptr};
   unixtime from_time_{0}, to_time_{0};
   std::vector<edge*> path_;
   train* train_{nullptr};
