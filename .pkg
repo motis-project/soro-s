@@ -21,4 +21,4 @@
 [benchmark]
   url=git@github.com:motis-project/benchmark.git
   branch=master
-  commit=1302d2ce094a9753b0f81a81ea74c0fa71fae582
+  commit=94dc64692fa7e1feb361f5b6b3277fc982953afd
