@@ -9,14 +9,14 @@ auto const info = parse_train_data(R"(PASTE HERE)");
 
 static void acceleration_numerical(benchmark::State& state) {
   for (auto _ : state) {
-    benchmark::DoNotOptimize(time_until_numerical(info.front(), 160));
+    benchmark::DoNotOptimize(compute_train_run(info.front(), 160));
   }
 }
 BENCHMARK(acceleration_numerical)->Threads(8);
 
 static void acceleration_analytical(benchmark::State& state) {
   for (auto _ : state) {
-    benchmark::DoNotOptimize(time_until_analytical(info.front(), 160));
+    benchmark::DoNotOptimize(compute_train_run(info.front(), 160));
   }
 }
 BENCHMARK(acceleration_analytical)->Threads(8);
