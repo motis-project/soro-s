@@ -6,22 +6,23 @@ PointerAlignment: Left
 AccessModifierOffset: -2
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AlignTrailingComments: false
+RequiresClausePosition: OwnLine
 KeepEmptyLinesAtTheStartOfBlocks: true
 AllowShortCaseLabelsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
 SpacesBeforeTrailingComments: 2
 IncludeBlocks: Preserve
 IncludeCategories:
-  - Regex:           '^<.*\.h>'
-    Priority:        1
-  - Regex:           '^<c.*'
-    Priority:        2
-  - Regex:           '^"boost.*'
-    Priority:        3
-  - Regex:           '^<.*'
-    Priority:        12
-  - Regex:           '.*'
-    Priority:        13
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^<c.*'
+    Priority: 2
+  - Regex: '^"boost.*'
+    Priority: 3
+  - Regex: '^<.*'
+    Priority: 12
+  - Regex: '.*'
+    Priority: 13
 ---
 BasedOnStyle: Google
 IndentWidth: 2
@@ -37,13 +38,13 @@ AlwaysBreakTemplateDeclarations: true
 SpacesBeforeTrailingComments: 2
 ColumnLimit: 80
 IncludeCategories:
-  - Regex:           '^<.*\.h>'
-    Priority:        1
-  - Regex:           '^<c.*'
-    Priority:        2
-  - Regex:           '^"boost.*'
-    Priority:        3
-  - Regex:           '^<.*'
-    Priority:        12
-  - Regex:           '.*'
-    Priority:        13
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^<c.*'
+    Priority: 2
+  - Regex: '^"boost.*'
+    Priority: 3
+  - Regex: '^<.*'
+    Priority: 12
+  - Regex: '.*'
+    Priority: 13

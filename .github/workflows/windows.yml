@@ -10,83 +10,43 @@ on:
       - published
 
 jobs:
-  build:
-    runs-on: windows-latest
+  windows-build:
+    runs-on: windows-2019
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        mode: [Debug, Release]
+        config:
+          - preset: msvc-release
+          - preset: msvc-debug
 
     env:
       CXX: cl.exe
       CC: cl.exe
       BUILDCACHE_COMPRESS: true
-      BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
+      BUILDCACHE_DIRECT_MODE: true
       BUILDCACHE_ACCURACY: SLOPPY
+      BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
       BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
 
     steps:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-ninja@master
-
-      # ==== CACHE ====
-      - name: buildcache Cache
-        uses: actions/cache@v1.1.2
+      - uses: actions/setup-python@v3
         with:
-          path: ${{ github.workspace }}/.buildcache
-          key: buildcache-windows-${{ matrix.mode }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}
-          restore-keys: |
-            buildcache-windows-${{ matrix.mode }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}
-            buildcache-windows-${{ matrix.mode }}-${{ hashFiles('.pkg') }}-
-            buildcache-windows-${{ matrix.mode }}-
-
-      - name: Dependencies Cache
-        uses: actions/cache@v1.1.2
-        with:
-          path: ${{ github.workspace }}/deps
-          key: deps-${{ hashFiles('.pkg') }}
-          restore-keys: deps-
+          python-version: '3.x'
 
       # ==== BUILD ====
       - name: Build
         run: |
-          $env:BOOST_ROOT = $env:BOOST_ROOT_1_72_0
           $devShell = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find **\Microsoft.VisualStudio.DevShell.dll
           $installPath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
           Import-Module $devShell
-          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64"
-          cmake -GNinja -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.mode }}
-          .\build\bin\buildcache.exe -z
-          cmake --build build --target soro-test
-          .\build\bin\buildcache.exe -s
+          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64 -vcvars_ver=14.29"
+          cmake --preset=${{ matrix.config.preset }}
+          cmake --build build\${{ matrix.config.preset }} --target soro-test
 
       # ==== TESTS ====
       - name: Run Tests
-        run: .\build\soro-test.exe
-
-      # ==== DISTRIBUTION ====
-      - name: Create Distribution
-        if: matrix.mode == 'Release'
-        run: >
-          7z a soro-windows.zip
-          .\build\soro-test.exe
-
-      - name: Upload Distribution
-        if: matrix.mode == 'Release'
-        uses: actions/upload-artifact@v1
-        with:
-          name: soro-windows
-          path: soro-windows.zip
-
-      # ==== RELEASE ====
-      - name: Upload Release
-        if: github.event.action == 'published' && matrix.mode == 'Release'
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-windows.zip
-          asset_name: soro-windows.zip
-          asset_content_type: application/zip
+        run: .\build\${{ matrix.config.preset }}\soro-test.exe

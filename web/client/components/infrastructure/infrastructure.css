@@ -1,0 +1,49 @@
+#map {
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+#infrastructureTooltip {
+    display: none;
+    left: 0;
+    top: 0;
+    background: white;
+    border: 2px;
+    border-radius: 5px;
+}
+
+.map-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--overlay-color);
+    margin-right: 20px;
+    font-family: var(--main-font-family);
+    overflow: auto;
+    border-radius: var(--border-radius)
+}
+
+#mapLegend {
+    padding: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 18px;
+    height: fit-content;
+    margin-bottom: 40px;
+    width: fit-content;
+    background: var(--overlay-color);
+}
+
+.legend-key {
+    height: 1em;
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+.legend-key-icon {
+    margin-right: 7px;
+    display: inline-block;
+    height: 1em;
+}

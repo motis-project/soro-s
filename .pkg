@@ -1,11 +1,11 @@
 [cista]
   url=git@github.com:felixguendling/cista.git
   branch=master
-  commit=2d93750f864a7cc1e4de236723ef82f90d37aedd
+  commit=32e52a0082e89986bb86afad513654fa6a6c1412
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=46efb27d4a92e640a59de4a5ecff70168c5b7087
+  commit=7fdc7652d650243ede2d33820d34f2824fafddba
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
@@ -13,8 +13,28 @@
 [date]
   url=git@github.com:motis-project/date.git
   branch=master
-  commit=6de941079a68b29753c430fb19c3b110c8499c97
+  commit=17429576f2468e1deb487c1d0fee91d3cfd54814
 [pugixml]
   url=git@github.com:motis-project/pugixml.git
   branch=master
   commit=60175e80e2f5e97e027ac78f7e14c5acc009ce50
+[tar]
+  url=git@github.com:motis-project/tar.git
+  branch=master
+  commit=6b7c88cb8cbf00e972dc51e3e30d4bb5ea001f40
+[tiles]
+  url=git@github.com:motis-project/tiles.git
+  branch=master
+  commit=8fb1e9ab5dc6f22a71aebeff38bdb4021a7b3db8
+[rapidjson]
+  url=git@github.com:motis-project/rapidjson.git
+  branch=master
+  commit=e7a1ac95c7840c6f4351abead02b1f7a02874197
+[emsdk]
+  url=git@github.com:julianharbarth/emsdk.git
+  branch=master
+  commit=7d7ee02f479e578b286bda497be0df0414a5bbaa
+[boost]
+  url=git@github.com:motis-project/boost.git
+  branch=master
+  commit=c90d53bdcd7ff741a416ae122b33c9c2a96e8be7

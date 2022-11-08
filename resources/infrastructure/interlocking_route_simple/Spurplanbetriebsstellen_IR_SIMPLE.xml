@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<XmlIssDaten xsi:noNamespaceSchemaLocation="..\schema\xmliss.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Ersteller>TU ALGO</Ersteller>
+	<Erstellzeitpunkt>11.02.2022</Erstellzeitpunkt>
+	<Indexdatei>Index.xml</Indexdatei>
+	<Version>
+		<Name>Jahresfahrplan 2000</Name>
+		<Nummer>1</Nummer>
+		<GueltigAb>01.01.2000</GueltigAb>
+		<GueltigBis>01.01.2100</GueltigBis>
+		<Beschreibung></Beschreibung>
+        <LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+	</Version>
+	<Spurplanbetriebsstellen>
+        
+        <Spurplanbetriebsstelle>
+			<Betriebsstelle>BS_1</Betriebsstelle>
+			<Spurplanabschnitte>
+				<Spurplanabschnitt>
+					<Strecke>1234</Strecke>
+					<Spurplanknoten>
+						<Betriebsstellengrenze>
+							<ID>1</ID>
+							<Kilometrierung>37,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022: 14:00:00</LetzteAenderung>
+							<PartnerBtrst>KMES</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>1,0</X>
+								<Y>3,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>2</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+						<HalteplatzRzLinksS>
+							<ID>3</ID>
+							<Kilometrierung>37,500</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>Halt_BS1</Name>
+							<BezeichnerBetrieb>1</BezeichnerBetrieb>
+							<BezeichnerExtern>1</BezeichnerExtern>
+							<Laenge Einheit="m">50</Laenge>
+						</HalteplatzRzLinksS>
+                        <HauptsignalS>
+							<ID>99</ID>
+							<Kilometrierung>37,600</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>HS99</Name>
+							<DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+						</HauptsignalS>
+						<Betriebsstellengrenze>
+							<ID>2</ID>
+							<Kilometrierung>38,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<PartnerBtrst>BS_2</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>2,0</X>
+								<Y>3,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>1</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+					</Spurplanknoten>
+				</Spurplanabschnitt>
+			</Spurplanabschnitte>
+			<Betriebsstellenfahrwege>
+				<Betriebsstellenfahrweg>
+					<Name>Path1</Name>
+					<Anfang Typ="Betriebsstellengrenze" ID="1">2651-1</Anfang>
+					<Ende Typ="Betriebsstellengrenze" ID="2">2651-1</Ende>
+					<Reisezughalt Typ="HalteplatzRzLinksS" ID="3">Halt_Begin</Reisezughalt>
+					<Attribute>
+						<Elektrifiziert/>
+					</Attribute>
+					<Verlauf/>
+					<Prioritaeten>
+						<Prioritaet Typ="FRz">20</Prioritaet>
+						<Prioritaet Typ="NRz">20</Prioritaet>
+						<Prioritaet Typ="Rz">20</Prioritaet>
+						<Prioritaet Typ="FGz">20</Prioritaet>
+						<Prioritaet Typ="NGz">20</Prioritaet>
+						<Prioritaet Typ="Gz">20</Prioritaet>
+						<Prioritaet Typ="S">20</Prioritaet>
+						<Prioritaet Typ="Lz">20</Prioritaet>
+						<Prioritaet Typ="GzG">20</Prioritaet>
+					</Prioritaeten>
+					<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+                </Betriebsstellenfahrweg>
+			</Betriebsstellenfahrwege>
+		</Spurplanbetriebsstelle>
+        
+		<Spurplanbetriebsstelle>
+			<Betriebsstelle>BS_2</Betriebsstelle>
+			<Spurplanabschnitte>
+				<Spurplanabschnitt>
+					<Strecke>1234</Strecke>
+					<Spurplanknoten>
+						<Betriebsstellengrenze>
+							<ID>4</ID>
+							<Kilometrierung>38,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<PartnerBtrst>BS_1</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>6,92822</X>
+								<Y>1,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>1</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+						<Neigung>
+							<ID>6</ID>
+							<Kilometrierung>38,500</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Fallend>-2,82</Fallend>
+							<Steigend>-2,08</Steigend>
+						</Neigung>
+                        
+                            <HauptsignalS>
+							<ID>97</ID>
+							<Kilometrierung>38,600</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>HS97</Name>
+							<DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+						</HauptsignalS>
+                        
+                        
+						<Tunnel>
+							<ID>7</ID>
+							<Kilometrierung>39,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>Mertener</Name>
+							<QuerschnittFallend Einheit="m2">0,0</QuerschnittFallend>
+							<QuerschnittSteigend Einheit="m2">84,0</QuerschnittSteigend>
+						</Tunnel>
+						<Neigung>
+							<ID>8</ID>
+							<Kilometrierung>39,500</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Fallend>2,08</Fallend>
+							<Steigend>-2,2</Steigend>
+						</Neigung>
+						<Tunnel>
+							<ID>9</ID>
+							<Kilometrierung>40,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>Mertener</Name>
+							<QuerschnittFallend Einheit="m2">84,0</QuerschnittFallend>
+							<QuerschnittSteigend Einheit="m2">0,0</QuerschnittSteigend>
+						</Tunnel>
+                        
+                        <HauptsignalS>
+							<ID>96</ID>
+							<Kilometrierung>40,100</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>HS96</Name>
+							<DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+						</HauptsignalS>
+
+						<Betriebsstellengrenze>
+							<ID>5</ID>
+							<Kilometrierung>42,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<PartnerBtrst>BS_3</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>0,57697</X>
+								<Y>0,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>1</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+					</Spurplanknoten>
+				</Spurplanabschnitt>
+
+			</Spurplanabschnitte>
+			<Betriebsstellenfahrwege>
+
+				<Betriebsstellenfahrweg>
+					<Name>Path2</Name>
+					<Anfang Typ="Betriebsstellengrenze" ID="4">2651-1</Anfang>
+					<Ende Typ="Betriebsstellengrenze" ID="5">2651-1</Ende>
+					<Attribute>
+						<Elektrifiziert/>
+					</Attribute>
+					<Verlauf/>
+					<Prioritaeten>
+						<Prioritaet Typ="FRz">20</Prioritaet>
+						<Prioritaet Typ="NRz">20</Prioritaet>
+						<Prioritaet Typ="Rz">20</Prioritaet>
+						<Prioritaet Typ="FGz">20</Prioritaet>
+						<Prioritaet Typ="NGz">20</Prioritaet>
+						<Prioritaet Typ="Gz">20</Prioritaet>
+						<Prioritaet Typ="S">20</Prioritaet>
+						<Prioritaet Typ="Lz">20</Prioritaet>
+						<Prioritaet Typ="GzG">20</Prioritaet>
+					</Prioritaeten>
+					<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+				</Betriebsstellenfahrweg>
+			</Betriebsstellenfahrwege>
+		</Spurplanbetriebsstelle>
+        
+        
+        <Spurplanbetriebsstelle>
+			<Betriebsstelle>BS_3</Betriebsstelle>
+			<Spurplanabschnitte>
+				<Spurplanabschnitt>
+					<Strecke>1234</Strecke>
+					<Spurplanknoten>
+						<Betriebsstellengrenze>
+							<ID>10</ID>
+							<Kilometrierung>42,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<PartnerBtrst>BS_2</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>5,77312</X>
+								<Y>3,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>1</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+						<HalteplatzRzLinksS>
+							<ID>12</ID>
+							<Kilometrierung>42,500</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>Halt_End</Name>
+							<BezeichnerBetrieb>1</BezeichnerBetrieb>
+							<BezeichnerExtern>1</BezeichnerExtern>
+							<Laenge Einheit="m">48</Laenge>
+						</HalteplatzRzLinksS>
+                        <HauptsignalS>
+							<ID>98</ID>
+							<Kilometrierung>42,600</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<Name>HS98</Name>
+							<DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+						</HauptsignalS>
+						<Betriebsstellengrenze>
+							<ID>11</ID>
+							<Kilometrierung>43,000</Kilometrierung>
+							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+							<PartnerBtrst>KEIT</PartnerBtrst>
+							<Bildkoordinaten>
+								<X>1,15432</X>
+								<Y>3,0</Y>
+							</Bildkoordinaten>
+							<Gleiskennzeichen>2</Gleiskennzeichen>
+						</Betriebsstellengrenze>
+					</Spurplanknoten>
+				</Spurplanabschnitt>
+			</Spurplanabschnitte>
+			<Betriebsstellenfahrwege>
+				<Betriebsstellenfahrweg>
+					<Name>Path3</Name>
+					<Anfang Typ="Betriebsstellengrenze" ID="10">2651-1</Anfang>
+					<Ende Typ="Betriebsstellengrenze" ID="11">2651-1</Ende>
+					<Reisezughalt Typ="HalteplatzRzLinksS" ID="12">Halt_End</Reisezughalt>
+					<Attribute>
+						<Elektrifiziert/>
+					</Attribute>
+					<Verlauf/>
+					<Prioritaeten>
+						<Prioritaet Typ="FRz">20</Prioritaet>
+						<Prioritaet Typ="NRz">20</Prioritaet>
+						<Prioritaet Typ="Rz">20</Prioritaet>
+						<Prioritaet Typ="FGz">20</Prioritaet>
+						<Prioritaet Typ="NGz">20</Prioritaet>
+						<Prioritaet Typ="Gz">20</Prioritaet>
+						<Prioritaet Typ="S">20</Prioritaet>
+						<Prioritaet Typ="Lz">20</Prioritaet>
+						<Prioritaet Typ="GzG">20</Prioritaet>
+					</Prioritaeten>
+					<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
+				</Betriebsstellenfahrweg>
+			</Betriebsstellenfahrwege>
+		</Spurplanbetriebsstelle>
+        
+	</Spurplanbetriebsstellen>
+</XmlIssDaten>

@@ -1,5 +1,15 @@
+/.vs
 /.idea
 /*build*
 /deps
 /.clang-tidy
+*.zip
+*.tar.gz
+*.tar.zst
+/pkg
+.pkg.lock
+.pkg.mutex
+/CMakeSettings.json
 
+# Ignore the file produced by cmake
+test/include/test/file_paths.h

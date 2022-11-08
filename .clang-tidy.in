@@ -11,11 +11,13 @@ Checks: "*,\
 -clang-analyzer-optin.osx*,\
 -clang-analyzer-osx*,\
 -readability-implicit-bool-cast,\
--readability-else-after-return,\
 -llvm-include-order,\
+-llvmlibc-*,\
 -clang-analyzer-alpha.unix.PthreadLock,\
 -llvm-header-guard,\
 -readability-named-parameter,\
+-hicpp-named-parameter,\
+-hicpp-use-nullptr,\
 -clang-analyzer-alpha.deadcode.UnreachableCode,\
 -cppcoreguidelines-pro-type-reinterpret-cast,\
 -cppcoreguidelines-pro-type-vararg,\
@@ -37,6 +39,7 @@ Checks: "*,\
 -fuchsia-trailing-return,\
 -portability-simd-intrinsics,\
 -modernize-use-nodiscard,\
+-modernize-use-nullptr,\
 -cppcoreguidelines-pro-bounds-constant-array-index,\
 -*-avoid-c-arrays,\
 -*-narrowing-conversions,\
@@ -55,14 +58,26 @@ Checks: "*,\
 -fuchsia-default-arguments-declarations,\
 -google-readability-braces-around-statements,\
 -hicpp-braces-around-statements,\
+-readability-avoid-const-params-in-decls,\
 -readability-braces-around-statements,\
 -google-readability-avoid-underscore-in-googletest-name,\
 -readability-misleading-indentation,\
--llvm-qualified-auto,
--readability-qualified-auto"
+-llvm-qualified-auto,\
+-readability-qualified-auto,\
+-readability-function-cognitive-complexity,\
+-altera-struct-pack-align,\
+-altera-unroll-loops,\
+-altera-id-dependent-backward-branch,\
+-readability-else-after-return,\
+-llvm-else-after-return,\
+-misc-no-recursion,\
+-android-cloexec-fopen,\
+-bugprone-easily-swappable-parameters,\
+-readability-identifier-length,\
+-abseil-string-find-str-contains"
 WarningsAsErrors: '*'
-HeaderFilterRegex: '^${RELATIVE_SOURCE_DIR}(base|modules|test)/'
 AnalyzeTemporaryDtors: false
+HeaderFilterRegex: '^${RELATIVE_SOURCE_DIR}(src|include|test)/'
 User:            root
 CheckOptions:
   - key:             cert-err61-cpp.CheckThrowTemporaries
@@ -344,7 +359,7 @@ CheckOptions:
   - key:             readability-identifier-naming.TemplateTemplateParameterSuffix
     value:           ''
   - key:             readability-identifier-naming.TypeTemplateParameterCase
-    value:           CamelCase
+    value:           aNy_CasE
   - key:             readability-identifier-naming.TypeTemplateParameterPrefix
     value:           ''
   - key:             readability-identifier-naming.TypeTemplateParameterSuffix

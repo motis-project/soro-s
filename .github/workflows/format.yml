@@ -1,0 +1,30 @@
+name: Check Format
+
+on:
+  push:
+    branches: [ master, advance-simulation ]
+  pull_request:
+    branches: [ master, advance-simulation ]
+  release:
+    types:
+      - published
+
+jobs:
+  formatting:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install clang-format-12
+        run: |
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo apt-get install -y --no-install-recommends clang-format-12
+
+      - name: Format files
+        run: find include src test tools web/iss-server -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-12 -i
+
+      - name: Check for differences
+        run: |
+          git status --porcelain
+          git diff
+          git status --porcelain | xargs -I {} -0 test -z \"{}\"

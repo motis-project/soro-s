@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<XmlIssDaten xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Ersteller>TU</Ersteller>
+	<Erstellzeitpunkt>01.01.2021 12:00:00</Erstellzeitpunkt>
+	<Indexdatei>Index.xml</Indexdatei>
+	<Version>
+		<Name>Jahresfahrplan  2021</Name>
+		<Nummer>1</Nummer>
+		<GueltigAb>01.01.2021</GueltigAb>
+		<GueltigBis>01.01.2021</GueltigBis>
+		<LetzteAenderung>01.01.2021 00:00:00</LetzteAenderung>
+	</Version>
+	<Stammdaten>
+		<Standardwerte>
+			<Fahrstrassenbildezeit Einheit="s">9</Fahrstrassenbildezeit>
+			<Streckenklasse>D4</Streckenklasse>
+			<BremswegArt Einheit="m">1000</BremswegArt>
+			<ZulaessigeOrtsfesteGeschwindigkeit Einheit="km/h">160</ZulaessigeOrtsfesteGeschwindigkeit>
+		</Standardwerte>
+        <Triebfahrzeugbaureihen>
+            <Triebfahrzeugbaureihe>
+				<Nr>42</Nr>
+				<Eisenbahnunternehmen Typ="U" Nr="8000">DB</Eisenbahnunternehmen>
+				<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+				<Triebfahrzeugbaureihenvarianten>
+					<Triebfahrzeugbaureihenvariante>
+						<Variante>1</Variante>
+						<Bezeichnung>RB</Bezeichnung>
+						<EigenGewicht Einheit="t">100</EigenGewicht>
+						<MasseZuschlag>15,00</MasseZuschlag>
+						<ZulaessigeGeschwindigkeit>80</ZulaessigeGeschwindigkeit>
+						<LaengeUeberPuffer>15</LaengeUeberPuffer>
+						<Laufwiderstandsfaktor1>3,00</Laufwiderstandsfaktor1>
+						<Laufwiderstandsfaktor2>0,01</Laufwiderstandsfaktor2>
+						<Laufwiderstandsfaktor3>0,03</Laufwiderstandsfaktor3>
+						<LinienfoermigeZugbeeinflussung>Nein</LinienfoermigeZugbeeinflussung>
+						<PunktfoermigeZugbeeinflussung>Ja</PunktfoermigeZugbeeinflussung>
+						<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+						<Bremsgewichte>
+							<Bremsgewicht>
+								<Gewicht Einheit="t">300</Gewicht>
+								<Bremsstellung Typ="BREMSSTELLUNG" Schluessel="R+Mg">druckluftbediente Hochleistungsbremse mit zusätzlicher Magnetschienenbremse</Bremsstellung>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+							</Bremsgewicht>
+							<Bremsgewicht>
+								<Gewicht Einheit="t">250</Gewicht>
+								<Bremsstellung Typ="BREMSSTELLUNG" Schluessel="R+H">druckluftbediente Hochleistungsbremse mit hydrodynamischer Zusatzbremse (nur bei Tfz)</Bremsstellung>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+							</Bremsgewicht>
+							<Bremsgewicht>
+								<Gewicht Einheit="t">200</Gewicht>
+								<Bremsstellung Typ="BREMSSTELLUNG" Schluessel="R">druckluftbediente Hochleistungsbremse  mit höherem Bremsgewicht als &lt;R&gt;-(R)</Bremsstellung>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+							</Bremsgewicht>
+						</Bremsgewichte>
+						<Stromartausruestungen>
+							<Stromartausruestung>
+								<Stromart Typ="STROMART" Schluessel="0">ohne Stromart</Stromart>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+								<Zugkraftfaktoren>
+									<Zugkraftfaktor>
+										<Faktor1>250,00</Faktor1>
+										<Faktor2>-2,50</Faktor2>
+										<Faktor3>0,015</Faktor3>
+										<GeschwindigkeitVon>0</GeschwindigkeitVon>
+										<GeschwindigkeitBis>40</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>240,00</Faktor1>
+										<Faktor2>-2,00</Faktor2>
+										<Faktor3>0.008</Faktor3>
+										<GeschwindigkeitVon>40</GeschwindigkeitVon>
+										<GeschwindigkeitBis>80</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>230,00</Faktor1>
+										<Faktor2>-2,30</Faktor2>
+										<Faktor3>0,01</Faktor3>
+										<GeschwindigkeitVon>80</GeschwindigkeitVon>
+										<GeschwindigkeitBis>120</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>460,00</Faktor1>
+										<Faktor2>-4,00</Faktor2>
+										<Faktor3>0,01</Faktor3>
+										<GeschwindigkeitVon>120</GeschwindigkeitVon>
+										<GeschwindigkeitBis>130</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+                                    <Zugkraftfaktor>
+										<Faktor1>450</Faktor1>
+										<Faktor2>-4,30</Faktor2>
+										<Faktor3>0,01</Faktor3>
+										<GeschwindigkeitVon>130</GeschwindigkeitVon>
+										<GeschwindigkeitBis>140</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+								</Zugkraftfaktoren>
+							</Stromartausruestung>
+						</Stromartausruestungen>
+                    </Triebfahrzeugbaureihenvariante>
+				</Triebfahrzeugbaureihenvarianten>
+			</Triebfahrzeugbaureihe>
+            <Triebfahrzeugbaureihe>
+				<Nr>1337</Nr>
+				<Eisenbahnunternehmen Typ="U" Nr="8000">DB</Eisenbahnunternehmen>
+				<TriebfahrzeugBaureiheTyp>D</TriebfahrzeugBaureiheTyp>
+				<LetzteAenderung>25.08.1997 13:02:14</LetzteAenderung>
+				<Triebfahrzeugbaureihenvarianten>
+					<Triebfahrzeugbaureihenvariante>
+						<Variante>1</Variante>
+						<Bezeichnung>ICE</Bezeichnung>
+						<EigenGewicht Einheit="t">450</EigenGewicht>
+						<MasseZuschlag>10</MasseZuschlag>
+						<ZulaessigeGeschwindigkeit>120</ZulaessigeGeschwindigkeit>
+						<LaengeUeberPuffer>200</LaengeUeberPuffer>
+						<Laufwiderstandsfaktor1>1,00</Laufwiderstandsfaktor1>
+						<Laufwiderstandsfaktor2>0,01</Laufwiderstandsfaktor2>
+						<Laufwiderstandsfaktor3>0,06</Laufwiderstandsfaktor3>
+						<LinienfoermigeZugbeeinflussung>Ja</LinienfoermigeZugbeeinflussung>
+						<PunktfoermigeZugbeeinflussung>Ja</PunktfoermigeZugbeeinflussung>
+						<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+						<Bremsgewichte>
+							<Bremsgewicht>
+								<Gewicht Einheit="t">0</Gewicht>
+								<Bremsstellung Typ="BREMSSTELLUNG" Schluessel="P">druckluftbediente Personenzugbremse (bel. Pwg.)</Bremsstellung>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+							</Bremsgewicht>
+						</Bremsgewichte>
+						<Stromartausruestungen>
+							<Stromartausruestung>
+								<Stromart Typ="STROMART" Schluessel="1">Wechselstrom 16,7 Hz,15kV, 900A</Stromart>
+								<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+								<Zugkraftfaktoren>
+									<Zugkraftfaktor>
+										<Faktor1>300,00</Faktor1>
+										<Faktor2>-0,30</Faktor2>
+										<Faktor3>0,00</Faktor3>
+										<GeschwindigkeitVon>0</GeschwindigkeitVon>
+										<GeschwindigkeitBis>100,00</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>700,00</Faktor1>
+										<Faktor2>-5,00</Faktor2>
+										<Faktor3>0,02</Faktor3>
+										<GeschwindigkeitVon>100,00</GeschwindigkeitVon>
+										<GeschwindigkeitBis>150</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>500,00</Faktor1>
+										<Faktor2>-3,00</Faktor2>
+										<Faktor3>0,005</Faktor3>
+										<GeschwindigkeitVon>150</GeschwindigkeitVon>
+										<GeschwindigkeitBis>200</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>350,00</Faktor1>
+										<Faktor2>-1,50</Faktor2>
+										<Faktor3>0,002</Faktor3>
+										<GeschwindigkeitVon>200</GeschwindigkeitVon>
+										<GeschwindigkeitBis>250</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+									<Zugkraftfaktor>
+										<Faktor1>300,00</Faktor1>
+										<Faktor2>-1,00</Faktor2>
+										<Faktor3>0,001</Faktor3>
+										<GeschwindigkeitVon>250</GeschwindigkeitVon>
+										<GeschwindigkeitBis>300</GeschwindigkeitBis>
+										<LetzteAenderung>14.02.2022 11:47:20</LetzteAenderung>
+									</Zugkraftfaktor>
+								</Zugkraftfaktoren>
+							</Stromartausruestung>
+						</Stromartausruestungen>
+                    </Triebfahrzeugbaureihenvariante>
+				</Triebfahrzeugbaureihenvarianten>
+			</Triebfahrzeugbaureihe>
+        </Triebfahrzeugbaureihen>
+	</Stammdaten>
+</XmlIssDaten>

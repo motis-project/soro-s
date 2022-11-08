@@ -1,0 +1,70 @@
+name: Linux Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types:
+      - published
+
+jobs:
+  linux:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    container:
+      image: ghcr.io/motis-project/docker-cpp-build
+      volumes:
+        - ${{ matrix.config.preset }}-deps:/deps
+        - ${{ matrix.config.preset }}-buildcache:/buildcache
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - preset: clang-release
+          - preset: clang-debug
+          - preset: gcc-release
+          - preset: gcc-debug
+          - preset: gcc-cista-debug
+          - preset: clang-tidy
+          - preset: clang-sanitizer
+
+    env:
+      BUILDCACHE_DIR: /buildcache
+      BUILDCACHE_DIRECT_MODE: true
+      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
+      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get deps
+        run: ln -s /deps deps
+
+      - name: CMake
+        run: cmake --preset=${{ matrix.config.preset }}
+
+      # ==== BUILD ====
+      - name: Build
+        run: |
+          buildcache -z
+          cmake --build build/${{ matrix.config.preset }} --target soro-test
+          buildcache -s
+
+      # ==== TESTS ====
+      - name: Run Tests
+        run: ./build/${{ matrix.config.preset }}/soro-test
+
+      # ==== WEB BUILD ====
+      - name: Build
+        run: |
+          buildcache -z
+          cmake --build build/${{ matrix.config.preset }} --target soro-server-client
+          buildcache -s
+
+      # ==== WEB TESTS ====
+      - name: Run Server
+        run: |
+          cd ./build/${{ matrix.config.preset }}
+          ./soro-server -t
