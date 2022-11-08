@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 30
     container:
-      image: ghcr.io/motis-project/docker-cpp-build
+      image: ghcr.io/julianharbarth/docker-cpp-build
       volumes:
         - ${{ matrix.config.preset }}-deps:/deps
         - ${{ matrix.config.preset }}-buildcache:/buildcache
