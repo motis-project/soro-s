@@ -13,7 +13,7 @@ si::time sheepmaker_data::get_time_at_end() const {
 }
 
 std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
-                                        std::vector<interval> const& intervals,
+                                        interval_list const& intervals,
                                         tt::train const& dispo,
                                         si::length step_size) {
   utl::verify(intervals[0].halt_, "First interval must be a halt.");
@@ -40,7 +40,7 @@ std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
 
   while (intervals_current_start < intervals.size() - 2 &&
          dispo_current_start < dispo.stop_times_.size() - 1) {
-    std::vector<interval> halt_to_halt_intervals{};
+    soro::vector<interval> halt_to_halt_intervals{};
 
     auto next_interval = intervals[intervals_current_start];
     // use *.val_ since distance/distance is of type fraction not double

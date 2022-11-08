@@ -432,8 +432,7 @@ TEST_CASE(  // NOLINT
 // TEST SIMULATE_ON (cruising, acceleration)
 TEST_CASE("general_driving::simulate::cruising::normal") {  // NOLINT
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
-      interval(si::length{15.0F}, {62.0F})};
+  interval_list const intervals = {interval(si::length{15.0F}, {62.0F})};
 
   general_driving general_dr =
       general_driving(si::length{0.0F}, si::length{15.0F}, si::speed{1.0F},
@@ -460,8 +459,7 @@ TEST_CASE("general_driving::simulate::cruising::normal") {  // NOLINT
 
 TEST_CASE("general_driving::simulate::accelerate::normal") {  // NOLINT
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
-      interval(si::length{15.0F}, {62.0F})};
+  interval_list const intervals = {interval(si::length{15.0F}, {62.0F})};
 
   general_driving general_dr =
       general_driving(si::length{0.0F}, si::length{15.0F}, si::speed{1.0F},
@@ -489,8 +487,7 @@ TEST_CASE("general_driving::simulate::accelerate::normal") {  // NOLINT
 TEST_CASE(  // NOLINT
     "general_driving::simulate::accelerate-dt-offset::normal") {
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
-      interval(si::length{15.0F}, {62.0F})};
+  interval_list const intervals = {interval(si::length{15.0F}, {62.0F})};
 
   general_driving general_dr =
       general_driving(si::length{0.0F}, si::length{15.0F}, si::speed{1.0F},
@@ -519,7 +516,7 @@ TEST_CASE(  // NOLINT
 
 TEST_CASE("general_driving::simulate::deceleration::reverse") {  // NOLINT
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
+  interval_list const intervals = {
       interval(si::length{15.0}, si::speed{62.07F})};
 
   general_driving general_dr =
@@ -548,7 +545,7 @@ TEST_CASE("general_driving::simulate::deceleration::reverse") {  // NOLINT
 TEST_CASE(  // NOLINT
     "general_driving::simulate::deceleration-dt-offset::reverse") {
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
+  interval_list const intervals = {
       interval(si::length{15.0}, si::speed{62.07F})};
 
   general_driving general_dr =
@@ -577,8 +574,7 @@ TEST_CASE(  // NOLINT
 // single run test case
 TEST_CASE("general_driving::run::cruising::normal") {  // NOLINT
   auto const tv = generate_frictionless_test_train();
-  std::vector<interval> const intervals = {
-      interval(si::length{15.0F}, {62.0F})};
+  interval_list const intervals = {interval(si::length{15.0F}, {62.0F})};
 
   general_driving general_dr =
       general_driving(si::length{0.0F}, si::length{3.0F}, si::speed{1.0F},

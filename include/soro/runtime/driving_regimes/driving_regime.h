@@ -21,11 +21,11 @@ class driving_regime {
 
 private:
   virtual std::vector<runtime_result> simulate_on(
-      rs::train_physics const& tv, std::vector<interval> const& intervals,
+      rs::train_physics const& tv, interval_list const& intervals,
       si::length start, si::length end, si::speed vel_start, si::length offset,
       si::time time_offset, si::length step_size) = 0;
   virtual std::vector<runtime_result> simulate_reverse_on(
-      rs::train_physics const& tv, std::vector<interval> const& intervals,
+      rs::train_physics const& tv, interval_list const& intervals,
       si::length start, si::length end, si::speed vel_end, si::length offset,
       si::time time_offset, si::length step_size) = 0;
 
@@ -92,7 +92,7 @@ public:
    * @return a vector of runtime_results representing the simulation results
    */
   virtual std::vector<runtime_result> simulate(
-      rs::train_physics const& tp, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, interval_list const& intervals,
       si::length start, si::length end, si::speed velocity, si::length offset,
       si::time time_offset, si::length step_size, bool reverse);
 };

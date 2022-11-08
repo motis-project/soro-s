@@ -20,7 +20,7 @@ private:
    *
    * @see general_driving::simulate_on for params description
    */
-  static bool check_simulate_on_params(std::vector<interval> const& intervals,
+  static bool check_simulate_on_params(interval_list const& intervals,
                                        si::length start, si::length end,
                                        si::speed vel_start, si::length offset,
                                        si::time time_offset,
@@ -120,7 +120,7 @@ public:
    * simulation.
    */
   std::vector<runtime_result> simulate_on(
-      rs::train_physics const& tp, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, interval_list const& intervals,
       si::length start, si::length end, si::speed vel_start, si::length offset,
       si::time time_offset, si::length step_size) override;
 
@@ -144,7 +144,7 @@ public:
    * @see general_driving::simulate_on
    */
   std::vector<runtime_result> simulate_reverse_on(
-      rs::train_physics const& tp, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, interval_list const& intervals,
       si::length start, si::length end, si::speed vel_end, si::length offset,
       si::time time_offset, si::length step_size) override;
 
@@ -156,7 +156,7 @@ public:
    * @see general_driving::simulate_on
    */
   std::vector<runtime_result> run(rs::train_physics const& tp,
-                                  std::vector<interval> const& intervals,
+                                  interval_list const& intervals,
                                   si::speed vel_start, si::length offset,
                                   si::time time_offset, si::length step_size);
 };

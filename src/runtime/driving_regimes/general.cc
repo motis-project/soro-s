@@ -5,7 +5,7 @@
 namespace soro::runtime {
 
 bool general_driving::check_simulate_on_params(
-    std::vector<interval> const& intervals, si::length const start,
+    interval_list const& intervals, si::length const start,
     si::length const end, si::speed const vel_start, si::length const offset,
     si::time const time_offset, si::length const step_size,
     si::speed const allowed_max_velocity) {
@@ -150,7 +150,7 @@ std::tuple<si::time, si::time> general_driving::get_acceleration_duration(
 }
 
 std::vector<runtime_result> general_driving::simulate_on(
-    rs::train_physics const& tp, std::vector<interval> const& intervals,
+    rs::train_physics const& tp, interval_list const& intervals,
     si::length const start, si::length const end, si::speed const vel_start,
     si::length const offset, si::time const time_offset,
     si::length const step_size) {
@@ -200,7 +200,7 @@ std::vector<runtime_result> general_driving::simulate_on(
   return results;
 }
 std::vector<runtime_result> general_driving::simulate_reverse_on(
-    rs::train_physics const& tp, std::vector<interval> const& intervals,
+    rs::train_physics const& tp, interval_list const& intervals,
     si::length const start, si::length const end, si::speed const vel_end,
     si::length const offset, si::time const time_offset,
     si::length const step_size) {
@@ -273,10 +273,12 @@ std::vector<runtime_result> general_driving::simulate_reverse_on(
   return results;
 }
 
-std::vector<runtime_result> general_driving::run(
-    rs::train_physics const& tp, std::vector<interval> const& intervals,
-    si::speed vel_start, si::length offset, si::time time_offset,
-    si::length step_size) {
+std::vector<runtime_result> general_driving::run(rs::train_physics const& tp,
+                                                 interval_list const& intervals,
+                                                 si::speed vel_start,
+                                                 si::length offset,
+                                                 si::time time_offset,
+                                                 si::length step_size) {
   runtime_results rr;
 
   // use simulate_reverse_on if acceleration is negative

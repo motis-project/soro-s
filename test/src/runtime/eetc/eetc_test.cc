@@ -209,13 +209,13 @@ TEST_CASE("get_speed_intervals::empty") {  // NOLINT
 }
 
 TEST_CASE("get_speed_intervals::no_speed_limit_update") {  // NOLINT
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{5.0F}),
       interval(si::length{25.0F}, si::speed{5.0F}),
       interval(si::length{30.0F}, si::speed{5.0F}, true, type::HALT)};
-  std::vector<interval> first = {
+  interval_list first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{5.0F}),
@@ -229,15 +229,15 @@ TEST_CASE("get_speed_intervals::no_speed_limit_update") {  // NOLINT
 }
 
 TEST_CASE("get_speed_intervals::speed_limit_update") {  // NOLINT
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
       interval(si::length{25.0F}, si::speed{2.5F}, true, type::HALT)};
-  std::vector<interval> first = {
+  interval_list first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F})};
-  std::vector<interval> second = {interval(si::length{15.0F}, si::speed{2.5F})};
+  interval_list second = {interval(si::length{15.0F}, si::speed{2.5F})};
 
   speed_intervals const shall_speed_intervals = {
       speed_interval{si::length{0.0F}, si::length{15.0F}, si::speed{5.0F},
@@ -251,15 +251,15 @@ TEST_CASE("get_speed_intervals::speed_limit_update") {  // NOLINT
 }
 
 TEST_CASE("get_speed_intervals::multiple_speed_intervals") {  // NOLINT
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{15.0F}, si::speed{4.0F}),
       interval(si::length{25.0F}, si::speed{3.0F}),
       interval(si::length{30.0F}, si::speed{0.0F}, true, type::HALT)};
-  std::vector<interval> first = {
+  interval_list first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT)};
-  std::vector<interval> second = {interval(si::length{15.0F}, si::speed{4.0F})};
-  std::vector<interval> third = {interval(si::length{25.0F}, si::speed{3.0F})};
+  interval_list second = {interval(si::length{15.0F}, si::speed{4.0F})};
+  interval_list third = {interval(si::length{25.0F}, si::speed{3.0F})};
 
   speed_intervals const shall_speed_intervals = {
       speed_interval(si::length{0.0F}, si::length{15.0F}, si::speed{5.0F},
@@ -299,7 +299,7 @@ TEST_CASE("get_cruising_speed_range::base_case") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.0F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -336,7 +336,7 @@ TEST_CASE("get_cruising_speed_range::scaleddown_base_case") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {0.75F}),
                        runtime_result({3.0F}, {3.0F}, {0.25F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -373,7 +373,7 @@ TEST_CASE("get_cruising_speed_range::lower_final_speed") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.25F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -404,7 +404,7 @@ TEST_CASE("get_cruising_speed_range::no_braking") {
   cruising.last_run_ = {runtime_result({1.0F}, {1.0F}, {1.0F}),
                         runtime_result({2.0F}, {2.0F}, {1.0F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{2.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising};
@@ -441,7 +441,7 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_full_range") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -478,7 +478,7 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_safe_range") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -507,7 +507,7 @@ TEST_CASE("get_cruising_speed_range::edge_case_constant_speed") {
   cruising.last_run_ = {runtime_result({1.0F}, {1.0F}, {0.75F}),
                         runtime_result({2.0F}, {2.0F}, {0.75F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{0.75F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising};
@@ -543,7 +543,7 @@ TEST_CASE("get_cruising_speed_range::edge_case_only_branking_changes_speed") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  std::vector<interval> dummy = {};
+  interval_list dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -920,7 +920,7 @@ TEST_SUITE_BEGIN("sheepmaker");  // NOLINT
 
 // SHEEPMAKER - Initialization
 TEST_CASE("sheepmaker_initialzation::double") {  // NOLINT
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{5.0F}, true, type::HALT)};
@@ -939,7 +939,7 @@ TEST_CASE("sheepmaker_initialzation::double") {  // NOLINT
 }
 
 TEST_CASE("sheepmaker_initialization::halt_at_end") {  // NOLINT
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -964,7 +964,7 @@ TEST_CASE("sheepmaker_initialization::halt_at_end") {  // NOLINT
 TEST_CASE(  // NOLINT
     "sheepmaker::coasting_candidates::interval_has_no_cruising") {
   // REMARK: this is a highly constructed, therefore unrealistic, test case
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1007,7 +1007,7 @@ TEST_CASE("sheepmaker::coasting_candidates::interval_has_cruising") {  // NOLINT
   // cruising speed of 2.75 meters per second
   // expected result should look like this:
   // ACC: [0, 6], CRUISE: [6, 7], COASTING [7, 14] DECELERATE: [14, 15]
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1062,7 +1062,7 @@ TEST_CASE("sheepmaker::coasting_candidates::interval_has_cruising") {  // NOLINT
 TEST_CASE(  // NOLINT
     "sheepmaker::coasting_candidates::second::interval_has_no_cruising") {
   // REMARK: this is a highly constructed, therefore unrealistic, test case
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1103,7 +1103,7 @@ TEST_CASE(  // NOLINT
 TEST_CASE(  // NOLINT
     "sheepmaker::coasting_candidates::set_next_cp_cand::no_cruising::right") {
   // REMARK: this is a highly constructed, therefore unrealistic, test case
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1149,7 +1149,7 @@ TEST_CASE(  // NOLINT
 TEST_CASE(  // NOLINT
     "sheepmaker::coasting_candidates::set_next_cp_cand::no_cruising::left") {
   // REMARK: this is a highly constructed, therefore unrealistic, test case
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1198,7 +1198,7 @@ TEST_CASE(  // NOLINT
   // First: add coasting point in first speed interval
   // propagate coasting point to the right to get faster and faster, since the
   // target time is 0 s
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
@@ -1252,7 +1252,7 @@ TEST_CASE(  // NOLINT
 
 TEST_CASE("sheepmaker::sheepmaker_per_halt" * doctest::skip(true)) {  // NOLINT
   // REMARK: this is a highly constructed, therefore unrealistic, test case
-  std::vector<interval> const input = {
+  interval_list const input = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),

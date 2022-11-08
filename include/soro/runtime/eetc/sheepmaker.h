@@ -148,7 +148,7 @@ struct cruising_candidates {
  * a sheepmaker data container, that contains the algorithms result
  */
 std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
-                                        std::vector<interval> const& intervals,
+                                        interval_list const& intervals,
                                         tt::train const& dispo,
                                         si::length step_size);
 
