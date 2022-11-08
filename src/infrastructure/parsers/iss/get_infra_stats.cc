@@ -26,7 +26,6 @@ void count_elements_in_section(pugi::xml_node xml_section, infra_stats& is) {
     if (t != type::INVALID) {
       ++(is.number(get_type(xml_element.name())));
     }
-
   }
 }
 
