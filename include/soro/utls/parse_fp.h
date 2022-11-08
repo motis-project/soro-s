@@ -59,7 +59,7 @@ template <typename T, replace_comma ReplaceComma = OFF>
 constexpr T parse_fp(const char* const start, std::size_t const len) {
   if constexpr (ReplaceComma) {
     char* tmp = new char[len + 1];
-    strncpy(tmp, start, len);
+    memcpy(tmp, start, len);
     tmp[len] = '\0';
 
     std::replace(tmp, tmp + len, ',', '.');
