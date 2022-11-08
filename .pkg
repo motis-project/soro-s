@@ -9,7 +9,7 @@
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
-  commit=421f520ea0f6d81a1eff303ae926f39cc04d07fa
+  commit=70e8f76437b76dd5e9c0a2eb9b907df190ab71a0
 [date]
   url=git@github.com:motis-project/date.git
   branch=master
