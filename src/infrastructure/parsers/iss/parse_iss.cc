@@ -206,6 +206,8 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
       auto& prev_element = rising ? prev_rising_element : prev_falling_element;
       auto& prev_node = rising ? prev_rising_rp_node : prev_falling_rp_node;
 
+      // TODO(julian) start parsing the route end of train detectors
+      // cf get_infra_stats.cc
       if (equal(node.name(), ROUTE_EOTD_FALLING) ||
           equal(node.name(), ROUTE_EOTD_RISING)) {
         continue;
