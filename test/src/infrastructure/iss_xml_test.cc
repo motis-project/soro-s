@@ -655,11 +655,6 @@ TEST_SUITE("parse base_infrastructure") {
     check_infra(infra);
   }
 
-  TEST_CASE("infra from archive") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS_ARCHIVE);
-    check_infra(infra);
-  }
-
 #if defined(SERIALIZE)
   TEST_CASE("serialize infrastructure test") {  // NOLINT
     {
