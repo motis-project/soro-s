@@ -14,10 +14,11 @@ template <typename T>
 struct serializable {
   serializable() = default;
 
-  explicit serializable(std::filesystem::path const& fp) :
-
-  mem_{cista::buf<cista::mmap>{cista::mmap{fp.c_str(), cista::mmap::protection::READ}}},
-  access_{cista::deserialize<T>(mem_.template as<cista::buf<cista::mmap>>())} {}
+  explicit serializable(std::filesystem::path const& fp)
+      : mem_{cista::buf<cista::mmap>{
+            cista::mmap{fp.c_str(), cista::mmap::protection::READ}}},
+        access_{cista::deserialize<T>(
+            mem_.template as<cista::buf<cista::mmap>>())} {}
 
   void save(std::filesystem::path const& fp) const {
 #if defined(SERIALIZE)

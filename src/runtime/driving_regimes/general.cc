@@ -134,13 +134,13 @@ si::acceleration general_driving::get_acceleration(
 std::tuple<si::time, si::time> general_driving::get_acceleration_duration(
     si::acceleration const acc, si::speed const vel,
     si::length const distance) {
-  si::time pq_p = (2.0F * vel) / acc;
-  si::time pq_p_2 = pq_p * 0.5F;
-  si::time pq_p_2_neg = pq_p_2 * -1.0F;
+  si::time const pq_p = (2.0F * vel) / acc;
+  si::time const pq_p_2 = pq_p * 0.5F;
+  si::time const pq_p_2_neg = pq_p_2 * -1.0F;
 
   // squared time(s)
-  auto pq_p_2_squared = pq_p_2 * pq_p_2;
-  auto pq_q = (-2.0F * distance) / acc;
+  auto const pq_p_2_squared = pq_p_2 * pq_p_2;
+  auto const pq_q = (-2.0F * distance) / acc;
 
   // sqrt of a squared time should be si::time (currently no strong_typing
   // support)
@@ -168,11 +168,10 @@ std::vector<runtime_result> general_driving::simulate_on(
   si::speed current_velocity = vel_start;
   std::vector<runtime_result> results = {};
 
-  results.emplace_back(
-      runtime_result(current_time, current_position, current_velocity));
+  results.emplace_back(current_time, current_position, current_velocity);
 
   while (current_position < end) {
-    si::acceleration current_acceleration =
+    auto const current_acceleration =
         this->get_acceleration(tp, current_velocity);
     auto const acc_result =
         accelerate(current_acceleration, current_velocity, current_position,
@@ -195,8 +194,7 @@ std::vector<runtime_result> general_driving::simulate_on(
     current_time += std::get<0>(acc_result);
     current_velocity = next_velocity;
 
-    results.emplace_back(
-        runtime_result(current_time, current_position, current_velocity));
+    results.emplace_back(current_time, current_position, current_velocity);
   }
 
   return results;
@@ -220,8 +218,7 @@ std::vector<runtime_result> general_driving::simulate_reverse_on(
   si::speed current_velocity = vel_end;
   std::vector<runtime_result> results = {};
 
-  results.emplace_back(
-      runtime_result(current_time, current_position, current_velocity));
+  results.emplace_back(current_time, current_position, current_velocity);
 
   while (current_position > start) {
     /**
@@ -235,7 +232,7 @@ std::vector<runtime_result> general_driving::simulate_reverse_on(
      * can be taken into account based on knowledge of the exact location.
      * However, track properties are currently unconsidered.
      */
-    si::acceleration current_acceleration =
+    si::acceleration const current_acceleration =
         this->get_acceleration(tp, current_velocity);
     auto const acc_result =
         accelerate_reverse(current_acceleration, current_velocity,
@@ -257,8 +254,7 @@ std::vector<runtime_result> general_driving::simulate_reverse_on(
     current_time = std::get<0>(acc_result);
     current_velocity = prev_velocity;
 
-    results.emplace_back(
-        runtime_result(current_time, current_position, current_velocity));
+    results.emplace_back(current_time, current_position, current_velocity);
   }
 
   // reverse results to get runtime_results from start to end

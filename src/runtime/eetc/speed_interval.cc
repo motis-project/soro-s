@@ -235,7 +235,7 @@ speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
       si::speed const speed_limit = current_intervals[0].speed_limit_;
       bool const halt = false;
 
-      speed_interval next_speed_interval =
+      auto const next_speed_interval =
           speed_interval(start, end, speed_limit, halt, current_intervals);
 
       result.emplace_back(next_speed_interval);
@@ -253,7 +253,7 @@ speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
     si::speed const speed_limit = current_intervals[0].speed_limit_;
     bool const halt = true;
 
-    speed_interval next_speed_interval =
+    auto const next_speed_interval =
         speed_interval(start, end, speed_limit, halt, current_intervals);
 
     result.emplace_back(next_speed_interval);

@@ -61,7 +61,7 @@ public:
    *  - CRUISING: currently implemented as a standalone class. To update this
    *    implementation to a acceleration based one set: a = sum of resistances
    *
-   * @param tv the used train variant
+   * @param tv the used train physics
    * @param current_velocity the current velocity (m/s)
    * @return the acceleration of a train at a given velocity (m/s^2)
    */
@@ -105,7 +105,7 @@ public:
    * @todo it may be possible to pass most of the arguments as key-value
    *   structure
    *
-   * @param tv the used train variant during this simulation.
+   * @param tp the used train physics during this simulation.
    * @param intervals intervals the train drives on during this simulation.
    * @param start the starting point of this simulation in meters.
    * @param end the end point of this simulation in meters.
@@ -120,7 +120,7 @@ public:
    * simulation.
    */
   std::vector<runtime_result> simulate_on(
-      rs::train_physics const& tv, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, std::vector<interval> const& intervals,
       si::length start, si::length end, si::speed vel_start, si::length offset,
       si::time time_offset, si::length step_size) override;
 
@@ -144,7 +144,7 @@ public:
    * @see general_driving::simulate_on
    */
   std::vector<runtime_result> simulate_reverse_on(
-      rs::train_physics const& tv, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, std::vector<interval> const& intervals,
       si::length start, si::length end, si::speed vel_end, si::length offset,
       si::time time_offset, si::length step_size) override;
 
@@ -155,7 +155,7 @@ public:
    *
    * @see general_driving::simulate_on
    */
-  std::vector<runtime_result> run(rs::train_physics const& tv,
+  std::vector<runtime_result> run(rs::train_physics const& tp,
                                   std::vector<interval> const& intervals,
                                   si::speed vel_start, si::length offset,
                                   si::time time_offset, si::length step_size);

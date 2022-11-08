@@ -146,7 +146,7 @@ TEST_CASE("dpd iterate") {
     found_probabilities.emplace_back(prob);
   }
 
-  std::vector<unixtime> expected_times = {
+  std::vector<unixtime> const expected_times = {
       unixtime{0}, unixtime{0},  unixtime{0},  unixtime{6},  unixtime{6},
       unixtime{6}, unixtime{12}, unixtime{12}, unixtime{18},
   };

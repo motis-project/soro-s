@@ -92,7 +92,7 @@ public:
    * @return a vector of runtime_results representing the simulation results
    */
   virtual std::vector<runtime_result> simulate(
-      rs::train_physics const& tv, std::vector<interval> const& intervals,
+      rs::train_physics const& tp, std::vector<interval> const& intervals,
       si::length start, si::length end, si::speed velocity, si::length offset,
       si::time time_offset, si::length step_size, bool reverse);
 };

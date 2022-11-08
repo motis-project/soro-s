@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <algorithm>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 
@@ -80,8 +81,9 @@ constexpr void sassert(bool_with_loc const& assert_this, Msg&& msg,
     fmt::print(std::clog, std::forward<Msg>(msg), std::forward<Args>(args)...);
     fmt::print(std::clog, "\n");
     fmt::print(std::clog, "[FAILED HERE] {}:{}:{} in {}",
-               basename(assert_this.loc_.file_name()), assert_this.loc_.line(),
-               assert_this.loc_.column(), assert_this.loc_.function_name());
+               std::filesystem::path(assert_this.loc_.file_name()).filename(),
+               assert_this.loc_.line(), assert_this.loc_.column(),
+               assert_this.loc_.function_name());
     fmt::print(std::clog, "\n");
 
     std::abort();

@@ -184,7 +184,8 @@ void sheepmaker_initialization(sheepmaker_data& data) {
       // determine intersection point of accelerate and decelerate
       auto i_point =
           driving_regime::intersection_point(rr_accelerate, rr_decelerate);
-      double ip_idx = ((i_point - accelerate.start_) / data.step_size_).val_;
+      double const ip_idx =
+          ((i_point - accelerate.start_) / data.step_size_).val_;
 
       // update regimes using intersection point
       accelerate.end_ = i_point;
@@ -237,9 +238,10 @@ void sheepmaker_set_coasting_point(sheepmaker_data& data,
   utl::verify(0.0F <= threshold && threshold <= 1.0F,
               "Threshold must be a real number between 0F and 1F.");
 
-  si::time target_duration{
+  si::time const target_duration{
       static_cast<float>(data.end_.arrival_ - data.start_.departure_)};
-  si::time current_travel_time{data.rr_.back().time_ - data.rr_.begin()->time_};
+  si::time const current_travel_time{data.rr_.back().time_ -
+                                     data.rr_.begin()->time_};
 
   auto last_travel_time = current_travel_time;
 
@@ -311,7 +313,7 @@ void sheepmaker_set_coasting_point(sheepmaker_data& data,
         speed_interval.get_time_at_position(candidates.coasting_point_) -
         speed_interval.get_time_at_position(speed_interval.start_);
 
-    double intersection_point_idx{
+    double const intersection_point_idx{
         ((intersection_point - coasting.start_) / data.step_size_).val_};
 
     auto time_in_coasting =
@@ -324,8 +326,8 @@ void sheepmaker_set_coasting_point(sheepmaker_data& data,
 
     // if next and last in threshold: finished or next_tr == target_duration ->
     // update regimes!! + simulate
-    double change{std::abs((next_travel_time - last_travel_time).val_) /
-                  last_travel_time.val_};
+    double const change{std::abs((next_travel_time - last_travel_time).val_) /
+                        last_travel_time.val_};
 
     if (next_travel_time == target_duration || change <= threshold) {
       finished = true;
@@ -351,7 +353,7 @@ void sheepmaker_set_coasting_point(sheepmaker_data& data,
     std::cout << "found coasting point: " << last_coasting_candidate
               << std::endl;
     // calculate intersection_point
-    double intersection_point_idx =
+    double const intersection_point_idx =
         ((last_intersection_point - coasting.start_) / data.step_size_).val_;
 
     // update acceleration
@@ -382,7 +384,7 @@ void sheepmaker_update_coasting_point(sheepmaker_data& data,
 
   // determine target travel time (duration) and actual_travel_time
   // (travel_time)
-  si::time duration{
+  si::time const duration{
       static_cast<float>(data.end_.arrival_ - data.start_.departure_)};
   si::time travel_time = data.rr_.back().time_ - data.rr_.begin()->time_;
 
@@ -390,7 +392,7 @@ void sheepmaker_update_coasting_point(sheepmaker_data& data,
   // NO:  coasting_candidates initializes the first one, which must be evaluated
   //      before testing the next one
   // YES: set a new coasting point, test performance change with new c.point
-  bool has_coasting =
+  bool const has_coasting =
       speed_interval.driving_regimes_.end()[-2].type_ == COASTING;
 
   // initialize coasting point candidates struct
@@ -544,7 +546,7 @@ void coasting_candidates::set_next_cp_candidate(
 
 coasting_candidates_v2::coasting_candidates_v2(speed_interval& speed_interval) {
   // Requirements: No COASTING, No CRUISING
-  si::length interval_length{speed_interval.end_ - speed_interval.start_};
+  si::length const interval_length{speed_interval.end_ - speed_interval.start_};
 
   // set initial step_size_ (1/2 speed_interval length)
   this->step_size_ = {std::floor(0.5F * interval_length.val_)};
@@ -610,8 +612,10 @@ coasting_candidates::coasting_candidates(sheepmaker_data& data,
     // calculate coasting point idx in runtime_results
     this->coasting_point_idx_ =
         ((coasting_point - data.rr_.begin()->distance_) / data.step_size_).val_;
-    si::speed coasting_start_vel = data.rr_[this->coasting_point_idx_].speed_;
-    si::time coasting_start_time = data.rr_[this->coasting_point_idx_].time_;
+    si::speed const coasting_start_vel =
+        data.rr_[this->coasting_point_idx_].speed_;
+    si::time const coasting_start_time =
+        data.rr_[this->coasting_point_idx_].time_;
 
     coasting = general_driving(coasting_point, {NAN}, {NAN},
                                coasting_start_time, COASTING);
@@ -706,9 +710,9 @@ coasting_candidates::coasting_candidates(sheepmaker_data& data,
             .val_;
   }
 
-  si::time duration{
+  si::time const duration{
       static_cast<float>(data.end_.arrival_ - data.start_.departure_)};
-  si::time current_travel_time =
+  si::time const current_travel_time =
       data.rr_.back().time_ - data.rr_.begin()->time_;
 
   if (current_travel_time > duration) {
@@ -765,7 +769,7 @@ void sheepmaker_update_cruising_speed(sheepmaker_data& data,
   auto cr_speed_range = speed_interval.get_cruising_speed_range(true);
   si::speed cr_speed = std::get<0>(cr_speed_range);
 
-  si::time target_time{
+  si::time const target_time{
       static_cast<float>(data.end_.arrival_ - data.start_.departure_)};
 
   // (2) start < end? Y: Run GSS

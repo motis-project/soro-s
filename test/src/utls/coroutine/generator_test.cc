@@ -10,7 +10,7 @@ TEST_SUITE("generator suite") {
   template <typename T>
   generator<const T> generate_vec(std::vector<T> const& v) {
     for (auto const& e : v) {
-      co_yield(e);
+      co_yield (e);
     }
     co_yield 11;
   }

@@ -110,7 +110,7 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
       continue;
     }
 
-    bool same_element =
+    bool const same_element =
         ts.times_[ts_idx].element_->id() == rich_node.node_->element_->id();
 
     CHECK_MESSAGE(

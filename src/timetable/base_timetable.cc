@@ -14,9 +14,9 @@ train const& base_timetable::operator[](std::string const& name) const {
   return *name_to_train_.at(name);
 }
 
-auto get_filtered_train_runs(
-    soro::vector<soro::unique_ptr<train>>& trains,
-    utls::unixtime const start, utls::unixtime const end) {
+auto get_filtered_train_runs(soro::vector<soro::unique_ptr<train>>& trains,
+                             utls::unixtime const start,
+                             utls::unixtime const end) {
   train::id current_id = 0;
 
   return utl::all(trains) | utl::remove_if([&](auto&& tr_ptr) {
