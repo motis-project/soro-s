@@ -22,7 +22,11 @@ void count_elements_in_section(pugi::xml_node xml_section, infra_stats& is) {
       continue;
     }
 
-    ++is.number(get_type(xml_element.name()));
+    auto const t = get_type(xml_element.name());
+    if (t != type::INVALID) {
+      ++(is.number(get_type(xml_element.name())));
+    }
+
   }
 }
 
