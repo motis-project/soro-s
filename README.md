@@ -15,8 +15,8 @@ included.
 
 - Git
 - CMake >= 3.19
-- GCC 10 / 11
-- Clang 11 / 12 / 13 / 14
+- GCC 11
+- Clang 15
 - Ninja
 
 ### Steps:
@@ -29,14 +29,14 @@ Add Repositories and signing key.
 
 ```shell
 wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main" | sudo tee -a /etc/apt/sources.list
+echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo tee -a /etc/apt/sources.list
 sudo apt update
 ```
 
 Install clang and additional tooling.
 
 ```shell
-sudo apt install clang-14 lldb-14 lld-14 clangd-14 clang-tidy-14 clang-format-14 clang-tools-14 llvm-14-dev llvm-14-tools libomp-14-dev libc++-14-dev libc++abi-14-dev libclang-common-14-dev libclang-14-dev libclang-cpp14-dev libunwind-14-dev
+sudo apt install clang-15 lldb-15 lld-15 clangd-15 clang-tidy-15 clang-format-15 clang-tools-15 llvm-15-dev llvm-15-tools libomp-15-dev libc++-15-dev libc++abi-15-dev libclang-common-15-dev libclang-15-dev libclang-cpp15-dev libunwind-15-dev
 ```
 
 #### Installing GCC
@@ -50,7 +50,7 @@ sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa && sudo apt update
 Install GCC.
 
 ```shell
-sudo apt install g++-10
+sudo apt install g++-11
 ```
 
 #### Installing remaining tools
@@ -84,7 +84,7 @@ ssh-add ~./ssh/id_rsa
 Clone the repository.
 
 ```shell
-git clone git@github.com:julianharbarth/private-soros.git
+git clone git@github.com:motis-project/soro-s.git
 ```
 
 #### Building the tests
