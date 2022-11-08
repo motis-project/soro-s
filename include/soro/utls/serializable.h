@@ -50,8 +50,8 @@ struct serializable {
   T const& operator*() const { return *access_; }
 
 protected:
-  cista::variant<cista::buf<cista::mmap>, T> mem_{};
-  T* access_{nullptr};
+  cista::variant<cista::buf<cista::mmap>, T> mem_{T{}};
+  T* access_{std::addressof(mem_.template as<T>())};
 };
 
 }  // namespace soro::utls
