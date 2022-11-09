@@ -91,18 +91,18 @@
 </div>
 
 <script type="module">
-  import { Module, FS, IDBFS } from "./soro-client.js";
+  // import { Module, FS, IDBFS } from "./soro-client.js";
   import { GoldenLayout } from "./deps/GoldenLayout/GoldenLayout.js";
 
-  import {
-    saveToPersistent,
-    loadFromPersistent,
-    exists,
-    saveFileToIDBFS,
-    createFolders,
-    deleteAllFiles,
-    getStationCoordPath
-  } from "./utl/IDBFSHelper.js";
+  // import {
+  //   saveToPersistent,
+  //   loadFromPersistent,
+  //   exists,
+  //   saveFileToIDBFS,
+  //   createFolders,
+  //   deleteAllFiles,
+  //   getStationCoordPath
+  // } from "./utl/IDBFSHelper.js";
 
   import { getControlComponent } from "./utl/goldenLayoutHelper.js";
   import { InfrastructureManager } from "./model/InfrastructureManager.js";
@@ -118,16 +118,16 @@
   import { TimetableManager } from "./model/TimetableManager.js";
   import { getSimulationComponent } from "./utl/goldenLayoutHelper.js";
 
-  function mountIDBFS(callback) {
-    FS.mkdir('/idbfs');
-    FS.mount(IDBFS, {}, '/idbfs');
-
-    loadFromPersistent(function () {
-      createFolders();
-      callback();
-      saveToPersistent();
-    });
-  }
+  // function mountIDBFS(callback) {
+  //   FS.mkdir('/idbfs');
+  //   FS.mount(IDBFS, {}, '/idbfs');
+  //
+  //   loadFromPersistent(function () {
+  //     createFolders();
+  //     callback();
+  //     saveToPersistent();
+  //   });
+  // }
 
   const initLayout = {
     root: {
@@ -169,31 +169,33 @@
   /*
     Run the setup routines after emscripten has done all of its own initialization
    */
-  Module.onRuntimeInitialized = async function () {
-    mountIDBFS(() => {
-      const c = {
-        settings: {
-          showPopoutIcon: false,
-          showMaximiseIcon: false,
-          showCloseIcon: false
-        }
-      };
-      window.goldenLayout = new GoldenLayout();
-      window.goldenLayout.registerComponentConstructor('InfrastructureComponent', InfrastructureComponent);
-      window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
-      window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
-      window.goldenLayout.loadLayout(initLayout);
+  // Module.onRuntimeInitialized = async function () {
+  //   mountIDBFS(() => {
+  //
+  //     fetch(window.origin + '/misc/btrs_geo.csv')
+  //       .then(response => response.arrayBuffer())
+  //       .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
+  //       .catch(e => console.error(e));
+  //   })
+  //
+  // }
 
-      window.infrastructureManager = new InfrastructureManager();
-      window.timetableManager = new TimetableManager();
+  const c = {
+    settings: {
+      showPopoutIcon: false,
+      showMaximiseIcon: false,
+      showCloseIcon: false
+    }
+  };
 
-      fetch(window.origin + '/misc/btrs_geo.csv')
-        .then(response => response.arrayBuffer())
-        .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
-        .catch(e => console.error(e));
-    })
+  window.goldenLayout = new GoldenLayout();
+  window.goldenLayout.registerComponentConstructor('InfrastructureComponent', InfrastructureComponent);
+  window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
+  window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
+  window.goldenLayout.loadLayout(initLayout);
 
-  }
+  window.infrastructureManager = new InfrastructureManager();
+  window.timetableManager = new TimetableManager();
 
   const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
   addInfrastructureComponent.addEventListener('click', () => {
