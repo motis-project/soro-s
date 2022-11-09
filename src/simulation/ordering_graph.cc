@@ -119,7 +119,7 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   std::vector<size_t> current_route_usage_index(route_orderings.size(),
                                                 INVALID_USAGE_IDX);
 
-  auto const entry_comparison = [&](ir_id const e1, ir_id const e2) {
+  auto const entry_comparison = [&](auto const e1, auto const e2) {
     return route_orderings[e1][current_route_usage_index[e1]].from_ >
            route_orderings[e2][current_route_usage_index[e2]].from_;
   };
@@ -132,13 +132,13 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   utls::priority_queue<ir_id, decltype(entry_comparison)> todo_queue(
       entry_comparison);
 
-  for (auto const [ssr_id, usages] : utl::enumerate(route_orderings)) {
+  for (auto const [route_id, usages] : utl::enumerate(route_orderings)) {
     if (usages.empty()) {
       continue;
     }
 
-    current_route_usage_index[ssr_id] = 0;
-    todo_queue.emplace(ssr_id);
+    current_route_usage_index[route_id] = 0;
+    todo_queue.emplace(static_cast<ir_id>(route_id));
   }
 
   // the algorithm is similar to a merge operation
