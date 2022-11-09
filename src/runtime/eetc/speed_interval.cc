@@ -185,7 +185,7 @@ si::time speed_interval::get_transit_time_difference_cruising(
   return new_transit_time - current_transit_time;
 }
 
-speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
+speed_intervals get_speed_intervals(soro::vector<interval> const& intervals) {
   speed_intervals result{};
 
   // if intervals is empty: no speed interval
@@ -199,7 +199,7 @@ speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
               "intervals");
 
   // initialize first speed interval properties
-  std::vector<interval> current_intervals{intervals[0]};
+  interval_list current_intervals{intervals[0]};
   si::length start = intervals[0].distance_;
   si::length end = intervals[1].distance_;
 
@@ -235,7 +235,7 @@ speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
       si::speed const speed_limit = current_intervals[0].speed_limit_;
       bool const halt = false;
 
-      speed_interval next_speed_interval =
+      auto const next_speed_interval =
           speed_interval(start, end, speed_limit, halt, current_intervals);
 
       result.emplace_back(next_speed_interval);
@@ -253,7 +253,7 @@ speed_intervals get_speed_intervals(std::vector<interval> const& intervals) {
     si::speed const speed_limit = current_intervals[0].speed_limit_;
     bool const halt = true;
 
-    speed_interval next_speed_interval =
+    auto const next_speed_interval =
         speed_interval(start, end, speed_limit, halt, current_intervals);
 
     result.emplace_back(next_speed_interval);

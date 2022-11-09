@@ -206,6 +206,8 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
       auto& prev_element = rising ? prev_rising_element : prev_falling_element;
       auto& prev_node = rising ? prev_rising_rp_node : prev_falling_rp_node;
 
+      // TODO(julian) start parsing the route end of train detectors
+      // cf get_infra_stats.cc
       if (equal(node.name(), ROUTE_EOTD_FALLING) ||
           equal(node.name(), ROUTE_EOTD_RISING)) {
         continue;
@@ -320,10 +322,12 @@ void calculate_station_routes(base_infrastructure& iss,
   iss.station_route_store_.reserve(mats.intermediate_station_routes_.size());
   for (auto const& i_sr : mats.intermediate_station_routes_) {
     iss.station_route_store_.emplace_back();
-    assert(iss.station_route_store_.size() > i_sr.id_);
+    sassert(iss.station_route_store_.size() == i_sr.id_ + 1,
+            "Did not allocate enough space for the signal station route");
+
     iss.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
-    auto& sr = iss.station_route_store_[i_sr.id_];
-    iss.station_routes_.emplace_back(sr.get());
+    auto sr = iss.station_route_store_[i_sr.id_].get();
+    iss.station_routes_.emplace_back(sr);
 
     sr->id_ = static_cast<station_route::id>(i_sr.id_);
     sr->name_ = i_sr.name_;
@@ -331,8 +335,14 @@ void calculate_station_routes(base_infrastructure& iss,
     sr->station_ = i_sr.station_;
     sr->attributes_ = i_sr.attributes_;
 
-    iss.station_store_[i_sr.station_->id_]->station_routes_[i_sr.name_] =
-        sr.get();
+    auto& station = iss.station_store_[i_sr.station_->id_];
+
+    sassert(station->station_routes_.find(i_sr.name_) ==
+                std::end(station->station_routes_),
+            "There is already a station route with the name {} in station {}",
+            i_sr.name_, station->ds100_);
+
+    station->station_routes_[i_sr.name_] = sr;
 
     auto start = network.elements_[mats.rp_id_to_element_id_.at(i_sr.start_)];
     auto end = network.elements_[mats.rp_id_to_element_id_.at(i_sr.end_)];
@@ -352,11 +362,11 @@ void calculate_station_routes(base_infrastructure& iss,
     }
 
     if (auto first = sr->nodes().back()->next_node_; first != nullptr) {
-      sr->to_ = iss.element_to_station_[first->element_->id()];
+      sr->to_ = iss.element_to_station_.at(first->element_->id());
     }
 
     if (auto inc = sr->nodes().front()->reverse_edges_; !inc.empty()) {
-      sr->from_ = iss.element_to_station_[inc.front()->element_->id()];
+      sr->from_ = iss.element_to_station_.at(inc.front()->element_->id());
     }
 
     auto const get_halt_node = [&](auto&& rp_id) -> node_ptr {
@@ -453,10 +463,11 @@ void calculate_station_routes(base_infrastructure& iss,
 
 soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
                                             base_infrastructure& iss,
-                                            construction_materials& mats) {
+                                            construction_materials& mats,
+                                            station::id const id) {
   auto station = soro::make_unique<struct station>();
   station->ds100_ = soro::string(rp_station.child_value(STATION));
-  station->id_ = static_cast<station::id>(iss.station_store_.size());
+  station->id_ = id;
 
   for (auto const& section :
        rp_station.child(RAIL_PLAN_SECTIONS).children(RAIL_PLAN_SECTION)) {
@@ -467,9 +478,9 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
 
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
-    auto const id = mats.intermediate_station_routes_.size();
+    auto const sr_id = mats.intermediate_station_routes_.size();
     mats.intermediate_station_routes_.push_back(
-        parse_station_route(id, xml_sr, station.get(), iss.graph_, mats));
+        parse_station_route(sr_id, xml_sr, station.get(), iss.graph_, mats));
   }
 
   return station;
@@ -673,11 +684,11 @@ void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
   for (auto const& xml_rp_station : d.child(XML_ISS_DATA)
                                         .child(RAIL_PLAN_STATIONS)
                                         .children(RAIL_PLAN_STATION)) {
-
-    auto station_ptr = parse_iss_station(xml_rp_station, iss, mats);
-
-    iss.stations_.emplace_back(station_ptr.get());
-    iss.station_store_.emplace_back(std::move(station_ptr));
+    auto const id = static_cast<station::id>(iss.station_store_.size());
+    iss.station_store_.emplace_back();
+    iss.station_store_.back() =
+        parse_iss_station(xml_rp_station, iss, mats, id);
+    iss.stations_.emplace_back(iss.station_store_.back().get());
   }
 }
 

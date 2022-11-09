@@ -68,21 +68,9 @@ TEST_SUITE("timetable") {
     check_timetable(tt);
   }
 
-  TEST_CASE("parse overtake archive") {
-    auto const infra = infrastructure(SMALL_OPTS);
-    auto const tt = timetable(OVERTAKE_OPTS_ARCHIVE, infra);
-    check_timetable(tt);
-  }
-
   TEST_CASE("parse follow") {  // NOLINT
     auto const infra = infrastructure(SMALL_OPTS);
     auto const tt = timetable(FOLLOW_OPTS, infra);
-    check_timetable(tt);
-  }
-
-  TEST_CASE("parse follow archive") {
-    auto const infra = infrastructure(SMALL_OPTS);
-    auto const tt = timetable(FOLLOW_OPTS_ARCHIVE, infra);
     check_timetable(tt);
   }
 }

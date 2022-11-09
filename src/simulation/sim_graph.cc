@@ -3,6 +3,7 @@
 #include <set>
 
 #include "soro/utls/graph/traversal.h"
+#include "soro/utls/sassert.h"
 #include "soro/utls/unixtime.h"
 
 #include "soro/infrastructure/interlocking/interlocking_route.h"
@@ -216,6 +217,8 @@ discrete_scenario calcuate_discrete_scenario(
 }
 
 kilometer_per_hour si_to_sim_kmh(si::speed const& s) {
+  utls::sassert(si::valid(s),
+                "Can't convert invalid (nan) '{}' si::speed to kmh!", s);
   return kilometer_per_hour{
       static_cast<kilometer_per_hour::member_t>(si::as_km_h(s))};
 }

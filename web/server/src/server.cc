@@ -129,7 +129,7 @@ int main(int argc, char const** argv) {
     opts.infrastructure_path_ = infra_file;
     opts.gps_coord_path_ = coord_file;
 
-    soro::infra::infrastructure infra(opts);
+    soro::infra::infrastructure const infra(opts);
 
     auto const osm_file =
         infra_res_dir / infra_file.filename().replace_extension(".osm");
@@ -141,7 +141,7 @@ int main(int argc, char const** argv) {
     auto const tmp_dir = infra_res_dir / "tmp";
     exists_or_create_dir(tmp_dir);
 
-    soro::server::import_settings import_settings(
+    soro::server::import_settings const import_settings(
         osm_file,
         infra_res_dir / "tiles" /
             infra_file.filename().replace_extension(".mdb"),
@@ -149,6 +149,6 @@ int main(int argc, char const** argv) {
     soro::server::import_tiles(import_settings);
   }
 
-  soro::server::server server(s.address_.val(), s.port_.val(),
-                              s.server_resource_dir_.val(), s.test_);
+  soro::server::server const server(s.address_.val(), s.port_.val(),
+                                    s.server_resource_dir_.val(), s.test_);
 }

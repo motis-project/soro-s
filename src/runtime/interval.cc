@@ -173,7 +173,6 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
 
       list.emplace_back(INVALID<length>, INVALID<speed>);
     }
-
   }
 
   utl::verify(!valid(list.back().distance_) && list.back().elements_.empty(),

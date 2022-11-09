@@ -24,14 +24,14 @@ namespace soro::runtime {
 struct speed_interval {
   speed_interval() = delete;
   speed_interval(si::length const start, si::length const end,
-                 si::speed const speed_limit, std::vector<interval>& intervals)
+                 si::speed const speed_limit, interval_list const& intervals)
       : start_(start),
         end_(end),
         speed_limit_(speed_limit),
         intervals_(intervals) {}
   speed_interval(si::length const start, si::length const end,
                  si::speed const speed_limit, bool const halt,
-                 std::vector<interval>& intervals)
+                 interval_list const& intervals)
       : start_(start),
         end_(end),
         speed_limit_(speed_limit),
@@ -46,7 +46,7 @@ struct speed_interval {
 
   bool halt_{false};
 
-  std::vector<interval> intervals_;
+  interval_list intervals_;
   general_driving_regimes driving_regimes_{};
 
   si::length length() const;
@@ -182,7 +182,7 @@ using speed_intervals = std::vector<speed_interval>;
  * @return a list of speed_interval structs. Every speed interval struct
  * contains all directly connected interval structs with the same speed limit
  */
-speed_intervals get_speed_intervals(std::vector<interval> const& intervals);
+speed_intervals get_speed_intervals(soro::vector<interval> const& intervals);
 
 std::vector<runtime_result> run_complete(rs::train_physics const& tp,
                                          speed_intervals& speed_intervals,

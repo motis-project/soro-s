@@ -124,7 +124,7 @@ export function createMap(rootElement, infrastructureName, tooltip) {
     attributionControl: false,
     zoom: 14,
     hash: "location",
-    // center: getMiddle(infrastructure),
+    center: [14, 49],
     maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
     bearing: 0,
     transformRequest: (relative_url, _resourceType) => {

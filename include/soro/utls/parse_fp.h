@@ -59,7 +59,7 @@ template <typename T, replace_comma ReplaceComma = OFF>
 constexpr T parse_fp(const char* const start, std::size_t const len) {
   if constexpr (ReplaceComma) {
     char* tmp = new char[len + 1];
-    strncpy(tmp, start, len);
+    memcpy(tmp, start, len);
     tmp[len] = '\0';
 
     std::replace(tmp, tmp + len, ',', '.');
@@ -83,7 +83,12 @@ constexpr T parse_fp(const char* const start) {
 
 template <typename T, replace_comma ReplaceComma = OFF>
 constexpr T parse_fp(std::string_view s) {
-  return parse_fp<T, ReplaceComma>(s.begin(), s.size());
+  return parse_fp<T, ReplaceComma>(s.data(), s.size());
+}
+
+template <typename T, replace_comma ReplaceComma = OFF>
+constexpr T parse_fp(std::string const& s) {
+  return parse_fp<T, ReplaceComma>(s.data(), s.size());
 }
 
 }  // namespace soro::utls

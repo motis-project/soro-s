@@ -1,10 +1,12 @@
 #include "soro/infrastructure/parsers/iss/get_infra_stats.h"
 
+#include "pugixml.hpp"
+
 #include "utl/verify.h"
 
 #include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 
-#include "pugixml.hpp"
+#include "soro/utls/string.h"
 
 namespace soro::infra {
 
@@ -12,7 +14,18 @@ void count_elements_in_section(pugi::xml_node xml_section, infra_stats& is) {
   ++is.sections_;
 
   for (auto const xml_element : xml_section.child(RAIL_PLAN_NODE).children()) {
-    ++is.number(get_type(xml_element.name()));
+    // we are not parsing the route end of train detectors for now
+    // TODO(julian) start parsing the route end of train detectors
+    // cf parse_iss.cc
+    if (utls::equal(xml_element.name(), ROUTE_EOTD_FALLING) ||
+        utls::equal(xml_element.name(), ROUTE_EOTD_RISING)) {
+      continue;
+    }
+
+    auto const t = get_type(xml_element.name());
+    if (t != type::INVALID) {
+      ++(is.number(t));
+    }
   }
 }
 
@@ -43,6 +56,34 @@ infra_stats get_infra_stats(iss_files const& files) {
 
   for (auto const& file : files.rail_plan_files_) {
     count_elements_in_file(file.contents_, is);
+  }
+
+  // for every border pair there is an extra (empty) section
+  is.sections_ += is.number(type::BORDER) / 2;
+
+  for (auto t : all_types()) {
+
+    // undirected track elements appear two times in the graph
+    if (is_undirected_track_element(t)) {
+      is.number(t) *= 2;
+    }
+
+    // simple elements appear two times in the infrastructure data,
+    // but are modelled as one element in the graph
+    // exception: borders
+    // TODO(julian) maybe remove half of all border elements?
+    if (is_simple_element(t) && t != type::BORDER) {
+      is.number(t) /= 2;
+    }
+
+    // every switch is represented three times in the infrastructure data
+    if (t == type::SIMPLE_SWITCH) {
+      is.number(t) /= 3;
+    }
+
+    if (t == type::CROSS) {
+      is.number(t) /= 4;
+    }
   }
 
   return is;

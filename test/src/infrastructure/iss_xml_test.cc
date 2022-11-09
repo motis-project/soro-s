@@ -570,7 +570,8 @@ void check_border_number(infrastructure const& infra) {
     return;  // no border checking with a single station
   }
   auto const total_borders = std::accumulate(
-      std::cbegin(infra->stations_), std::cend(infra->stations_), 0UL,
+      std::cbegin(infra->stations_), std::cend(infra->stations_),
+      std::size_t{0},
       [](auto&& acc, auto&& s) { return acc + s->borders_.size(); });
 
   CHECK_MESSAGE(total_borders != 0,
@@ -651,11 +652,6 @@ TEST_SUITE("parse base_infrastructure") {
 
   TEST_CASE("infra from folder") {  // NOLINT
     infrastructure const infra(SMALL_OPTS);
-    check_infra(infra);
-  }
-
-  TEST_CASE("infra from archive") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS_ARCHIVE);
     check_infra(infra);
   }
 

@@ -6,9 +6,11 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::simulation;
 
+#if !defined(_MSC_VER)
 // turn off warning for this suite
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 TEST_SUITE("cycle_detection suite") {
   TEST_CASE("no cycle") {
@@ -222,4 +224,6 @@ TEST_SUITE("cycle_detection suite") {
   }
 }
 
+#if !defined(_MSC_VER)
 #pragma GCC diagnostic pop
+#endif

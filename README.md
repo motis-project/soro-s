@@ -5,10 +5,12 @@
 
 ## SORO-S Setup (Ubuntu 20.04)
 
-If this setup does not work for you check out the unix.yml or windows.yml file for the github actions. There should
+If this setup does not work for you check out the unix.yml or windows.yml file
+for the github actions. There should
 always be a configuration for a successful build.
 
-Newer versions of Ubuntu or other distributions might not need to excute all steps, since some packages might already be
+Newer versions of Ubuntu or other distributions might not need to excute all
+steps, since some packages might already be
 included.
 
 ### Tools:
@@ -55,7 +57,8 @@ sudo apt install g++-11
 
 #### Installing remaining tools
 
-First add the kitware repository for the latest cmake version. To do this add the kitware signing key.
+First add the kitware repository for the latest cmake version. To do this add
+the kitware signing key.
 
 ```shell
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
@@ -92,7 +95,7 @@ git clone git@github.com:motis-project/soro-s.git
 Invoke cmake with the 'clang-release' preset for a build with clang ..
 
 ```shell
-cd private-soros && cmake --preset clang-release
+cd soro-s && cmake --preset clang-release
 ```
 
 .. or 'gcc-release' for a build with gcc.
@@ -100,7 +103,7 @@ cd private-soros && cmake --preset clang-release
 [comment]: <> (Create soro-test build files either with GCC as the compiler ...)
 
 ```shell
-cd private-soros && cmake --preset gcc-release
+cd soro-s && cmake --preset gcc-release
 ```
 
 Navigate to the build directory and build the tests for a clang build ..
@@ -151,7 +154,8 @@ You can access the interface now on [localhost:8080](http://localhost:8080).
 
 ### SORO-S CMake Flags
 
-These are the custom CMake flags. Turn them on by passing -D{Flag Name}=On to CMake.
+These are the custom CMake flags. Turn them on by passing -D{Flag Name}=On to
+CMake.
 
 | Flag Name | Effect |
 |-----------|--------|
@@ -163,13 +167,16 @@ These are the custom CMake flags. Turn them on by passing -D{Flag Name}=On to CM
 
 ## SORO-S Setup (Visual Studio 2022)
 
-Please make sure that you have the following tools installed and available in the build environment.
+Please make sure that you have the following tools installed and available in
+the build environment.
 
 - Git
 - Ninja
 - CMake
 - Python (only needed for the web interface)
 
-Currently, only MSVC 14.29 is supported. Please make sure that you have the appropriate version installed.
+Currently, only MSVC 14.29 is supported. Please make sure that you have the
+appropriate version installed.
 
-After adding the repository in Visual Studio select either the MSVC Debug or MSVC Release preset to compile.
+After adding the repository in Visual Studio select either the MSVC Debug or
+MSVC Release preset to compile.

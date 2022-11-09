@@ -150,7 +150,7 @@ si::length driving_regime::intersection_point_with_constant(
 }
 
 std::vector<runtime_result> driving_regime::simulate(
-    rs::train_physics const& tp, std::vector<interval> const& intervals,
+    rs::train_physics const& tp, interval_list const& intervals,
     si::length const start, si::length const end, si::speed const velocity,
     si::length const offset, si::time const time_offset,
     si::length const step_size, bool const reverse) {

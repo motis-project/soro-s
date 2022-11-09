@@ -32,7 +32,6 @@ struct node {
   id id_{INVALID};
   element_ptr element_{nullptr};
 
-  // TODO(julian) maybe use std::optional here
   ptr next_node_{nullptr};
   ptr branch_node_{nullptr};
 

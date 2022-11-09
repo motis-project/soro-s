@@ -25,8 +25,4 @@ struct graph {
   soro::vector<soro::unique_ptr<element>> element_store_;
 };
 
-static_assert(std::is_standard_layout_v<graph>);
-static_assert(std::is_aggregate_v<graph>);
-static_assert(!std::is_polymorphic_v<graph>);
-
 }  // namespace soro::infra

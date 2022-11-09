@@ -1,14 +1,15 @@
-import {
-  exists,
-  saveToPersistent,
-  saveFileToIDBFS,
-  timetableFileExists
-} from "../utl/IDBFSHelper.js";
+// import {
+//   exists,
+//   saveToPersistent,
+//   saveFileToIDBFS,
+//   timetableFileExists
+// } from "../utl/IDBFSHelper.js";
 import {
   getComponents,
   getTimetableComponents
 } from "../utl/goldenLayoutHelper.js";
-import { Module } from "../soro-client.js";
+
+// import { Module } from "../soro-client.js";
 
 function loadTimetableFromIDBFS(filePath, currentInfrastructure) {
   /* Loading from cache is very slow atm, so disabled

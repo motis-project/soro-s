@@ -110,7 +110,7 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
       continue;
     }
 
-    bool same_element =
+    bool const same_element =
         ts.times_[ts_idx].element_->id() == rich_node.node_->element_->id();
 
     CHECK_MESSAGE(
@@ -152,26 +152,12 @@ TEST_SUITE("overtake runtime") {
     check_runtime(infra, tt);
     check_delays(infra, tt);
   }
-
-  TEST_CASE("overtake archive") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(OVERTAKE_OPTS_ARCHIVE, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
-  }
 }
 
 TEST_SUITE("follow runtime") {
   TEST_CASE("follow") {  // NOLINT
     infrastructure const infra(SMALL_OPTS);
     timetable const tt(FOLLOW_OPTS, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
-  }
-
-  TEST_CASE("follow archive") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(FOLLOW_OPTS_ARCHIVE, infra);
     check_runtime(infra, tt);
     check_delays(infra, tt);
   }
