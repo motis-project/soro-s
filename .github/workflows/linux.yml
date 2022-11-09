@@ -12,7 +12,6 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-20.04
-    timeout-minutes: 30
     container:
       image: ghcr.io/julianharbarth/docker-cpp-build:master
       volumes:
