@@ -321,9 +321,9 @@ void calculate_station_routes(base_infrastructure& iss,
 
   iss.station_route_store_.reserve(mats.intermediate_station_routes_.size());
   for (auto const& i_sr : mats.intermediate_station_routes_) {
-    if (iss.station_route_store_.size() <= i_sr.id_) {
-      iss.station_route_store_.resize(i_sr.id_ + 1);
-    }
+    iss.station_route_store_.emplace_back();
+    sassert(iss.station_route_store_.size() == i_sr.id_ + 1,
+            "Did not allocate enough space for the signal station route");
 
     iss.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
     auto sr = iss.station_route_store_[i_sr.id_].get();
@@ -335,14 +335,14 @@ void calculate_station_routes(base_infrastructure& iss,
     sr->station_ = i_sr.station_;
     sr->attributes_ = i_sr.attributes_;
 
-    auto const& station = iss.station_store_[i_sr.station_->id_];
+    auto& station = iss.station_store_[i_sr.station_->id_];
 
     sassert(station->station_routes_.find(i_sr.name_) ==
                 std::end(station->station_routes_),
             "There is already a station route with the name {} in station {}",
             i_sr.name_, station->ds100_);
 
-    station->station_routes_.emplace(i_sr.name_, sr);
+    station->station_routes_[i_sr.name_] = sr;
 
     auto start = network.elements_[mats.rp_id_to_element_id_.at(i_sr.start_)];
     auto end = network.elements_[mats.rp_id_to_element_id_.at(i_sr.end_)];
@@ -463,10 +463,11 @@ void calculate_station_routes(base_infrastructure& iss,
 
 soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
                                             base_infrastructure& iss,
-                                            construction_materials& mats) {
+                                            construction_materials& mats,
+                                            station::id const id) {
   auto station = soro::make_unique<struct station>();
   station->ds100_ = soro::string(rp_station.child_value(STATION));
-  station->id_ = static_cast<station::id>(iss.station_store_.size());
+  station->id_ = id;
 
   for (auto const& section :
        rp_station.child(RAIL_PLAN_SECTIONS).children(RAIL_PLAN_SECTION)) {
@@ -477,9 +478,9 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
 
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
-    auto const id = mats.intermediate_station_routes_.size();
+    auto const sr_id = mats.intermediate_station_routes_.size();
     mats.intermediate_station_routes_.push_back(
-        parse_station_route(id, xml_sr, station.get(), iss.graph_, mats));
+        parse_station_route(sr_id, xml_sr, station.get(), iss.graph_, mats));
   }
 
   return station;
@@ -683,7 +684,10 @@ void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
   for (auto const& xml_rp_station : d.child(XML_ISS_DATA)
                                         .child(RAIL_PLAN_STATIONS)
                                         .children(RAIL_PLAN_STATION)) {
-    iss.station_store_.push_back(parse_iss_station(xml_rp_station, iss, mats));
+    auto const id = static_cast<station::id>(iss.station_store_.size());
+    iss.station_store_.emplace_back();
+    iss.station_store_.back() =
+        parse_iss_station(xml_rp_station, iss, mats, id);
     iss.stations_.emplace_back(iss.station_store_.back().get());
   }
 }
