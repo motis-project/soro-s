@@ -109,7 +109,8 @@ void check_speed_intervals(speed_intervals is_speed_intervals,
 TEST_SUITE_BEGIN("speed_intervals");  // NOLINT
 
 TEST_CASE("speed_interval::has_driving_regime_type::empty") {  // NOLINT
-  interval_list intervals = {interval(si::length{0.0F}, si::speed{10.0F})};
+  interval_list const intervals = {
+      interval(si::length{0.0F}, si::speed{10.0F})};
   auto test_speed_interval = speed_interval{si::length{0.0F}, si::length{10.0F},
                                             si::speed{10.0F}, intervals};
 
@@ -120,7 +121,8 @@ TEST_CASE("speed_interval::has_driving_regime_type::empty") {  // NOLINT
 }
 
 TEST_CASE("speed_interval::has_driving_regime_type::acc") {  // NOLINT
-  interval_list intervals = {interval(si::length{0.0F}, si::speed{10.0F})};
+  interval_list const intervals = {
+      interval(si::length{0.0F}, si::speed{10.0F})};
   auto test_speed_interval = speed_interval{si::length{0.0F}, si::length{10.0F},
                                             si::speed{10.0F}, intervals};
   auto accelerate =
@@ -136,7 +138,8 @@ TEST_CASE("speed_interval::has_driving_regime_type::acc") {  // NOLINT
 }
 
 TEST_CASE("speed_interval::has_driving_regime_type::acc-cruise") {  // NOLINT
-  interval_list intervals = {interval(si::length{0.0F}, si::speed{10.0F})};
+  interval_list const intervals = {
+      interval(si::length{0.0F}, si::speed{10.0F})};
   auto test_speed_interval = speed_interval{si::length{0.0F}, si::length{10.0F},
                                             si::speed{10.0F}, intervals};
   auto accelerate =
@@ -156,7 +159,8 @@ TEST_CASE("speed_interval::has_driving_regime_type::acc-cruise") {  // NOLINT
 
 TEST_CASE(  // NOLINT
     "speed_interval::has_driving_regime_type::acc-cruising-coasting") {
-  interval_list intervals = {interval(si::length{0.0F}, si::speed{10.0F})};
+  interval_list const intervals = {
+      interval(si::length{0.0F}, si::speed{10.0F})};
   auto test_speed_interval = speed_interval{si::length{0.0F}, si::length{10.0F},
                                             si::speed{10.0F}, intervals};
   auto accelerate =
@@ -179,7 +183,8 @@ TEST_CASE(  // NOLINT
 
 TEST_CASE(  // NOLINT
     "speed_interval::has_driving_regime_type::acc-cruising-coasting-brake") {
-  interval_list intervals = {interval(si::length{0.0F}, si::speed{10.0F})};
+  interval_list const intervals = {
+      interval(si::length{0.0F}, si::speed{10.0F})};
   auto test_speed_interval = speed_interval{si::length{0.0F}, si::length{10.0F},
                                             si::speed{10.0F}, intervals};
   auto accelerate =
@@ -215,7 +220,7 @@ TEST_CASE("get_speed_intervals::no_speed_limit_update") {  // NOLINT
       interval(si::length{15.0F}, si::speed{5.0F}),
       interval(si::length{25.0F}, si::speed{5.0F}),
       interval(si::length{30.0F}, si::speed{5.0F}, true, type::HALT)};
-  interval_list first = {
+  interval_list const first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{5.0F}),
@@ -234,10 +239,10 @@ TEST_CASE("get_speed_intervals::speed_limit_update") {  // NOLINT
       interval(si::length{10.0F}, si::speed{5.0F}),
       interval(si::length{15.0F}, si::speed{2.5F}),
       interval(si::length{25.0F}, si::speed{2.5F}, true, type::HALT)};
-  interval_list first = {
+  interval_list const first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT),
       interval(si::length{10.0F}, si::speed{5.0F})};
-  interval_list second = {interval(si::length{15.0F}, si::speed{2.5F})};
+  interval_list const second = {interval(si::length{15.0F}, si::speed{2.5F})};
 
   speed_intervals const shall_speed_intervals = {
       speed_interval{si::length{0.0F}, si::length{15.0F}, si::speed{5.0F},
@@ -256,10 +261,10 @@ TEST_CASE("get_speed_intervals::multiple_speed_intervals") {  // NOLINT
       interval(si::length{15.0F}, si::speed{4.0F}),
       interval(si::length{25.0F}, si::speed{3.0F}),
       interval(si::length{30.0F}, si::speed{0.0F}, true, type::HALT)};
-  interval_list first = {
+  interval_list const first = {
       interval(si::length{0.0F}, si::speed{5.0F}, true, type::HALT)};
-  interval_list second = {interval(si::length{15.0F}, si::speed{4.0F})};
-  interval_list third = {interval(si::length{25.0F}, si::speed{3.0F})};
+  interval_list const second = {interval(si::length{15.0F}, si::speed{4.0F})};
+  interval_list const third = {interval(si::length{25.0F}, si::speed{3.0F})};
 
   speed_intervals const shall_speed_intervals = {
       speed_interval(si::length{0.0F}, si::length{15.0F}, si::speed{5.0F},
@@ -299,7 +304,7 @@ TEST_CASE("get_cruising_speed_range::base_case") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.0F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -336,7 +341,7 @@ TEST_CASE("get_cruising_speed_range::scaleddown_base_case") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {0.75F}),
                        runtime_result({3.0F}, {3.0F}, {0.25F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -373,7 +378,7 @@ TEST_CASE("get_cruising_speed_range::lower_final_speed") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.25F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -404,7 +409,7 @@ TEST_CASE("get_cruising_speed_range::no_braking") {
   cruising.last_run_ = {runtime_result({1.0F}, {1.0F}, {1.0F}),
                         runtime_result({2.0F}, {2.0F}, {1.0F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{2.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising};
@@ -441,7 +446,7 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_full_range") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -478,7 +483,7 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_safe_range") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -507,7 +512,7 @@ TEST_CASE("get_cruising_speed_range::edge_case_constant_speed") {
   cruising.last_run_ = {runtime_result({1.0F}, {1.0F}, {0.75F}),
                         runtime_result({2.0F}, {2.0F}, {0.75F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{0.75F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising};
@@ -543,7 +548,7 @@ TEST_CASE("get_cruising_speed_range::edge_case_only_branking_changes_speed") {
   braking.last_run_ = {runtime_result({2.0F}, {2.0F}, {1.0F}),
                        runtime_result({3.0F}, {3.0F}, {0.5F})};
 
-  interval_list dummy = {};
+  interval_list const dummy = {};
   speed_interval speed_int = speed_interval(si::length{0.0F}, si::length{3.0F},
                                             si::speed{1.0F}, dummy);
   speed_int.driving_regimes_ = {acceleration, cruising, braking};
@@ -555,7 +560,7 @@ TEST_CASE("get_cruising_speed_range::edge_case_only_branking_changes_speed") {
 }
 
 TEST_CASE("get_cruising_interval::no_braking") {  // NOLINT
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
   auto acc = general_driving(si::length{0.0F}, si::length{5.0F},
@@ -572,7 +577,7 @@ TEST_CASE("get_cruising_interval::no_braking") {  // NOLINT
 }
 
 TEST_CASE("get_cruising_interval::candidate_out_of_range") {  // NOLINT
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -621,7 +626,7 @@ TEST_CASE(
     "get_cruising_interval::coasting_isp_and_no_isp_combination") {  // NOLINT
   // ISP - INTERSECTION POINT
 
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -674,7 +679,7 @@ TEST_CASE(
 
 TEST_CASE("get_cruising_interval::braking_isp") {  // NOLINT
   // ISP - INTERSECTION POINT
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -715,7 +720,7 @@ TEST_CASE("get_cruising_interval::braking_isp") {  // NOLINT
 
 TEST_CASE("get_cruising_interval::first_and_last_isp_test") {
   // ISP - INTERSECTION POINT
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -754,7 +759,7 @@ TEST_CASE("get_cruising_interval::first_and_last_isp_test") {
 }
 
 TEST_CASE("get_time_at_position::pos_not_in_speed_interval") {
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -762,7 +767,7 @@ TEST_CASE("get_time_at_position::pos_not_in_speed_interval") {
 }
 
 TEST_CASE("get_time_at_position::pos_not_found") {
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -773,7 +778,7 @@ TEST_CASE("get_time_at_position::pos_not_found") {
 }
 
 TEST_CASE("get_time_at_position::combined_valid_test_cases") {
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int = speed_interval(si::length{0.0F}, si::length{10.0F},
                                   si::speed{5.0F}, ints);
 
@@ -824,7 +829,7 @@ TEST_CASE("get_time_at_position::combined_valid_test_cases") {
 }
 
 TEST_CASE("get_transit_time_difference_cruising::base_case_tests") {
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int =
       speed_interval(si::length{0.0F}, si::length{8.0F}, si::speed{5.0F}, ints);
 
@@ -864,7 +869,7 @@ TEST_CASE("get_transit_time_difference_cruising::base_case_tests") {
 }
 
 TEST_CASE("get_transit_time_difference_cruising::change_in_speed_test") {
-  interval_list ints = {};
+  interval_list const ints = {};
   auto speed_int =
       speed_interval(si::length{0.0F}, si::length{8.0F}, si::speed{5.0F}, ints);
 
