@@ -669,11 +669,10 @@ TEST_SUITE("parse base_infrastructure") {
 }
 
 TEST_SUITE("parse infrastructure - de_export" *
-           doctest::skip(fs::exists(DE_EXPORT_FOLDER))) {
+           doctest::skip(!fs::exists(DE_EXPORT_FOLDER))) {
 
   TEST_CASE("parse de_export") {
     infrastructure const infra(DE_EXPORT_OPTS);
     check_infra(infra);
   }
-
 }
