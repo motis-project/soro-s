@@ -218,7 +218,7 @@ auto get_best_rotations(soro::vector<station::ptr> const& stations,
   return station_rotations;
 }
 
-auto resolve_overlaps(soro::vector<station::ptr> const&,
+auto resolve_overlaps(soro::vector<station::ptr> const& stations,
                       soro::vector<gps> const& station_coords) {
   uLOG(info) << "[ Layout ] Resolving overlaps.";
 
