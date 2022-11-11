@@ -10,6 +10,7 @@
 .pkg.lock
 .pkg.mutex
 /CMakeSettings.json
+resources/infrastructure/de_export
 
 # Ignore the file produced by cmake
 test/include/test/file_paths.h
