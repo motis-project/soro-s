@@ -2,6 +2,8 @@
 
 #include "pugixml.hpp"
 
+#include "utl/logging.h"
+
 #include "soro/utls/parse_fp.h"
 
 #include "soro/si/constants.h"
@@ -82,6 +84,12 @@ tractive_curve_t get_tractive_force_curve(
     polynomials.push_back(piece);
   }
 
+  if (!is_continuous(polynomials)) {
+    uLOG(utl::warn) << "Found non continuous piecewise function for tractive "
+                       "force curve, skipping it.";
+    return {};
+  }
+
   return make_piecewise(std::move(polynomials));
 }
 
@@ -121,6 +129,15 @@ auto parse_variants(xml_node const& xml_variants) {
     auto weight = si::from_ton(parse_fp<si::precision, replace_comma::ON>(
         xml_variant.child("EigenGewicht").child_value()));
 
+    auto const tractive_force_curve =
+        get_tractive_force_curve(xml_variant.child("Stromartausruestungen")
+                                     .child("Stromartausruestung")
+                                     .child("Zugkraftfaktoren"));
+
+    if (tractive_force_curve.pieces_.empty()) {
+      continue;
+    }
+
     variants.emplace(
         id, traction_vehicle{
                 .name_ = xml_variant.child("Bezeichnung").child_value(),
@@ -129,10 +146,7 @@ auto parse_variants(xml_node const& xml_variants) {
                     si::from_km_h(parse_fp<si::precision, replace_comma::ON>(
                         xml_variant.child("ZulaessigeGeschwindigkeit")
                             .child_value())),
-                .tractive_curve_ = get_tractive_force_curve(
-                    xml_variant.child("Stromartausruestungen")
-                        .child("Stromartausruestung")
-                        .child("Zugkraftfaktoren")),
+                .tractive_curve_ = tractive_force_curve,
                 .resistance_curve_ =
                     get_running_resistance_curve(xml_variant, weight)});
   }
