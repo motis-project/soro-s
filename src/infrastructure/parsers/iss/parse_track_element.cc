@@ -2,6 +2,7 @@
 
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/serror.h"
 #include "soro/utls/string.h"
 
 #include "soro/infrastructure/graph/graph_creation.h"
@@ -92,10 +93,9 @@ speed_limit get_speed_limit(xml_node const& speed_limit_xml,
 
   spl.element_ = element;
 
-  utls::sassert(
-      element->is_track_element(),
-      "Speed limits should only apply to track elements, nothing else");
-  spl.node_ = element->as<track_element>().get_node();
+  if (element->is_track_element()) {
+    spl.node_ = element->as<track_element>().get_node();
+  }
 
   return spl;
 }
@@ -151,8 +151,12 @@ void add_element_data(pugi::xml_node const& xml_node, element* element,
   } else if (element->is(type::EOTD)) {
     network.element_data_[element_id].emplace<eotd>(get_eotd(xml_node));
   } else if (element->is(type::SPEED_LIMIT)) {
-    network.element_data_[element_id].emplace<speed_limit>(
-        get_speed_limit(xml_node, element));
+    auto const spl = get_speed_limit(xml_node, element);
+
+    utls::sassert(spl.node_ != nullptr,
+                  "Could not find speed limit node for track element!");
+
+    network.element_data_[element_id].emplace<speed_limit>(spl);
   }
 }
 
