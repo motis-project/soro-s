@@ -1,6 +1,7 @@
 #include "doctest/doctest.h"
 
 #include "soro/utls/parse_fp.h"
+#include "soro/utls/std_wrapper/std_wrapper.h"
 
 #include "soro/infrastructure/route.h"
 #include "soro/rolling_stock/ctc.h"
@@ -45,5 +46,22 @@ TEST_SUITE("static asserts") {
     static_assert(static_cast<bool>(replace_comma::ON));
     static_assert(static_cast<replace_comma>(false) == replace_comma::OFF);
     static_assert(static_cast<replace_comma>(true) == replace_comma::ON);
+  }
+
+  constexpr bool true_exactly_once(type const t) {
+    auto const trues = static_cast<uint32_t>(is_end_element(t)) +
+                       static_cast<uint32_t>(is_simple_element(t)) +
+                       static_cast<uint32_t>(is_simple_switch(t)) +
+                       static_cast<uint32_t>(is_cross(t)) +
+                       static_cast<uint32_t>(is_directed_track_element(t)) +
+                       static_cast<uint32_t>(is_undirected_track_element(t));
+
+    return trues == 1;
+  }
+
+  TEST_CASE("check type enum") {
+    // every type should only belong to one of the following categories:
+    // end, simple, switch, cross, directed or undirected track element
+    static_assert(all_of(all_types(), true_exactly_once));
   }
 }

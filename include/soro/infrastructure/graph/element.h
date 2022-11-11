@@ -144,6 +144,47 @@ struct track_element {
   line_id line_{INVALID_LINE_ID};
 };
 
+struct undirected_track_element {
+#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+  undirected_track_element() = default;
+  undirected_track_element(undirected_track_element&&) = default;
+  undirected_track_element(undirected_track_element const&) = delete;
+
+  undirected_track_element& operator=(undirected_track_element&&) = default;
+  auto operator=(undirected_track_element const&) = delete;
+
+  ~undirected_track_element() = default;
+#endif
+
+  bool is(type const t) const noexcept { return type_ == t; }
+
+  auto& top() { return nodes_[0]; }
+  auto& bot() { return nodes_[1]; }
+
+  auto const& top() const { return nodes_[0]; }
+  auto const& bot() const { return nodes_[1]; }
+
+  auto& start_rising_neighbour() { return neighbours_[0]; }
+  auto& start_falling_neighbour() { return neighbours_[1]; }
+  auto& end_rising_neighbour() { return neighbours_[2]; }
+  auto& end_falling_neighbour() { return neighbours_[3]; }
+
+  auto const& start_rising_neighbour() const { return neighbours_[0]; }
+  auto const& start_falling_neighbour() const { return neighbours_[1]; }
+  auto const& end_rising_neighbour() const { return neighbours_[2]; }
+  auto const& end_falling_neighbour() const { return neighbours_[3]; }
+
+  bool rising_{false};
+  type type_{type::INVALID};
+  element_id id_{INVALID_ELEMENT_ID};
+
+  soro::array<node_ptr, 2> nodes_{nullptr, nullptr};
+  soro::array<element_ptr, 4> neighbours_{nullptr, nullptr, nullptr, nullptr};
+
+  kilometrage km_{si::INVALID<kilometrage>};
+  line_id line_{INVALID_LINE_ID};
+};
+
 struct simple_switch {
 #if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
   simple_switch() = default;
@@ -269,8 +310,9 @@ struct element {
   ~element() = default;
 #endif
 
-  using member_t = soro::variant<end_element, track_element, simple_element,
-                                 simple_switch, cross>;
+  using member_t =
+      soro::variant<end_element, track_element, undirected_track_element,
+                    simple_element, simple_switch, cross>;
 
   template <typename T>
   T& as() {

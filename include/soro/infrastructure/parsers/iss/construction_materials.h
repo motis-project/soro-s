@@ -20,6 +20,7 @@ struct intermediate_station_route {
       DEFAULT_ATTRIBUTE_ARRAY};
 
   soro::vector<course_decision> course_;
+
   soro::vector<speed_limit> extra_speed_limits_;
 
   std::size_t id_;

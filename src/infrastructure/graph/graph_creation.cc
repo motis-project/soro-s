@@ -24,8 +24,11 @@ element* create_element(graph& network, station& station,
   } else if (is_simple_switch(type)) {
     return create_element_t<simple_switch>(network, station, mats, type, rp_id,
                                            rising);
-  } else if (is_track_element(type)) {
+  } else if (is_directed_track_element(type)) {
     return create_element_t<track_element>(network, station, mats, type, rp_id,
+                                           rising);
+  } else if (is_undirected_track_element(type)) {
+    return create_element_t<undirected_track_element>(network, station, mats, type, rp_id,
                                            rising);
   }
 
@@ -80,6 +83,12 @@ void set_km_point_and_line(simple_element& e, std::string const& node_name,
 }
 
 void set_km_point_and_line(track_element& e, std::string const&,
+                           kilometrage const km_point, line_id const line) {
+  e.km_ = km_point;
+  e.line_ = line;
+}
+
+void set_km_point_and_line(undirected_track_element& e, std::string const&,
                            kilometrage const km_point, line_id const line) {
   e.km_ = km_point;
   e.line_ = line;
@@ -199,6 +208,17 @@ void set_neighbour(track_element& e, std::string const&, element* neigh,
   (rising ? e.ahead() : e.behind()) = neigh;
 }
 
+void set_neighbour(undirected_track_element& e, std::string const&,
+                   element* neigh, bool rising) {
+  if (rising) {
+    e.end_rising_neighbour() == nullptr ? e.end_rising_neighbour() = neigh
+                                          : e.start_rising_neighbour() = neigh;
+  } else {
+    e.end_falling_neighbour() == nullptr ? e.end_falling_neighbour() = neigh
+                                           : e.start_falling_neighbour() = neigh;
+  }
+}
+
 void set_neighbour(cross& e, std::string const& name, element* neigh,
                    bool rising) {
   switch (str_hash(name)) {
@@ -232,6 +252,7 @@ void set_neighbour(element& e, std::string const& name, element* neigh,
 
 bool joins_lines(end_element const&) { return false; }
 bool joins_lines(track_element const&) { return false; }
+bool joins_lines(undirected_track_element const&) { return false; }
 bool joins_lines(simple_element const&) { return false; }
 
 bool joins_lines(simple_switch const& s) {
@@ -246,6 +267,7 @@ bool joins_lines(cross const& c) {
 
 bool misaligned_join(end_element const&) { return false; }
 bool misaligned_join(track_element const&) { return false; }
+bool misaligned_join(undirected_track_element const&) { return false; }
 bool misaligned_join(simple_element const&) { return false; }
 
 bool misaligned_join(simple_switch const& s) {
@@ -289,7 +311,12 @@ node_ptr get_node(simple_element const& s, bool const rising,
 }
 
 node_ptr get_node(track_element const& e, bool const, element_ptr) {
-  return e.nodes_.front();
+  return e.get_node();
+}
+
+node_ptr get_node(undirected_track_element const& e, bool const rising,
+                  element_ptr) {
+  return rising ? e.top() : e.bot();
 }
 
 node_ptr get_node(simple_switch const& e, bool const rising,
@@ -409,6 +436,19 @@ void connect_nodes(simple_element& e, element_ptr this_ptr) {
       bot_ptr->next_node_ =
           get_node(*e.end_falling_neighbour(), false, this_ptr);
     }
+  }
+}
+
+void connect_nodes(undirected_track_element& e, element_ptr this_ptr) {
+  auto top_ptr = to_non_const(e.top());
+  auto bot_ptr = to_non_const(e.bot());
+
+  if (e.start_rising_neighbour() != nullptr) {
+    top_ptr->next_node_ = get_node(*e.start_rising_neighbour(), true, this_ptr);
+  }
+
+  if (e.end_falling_neighbour() != nullptr) {
+    bot_ptr->next_node_ = get_node(*e.end_falling_neighbour(), false, this_ptr);
   }
 }
 

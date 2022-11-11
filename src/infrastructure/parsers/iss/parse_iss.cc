@@ -200,18 +200,12 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
 
   for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
     auto const type = get_type(node.name());
-    if (is_track_element(type) && !is_undirected_track_element(type)) {
+
+    if (is_directed_track_element(type)) {
       auto const rising = has_rising_name(node);
 
       auto& prev_element = rising ? prev_rising_element : prev_falling_element;
       auto& prev_node = rising ? prev_rising_rp_node : prev_falling_rp_node;
-
-      // TODO(julian) start parsing the route end of train detectors
-      // cf get_infra_stats.cc
-      if (equal(node.name(), ROUTE_EOTD_FALLING) ||
-          equal(node.name(), ROUTE_EOTD_RISING)) {
-        continue;
-      }
 
       auto const track_element =
           parse_track_element(node, type, rising, line, network, station, mats);
@@ -226,28 +220,24 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
       prev_element = track_element;
       prev_node = node;
     } else if (is_undirected_track_element(type)) {
-      auto const track_rising =
+      auto const track_element =
           parse_track_element(node, type, true, line, network, station, mats);
-      auto const track_falling =
-          parse_track_element(node, type, false, line, network, station, mats);
 
       set_neighbour(*prev_rising_element, prev_rising_rp_node.name(),
-                    track_rising, true);
+                    track_element, true);
       set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
-                    track_falling, false);
+                    track_element, false);
 
-      set_neighbour(*track_rising, node.name(), prev_rising_element, false);
-      set_neighbour(*track_falling, node.name(), prev_falling_element, true);
+      set_neighbour(*track_element, node.name(), prev_rising_element, true);
+      set_neighbour(*track_element, node.name(), prev_falling_element, false);
 
-      sec.elements_.emplace_back(track_rising);
-      sec.elements_.emplace_back(track_falling);
-      network.element_id_to_section_ids_[track_rising->id()].push_back(
-          section_id);
-      network.element_id_to_section_ids_[track_falling->id()].push_back(
+      sec.elements_.emplace_back(track_element);
+      network.element_id_to_section_ids_[track_element->id()].push_back(
           section_id);
 
-      prev_rising_element = track_rising;
-      prev_falling_element = track_falling;
+      prev_rising_element = track_element;
+      prev_falling_element = track_element;
+
       prev_rising_rp_node = node;
       prev_falling_rp_node = node;
     }
@@ -337,10 +327,11 @@ void calculate_station_routes(base_infrastructure& iss,
 
     auto& station = iss.station_store_[i_sr.station_->id_];
 
-    sassert(station->station_routes_.find(i_sr.name_) ==
-                std::end(station->station_routes_),
-            "There is already a station route with the name {} in station {}",
-            i_sr.name_, station->ds100_);
+    utls::sassert(
+        station->station_routes_.find(i_sr.name_) ==
+            std::end(station->station_routes_),
+        "There is already a station route with the name {} in station {}",
+        i_sr.name_, station->ds100_);
 
     station->station_routes_[i_sr.name_] = sr;
 
@@ -418,10 +409,16 @@ void calculate_station_routes(base_infrastructure& iss,
       }
     }
 
+    sr->r_.extra_speed_limits_ = i_sr.extra_speed_limits_;
     for (auto& spl : sr->r_.extra_speed_limits_) {
-      spl.node_ = *utls::find_if(sr->nodes(), [&spl](auto&& n) {
+      auto const it = utls::find_if(sr->nodes(), [&spl](auto&& n) {
         return n->element_->id() == spl.element_->id();
       });
+
+      utls::sassert(it != std::end(sr->nodes()),
+                    "Could not find node for the extra speed limit!");
+
+      spl.node_ = *it;
     }
 
     utls::sort(sr->r_.extra_speed_limits_,
@@ -439,6 +436,12 @@ void calculate_station_routes(base_infrastructure& iss,
                });
 
     sr->length_ = get_path_length_from_elements(sr->nodes());
+
+    utls::sassert(
+        sr->r_.extra_speed_limits_.size() == i_sr.extra_speed_limits_.size(),
+        "Did not account for every extra speed limit.");
+    utls::sassert(sr->r_.omitted_nodes_.size() == i_sr.omitted_rp_nodes_.size(),
+                  "Did not account for every omitted node.");
   }
 
   // TODO(julian) refactor this into a separate function
@@ -722,14 +725,11 @@ auto get_layouted_positions(
 soro::vector<soro::string> get_full_station_names(
     base_infrastructure const& base_infra,
     regulatory_station_data const& regulatory_data) {
-  soro::vector<soro::string> result;
-
-  result.resize(base_infra.stations_.size());
-  for (auto const& [ds100, full_name] : regulatory_data.ds100_to_full_name_) {
-    result[base_infra.ds100_to_station_.at(ds100)->id_] = full_name;
-  }
-
-  return result;
+  return soro::to_vec(base_infra.stations_, [&](station::ptr s) {
+    auto const it = regulatory_data.ds100_to_full_name_.find(s->ds100_);
+    return it != std::end(regulatory_data.ds100_to_full_name_) ? it->second
+                                                               : s->ds100_;
+  });
 }
 
 base_infrastructure parse_iss(infrastructure_options const& options) {
