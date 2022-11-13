@@ -193,6 +193,10 @@ auto get_internal_ssrs(station_route::ptr sr) {
 auto get_sr_paths(station_route::ptr sr, station_route_graph const& srg) {
   std::vector<std::vector<station_route::ptr>> paths;
 
+  if (sr->id_ % 10000 == 0) {
+    std::cout << sr->id_ << '/' << srg.successors_.size() << std::endl;
+  }
+
   auto const& can_start_a_ssr = [&](station_route::ptr sr_ptr) {
     return !sr_ptr->main_signals_.empty() ||
            srg.predeccesors_[sr_ptr->id_].empty();
@@ -208,6 +212,7 @@ auto get_sr_paths(station_route::ptr sr, station_route_graph const& srg) {
           std::vector<station_route::ptr> const& current_path,
           auto const& get_paths_ref) {
         auto new_path = current_path;
+
         new_path.emplace_back(route);
 
         if (can_end_a_ssr(route) && new_path.size() > 1) {
@@ -220,11 +225,48 @@ auto get_sr_paths(station_route::ptr sr, station_route_graph const& srg) {
         }
       };
 
+  //  std::set<station_route::id> ids;
+  //  auto const& generate_graphviz = [&](station_route::ptr const route,
+  //                                      auto const& generate_ref) {
+  //    ids.insert(route->id_);
+  //
+  //    if (can_end_a_ssr(route) && route->id_ != sr->id_) {
+  //      return;
+  //    }
+  //
+  //    for (auto const& neighbour : srg.successors_[route->id_]) {
+  //      generate_ref(neighbour, generate_ref);
+  //    }
+  //  };
+
+  //  generate_graphviz(sr, generate_graphviz);
+  //
+  //  std::string dot = "";
+  //  for (auto const& id : ids) {
+  //    for (auto const& neigh : srg.successors_[id]) {
+  //      dot += std::to_string(id) + " -> " + std::to_string(neigh->id_) +
+  //      ";\n";
+  //    }
+  //  }
+
+  //  std::cout << dot << std::endl;
+
   if (can_start_a_ssr(sr)) {
     fill_paths(sr, {}, fill_paths);
   }
 
-  return paths;
+  std::size_t accumulated = 0;
+  for (auto const& path : paths) {
+    accumulated += path.size();
+  }
+
+  if (paths.size() > 10'000) {
+    std::cout << "Contributing more than 10k: " << paths.size() << std::endl;
+  }
+
+  return std::pair(paths.size(), accumulated);
+
+  //  return paths;
 }
 
 auto get_signal_station_routes(base_infrastructure const& iss) {
@@ -242,61 +284,72 @@ auto get_signal_station_routes(base_infrastructure const& iss) {
    * as they are not conforming to the default definition of a station route:
    * Starting and ending on a main signal.
    */
-  auto const sort_on_halt = [&](auto&& ssr) {
-    using uptr = soro::unique_ptr<interlocking_route>;
-    if (ssr->nodes().back()->is(type::HALT)) {
-      ending_on_halt.emplace_back(std::forward<uptr>(ssr));
-    } else if (ssr->nodes().front()->is(type::HALT)) {
-      starting_on_halt.emplace_back(std::forward<uptr>(ssr));
-    } else {
-      ssrs.emplace_back(std::forward<uptr>(ssr));
-    }
-  };
+  //  auto const sort_on_halt = [&](auto&& ssr) {
+  //    using uptr = soro::unique_ptr<interlocking_route>;
+  //    if (ssr->nodes().back()->is(type::HALT)) {
+  //      ending_on_halt.emplace_back(std::forward<uptr>(ssr));
+  //    } else if (ssr->nodes().front()->is(type::HALT)) {
+  //      starting_on_halt.emplace_back(std::forward<uptr>(ssr));
+  //    } else {
+  //      ssrs.emplace_back(std::forward<uptr>(ssr));
+  //    }
+  //  };
 
-  auto const& add_ssrs_from_path = [&](station_route::ptr sr) {
-    for (auto const& path : get_sr_paths(sr, srg)) {
-      auto ssr = get_ssr_from_path(path);
-      sort_on_halt(std::move(ssr));
-    }
-  };
+  //  auto const& add_ssrs_from_path = [&](station_route::ptr sr) {
+  //    for (auto const& path : get_sr_paths(sr, srg)) {
+  //      auto ssr = get_ssr_from_path(path);
+  //      sort_on_halt(std::move(ssr));
+  //    }
+  //  };
 
-  auto const& add_trailing_intermediate_ssr = [&](station_route::ptr sr) {
-    if (sr->main_signals_.empty()) {
-      return;
-    }
+  //  auto const& add_trailing_intermediate_ssr = [&](station_route::ptr sr) {
+  //    if (sr->main_signals_.empty()) {
+  //      return;
+  //    }
+  //
+  //    auto trailing_ssr = get_trailing_intermediate_ssr(sr);
+  //    sort_on_halt(std::move(trailing_ssr));
+  //  };
+  //
+  //  auto const& add_leading_intermediate_ssr = [&](station_route::ptr sr) {
+  //    if (sr->main_signals_.empty()) {
+  //      return;
+  //    }
+  //
+  //    auto leading_ssr = get_leading_intermediate_ssr(sr);
+  //    sort_on_halt(std::move(leading_ssr));
+  //  };
+  //
+  //  auto const& add_internal_intermediate_ssrs = [&](station_route::ptr sr) {
+  //    utls::append_move(ssrs, get_internal_ssrs(sr));
+  //  };
 
-    auto trailing_ssr = get_trailing_intermediate_ssr(sr);
-    sort_on_halt(std::move(trailing_ssr));
-  };
-
-  auto const& add_leading_intermediate_ssr = [&](station_route::ptr sr) {
-    if (sr->main_signals_.empty()) {
-      return;
-    }
-
-    auto leading_ssr = get_leading_intermediate_ssr(sr);
-    sort_on_halt(std::move(leading_ssr));
-  };
-
-  auto const& add_internal_intermediate_ssrs = [&](station_route::ptr sr) {
-    utls::append_move(ssrs, get_internal_ssrs(sr));
-  };
-
+  std::size_t irs_from_path = 0;
+  std::size_t avg_length = 0;
   for (auto const& sr : iss.station_routes_) {
-    add_ssrs_from_path(sr);
+    auto const [paths, acc_length] = get_sr_paths(sr, srg);
+    irs_from_path += paths;
+    avg_length += acc_length;
 
-    if (srg.successors_[sr->id_].empty()) {
-      add_trailing_intermediate_ssr(sr);
-    }
+    //    auto const paths = get_sr_paths()
+    //    add_ssrs_from_path(sr);
 
-    if (srg.predeccesors_[sr->id_].empty()) {
-      add_leading_intermediate_ssr(sr);
-    }
-
-    if (sr->main_signals_.size() > 1) {
-      add_internal_intermediate_ssrs(sr);
-    }
+    //    if (srg.successors_[sr->id_].empty()) {
+    //      add_trailing_intermediate_ssr(sr);
+    //    }
+    //
+    //    if (srg.predeccesors_[sr->id_].empty()) {
+    //      add_leading_intermediate_ssr(sr);
+    //    }
+    //
+    //    if (sr->main_signals_.size() > 1) {
+    //      add_internal_intermediate_ssrs(sr);
+    //    }
   }
+
+  avg_length /= irs_from_path;
+  std::cout << "IRs from paths: " << irs_from_path << std::endl;
+  std::cout << "AVG length: " << avg_length << std::endl;
 
   // TODO(julian) this should actually happen during ssr construction
   auto const fill_eotd_data = [&](soro::unique_ptr<interlocking_route>& ssr) {

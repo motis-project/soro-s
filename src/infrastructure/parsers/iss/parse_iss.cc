@@ -482,6 +482,12 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
     auto const sr_id = mats.intermediate_station_routes_.size();
+
+    auto const publish_only = xml_sr.child("nurVeroeffentlichung");
+    if (static_cast<bool>(publish_only)) {
+      continue;
+    }
+
     mats.intermediate_station_routes_.push_back(
         parse_station_route(sr_id, xml_sr, station.get(), iss.graph_, mats));
   }
@@ -750,14 +756,14 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   auto const station_positions =
       parse_station_coords(options.gps_coord_path_, iss.ds100_to_station_);
 
-  std::tie(iss.station_positions_, iss.element_positions_) =
-      get_layouted_positions(iss, iss_files, station_positions,
-                             mats.rp_id_to_element_id_);
+  //  std::tie(iss.station_positions_, iss.element_positions_) =
+  //      get_layouted_positions(iss, iss_files, station_positions,
+  //                             mats.rp_id_to_element_id_);
 
-  auto const regulatory_station_data =
-      parse_regulatory_stations(iss_files.regulatory_station_files_);
-  iss.full_station_names_ =
-      get_full_station_names(iss, regulatory_station_data);
+  //  auto const regulatory_station_data =
+  //      parse_regulatory_stations(iss_files.regulatory_station_files_);
+  //  iss.full_station_names_ =
+  //      get_full_station_names(iss, regulatory_station_data);
 
   iss.station_route_graph_ =
       get_station_route_graph(iss.station_routes_, iss.graph_);

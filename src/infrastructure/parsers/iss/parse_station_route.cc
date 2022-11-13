@@ -61,7 +61,9 @@ intermediate_station_route parse_station_route(
     if (utls::equal(xml_spl.child(NODES).attribute(TYPE).value(),
                     WARNING_SIGN)) {
       uLOG(warn) << "Skipped one station route speed limit with node type "
-                 << WARNING_SIGN;
+                 << WARNING_SIGN << " in station route "
+                 << i_station_route.name_ << " in station " << station->ds100_
+                 << ".";
       continue;
     }
 

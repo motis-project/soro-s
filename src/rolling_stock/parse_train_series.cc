@@ -117,8 +117,11 @@ auto get_running_resistance_curve(xml_node const& running_resistance_factors,
   return utls::make_polynomial(drag, dampening, rolling);
 }
 
-auto parse_variants(xml_node const& xml_variants) {
+std::pair<bool, soro::map<variant_id, traction_vehicle>> parse_variants(
+    xml_node const& xml_variants) {
   soro::map<variant_id, traction_vehicle> variants;
+
+  auto success = true;
 
   for (auto const& xml_variant :
        xml_variants.children("Triebfahrzeugbaureihenvariante")) {
@@ -135,6 +138,7 @@ auto parse_variants(xml_node const& xml_variants) {
                                      .child("Zugkraftfaktoren"));
 
     if (tractive_force_curve.pieces_.empty()) {
+      success = false;
       continue;
     }
 
@@ -151,7 +155,7 @@ auto parse_variants(xml_node const& xml_variants) {
                     get_running_resistance_curve(xml_variant, weight)});
   }
 
-  return variants;
+  return {success, variants};
 }
 
 soro::vector<train_series> parse_train_series(
@@ -168,8 +172,14 @@ soro::vector<train_series> parse_train_series(
                          .attribute("Nr")
                          .value();
 
-    ts.variants_ = parse_variants(
+    bool success;
+    std::tie(success, ts.variants_) = parse_variants(
         xml_train_model_range.child("Triebfahrzeugbaureihenvarianten"));
+
+    if (!success) {
+      uLOG(utl::warn) << "Could not parse every train variant in train no "
+                      << ts.nr_ << " from company " << ts.company_nr_;
+    }
 
     train_series.push_back(ts);
   }
