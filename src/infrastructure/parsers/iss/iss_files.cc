@@ -25,6 +25,7 @@ void add_iss_file(iss_files& iss_fs, std::filesystem::path const& fp,
   } else if (fp.filename().string().starts_with("Ordnungsrahmen_ORStr")) {
     iss_fs.regulatory_line_files_.push_back(
         {.path_ = fp, .contents_ = contents});
+  } else if (fp.filename().string().starts_with("BaubetrieblicheMassnahmen")) {
   } else {
     uLOG(utl::warn)
         << "Found file " << fp
