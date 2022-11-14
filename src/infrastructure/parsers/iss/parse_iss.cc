@@ -750,9 +750,11 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   auto const station_positions =
       parse_station_coords(options.gps_coord_path_, iss.ds100_to_station_);
 
-  std::tie(iss.station_positions_, iss.element_positions_) =
-      get_layouted_positions(iss, iss_files, station_positions,
-                             mats.rp_id_to_element_id_);
+  if (options.determine_layout_) {
+    std::tie(iss.station_positions_, iss.element_positions_) =
+        get_layouted_positions(iss, iss_files, station_positions,
+                               mats.rp_id_to_element_id_);
+  }
 
   auto const regulatory_station_data =
       parse_regulatory_stations(iss_files.regulatory_station_files_);
