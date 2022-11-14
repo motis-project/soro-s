@@ -5,7 +5,7 @@
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=7fdc7652d650243ede2d33820d34f2824fafddba
+  commit=0be21a91d96f27f2de4583eb5badfd1c873e3f6c
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
@@ -25,7 +25,7 @@
 [tiles]
   url=git@github.com:motis-project/tiles.git
   branch=master
-  commit=8fb1e9ab5dc6f22a71aebeff38bdb4021a7b3db8
+  commit=84b3686006d748b2c48c5ef05763af21b0f8403f
 [rapidjson]
   url=git@github.com:motis-project/rapidjson.git
   branch=master

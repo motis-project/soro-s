@@ -482,6 +482,12 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
     auto const sr_id = mats.intermediate_station_routes_.size();
+
+    auto const publish_only = xml_sr.child("nurVeroeffentlichung");
+    if (static_cast<bool>(publish_only)) {
+      continue;
+    }
+
     mats.intermediate_station_routes_.push_back(
         parse_station_route(sr_id, xml_sr, station.get(), iss.graph_, mats));
   }
