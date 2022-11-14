@@ -139,6 +139,7 @@ std::pair<bool, soro::map<variant_id, traction_vehicle>> parse_variants(
 
     if (tractive_force_curve.pieces_.empty()) {
       success = false;
+      uLOG(utl::warn) << "Skipping variant " << id;
       continue;
     }
 
