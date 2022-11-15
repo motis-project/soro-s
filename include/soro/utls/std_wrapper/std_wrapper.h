@@ -156,7 +156,10 @@ inline auto any_of(Iteratable const& i, Pred&& p) {
 
 template <typename Iteratable, typename Pred>
 inline auto all_of(Iteratable&& i, Pred&& p) {
-  return std::all_of(std::begin(i), std::end(i), p);
+  using std::begin;
+  using std::end;
+
+  return std::all_of(begin(i), end(i), p);
 }
 
 template <typename Iterable, typename T>

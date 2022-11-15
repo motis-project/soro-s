@@ -21,11 +21,20 @@ struct stop_time {
   utls::duration min_stop_time_;
 };
 
+struct id2 {
+  using base_train_id = uint32_t;
+  using bitfield_idx = uint16_t;
+
+  base_train_id base_id_{std::numeric_limits<base_train_id>::max()};
+  bitfield_idx bit_offset_{std::numeric_limits<bitfield_idx>::max()};
+};
+
 struct train {
   using id = soro::size_type;
   using ptr = soro::ptr<train>;
 
   static constexpr id INVALID = std::numeric_limits<id>::max();
+  static constexpr id2 INVALID2 = id2();
 
   bool freight() const;
   bool ctc() const;

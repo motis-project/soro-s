@@ -77,16 +77,21 @@ constexpr void sassert(bool_with_loc const& assert_this, Msg&& msg,
     gmtime_r(&now, &tmp);
 #endif
 
-    fmt::print(std::clog, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
-    fmt::print(std::clog, std::forward<Msg>(msg), std::forward<Args>(args)...);
-    fmt::print(std::clog, "\n");
-    fmt::print(std::clog, "[FAILED HERE] {}:{}:{} in {}",
-               std::filesystem::path(assert_this.loc_.file_name()).filename(),
-               assert_this.loc_.line(), assert_this.loc_.column(),
-               assert_this.loc_.function_name());
-    fmt::print(std::clog, "\n");
+    std::stringstream ss;
 
-    std::abort();
+    fmt::print(ss, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
+    fmt::print(ss, std::forward<Msg>(msg), std::forward<Args>(args)...);
+    fmt::print(ss, "\n");
+    fmt::print(
+        ss, "[FAILED HERE] {}:{}:{} in {}",
+        std::filesystem::path(assert_this.loc_.file_name()).filename().string(),
+        assert_this.loc_.line(), assert_this.loc_.column(),
+        assert_this.loc_.function_name());
+    fmt::print(ss, "\n");
+
+    std::clog << ss.rdbuf();
+
+    throw std::runtime_error(ss.str());
   }
 }
 
