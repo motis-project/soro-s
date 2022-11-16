@@ -21,36 +21,10 @@ else ()
     add_subdirectory(web/server/)
     add_dependencies(soro-server-client soro-server)
 
-    # CLIENT
-    set(SORO_CLIENT_DIR ${CMAKE_CURRENT_BINARY_DIR}/build-client)
-
-    file(MAKE_DIRECTORY ${SORO_CLIENT_DIR})
-    # Generate the build files for soro-client
-    add_custom_command(TARGET soro-server-client
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND}
-            -GNinja
-            -S ${CMAKE_CURRENT_SOURCE_DIR}
-            -B ${SORO_CLIENT_DIR}
-            -DCMAKE_TOOLCHAIN_FILE=$ENV{EMSDK}upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            USES_TERMINAL
-            )
-
-    # Build soro-client
-    add_custom_command(TARGET soro-server-client
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND}
-            --build ${SORO_CLIENT_DIR}
-            --target soro-client
-            USES_TERMINAL
-            )
-
-    # Copy the client files from the build folder to the server_resources folder
-    add_custom_command(TARGET soro-server-client
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${SORO_CLIENT_DIR}/client/
-            ${SORO_SERVER_DIR}/server_resources/
-            )
+    file(GLOB_RECURSE soro-client-files web/client/ *.html *.css *.js *.ico *.png *.svg *.map)
+    foreach (file ${soro-client-files})
+        set(path ${file})
+        cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/web/client OUTPUT_VARIABLE relative-path)
+        configure_file(${file} ${SORO_SERVER_DIR}/server_resources/${relative-path} COPYONLY)
+    endforeach ()
 endif ()
