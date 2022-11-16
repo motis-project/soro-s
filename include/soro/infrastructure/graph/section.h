@@ -13,7 +13,7 @@ namespace soro::infra {
 struct section {
   using id = uint32_t;
 
-  utls::generator<const element_ptr> iterate(rising const direction) const;
+  utls::generator<const element_ptr> iterate(rising direction) const;
 
   soro::vector<element_ptr> elements_;
   si::length length_{si::ZERO<si::length>};
