@@ -37,15 +37,6 @@ else ()
             USES_TERMINAL
             )
 
-    # Build soro-client
-    add_custom_command(TARGET soro-server-client
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND}
-            --build ${SORO_CLIENT_DIR}
-            --target soro-client
-            USES_TERMINAL
-            )
-
     # Copy the client files from the build folder to the server_resources folder
     add_custom_command(TARGET soro-server-client
             POST_BUILD
