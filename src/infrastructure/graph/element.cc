@@ -74,6 +74,8 @@ kilometrage get_km(simple_switch const& e, element_ptr neigh) {
 
 kilometrage get_km(track_element const& e, element_ptr) { return e.km_; }
 
+kilometrage get_km(undirected_track_element const& e, element_ptr) { return e.km_; }
+
 kilometrage get_km(cross const& e, element_ptr neigh) {
   if (neigh == e.rising_start_left() || neigh == e.falling_start_left()) {
     return e.start_left_km_;
@@ -133,6 +135,10 @@ node_ptr reverse_ahead(simple_switch const& e, node_ptr n) {
 }
 
 node_ptr reverse_ahead(track_element const&, node_ptr n) {  // NOLINT
+  return default_reverse_ahead(n);
+}
+
+node_ptr reverse_ahead(undirected_track_element const&, node_ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 

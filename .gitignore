@@ -10,7 +10,6 @@
 .pkg.lock
 .pkg.mutex
 /CMakeSettings.json
-resources/infrastructure/de_export
 resources/infrastructure/de_iss
 resources/timetable/de_kss
 

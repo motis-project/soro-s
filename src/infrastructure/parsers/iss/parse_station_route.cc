@@ -1,8 +1,14 @@
 #include "soro/infrastructure/parsers/iss/parse_station_route.h"
 
+#include "utl/logging.h"
+
+#include "soro/utls/string.h"
+
 #include "soro/infrastructure/parsers/iss/parse_track_element.h"
 
 namespace soro::infra {
+
+using namespace utl;
 
 intermediate_station_route parse_station_route(
     std::size_t const id, pugi::xml_node const& xml_station_route,
@@ -51,6 +57,16 @@ intermediate_station_route parse_station_route(
   }
 
   for (auto const& xml_spl : xml_station_route.child(SPEED_LIMITS).children()) {
+
+    if (utls::equal(xml_spl.child(NODES).attribute(TYPE).value(),
+                    WARNING_SIGN)) {
+      uLOG(warn) << "Skipped one station route speed limit with node type "
+                 << WARNING_SIGN << " in station route "
+                 << i_station_route.name_ << " in station " << station->ds100_
+                 << ".";
+      continue;
+    }
+
     auto const infra_id = mats.rp_id_to_element_id_.at(
         std::stoul(xml_spl.child(NODES).attribute(ID).value()));
     auto const spl = get_speed_limit(xml_spl, network.elements_[infra_id]);

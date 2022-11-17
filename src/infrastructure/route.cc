@@ -52,14 +52,14 @@ utls::recursive_generator<route_node> route::from_to(
   for (; result.node_idx_ < to; ++result.node_idx_) {
     result.node_ = nodes_[result.node_idx_];
 
-    result.omitted_ = omit_idx != node::INVALID_IDX &&
+    result.omitted_ = omit_idx < omitted_nodes_.size() &&
                       omitted_nodes_[omit_idx] == result.node_idx_;
 
     if (result.omitted_) {
       ++omit_idx;
     } else {
       bool const extra_spl =
-          spl_idx != node::INVALID_IDX &&
+          spl_idx < extra_speed_limits_.size() &&
           extra_speed_limits_[spl_idx].node_->id_ == result.node_->id_;
 
       result.extra_spl_ = extra_spl ? &extra_speed_limits_[spl_idx++]
