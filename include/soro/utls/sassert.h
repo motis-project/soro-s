@@ -19,9 +19,8 @@ namespace soro::utls {
 #if defined(__EMSCRIPTEN__)
 
 template <typename Msg, typename... Args>
-constexpr void sassert([[maybe_unused]] bool const assert_this,
-                       [[maybe_unused]] Msg&& msg,
-                       [[maybe_unused]] Args... args) {
+inline void sassert([[maybe_unused]] bool const assert_this,
+                    [[maybe_unused]] Msg&& msg, [[maybe_unused]] Args... args) {
 
 #if !defined(NDEBUG)
   if (!assert_this) {
@@ -44,7 +43,7 @@ constexpr void sassert([[maybe_unused]] bool const assert_this,
 #endif
 }
 
-constexpr void sassert(bool const assert_this) {
+inline void sassert(bool const assert_this) {
   sassert(assert_this, "I didn't specify a error message :(");
 }
 
@@ -63,8 +62,7 @@ struct bool_with_loc {
 
 #if !defined(NDEBUG)
 template <typename Msg, typename... Args>
-constexpr void sassert(bool_with_loc const& assert_this, Msg&& msg,
-                       Args... args) {
+inline void sassert(bool_with_loc const& assert_this, Msg&& msg, Args... args) {
 
   if (!assert_this) {
     using clock = std::chrono::system_clock;
@@ -98,11 +96,11 @@ constexpr void sassert(bool_with_loc const& assert_this, Msg&& msg,
 #else
 
 template <typename Msg, typename... Args>
-constexpr void sassert(bool_with_loc const&, Msg&&, Args...) {}
+inline void sassert(bool_with_loc const&, Msg&&, Args...) {}
 
 #endif
 
-constexpr void sassert(bool_with_loc const& assert_this) {
+inline void sassert(bool_with_loc const& assert_this) {
   sassert(assert_this, "I didn't specify a error message :(");
 }
 
