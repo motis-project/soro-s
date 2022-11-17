@@ -773,8 +773,10 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
 
-  iss.interlocking_ =
-      get_interlocking_subsystem(iss, options.determine_conflicts_);
+  if (options.determine_interlocking_) {
+    iss.interlocking_ =
+        get_interlocking_subsystem(iss, options.determine_conflicts_);
+  }
 
   log_stats(iss);
 
