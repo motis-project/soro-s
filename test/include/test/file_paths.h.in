@@ -25,7 +25,7 @@ auto const SORO_COORD_PATH = BASE_PATH / "misc/btrs_geo.csv";
 // --- infrastructure files ---
 
 auto const SMALL_FOLDER = BASE_PATH / "infrastructure/small/";
-auto const DE_EXPORT_FOLDER = BASE_PATH / "infrastructure/de_iss/";
+auto const DE_ISS_FOLDER = BASE_PATH / "infrastructure/de_iss/";
 
 infra::infrastructure_options const SMALL_OPTS = {
     .determine_conflicts_ = true,
@@ -33,10 +33,10 @@ infra::infrastructure_options const SMALL_OPTS = {
     .infrastructure_path_ = SMALL_FOLDER,
 };
 
-infra::infrastructure_options const DE_EXPORT_OPTS = {
+infra::infrastructure_options const DE_ISS_OPTS = {
     .determine_conflicts_ = false,
     .gps_coord_path_ = SORO_COORD_PATH,
-    .infrastructure_path_ = DE_EXPORT_FOLDER,
+    .infrastructure_path_ = DE_ISS_FOLDER,
 };
 
 const std::vector<infra::infrastructure_options> ALL_INFRA_OPTS = {SMALL_OPTS};
