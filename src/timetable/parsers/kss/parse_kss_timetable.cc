@@ -1,5 +1,6 @@
 #include "soro/timetable/parsers/kss/parse_kss_timetable.h"
 
+#include <charconv>
 #include <set>
 
 #include "utl/logging.h"
@@ -8,12 +9,14 @@
 #include "soro/utls/string.h"
 
 #include "soro/timetable/bitfield.h"
+#include "soro/timetable/parsers/raw_to_trains.h"
 
 #include "pugixml.hpp"
 
 namespace soro::tt {
 
 using namespace pugi;
+using namespace soro::infra;
 
 namespace fs = std::filesystem;
 
@@ -31,22 +34,33 @@ bool is_kss_timetable(timetable_options const& opts) {
 }
 
 template <std::integral T>
+T parse_int(const char* const start, const char* const end) {
+  T val = std::numeric_limits<T>::max();
+
+  auto const [ptr, ec] = std::from_chars(start, end, val);
+
+  utls::sassert(ec == std::errc{}, "Error while parsing integer input {}.",
+                std::quoted(start));
+
+  utls::sassert(ptr == end, "Error while parsing integer input {}.",
+                std::quoted(start));
+
+  return val;
+}
+
+template <std::integral T>
 T parse_int(const char* const c) {
-  if constexpr (std::is_unsigned_v<T>) {
-    return static_cast<T>(std::stoull(c));
-  } else {
-    return static_cast<T>(std::stoll(c));
-  }
+  return parse_int<T>(c, c + strlen(c));
 }
 
 template <std::integral T>
 T parse_int(std::string const& s) {
-  return parse_int<T>(s.data());
+  return parse_int<T>(s.data(), s.data() + s.size());
 }
 
 template <std::integral T>
 T parse_int(std::string_view const& s) {
-  return parse_int<T>(s.data());
+  return parse_int<T>(s.data(), s.data() + s.size());
 }
 
 struct train_number {
@@ -97,26 +111,138 @@ bitfield parse_services(xml_node const services_xml) {
     }
   };
 
-  bitfield bf;
+  bitfield accumulated_bitfield;
 
   for (auto const service_xml : services_xml.children("service")) {
     if (auto bitmask_xml = service_xml.attribute("bitMask"); bitmask_xml) {
-      bf = bitfield(parse_date(service_xml.attribute("startDate").value()),
-                    parse_date(service_xml.attribute("endDate").value()),
-                    service_xml.attribute("bitMask").value());
+      bitfield bf(parse_date(service_xml.attribute("startDate").value()),
+                  parse_date(service_xml.attribute("endDate").value()),
+                  service_xml.attribute("bitMask").value());
+
+      accumulated_bitfield.ok() ? accumulated_bitfield |= bf
+                                : accumulated_bitfield = bf;
     } else {
       utls::sassert(
-          bf.first_date_.ok() && bf.last_date_.ok(),
+          accumulated_bitfield.ok(),
           "Trying to set special date, but base bitfield is not constructed");
-      parse_special_service(bf, service_xml);
+      parse_special_service(accumulated_bitfield, service_xml);
     }
   }
 
-  return bf;
+  return accumulated_bitfield;
+}
+
+stop::time_offset parse_time_offset(xml_node const time_xml) {
+  auto const time_str = time_xml.child_value("time");
+
+  utls::sassert(strlen(time_str) == 8);
+
+  std::integral auto const hours =
+      parse_int<stop::time_offset>(time_str, time_str + 1);
+  std::integral auto const minutes =
+      parse_int<stop::time_offset>(time_str + 2, time_str + 3);
+  std::integral auto const seconds =
+      parse_int<stop::time_offset>(time_str + 4, time_str + 5);
+
+  auto result = (hours * 60 * 60) + (minutes * 60) + seconds;
+
+  if (static_cast<bool>(time_xml.child("nightLeap"))) {
+    result += 24 * 60 * 60;
+  }
+
+  return result;
+};
+
+utls::duration parse_duration(char const* const dur_str) {
+  utls::sassert(dur_str[0] == 'P');
+  utls::sassert(dur_str[1] == 'T');
+
+  // Example duration strings:
+  // PT_
+  // PT6S_
+  // PT5M_
+  // PT5M6S_
+  // PT5M54S_
+  // PT15M54S_
+
+  auto const str_end = dur_str + strlen(dur_str);
+
+  auto letter_it = dur_str + 2;
+
+  auto dur = utls::duration::ZERO;
+
+  while (letter_it != str_end) {
+    auto next_cap = std::find_if(letter_it, str_end, [](char const c) {
+      return (std::isalpha(c) != 0) && (std::isupper(c) != 0);
+    });
+
+    utls::sassert(
+        std::find_if(letter_it, next_cap,
+                     [](auto const c) { return std::ispunct(c); }) == next_cap,
+        "Found punctuation character in seconds string '{}', feature is not "
+        "implemented",
+        std::string_view(letter_it, next_cap));
+
+    std::integral auto const val = parse_int<uint32_t>(letter_it, next_cap);
+
+    switch (*next_cap) {
+      case 'H': {
+        dur += utls::from_hours(val);
+        break;
+      }
+      case 'M': {
+        dur += utls::from_minutes(val);
+        break;
+      }
+      case 'S': {
+        dur += utls::from_seconds(val);
+        break;
+      }
+    }
+
+    letter_it = next_cap + 1;
+  }
+
+  return dur;
+};
+
+raw_train::run parse_sequence(xml_node const sequence_xml,
+                                 infrastructure const& infra) {
+  raw_train::run run;
+
+  auto const sequence_points_xml = sequence_xml.child("sequenceServicePoints");
+  for (auto const point_xml : sequence_points_xml.children()) {
+    auto const ds100 = point_xml.child_value("servicePoint");
+    auto const station_route = point_xml.child_value("trackSystem");
+
+    auto const station = infra->ds100_to_station_.at(ds100);
+    auto const route = station->station_routes_.at(station_route);
+    run.routes_.push_back(route);
+
+    stop st;
+
+    st.arrival_ = parse_time_offset(point_xml.child("arrival"));
+    st.departure_ = parse_time_offset(point_xml.child("departure"));
+
+    auto const stop_mode_xml = point_xml.child("stopMode");
+    if (static_cast<bool>(stop_mode_xml)) {
+      st.type_ = KEY_TO_STOP_TYPE.at(
+          *point_xml.child("stopMode").attribute("Schluessel").value());
+    }
+
+    auto const min_stop_time_xml = point_xml.child("minStopTime");
+    if (static_cast<bool>(min_stop_time_xml)) {
+      st.min_stop_time_ = parse_duration(min_stop_time_xml.value());
+    }
+
+    run.stops_.push_back(st);
+  }
+
+  return run;
 }
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
-                                   infra::infrastructure const&) {
+                                   infra::infrastructure const& infra) {
   base_timetable bt;
 
   std::set<std::string> status_map;
@@ -142,7 +268,7 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
         continue;
       }
 
-      auto const id =
+      std::integral auto const id =
           parse_int<train::id>(train_xml.attribute("trainID").value());
       std::cout << "id: " << id << '\n';
 
@@ -158,7 +284,8 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
       //    auto const characteristics_xml =
       //        construction_train_xml.child("characteristics");
-      //    auto const sequence_xml = construction_train_xml.child("sequence");
+      auto const sequence_xml = construction_train_xml.child("sequence");
+      auto const run = parse_sequence(sequence_xml, infra);
     }
 
     std::cout << "status map\n";

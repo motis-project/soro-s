@@ -17,6 +17,7 @@ struct raw_train {
     soro::vector<utls::unixtime> arrivals_;
     soro::vector<utls::unixtime> departures_;
     soro::vector<utls::duration> min_stop_times_;
+    soro::vector<stop> stops_;
   };
 
   struct physics {
