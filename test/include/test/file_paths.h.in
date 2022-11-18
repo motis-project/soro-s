@@ -7,7 +7,7 @@
 
 #include "soro/infrastructure/infrastructure_options.h"
 #include "soro/timetable/timetable_options.h"
-// test
+
 namespace fs = std::filesystem;
 
 namespace soro {
