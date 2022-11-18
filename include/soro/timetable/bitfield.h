@@ -5,11 +5,12 @@
 
 namespace soro::tt {
 
+// covers the range [first_date_, last_date_]
 struct bitfield {
   static constexpr const std::size_t BITSIZE = 512;
 
   bitfield() = default;
-  bitfield(date::year_month_day start, date::year_month_day end,
+  bitfield(date::year_month_day first_date, date::year_month_day last_date,
            std::string bit_string);
 
   std::vector<date::year_month_day> get_set_days() const;
@@ -18,7 +19,7 @@ struct bitfield {
 
   bool at(date::year_month_day const ymd) const;
 
-  bool operator[](date::year_month_day const ymd) const noexcept;
+  bool operator[](date::year_month_day const ymd) const;
 
   void set(date::year_month_day const ymd, bool const new_value);
 
@@ -29,10 +30,16 @@ struct bitfield {
   bitfield operator|=(bitfield const& o) noexcept;
   friend bitfield operator|(bitfield const& lhs, bitfield const& rhs) noexcept;
 
+  // with BITSIZE the bitfield can cover a range of [first_date_, end())
+  date::year_month_day end() const noexcept;
+
+  std::size_t count() const noexcept;
+
   date::year_month_day first_date_{};
   date::year_month_day last_date_{};
-
   cista::bitset<BITSIZE> bitset_{};
 };
+
+std::size_t distance(date::year_month_day from, date::year_month_day to);
 
 }  // namespace soro::tt

@@ -17,7 +17,9 @@ TEST_SUITE("parse de_kss" *
            doctest::skip(!std::filesystem::exists(DE_KSS_FOLDER))) {
 
   TEST_CASE("parse de_kss") {
-    infrastructure const infra;
+    auto opts = DE_ISS_OPTS;
+    opts.determine_interlocking_ = true;
+    infrastructure const infra(opts);
     timetable const tt(DE_KSS_OPTS, infra);
   }
 }

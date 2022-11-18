@@ -1,5 +1,7 @@
 #include "doctest/doctest.h"
 
+#include "soro/utls/std_wrapper/std_wrapper.h"
+
 #include "soro/timetable/bitfield.h"
 
 using namespace date;
@@ -11,7 +13,7 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("construct bitfield") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 1;
 
     bitfield bf1(s, t, "01010101");
 
@@ -22,16 +24,16 @@ TEST_SUITE("bitfield") {
     year_month_day const s = 2022_y / February / 22;
     year_month_day const t = 2022_y / February / 22;
 
-    bitfield bf1(s, t, "1");
+    bitfield bf(s, t, "1");
 
-    CHECK_EQ(bf1.bitset_.count(), 1);
-    CHECK(bf1[s]);
-    CHECK(bf1[t]);
+    CHECK_EQ(bf.bitset_.count(), 1);
+    CHECK(bf[s]);
+    CHECK(bf[t]);
   }
 
   TEST_CASE("operator[] both ends 1") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "101010101";
 
@@ -45,8 +47,6 @@ TEST_SUITE("bitfield") {
     year_month_day const s6 = 2022_y / February / 28;
     year_month_day const s7 = 2022_y / March / 1;
     year_month_day const s8 = 2022_y / March / 2;
-    year_month_day const s9 = 2022_y / March / 3;
-    year_month_day const s10 = 2022_y / March / 4;
 
     CHECK(bf[s]);
     CHECK(!bf[s1]);
@@ -57,13 +57,13 @@ TEST_SUITE("bitfield") {
     CHECK(bf[s6]);
     CHECK(!bf[s7]);
     CHECK(bf[s8]);
-    CHECK(!bf[s9]);
-    CHECK(!bf[s10]);
+
+    CHECK_EQ(bf.bitset_.count(), utls::count(bits, '1'));
   }
 
   TEST_CASE("operator[] both ends 0") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "010101010";
 
@@ -77,8 +77,6 @@ TEST_SUITE("bitfield") {
     year_month_day const s6 = 2022_y / February / 28;
     year_month_day const s7 = 2022_y / March / 1;
     year_month_day const s8 = 2022_y / March / 2;
-    year_month_day const s9 = 2022_y / March / 3;
-    year_month_day const s10 = 2022_y / March / 4;
 
     CHECK(!bf[s]);
     CHECK(bf[s1]);
@@ -89,13 +87,13 @@ TEST_SUITE("bitfield") {
     CHECK(!bf[s6]);
     CHECK(bf[s7]);
     CHECK(!bf[s8]);
-    CHECK(!bf[s9]);
-    CHECK(!bf[s10]);
+
+    CHECK_EQ(bf.bitset_.count(), utls::count(bits, '1'));
   }
 
   TEST_CASE("operator[] 1 - 0") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "110101010";
 
@@ -109,8 +107,6 @@ TEST_SUITE("bitfield") {
     year_month_day const s6 = 2022_y / February / 28;
     year_month_day const s7 = 2022_y / March / 1;
     year_month_day const s8 = 2022_y / March / 2;
-    year_month_day const s9 = 2022_y / March / 3;
-    year_month_day const s10 = 2022_y / March / 4;
 
     CHECK(bf[s]);
     CHECK(bf[s1]);
@@ -121,13 +117,13 @@ TEST_SUITE("bitfield") {
     CHECK(!bf[s6]);
     CHECK(bf[s7]);
     CHECK(!bf[s8]);
-    CHECK(!bf[s9]);
-    CHECK(!bf[s10]);
+
+    CHECK_EQ(bf.bitset_.count(), utls::count(bits, '1'));
   }
 
   TEST_CASE("operator[] 0 - 1") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "010101011";
 
@@ -141,8 +137,6 @@ TEST_SUITE("bitfield") {
     year_month_day const s6 = 2022_y / February / 28;
     year_month_day const s7 = 2022_y / March / 1;
     year_month_day const s8 = 2022_y / March / 2;
-    year_month_day const s9 = 2022_y / March / 3;
-    year_month_day const s10 = 2022_y / March / 4;
 
     CHECK(!bf[s]);
     CHECK(bf[s1]);
@@ -153,13 +147,13 @@ TEST_SUITE("bitfield") {
     CHECK(!bf[s6]);
     CHECK(bf[s7]);
     CHECK(bf[s8]);
-    CHECK(!bf[s9]);
-    CHECK(!bf[s10]);
+
+    CHECK_EQ(bf.bitset_.count(), utls::count(bits, '1'));
   }
 
   TEST_CASE("get_set_days") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "101010101";
 
@@ -184,7 +178,7 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= with self") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits = "101010101";
 
@@ -198,7 +192,7 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= same first and last date") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits1 = "101010101";
     std::string const bits2 = "010101010";
@@ -218,12 +212,12 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= same first and different last date") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     std::string const bits1 = "101010101";
-    std::string const bits2 = "010101010";
+    std::string const bits2 = "01010101000";
 
-    year_month_day const new_t = 2022_y / November / 20;
+    year_month_day const new_t = 2022_y / March / 4;
 
     bitfield bf1(s, t, bits1);
     bitfield bf2(s, new_t, bits2);
@@ -231,7 +225,7 @@ TEST_SUITE("bitfield") {
     auto const r1 = bf1 | bf2;
     auto const r2 = bf2 | bf1;
 
-    std::string const expected_bits = "111111111";
+    std::string const expected_bits = "11111111100";
     bitfield expected_result(s, new_t, expected_bits);
 
     CHECK_EQ(r1, expected_result);
@@ -240,10 +234,10 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= different first and last date - no gap") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     year_month_day const new_s = 2022_y / March / 3;
-    year_month_day const new_t = 2022_y / November / 20;
+    year_month_day const new_t = 2022_y / March / 11;
 
     std::string const bits1 = "101010101";
     std::string const bits2 = "010101010";
@@ -263,10 +257,10 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= different first and last date - with gap") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     year_month_day const new_s = 2022_y / March / 15;
-    year_month_day const new_t = 2022_y / November / 20;
+    year_month_day const new_t = 2022_y / March / 23;
 
     std::string const bits1 = "101010101";
     std::string const bits2 = "010101010";
@@ -286,10 +280,10 @@ TEST_SUITE("bitfield") {
 
   TEST_CASE("operator |= different first and last date - with overlap") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     year_month_day const new_s = 2022_y / March / 1;
-    year_month_day const new_t = 2022_y / November / 20;
+    year_month_day const new_t = 2022_y / March / 9;
 
     std::string const bits1 = "101010101";
     std::string const bits2 = "111111111";
@@ -307,21 +301,82 @@ TEST_SUITE("bitfield") {
     CHECK_EQ(r2, expected_result);
   }
 
+  TEST_CASE("set - in range") {
+    year_month_day const s = 2022_y / February / 22;
+    year_month_day const t = 2022_y / March / 2;
+
+    year_month_day const set_date = 2022_y / March / 1;
+
+    std::string const bits = "101010101";
+
+    bitfield bf(s, t, bits);
+    bf.set(set_date, true);
+
+    std::string const expected_bits = "101010111";
+    bitfield expected_result(s, t, expected_bits);
+
+    CHECK_EQ(bf, expected_result);
+  }
+
+  TEST_CASE("set - before range") {
+    year_month_day const s = 2022_y / February / 22;
+    year_month_day const t = 2022_y / March / 2;
+
+    year_month_day const set_date = 2022_y / February / 1;
+
+    std::string const bits = "101010101";
+
+    bitfield bf(s, t, bits);
+    bf.set(set_date, true);
+
+    std::string const expected_bits = "100000000000000000000101010101";
+    bitfield expected_result(set_date, t, expected_bits);
+
+    CHECK_EQ(bf, expected_result);
+  }
+
+  TEST_CASE("set - after range") {
+    year_month_day const s = 2022_y / February / 22;
+    year_month_day const t = 2022_y / March / 2;
+
+    year_month_day const set_date = 2022_y / March / 15;
+
+    std::string const bits1 = "101010101";
+
+    bitfield bf(s, t, bits1);
+    bf.set(set_date, true);
+
+    std::string const expected_bits = "1010101010000000000001";
+    bitfield expected_result(s, set_date, expected_bits);
+
+    CHECK_EQ(bf, expected_result);
+  }
+
 #if !defined(NDEBUG)
   TEST_CASE("construct bitfield throws - end before start") {
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / November / 15;
+    year_month_day const t = 2022_y / March / 2;
 
     CHECK_THROWS(bitfield(t, s, "10101010"));
   }
 
   TEST_CASE("construct bitfield throws - more than BITSIZE days") {
-    using namespace date;
-
     year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 3022_y / February / 22;
 
-    CHECK_THROWS(bitfield(s, t, "10101010"));
+    year_month_day const t = {static_cast<sys_days>(s) +
+                              days{bitfield::BITSIZE + 1}};
+
+    std::string bits(bitfield::BITSIZE + 1, '0');
+
+    CHECK_THROWS(bitfield(s, t, bits));
+  }
+
+  TEST_CASE("out of date access throws") {
+    year_month_day const s = 2022_y / February / 22;
+    year_month_day const t = 2022_y / March / 2;
+
+    bitfield const bf(s, t, "101010101");
+    CHECK_THROWS(bf[2022_y / February / 21]);
   }
 #endif
 }

@@ -18,15 +18,22 @@ struct raw_train {
     soro::vector<utls::unixtime> departures_;
     soro::vector<utls::duration> min_stop_times_;
     soro::vector<stop> stops_;
+    bool break_in_;
+    bool break_out_;
   };
 
-  struct physics {
+  struct traction_unit {
     soro::string series_;
     soro::string owner_;
     rs::variant_id variant_;
+  };
+
+  struct characteristic {
+    std::vector<traction_unit> traction_units_;
     si::length length_{si::ZERO<si::length>};
     si::speed max_speed_{si::ZERO<si::speed>};
     si::weight carriage_weight_{si::ZERO<si::weight>};
+    rs::FreightTrain freight_{rs::FreightTrain::NO};
   };
 
   std::size_t id_{std::numeric_limits<std::size_t>::max()};
@@ -36,7 +43,7 @@ struct raw_train {
   rs::CTC ctc_{rs::CTC::NO};
 
   run run_;
-  physics physics_;
+  characteristic charac_;
 };
 
 soro::vector<soro::unique_ptr<train>> raw_trains_to_trains(

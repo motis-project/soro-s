@@ -4,18 +4,23 @@
 #include <set>
 
 #include "utl/logging.h"
+#include "utl/timer.h"
 
+#include "soro/utls/parse_fp.h"
+#include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/string.h"
 
 #include "soro/timetable/bitfield.h"
 #include "soro/timetable/parsers/raw_to_trains.h"
+#include "soro/timetable/parsers/station_route_to_interlocking_route.h"
 
 #include "pugixml.hpp"
 
 namespace soro::tt {
 
 using namespace pugi;
+using namespace soro::utls;
 using namespace soro::infra;
 
 namespace fs = std::filesystem;
@@ -33,48 +38,13 @@ bool is_kss_timetable(timetable_options const& opts) {
                       });
 }
 
-template <std::integral T>
-T parse_int(const char* const start, const char* const end) {
-  T val = std::numeric_limits<T>::max();
-
-  auto const [ptr, ec] = std::from_chars(start, end, val);
-
-  utls::sassert(ec == std::errc{}, "Error while parsing integer input {}.",
-                std::quoted(start));
-
-  utls::sassert(ptr == end, "Error while parsing integer input {}.",
-                std::quoted(start));
-
-  return val;
-}
-
-template <std::integral T>
-T parse_int(const char* const c) {
-  return parse_int<T>(c, c + strlen(c));
-}
-
-template <std::integral T>
-T parse_int(std::string const& s) {
-  return parse_int<T>(s.data(), s.data() + s.size());
-}
-
-template <std::integral T>
-T parse_int(std::string_view const& s) {
-  return parse_int<T>(s.data(), s.data() + s.size());
-}
-
 struct train_number {
   uint32_t main_;
   uint32_t sub_;
 };
 
-// struct service {
-//   date::year_month_day start_;
-//   date::year_month_day end_;
-//   bitfield bitfield_;
-// };
-
 bitfield parse_services(xml_node const services_xml) {
+  std::size_t total_service_days = 0;
 
   auto const parse_date = [](std::string const& s) {
     auto const split = utls::split(s, "-");
@@ -102,8 +72,10 @@ bitfield parse_services(xml_node const services_xml) {
     auto const date = parse_date(special_xml.attribute("date").value());
 
     if (utls::equal(special_xml.attribute("type").value(), "include")) {
+      ++total_service_days;
       bf.set(date, true);
     } else if (utls::equal(special_xml.attribute("type").value(), "exclude")) {
+      --total_service_days;
       bf.set(date, false);
     } else {
       uLOG(utl::warn) << "Found " << special_xml.attribute("type").value()
@@ -112,12 +84,24 @@ bitfield parse_services(xml_node const services_xml) {
   };
 
   bitfield accumulated_bitfield;
+  utls::sassert(!accumulated_bitfield.ok());
 
   for (auto const service_xml : services_xml.children("service")) {
     if (auto bitmask_xml = service_xml.attribute("bitMask"); bitmask_xml) {
-      bitfield bf(parse_date(service_xml.attribute("startDate").value()),
-                  parse_date(service_xml.attribute("endDate").value()),
-                  service_xml.attribute("bitMask").value());
+      auto const start_date =
+          parse_date(service_xml.attribute("startDate").value());
+      auto const end_date =
+          parse_date(service_xml.attribute("endDate").value());
+
+      std::string bitmask(service_xml.attribute("bitMask").value());
+
+      total_service_days += utls::count(bitmask, '1');
+
+      utls::sassert(bitmask.size() == distance(start_date, end_date) + 1,
+                    "Bitmask has not the same size as distance between start "
+                    "and end date!");
+
+      bitfield bf(start_date, end_date, std::move(bitmask));
 
       accumulated_bitfield.ok() ? accumulated_bitfield |= bf
                                 : accumulated_bitfield = bf;
@@ -129,31 +113,35 @@ bitfield parse_services(xml_node const services_xml) {
     }
   }
 
+  utls::sassert(accumulated_bitfield.ok());
+  utls::sassert(total_service_days == accumulated_bitfield.count(),
+                "Counted different amount of service days than ended up in the "
+                "bitfield!");
+
   return accumulated_bitfield;
 }
 
-stop::time_offset parse_time_offset(xml_node const time_xml) {
+relative_time parse_time_offset(xml_node const time_xml) {
   auto const time_str = time_xml.child_value("time");
 
-  utls::sassert(strlen(time_str) == 8);
+  utls::sassert(strlen(time_str) == strlen("HH:MM:SS.SS"));
 
-  std::integral auto const hours =
-      parse_int<stop::time_offset>(time_str, time_str + 1);
+  std::integral auto const hours = parse_int<uint64_t>(time_str, time_str + 2);
   std::integral auto const minutes =
-      parse_int<stop::time_offset>(time_str + 2, time_str + 3);
+      parse_int<uint64_t>(time_str + 3, time_str + 5);
   std::integral auto const seconds =
-      parse_int<stop::time_offset>(time_str + 4, time_str + 5);
+      parse_int<uint64_t>(time_str + 6, time_str + 8);
 
-  auto result = (hours * 60 * 60) + (minutes * 60) + seconds;
+  uint64_t result = (hours * 60 * 60) + (minutes * 60) + seconds;
 
   if (static_cast<bool>(time_xml.child("nightLeap"))) {
     result += 24 * 60 * 60;
   }
 
-  return result;
+  return relative_time{result};
 };
 
-utls::duration parse_duration(char const* const dur_str) {
+duration2 parse_duration(char const* const dur_str) {
   utls::sassert(dur_str[0] == 'P');
   utls::sassert(dur_str[1] == 'T');
 
@@ -164,38 +152,33 @@ utls::duration parse_duration(char const* const dur_str) {
   // PT5M6S_
   // PT5M54S_
   // PT15M54S_
+  // PT15M54.99S_
 
   auto const str_end = dur_str + strlen(dur_str);
 
   auto letter_it = dur_str + 2;
 
-  auto dur = utls::duration::ZERO;
+  uint64_t dur = 0UL;
 
   while (letter_it != str_end) {
     auto next_cap = std::find_if(letter_it, str_end, [](char const c) {
       return (std::isalpha(c) != 0) && (std::isupper(c) != 0);
     });
 
-    utls::sassert(
-        std::find_if(letter_it, next_cap,
-                     [](auto const c) { return std::ispunct(c); }) == next_cap,
-        "Found punctuation character in seconds string '{}', feature is not "
-        "implemented",
-        std::string_view(letter_it, next_cap));
-
-    std::integral auto const val = parse_int<uint32_t>(letter_it, next_cap);
-
     switch (*next_cap) {
       case 'H': {
-        dur += utls::from_hours(val);
+        std::integral auto const val = parse_int<uint64_t>(letter_it, next_cap);
+        dur += val * 60 * 60;
         break;
       }
       case 'M': {
-        dur += utls::from_minutes(val);
+        std::integral auto const val = parse_int<uint64_t>(letter_it, next_cap);
+        dur += val * 60;
         break;
       }
       case 'S': {
-        dur += utls::from_seconds(val);
+        auto val = utls::parse_fp<double>(letter_it, next_cap);
+        dur += static_cast<uint64_t>(std::round(val));
         break;
       }
     }
@@ -203,26 +186,36 @@ utls::duration parse_duration(char const* const dur_str) {
     letter_it = next_cap + 1;
   }
 
-  return dur;
+  return duration2{dur};
 };
 
 raw_train::run parse_sequence(xml_node const sequence_xml,
-                                 infrastructure const& infra) {
+                              infrastructure const& infra) {
   raw_train::run run;
 
   auto const sequence_points_xml = sequence_xml.child("sequenceServicePoints");
   for (auto const point_xml : sequence_points_xml.children()) {
     auto const ds100 = point_xml.child_value("servicePoint");
-    auto const station_route = point_xml.child_value("trackSystem");
+    auto const route_name = point_xml.child_value("trackSystem");
 
     auto const station = infra->ds100_to_station_.at(ds100);
-    auto const route = station->station_routes_.at(station_route);
-    run.routes_.push_back(route);
+
+    auto route_it = station->station_routes_.find(route_name);
+    if (route_it != std::end(station->station_routes_)) {
+      run.routes_.push_back(route_it->second);
+    } else {
+      return {};
+    }
 
     stop st;
 
-    st.arrival_ = parse_time_offset(point_xml.child("arrival"));
-    st.departure_ = parse_time_offset(point_xml.child("departure"));
+    if (auto arr = point_xml.child("arrival"); arr) {
+      st.arrival_ = parse_time_offset(arr);
+    }
+
+    if (auto dep = point_xml.child("departure"); dep) {
+      st.departure_ = parse_time_offset(dep);
+    }
 
     auto const stop_mode_xml = point_xml.child("stopMode");
     if (static_cast<bool>(stop_mode_xml)) {
@@ -232,20 +225,61 @@ raw_train::run parse_sequence(xml_node const sequence_xml,
 
     auto const min_stop_time_xml = point_xml.child("minStopTime");
     if (static_cast<bool>(min_stop_time_xml)) {
-      st.min_stop_time_ = parse_duration(min_stop_time_xml.value());
+      st.min_stop_time_ = parse_duration(min_stop_time_xml.child_value());
     }
 
     run.stops_.push_back(st);
   }
 
+  run.break_in_ = equal(sequence_xml.child_value("breakin"), "true");
+  run.break_out_ = equal(sequence_xml.child_value("breakout"), "true");
+
   return run;
+}
+
+raw_train::characteristic parse_characteristic(xml_node const charac_xml) {
+  raw_train::characteristic c;
+
+  auto const traction_units_xml = charac_xml.child("tractionUnits");
+
+  for (auto const traction_unit_xml : traction_units_xml.children()) {
+    auto const series_xml = traction_unit_xml.child("tractionUnitDesignSeries");
+
+    c.traction_units_.push_back(
+        {.series_ = series_xml.child_value("designSeries"),
+         .owner_ = series_xml.attribute("Nr").value(),
+         .variant_ = utls::parse_int<rs::variant_id>(
+             series_xml.child_value("variante"))});
+  }
+
+  c.length_ = si::from_m(
+      utls::parse_fp<si::precision>(charac_xml.child_value("totalLength")));
+
+  c.carriage_weight_ = si::from_ton(
+      utls::parse_fp<si::precision>(charac_xml.child_value("totalWeight")));
+
+  c.max_speed_ = si::from_km_h(
+      utls::parse_fp<si::precision>(charac_xml.child_value("maxVelocity")));
+
+  c.freight_ = static_cast<rs::FreightTrain>(
+      utls::equal(charac_xml.child_value("relevantStopPositionMode"), "G"));
+
+  return c;
 }
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
+  utl::scoped_timer timetable_timer("Parsing Timetable");
+
   base_timetable bt;
 
-  std::set<std::string> status_map;
+  std::size_t released_trains = 0;
+  std::size_t construction_trains = 0;
+  std::size_t worked_on_trains = 0;
+  std::size_t failed_parsing = 0;
+  std::size_t successfully_parsed = 0;
+
+  std::set<std::pair<uint32_t, uint32_t>> train_numbers;
 
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
     auto const loaded_file = utls::load_file(dir_entry.path());
@@ -263,38 +297,75 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
     auto const timetable_xml = railml_xml.child("timetable");
 
     for (auto const train_xml : timetable_xml.children("train")) {
-      if (!utls::equal(train_xml.attribute("trainStatus").value(), "freig")) {
-        status_map.insert(train_xml.attribute("trainStatus").value());
+      // don't parse worked on trains
+      auto const train_status = train_xml.attribute("trainStatus").value();
+      if (!utls::equal(train_status, "freig")) {
+        utls::sassert(utls::equal(train_status, "inArbeit"));
+        ++worked_on_trains;
         continue;
       }
 
-      std::integral auto const id =
-          parse_int<train::id>(train_xml.attribute("trainID").value());
-      std::cout << "id: " << id << '\n';
+      ++released_trains;
+
+      //      std::integral auto const id =
+      //          parse_int<train::id>(train_xml.attribute("trainID").value());
+      //      std::cout << "id: " << id << '\n';
 
       //    auto const entries_xml = train_xml.child("timetableentries");
-      auto const fine_construction_xml = train_xml.child("fineConstruction");
-      auto const construction_train_xml =
-          fine_construction_xml.child("constructionTrain");
+      for (auto const construction_train_xml :
+           train_xml.child("fineConstruction").children("constructionTrain")) {
 
-      auto const services_xml = construction_train_xml.child("services");
-      auto const bf = parse_services(services_xml);
-      std::cout << "bf: " << bf.first_date_ << '\n';
-      std::cout << "bf: " << bf.last_date_ << '\n';
+        train t;
 
-      //    auto const characteristics_xml =
-      //        construction_train_xml.child("characteristics");
-      auto const sequence_xml = construction_train_xml.child("sequence");
-      auto const run = parse_sequence(sequence_xml, infra);
+        std::pair<uint32_t, uint32_t> train_number = {
+            utls::parse_int<uint32_t>(
+                construction_train_xml.child("trainNumber")
+                    .child_value("mainNumber")),
+            utls::parse_int<uint32_t>(
+                construction_train_xml.child("trainNumber")
+                    .child_value("subNumber"))};
+
+        if (train_numbers.contains(train_number)) {
+          std::cout << " Found doubl train number " << train_number.first << " "
+                    << train_number.second << '\n';
+        } else {
+          train_numbers.insert(train_number);
+        }
+
+        auto const services_xml = construction_train_xml.child("services");
+        t.bitfield_ = parse_services(services_xml);
+
+        auto const characteristic_xml =
+            construction_train_xml.child("characteristic");
+        //
+        auto const charac = parse_characteristic(characteristic_xml);
+
+        auto const sequence_xml = construction_train_xml.child("sequence");
+        auto const run = parse_sequence(sequence_xml, infra);
+
+        t.path_ = get_interlocking_route_path(run, charac.freight_,
+                                              infra->interlocking_,
+                                              infra->station_route_graph_);
+
+        if (run.routes_.empty()) {
+          ++failed_parsing;
+          continue;
+        }
+
+        ++construction_trains;
+      }
+
+      ++successfully_parsed;
     }
-
-    std::cout << "status map\n";
-    for (auto const& e : status_map) {
-      std::cout << e << '\n';
-    }
-
-    return bt;
   }
+
+  uLOG(utl::info) << "Total trains in data: "
+                  << worked_on_trains + released_trains;
+  uLOG(utl::info) << "Released trains: " << released_trains;
+  uLOG(utl::info) << "Worked on trains: " << worked_on_trains;
+  uLOG(utl::info) << "Trains successfully parsed: " << successfully_parsed;
+  uLOG(utl::info) << "Trains NOT successfully parsed: " << failed_parsing;
+  uLOG(utl::info) << "Construction trains parsed: " << construction_trains;
 
   return bt;
 }

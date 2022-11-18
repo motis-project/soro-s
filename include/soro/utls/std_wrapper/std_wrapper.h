@@ -167,6 +167,11 @@ constexpr auto sum(Iterable const& i, T init) {
   return std::accumulate(std::cbegin(i), std::cend(i), init);
 }
 
+template <typename Iterable, typename T, typename Fn>
+constexpr auto accumulate(Iterable&& i, T init, Fn&& fn) {
+  return std::accumulate(std::cbegin(i), std::cend(i), init, fn);
+}
+
 template <typename Iterable, typename Pred>
 constexpr std::size_t count_if(Iterable const& i, Pred&& p) {
   return static_cast<std::size_t>(

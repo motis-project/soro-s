@@ -4,6 +4,7 @@
 
 #include "soro/utls/unixtime.h"
 
+#include "soro/base/time.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/rolling_stock/ctc.h"
 #include "soro/rolling_stock/freight.h"
@@ -23,16 +24,27 @@ struct stop_time {
 };
 
 struct stop {
-  enum class type : uint8_t { INVALID, OPERATIONS, PASSENGER, REQUEST };
+  enum class type : uint8_t { NO, OPERATIONS, PASSENGER, REQUEST };
 
-  using time_offset = uint32_t;
+  bool is_halt() const noexcept { return type_ != type::NO; }
+  bool is_halt(type const t) const noexcept { return t == type_; }
 
-  bool is_halt() const noexcept;
+  absolute_time absolute_arrival(
+      date::year_month_day const departure_day) const noexcept {
+    return relative_to_absolute(departure_day, this->arrival_);
+  }
 
-  type type_{type::INVALID};
-  time_offset arrival_;
-  time_offset departure_;
-  utls::duration min_stop_time_;
+  absolute_time absolute_departure(
+      date::year_month_day const departure_day) const noexcept {
+    return relative_to_absolute(departure_day, this->departure_);
+  }
+
+  type type_{type::NO};
+
+  // relative to departure day of the train at 00:00
+  relative_time arrival_{};
+  relative_time departure_{};
+  duration2 min_stop_time_{};
 };
 
 static const std::map<char, stop::type> KEY_TO_STOP_TYPE = {

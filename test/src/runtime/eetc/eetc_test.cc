@@ -40,13 +40,15 @@ rs::train_physics generate_frictionless_test_train_2() {
   resistance_curve_t const resistance_poly =
       utls::make_polynomial(drag, dampening, rolling);
 
-  return {traction_vehicle{.name_ = "FRICTIONLESS_TEST_TRAIN",
-                           .weight_ = si::from_kg(400000.0),
-                           .max_speed_ = si::from_km_h(62.0),
-                           .deacceleration_ = si::from_m_s2(-1.5),
-                           .tractive_curve_ = tractive_piece_poly,
-                           .resistance_curve_ = resistance_poly},
-          si::from_kg(0.0), si::from_m(0.0), si::from_km_h(400.0)};
+  return {{traction_vehicle{.name_ = "FRICTIONLESS_TEST_TRAIN",
+                            .weight_ = si::from_kg(400000.0),
+                            .max_speed_ = si::from_km_h(62.0),
+                            .deacceleration_ = si::from_m_s2(-1.5),
+                            .tractive_curve_ = tractive_piece_poly,
+                            .resistance_curve_ = resistance_poly}},
+          si::from_kg(0.0),
+          si::from_m(0.0),
+          si::from_km_h(400.0)};
 }
 
 rs::train_physics generate_test_train_2() {
@@ -71,13 +73,15 @@ rs::train_physics generate_test_train_2() {
   resistance_curve_t const resistance_poly =
       utls::make_polynomial(drag, dampening, rolling);
 
-  return {traction_vehicle{.name_ = "TEST_TRAIN",
-                           .weight_ = si::from_kg(400000.0F),
-                           .max_speed_ = si::from_km_h(62.0F),
-                           .deacceleration_ = si::from_m_s2(-1.5F),
-                           .tractive_curve_ = tractive_piece_poly,
-                           .resistance_curve_ = resistance_poly},
-          si::from_kg(0.0), si::from_m(0.0), si::from_km_h(400.0)};
+  return {{traction_vehicle{.name_ = "TEST_TRAIN",
+                            .weight_ = si::from_kg(400000.0F),
+                            .max_speed_ = si::from_km_h(62.0F),
+                            .deacceleration_ = si::from_m_s2(-1.5F),
+                            .tractive_curve_ = tractive_piece_poly,
+                            .resistance_curve_ = resistance_poly}},
+          si::from_kg(0.0),
+          si::from_m(0.0),
+          si::from_km_h(400.0)};
 }
 
 void check_speed_intervals(speed_intervals is_speed_intervals,

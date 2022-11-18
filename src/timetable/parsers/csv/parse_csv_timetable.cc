@@ -109,10 +109,10 @@ std::vector<raw_train::run> get_raw_train_runs(
   return runs;
 }
 
-std::vector<raw_train::physics> get_raw_train_physics(
+std::vector<raw_train::characteristic> get_raw_train_physics(
     utls::loaded_file const& types_file) {
 
-  std::vector<raw_train::physics> raw_train_physics;
+  std::vector<raw_train::characteristic> raw_train_physics;
 
   struct type_row {
     utl::csv_col<std::size_t, UTL_NAME("id")> id_;
@@ -126,10 +126,11 @@ std::vector<raw_train::physics> get_raw_train_physics(
 
   utl::line_range{utl::buf_reader{types_file.contents_}} |
       utl::csv<type_row>() | utl::for_each([&](auto&& row) {
-        raw_train::physics tp;
-        tp.series_ = soro::string{row.series_.val().to_str()};
-        tp.owner_ = soro::string{row.owner_.val().to_str()};
-        tp.variant_ = row.variant_.val();
+        raw_train::characteristic tp;
+        tp.traction_units_ = {
+            {.series_ = soro::string{row.series_.val().to_str()},
+             .owner_ = soro::string{row.owner_.val().to_str()},
+             .variant_ = row.variant_.val()}};
         tp.carriage_weight_ = si::from_ton(
             utls::parse_fp<si::precision>(row.weight_.val().data()));
         tp.max_speed_ = si::from_km_h(
@@ -185,7 +186,7 @@ std::vector<raw_train> parse_csv_timetable(
                 raw_train.id_);
 
     raw_train.run_ = raw_train_runs[raw_train.id_];
-    raw_train.physics_ = raw_train_physics[raw_train.id_];
+    raw_train.charac_ = raw_train_physics[raw_train.id_];
   }
 
   return raw_trains;

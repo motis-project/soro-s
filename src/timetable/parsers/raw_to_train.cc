@@ -149,11 +149,14 @@ auto get_ssr_run_path(soro::vector<station_route::ptr> const& sr_run,
   return ssr_path;
 }
 
-train_physics get_train_physics(raw_train::physics const& rtp,
+train_physics get_train_physics(raw_train::characteristic const& rc,
                                 rolling_stock const& rolling_stock) {
-  return {
-      rolling_stock.get_traction_vehicle(rtp.series_, rtp.owner_, rtp.variant_),
-      rtp.carriage_weight_, rtp.length_, rtp.max_speed_};
+  auto tvs = soro::to_vec(rc.traction_units_, [&](auto&& tv) {
+    return rolling_stock.get_traction_vehicle(tv.series_, tv.owner_,
+                                              tv.variant_);
+  });
+
+  return {tvs, rc.carriage_weight_, rc.length_, rc.max_speed_};
 }
 
 soro::vector<soro::unique_ptr<train>> raw_trains_to_trains(
@@ -169,7 +172,7 @@ soro::vector<soro::unique_ptr<train>> raw_trains_to_trains(
     tr->name_ = rt.name_;
     tr->freight_ = rt.freight_;
     tr->ctc_ = rt.ctc_;
-    tr->physics_ = get_train_physics(rt.physics_, rolling_stock);
+    tr->physics_ = get_train_physics(rt.charac_, rolling_stock);
 
     // TODO(julian) for now only a single station route per station
     assert(rt.run_.routes_.size() == rt.run_.arrivals_.size());

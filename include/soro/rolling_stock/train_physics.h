@@ -8,8 +8,9 @@ struct train_physics {
 #if !defined(SERIALIZE)
   train_physics() = default;
   // if we don't serialize we need a constructor since the members are private
-  train_physics(traction_vehicle tv, si::weight const carriage_weight,
-                si::length const length, si::speed const max_speed);
+  train_physics(soro::vector<traction_vehicle> tvs,
+                si::weight const carriage_weight, si::length const length,
+                si::speed const max_speed);
 #endif
 
   si::length length() const;
@@ -31,7 +32,7 @@ struct train_physics {
 private:
 #endif
 
-  traction_vehicle vehicle_;
+  soro::vector<traction_vehicle> vehicles_;
   si::weight carriage_weight_{si::ZERO<si::weight>};
   si::length length_{si::ZERO<si::length>};
   si::speed max_speed_{si::ZERO<si::speed>};
