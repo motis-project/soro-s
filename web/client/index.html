@@ -27,10 +27,16 @@
                     Infrastructure
                 </button>
                 <button class="matter-button-contained window-button"
-                        id="addSimulationComponentButton">Simulation
+                        id="addSimulationComponentButton">
+                    Simulation
                 </button>
                 <button class="matter-button-contained window-button"
-                        id="addTimetableComponentButton">Timetable
+                        id="addTimetableComponentButton">
+                    Timetable
+                </button>
+                <button class="matter-button-contained window-button"
+                        id="addOrderingGraphComponentButton">
+                    Ordering Graph
                 </button>
             </div>
             <div class="data-selects">
@@ -114,7 +120,10 @@
   } from "./components/simulation/SimulationComponent.js";
   import {
     TimetableComponent
-  } from "./components/timetable/TimetableComponent.js";
+    } from "./components/timetable/TimetableComponent.js";
+  import {
+        OrderingGraphComponent
+    } from "./components/ordering_graph/OrderingGraphComponent.js"
   import { TimetableManager } from "./model/TimetableManager.js";
   import { getSimulationComponent } from "./utl/goldenLayoutHelper.js";
 
@@ -192,6 +201,7 @@
   window.goldenLayout.registerComponentConstructor('InfrastructureComponent', InfrastructureComponent);
   window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
   window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
+  window.goldenLayout.registerComponentConstructor('OrderingGraphComponent', OrderingGraphComponent);
   window.goldenLayout.loadLayout(initLayout);
 
   window.infrastructureManager = new InfrastructureManager();
@@ -210,6 +220,11 @@
   const addTimetableComponent = document.getElementById('addTimetableComponentButton');
   addTimetableComponent.addEventListener('click', () => {
     window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
+  });
+
+  const addOrderingGraphComponent = document.getElementById('addOrderingGraphComponentButton');
+  addOrderingGraphComponent.addEventListener('click', () => {
+      window.goldenLayout.addComponent('OrderingGraphComponent', undefined, 'Ordering Graph');
   });
 
   const simulateButton = document.getElementById('simulateButton');
