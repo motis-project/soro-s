@@ -106,9 +106,12 @@ slope get_slope(xml_node const& track_element_node) {
   auto const falling_slope = per_mille{parse_fp<precision, replace_comma::ON>(
       track_element_node.child_value("Fallend"))};
 
-  slope const slope_data = {.rising_ = rising_slope, .falling_ = falling_slope};
+  return slope{.rising_ = rising_slope, .falling_ = falling_slope};
+}
 
-  return slope_data;
+main_signal get_main_signal(xml_node const main_signal_node) {
+  auto const name = main_signal_node.child_value("Name");
+  return main_signal{.name_ = name};
 }
 
 halt get_halt(pugi::xml_node const& node) {
@@ -153,6 +156,9 @@ void add_element_data(pugi::xml_node const& xml_node, element* element,
   } else if (element->is(type::SPEED_LIMIT)) {
     network.element_data_[element_id].emplace<speed_limit>(
         get_speed_limit(xml_node, element));
+  } else if (element->is(type::MAIN_SIGNAL)) {
+    network.element_data_[element_id].emplace<main_signal>(
+        get_main_signal(xml_node));
   }
 }
 
