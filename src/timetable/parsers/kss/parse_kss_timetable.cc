@@ -337,7 +337,6 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
         auto const characteristic_xml =
             construction_train_xml.child("characteristic");
-        //
         auto const charac = parse_characteristic(characteristic_xml);
 
         auto const sequence_xml = construction_train_xml.child("sequence");
