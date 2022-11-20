@@ -1,10 +1,26 @@
 #pragma once
 
+#include <limits>
 #include <utility>
 
 namespace soro::utls {
 
-template <typename T, T INVALID>
+template <typename T>
+auto constexpr get_default_invalid() {
+  if constexpr (std::is_integral_v<T>) {
+    return std::numeric_limits<T>::max();
+  }
+
+  if constexpr (std::is_floating_point_v<T>) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+
+  if constexpr (std::is_pointer_v<T>) {
+    return nullptr;
+  }
+}
+
+template <typename T, T INVALID = get_default_invalid<T>()>
   requires std::is_fundamental_v<T> || std::is_pointer_v<T>
 struct optional {
   using value_type = T;
@@ -61,6 +77,13 @@ struct optional {
   }
 
   constexpr void reset() noexcept { val_ = INVALID_VALUE; }
+
+  template <typename Fn>
+  constexpr void execute_if(Fn&& fn) const noexcept {
+    if (has_value()) {
+      fn(value());
+    }
+  }
 
   template <typename ThenFunction>
   constexpr auto and_then(ThenFunction&& then_function) const noexcept {

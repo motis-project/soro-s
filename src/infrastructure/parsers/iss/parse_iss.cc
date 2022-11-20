@@ -256,9 +256,11 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   return section_id;
 }
 
-void calculate_station_routes(base_infrastructure& iss,
+void calculate_station_routes(base_infrastructure& infra,
                               construction_materials const& mats) {
-  auto const& network = iss.graph_;
+  utl::scoped_timer calc_timer("Calculating Station Routes");
+
+  auto const& network = infra.graph_;
 
   auto get_path = [&](intermediate_station_route const& sr, node_ptr next_node,
                       auto const last_node_id) {
@@ -309,15 +311,15 @@ void calculate_station_routes(base_infrastructure& iss,
   size_t in_routes = 0;
   size_t out_routes = 0;
 
-  iss.station_route_store_.reserve(mats.intermediate_station_routes_.size());
+  infra.station_route_store_.reserve(mats.intermediate_station_routes_.size());
   for (auto const& i_sr : mats.intermediate_station_routes_) {
-    iss.station_route_store_.emplace_back();
-    sassert(iss.station_route_store_.size() == i_sr.id_ + 1,
+    infra.station_route_store_.emplace_back();
+    sassert(infra.station_route_store_.size() == i_sr.id_ + 1,
             "Did not allocate enough space for the signal station route");
 
-    iss.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
-    auto sr = iss.station_route_store_[i_sr.id_].get();
-    iss.station_routes_.emplace_back(sr);
+    infra.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
+    auto sr = infra.station_route_store_[i_sr.id_].get();
+    infra.station_routes_.emplace_back(sr);
 
     sr->id_ = static_cast<station_route::id>(i_sr.id_);
     sr->name_ = i_sr.name_;
@@ -325,7 +327,7 @@ void calculate_station_routes(base_infrastructure& iss,
     sr->station_ = i_sr.station_;
     sr->attributes_ = i_sr.attributes_;
 
-    auto& station = iss.station_store_[i_sr.station_->id_];
+    auto& station = infra.station_store_[i_sr.station_->id_];
 
     utls::sassert(
         station->station_routes_.find(i_sr.name_) ==
@@ -352,12 +354,16 @@ void calculate_station_routes(base_infrastructure& iss,
       ++through_routes;
     }
 
-    if (auto first = sr->nodes().back()->next_node_; first != nullptr) {
-      sr->to_ = iss.element_to_station_.at(first->element_->id());
+    if (auto next = sr->nodes().back()->next_node_; next != nullptr) {
+      auto const next_station =
+          infra.element_to_station_.at(next->element_->id());
+      sr->to_ = next_station != sr->station_ ? next_station : nullptr;
     }
 
     if (auto inc = sr->nodes().front()->reverse_edges_; !inc.empty()) {
-      sr->from_ = iss.element_to_station_.at(inc.front()->element_->id());
+      auto const prev_station =
+          infra.element_to_station_.at(inc.front()->element_->id());
+      sr->from_ = prev_station != sr->station_ ? prev_station : nullptr;
     }
 
     auto const get_halt_node = [&](auto&& rp_id) -> node_ptr {
@@ -446,7 +452,7 @@ void calculate_station_routes(base_infrastructure& iss,
 
   // TODO(julian) refactor this into a separate function
   // fill element_to_station_routes_ map in every station
-  for (auto& station : iss.station_store_) {
+  for (auto& station : infra.station_store_) {
     for (auto const& [name, station_route] : station->station_routes_) {
       auto const first = station_route->nodes().front()->element_;
       auto it = station->element_to_routes_.find(first->id());
@@ -458,7 +464,7 @@ void calculate_station_routes(base_infrastructure& iss,
     }
   }
 
-  uLOG(info) << "Parsed " << iss.station_routes_.size() << " station routes";
+  uLOG(info) << "Parsed " << infra.station_routes_.size() << " station routes";
   uLOG(info) << through_routes << " through routes.";
   uLOG(info) << in_routes << " in routes.";
   uLOG(info) << out_routes << " out routes.";
@@ -645,7 +651,8 @@ default_values parse_default_values(xml_node const& default_values_xml) {
 
 std::pair<default_values, rs::rolling_stock> parse_core_data(
     std::vector<utls::loaded_file> const& core_files) {
-  uLOG(utl::info) << "Parsing " << core_files.size() << " core data files.";
+  utl::scoped_timer const core_data_timer("Parsing Core Data");
+
   default_values dv;
   rs::rolling_stock rs;
 
@@ -703,7 +710,7 @@ void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
 
 std::pair<base_infrastructure, construction_materials> parse_iss(
     std::vector<utls::loaded_file> const& rail_plan_files) {
-  uLOG(info) << "Parsing " << rail_plan_files.size() << " station files.";
+  utl::scoped_timer const station_timer("Parsing ISS Stations");
 
   std::pair<base_infrastructure, construction_materials> result;
   auto& iss = result.first;

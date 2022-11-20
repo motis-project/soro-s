@@ -12,7 +12,7 @@ namespace soro::infra {
 //   - ISS 'example/', a folder which contains an 'Index.xml'
 
 struct infrastructure_options {
-  bool determine_interlocking_{false};
+  bool determine_interlocking_{true};
   bool determine_conflicts_{false};
   bool determine_layout_{false};
 

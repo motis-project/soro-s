@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
-#include <source_location>
 
 // TODO(julian) replace this with the c++20 <format> header when available
 #include "fmt/ostream.h"
@@ -12,19 +11,39 @@
 namespace soro::utls {
 
 struct bool_with_loc {
-  bool_with_loc(bool const b, std::source_location const& loc =  // NOLINT
-#if !defined(__clang__)
-                              std::source_location::current())
+
+#if defined(__clang__)
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = __builtin_FILE(),
+                const char* function_name = __builtin_FUNCTION(),
+                unsigned line = __builtin_LINE(),
+                unsigned column = __builtin_COLUMN())
+#elif defined(__GNUC__)
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = __builtin_FILE(),
+                const char* function_name = __builtin_FUNCTION(),
+                unsigned line = __builtin_LINE(), unsigned column = 0)
 #else
-                              {})
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = "",
+                const char* function_name = "",
+                unsigned line = 0,
+                unsigned column = 0))
 #endif
-      : b_(b), loc_(loc) {
+      : b_(b),
+        filename_(filename),
+        function_name_(function_name),
+        line_(line),
+        column_(column) {
   }
 
   operator bool() const noexcept { return b_; }  // NOLINT
 
   bool b_;
-  std::source_location loc_;
+  const char* filename_;
+  const char* function_name_;
+  unsigned line_;
+  unsigned column_;
 };
 
 #if !defined(NDEBUG)
@@ -47,19 +66,13 @@ inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
     fmt::print(ss, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
     fmt::print(ss, std::forward<Msg>(msg), std::forward<Args>(args)...);
     fmt::print(ss, "\n");
-
-#if !defined(__clang__)
-    auto const& loc = assert_this.loc_;
     fmt::print(ss, "[FAILED HERE] {}:{}:{} in {}",
-               std::filesystem::path(loc.file_name()).filename().string(),
-               loc.line(), loc.column(), loc.function_name());
-#else
-    fmt::print(ss, "[FAILED HERE] {}:{}:{} in {}", __builtin_FILE(),
-               __builtin_LINE(), __builtin_COLUMN(), __builtin_FUNCTION());
-#endif
+               std::filesystem::path(assert_this.filename_).filename().string(),
+               assert_this.line_, assert_this.column_,
+               assert_this.function_name_);
     fmt::print(ss, "\n");
-    std::clog << ss.rdbuf();
 
+    std::clog << ss.rdbuf();
     throw std::runtime_error(ss.str());
   }
 }

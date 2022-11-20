@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <utility>
 
 #include "soro/utls/unixtime.h"
@@ -96,6 +97,9 @@ struct train {
   bitfield bitfield_;
   soro::vector<stop> stops;
   soro::vector<stop_time> stop_times_;
+
+  bool break_in_;
+  bool break_out_;
 };
 
 }  // namespace soro::tt

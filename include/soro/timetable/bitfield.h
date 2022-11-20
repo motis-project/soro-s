@@ -8,10 +8,7 @@ namespace soro::tt {
 // covers the range [first_date_, last_date_]
 struct bitfield {
   static constexpr const std::size_t BITSIZE = 512;
-
-  bitfield() = default;
-  bitfield(date::year_month_day first_date, date::year_month_day last_date,
-           std::string bit_string);
+  using bitset = cista::bitset<BITSIZE>;
 
   std::vector<date::year_month_day> get_set_days() const;
 
@@ -37,8 +34,12 @@ struct bitfield {
 
   date::year_month_day first_date_{};
   date::year_month_day last_date_{};
-  cista::bitset<BITSIZE> bitset_{};
+  bitset bitset_{};
 };
+
+bitfield make_bitfield(date::year_month_day first_date,
+                       date::year_month_day last_date,
+                       const char* const bitmask);
 
 std::size_t distance(date::year_month_day from, date::year_month_day to);
 

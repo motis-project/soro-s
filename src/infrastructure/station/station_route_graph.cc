@@ -1,5 +1,6 @@
 #include "soro/infrastructure/station/station_route_graph.h"
 
+#include "utl/timer.h"
 #include "utl/to_vec.h"
 
 #include "soro/infrastructure/station/station.h"
@@ -101,6 +102,7 @@ soro::vector<station_route::ptr> get_successors(station_route::ptr sr,
 station_route_graph get_station_route_graph(
     soro::vector<station_route::ptr> const& station_routes,
     graph const& network) {
+  utl::scoped_timer const srg_timer("Building Station Route Graph");
 
   station_route_graph srg;
 

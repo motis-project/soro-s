@@ -1,6 +1,7 @@
 #include "soro/infrastructure/station/station_route.h"
 
 #include "soro/infrastructure/station/station.h"
+#include "soro/infrastructure/station/station_route_graph.h"
 
 #include "soro/utls/coroutine/collect.h"
 #include "soro/utls/coroutine/coro_map.h"
@@ -33,13 +34,27 @@ bool station_route::is_out_route() const {
   return !starts_at_boundary(*this) && ends_at_boundary(*this);
 }
 
-node::idx station_route::get_halt_idx(rs::FreightTrain const freight) const {
+bool station_route::can_start_an_interlocking(
+    station_route_graph const& srg) const {
+  return !main_signals_.empty() || srg.predeccesors_[id_].empty();
+}
+
+bool station_route::can_end_an_interlocking(
+    station_route_graph const& srg) const {
+  return !this->main_signals_.empty() || srg.successors_[this->id_].empty();
+}
+
+utls::optional<node::idx> station_route::get_halt_idx(
+    rs::FreightTrain const freight) const {
   return static_cast<bool>(freight) ? freight_halt_ : passenger_halt_;
 }
 
-infra::node_ptr station_route::get_halt_node(rs::FreightTrain const f) const {
+utls::optional<infra::node_ptr> station_route::get_halt_node(
+    rs::FreightTrain const f) const {
   auto const idx = get_halt_idx(f);
-  return idx == node::INVALID_IDX ? nullptr : nodes(idx);
+  return idx.transform([&](node::idx const idx) {
+    return utls::optional<node::ptr>(nodes(idx));
+  });
 }
 
 }  // namespace soro::infra

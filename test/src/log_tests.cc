@@ -40,7 +40,7 @@ void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
     check_count += sr_count;
   }
 
-  CHECK(check_count == infra->station_routes_.size());
+  CHECK_EQ(check_count, infra->station_routes_.size());
 }
 
 void log_possible_speed_limit_values(infrastructure const& infra) {
@@ -61,23 +61,24 @@ void log_possible_speed_limit_values(infrastructure const& infra) {
   uLOG(info) << "In total: " << possible_values.size();
 }
 
-void log_signal_station_route_halt_counts(infrastructure const& infra) {
+void log_signal_station_route_halt_counts(infrastructure const&) {
   std::map<soro::size_type, soro::size_type> passenger_halt_counts;
   std::map<soro::size_type, soro::size_type> freight_halt_counts;
 
-  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
-    if (passenger_halt_counts.contains(ssr->passenger_halts_.size())) {
-      ++(passenger_halt_counts[ssr->passenger_halts_.size()]);
-    } else {
-      passenger_halt_counts[ssr->passenger_halts_.size()] = 1;
-    }
-
-    if (freight_halt_counts.contains(ssr->freight_halts_.size())) {
-      ++(freight_halt_counts[ssr->freight_halts_.size()]);
-    } else {
-      freight_halt_counts[ssr->freight_halts_.size()] = 1;
-    }
-  }
+  utls::sassert(false, "Not implemented");
+  //  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
+  //    if (passenger_halt_counts.contains(ssr->passenger_halts_.size())) {
+  //      ++(passenger_halt_counts[ssr->passenger_halts_.size()]);
+  //    } else {
+  //      passenger_halt_counts[ssr->passenger_halts_.size()] = 1;
+  //    }
+  //
+  //    if (freight_halt_counts.contains(ssr->freight_halts_.size())) {
+  //      ++(freight_halt_counts[ssr->freight_halts_.size()]);
+  //    } else {
+  //      freight_halt_counts[ssr->freight_halts_.size()] = 1;
+  //    }
+  //  }
 
   uLOG(info) << "Signal station route passenger halt count stats:";
   for (auto const& [passenger_halts, stat] : passenger_halt_counts) {

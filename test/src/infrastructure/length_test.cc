@@ -75,29 +75,30 @@ void test_station_route_lengths(infrastructure const& infra) {
   }
 }
 
-void test_interlocking_route_lengths(infrastructure const& infra) {
-  for (auto const& ir : infra->interlocking_.interlocking_routes_) {
-    auto const e1 = get_path_length_from_elements(ir->nodes());
-    auto const e2 = get_path_length_from_elements(utls::coro_map(
-        ir->entire(skip_omitted::OFF), [](auto&& rn) { return rn.node_; }));
-    auto const e3 = get_path_length_from_elements(utls::coro_map(
-        ir->entire(skip_omitted::ON), [](auto&& rn) { return rn.node_; }));
-
-    CHECK(e1 == e2);
-    CHECK(e2 == e3);
-
-    auto const s1 = get_path_length_from_sections(ir->nodes());
-    auto const s2 = get_path_length_from_sections(utls::coro_map(
-        ir->entire(skip_omitted::OFF), [](auto&& rn) { return rn.node_; }));
-    auto const s3 = get_path_length_from_sections(utls::coro_map(
-        ir->entire(skip_omitted::ON), [](auto&& rn) { return rn.node_; }));
-
-    CHECK(s1 == s2);
-    CHECK(s2 == s3);
-
-    CHECK_MESSAGE(e1 == s1,
-                  "Different lengths from the two length calculation funs");
-  }
+void test_interlocking_route_lengths(infrastructure const&) {
+  utls::sassert(false, "Not implemented");
+  //  for (auto const& ir : infra->interlocking_.interlocking_routes_) {
+  //    auto const e1 = get_path_length_from_elements(ir->nodes());
+  //    auto const e2 = get_path_length_from_elements(utls::coro_map(
+  //        ir->entire(skip_omitted::OFF), [](auto&& rn) { return rn.node_; }));
+  //    auto const e3 = get_path_length_from_elements(utls::coro_map(
+  //        ir->entire(skip_omitted::ON), [](auto&& rn) { return rn.node_; }));
+  //
+  //    CHECK(e1 == e2);
+  //    CHECK(e2 == e3);
+  //
+  //    auto const s1 = get_path_length_from_sections(ir->nodes());
+  //    auto const s2 = get_path_length_from_sections(utls::coro_map(
+  //        ir->entire(skip_omitted::OFF), [](auto&& rn) { return rn.node_; }));
+  //    auto const s3 = get_path_length_from_sections(utls::coro_map(
+  //        ir->entire(skip_omitted::ON), [](auto&& rn) { return rn.node_; }));
+  //
+  //    CHECK(s1 == s2);
+  //    CHECK(s2 == s3);
+  //
+  //    CHECK_MESSAGE(e1 == s1,
+  //                  "Different lengths from the two length calculation funs");
+  //  }
 }
 
 void test_train_path_lengths(timetable const& tt) {

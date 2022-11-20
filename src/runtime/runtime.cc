@@ -359,90 +359,12 @@ runtime_result calculate_interval(
   return current;
 }
 
-discrete_scenario runtime_calculation_ssr(
-    train const& tr, infrastructure const& infra, ir_id const ir_id,
-    utls::unixtime const start_time, si::speed const init_speed,
-    utls::unixtime const go_time, utls::duration const extra_stand_time) {
+discrete_scenario runtime_calculation_ssr(train const&, infrastructure const&,
+                                          ir_id const, utls::unixtime const,
+                                          si::speed const, utls::unixtime const,
+                                          utls::duration const) {
   discrete_scenario result;
-
-  auto il = get_interval_list(tr, {type::HALT, type::MAIN_SIGNAL, type::EOTD},
-                              BORDER_TYPES, infra);
-
-  auto const& ssr = infra->interlocking_.interlocking_routes_[ir_id];
-
-  //  auto const is_last_ssr = ssr_id == tr.ssr_run_.path_.back()->id_;
-  auto const is_first_ssr = ir_id == tr.path_.front()->id_;
-
-  auto const& signal_eotd = ssr->nodes(ssr->signal_eotd_);
-
-  auto const ir_offset = utls::find_if_position(
-      tr.path_, [&](auto&& ssr_ptr) { return ssr_ptr->id_ == ir_id; });
-
-  auto const min_stand_time = tr.stop_times_[ir_offset].min_stop_time_;
-  auto const earliest_departure = tr.stop_times_[ir_offset].departure_;
-
-  auto const from_interval =
-      is_first_ssr ? 0 : utls::find_if_position(il, [&](auto const& interval) {
-        return utls::any_of(interval.events_, [&](auto const& event) {
-          return event.node_->id_ == ssr->nodes().front()->id_;
-        });
-      });
-
-  auto const to_interval =
-      from_interval +
-      utls::find_if_position(
-          std::cbegin(il) + static_cast<std::ptrdiff_t>(from_interval),
-          std::cend(il),
-          [&](auto const& interval) {
-            return utls::any_of(interval.events_, [&](auto const& event) {
-              return event.node_->id_ == ssr->nodes().back()->id_;
-            });
-          }) +
-      1;
-
-  std::cout << "From: " << from_interval << '\n';
-  std::cout << "To: " << to_interval << '\n';
-
-  utls::slice_clasp(il, from_interval, to_interval + 1);
-  std::cout << "Elements[to]:\n";
-  for (auto const& element : il.back().elements_) {
-    std::cout << get_type_str(element) << '\n';
-  }
-  std::cout << "Elements[to - 1]:\n";
-  for (auto const& element : il[il.size() - 2].elements_) {
-    std::cout << get_type_str(element) << '\n';
-  }
-
-  runtime_result current;
-  current.time_ = si::ZERO<si::time>;
-  current.speed_ = init_speed;
-  current.distance_ = si::ZERO<si::length>;
-
-  auto const save_signal_eotd_time = [&](utls::unixtime const& arrival,
-                                         utls::unixtime const&,
-                                         element_ptr element) {
-    if (element->id() == signal_eotd->element_->id()) {
-      result.eotd_arrival_ = arrival;
-    }
-  };
-
-  for (auto const [prev, inter, next] : utl::nwise<3>(il)) {
-    //        unixtime const interval_start_ts =
-    //            start_time + duration(as_s(current.time_));
-
-    current = calculate_interval(prev, inter, next, tr, current, start_time,
-                                 save_signal_eotd_time, go_time, min_stand_time,
-                                 earliest_departure, extra_stand_time);
-  }
-
-  std::cout << start_time << '\n';
-  std::cout << init_speed << '\n';
-  std::cout << go_time << '\n';
-  std::cout << "hi\n";
-
-  result.end_arrival_ = start_time + duration(as_s(current.time_));
-  result.end_speed_ = current.speed_;
-
+  utls::sassert(false, "Not implemented.");
   return result;
 }
 

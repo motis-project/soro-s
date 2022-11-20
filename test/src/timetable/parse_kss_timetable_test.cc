@@ -20,6 +20,9 @@ TEST_SUITE("parse de_kss" *
     auto opts = DE_ISS_OPTS;
     opts.determine_interlocking_ = true;
     infrastructure const infra(opts);
+    //    infra.save("infra.raw");
     timetable const tt(DE_KSS_OPTS, infra);
+    //    std::cout << "Got " << tt->train_store_.size() << " trains" <<
+    //    std::endl; tt.save("tt.raw");
   }
 }

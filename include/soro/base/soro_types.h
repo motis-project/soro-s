@@ -103,8 +103,8 @@ using pair = std::pair<T1, T2>;
 template <typename... Ts>
 using tuple = std::tuple<Ts...>;
 
-template <typename Key, typename Value>
-using map = std::map<Key, Value>;
+template <typename Key, typename Value, typename Comparator = std::less<> >
+using map = std::map<Key, Value, Comparator>;
 
 template <typename T>
 using set = data::hash_set<T>;

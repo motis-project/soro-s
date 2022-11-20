@@ -3,6 +3,7 @@
 #include "pugixml.hpp"
 
 #include "utl/logging.h"
+#include "utl/timer.h"
 
 #include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 
@@ -10,6 +11,8 @@ namespace soro::infra {
 
 regulatory_station_data parse_regulatory_stations(
     std::vector<utls::loaded_file> const& regulatory_station_files) {
+  utl::scoped_timer const regulartory_timer("Parsing Regulatory Data");
+
   regulatory_station_data station_data;
 
   for (auto const& reg_file : regulatory_station_files) {

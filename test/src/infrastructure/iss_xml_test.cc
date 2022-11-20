@@ -86,17 +86,17 @@ void check_switch(simple_switch const& ss, soro::string const& station_name) {
     auto const stem_id = (take_branch ? node->branch_node_ : node->next_node_)
                              ->next_node_->element_->id();
 
-    CHECK_MESSAGE(stem_id == (ss.stem_rising_ ? ss.falling_stem_neighbour()
-                                              : ss.rising_stem_neighbour())
-                                 ->id(),
+    CHECK_MESSAGE((stem_id == (ss.stem_rising_ ? ss.falling_stem_neighbour()
+                                               : ss.rising_stem_neighbour())
+                                  ->id()),
                   in_station);
 
     auto const branch_id = (take_branch ? node->branch_node_ : node->next_node_)
                                ->branch_node_->element_->id();
     CHECK_MESSAGE(
-        branch_id == (ss.branch_rising_ ? ss.falling_branch_neighbour()
-                                        : ss.rising_branch_neighbour())
-                         ->id(),
+        (branch_id == (ss.branch_rising_ ? ss.falling_branch_neighbour()
+                                         : ss.rising_branch_neighbour())
+                          ->id()),
         in_station);
   }
 
@@ -109,9 +109,9 @@ void check_switch(simple_switch const& ss, soro::string const& station_name) {
     auto const start_id = (take_branch ? node->branch_node_ : node->next_node_)
                               ->next_node_->element_->id();
 
-    CHECK_MESSAGE(start_id == (ss.rising_ ? ss.falling_start_neighbour()
-                                          : ss.rising_start_neighbour())
-                                  ->id(),
+    CHECK_MESSAGE((start_id == (ss.rising_ ? ss.falling_start_neighbour()
+                                           : ss.rising_start_neighbour())
+                                   ->id()),
                   in_station);
   }
 
@@ -124,9 +124,9 @@ void check_switch(simple_switch const& ss, soro::string const& station_name) {
     auto const start_id = (take_branch ? node->branch_node_ : node->next_node_)
                               ->next_node_->element_->id();
 
-    CHECK_MESSAGE(start_id == (ss.rising_ ? ss.falling_start_neighbour()
-                                          : ss.rising_start_neighbour())
-                                  ->id(),
+    CHECK_MESSAGE((start_id == (ss.rising_ ? ss.falling_start_neighbour()
+                                           : ss.rising_start_neighbour())
+                                   ->id()),
                   in_station);
   }
 }
@@ -157,17 +157,17 @@ void check_cross(cross const& cross, soro::string const& station_name) {
 
     auto const end_left_id = cross_node->next_node_->element_->id();
     CHECK_MESSAGE(
-        end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
-                                               : cross.rising_end_left())
-                           ->id(),
+        (end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
+                                                : cross.rising_end_left())
+                            ->id()),
         in_station);
 
     if (cross.start_left_end_right_arc_) {
       auto const end_right_id = cross_node->branch_node_->element_->id();
       CHECK_MESSAGE(
-          end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
-                                                   : cross.rising_end_right())
-                              ->id(),
+          (end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
+                                                    : cross.rising_end_right())
+                               ->id()),
           in_station);
     }
   }
@@ -179,17 +179,17 @@ void check_cross(cross const& cross, soro::string const& station_name) {
                        cross.id_);
 
     auto const start_left_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE(start_left_id == (cross.rising_ ? cross.falling_start_left()
-                                                  : cross.rising_start_left())
-                                       ->id(),
+    CHECK_MESSAGE((start_left_id == (cross.rising_ ? cross.falling_start_left()
+                                                   : cross.rising_start_left())
+                                        ->id()),
                   in_station);
 
     if (cross.start_right_end_left_arc_) {
       auto const start_right_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE(start_right_id == (cross.start_right_rising_
-                                           ? cross.falling_start_right()
-                                           : cross.rising_start_right())
-                                          ->id(),
+      CHECK_MESSAGE((start_right_id == (cross.start_right_rising_
+                                            ? cross.falling_start_right()
+                                            : cross.rising_start_right())
+                                           ->id()),
                     in_station);
     }
   }
@@ -202,17 +202,17 @@ void check_cross(cross const& cross, soro::string const& station_name) {
 
     auto const end_right_id = cross_node->next_node_->element_->id();
     CHECK_MESSAGE(
-        end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
-                                                 : cross.rising_end_right())
-                            ->id(),
+        (end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
+                                                  : cross.rising_end_right())
+                             ->id()),
         in_station);
 
     if (cross.start_right_end_left_arc_) {
       auto const end_left_id = cross_node->branch_node_->element_->id();
       CHECK_MESSAGE(
-          end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
-                                                 : cross.rising_end_left())
-                             ->id(),
+          (end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
+                                                  : cross.rising_end_left())
+                              ->id()),
           in_station);
     }
   }
@@ -224,18 +224,19 @@ void check_cross(cross const& cross, soro::string const& station_name) {
                        cross.id_);
 
     auto const start_right_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE(start_right_id == (cross.start_right_rising_
-                                         ? cross.falling_start_right()
-                                         : cross.rising_start_right())
-                                        ->id(),
+    CHECK_MESSAGE((start_right_id == (cross.start_right_rising_
+                                          ? cross.falling_start_right()
+                                          : cross.rising_start_right())
+                                         ->id()),
                   in_station);
 
     if (cross.start_left_end_right_arc_) {
       auto const start_left_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE(start_left_id == (cross.rising_ ? cross.falling_start_left()
-                                                    : cross.rising_start_left())
-                                         ->id(),
-                    in_station);
+      CHECK_MESSAGE(
+          (start_left_id == (cross.rising_ ? cross.falling_start_left()
+                                           : cross.rising_start_left())
+                                ->id()),
+          in_station);
     }
   }
 }
@@ -275,7 +276,7 @@ void check_outgoing(element const& element, station const& station) {
     }
   }
 
-  CHECK_MESSAGE(expected == outgoing,
+  CHECK_MESSAGE((expected == outgoing),
                 fmt::format("Expected outgoing edges differ from actual "
                             "outgoing edges for element with id: {}.",
                             element.id()));
@@ -320,7 +321,7 @@ void check_incoming(infrastructure const& infra,
             "Expected incoming edges differ from actual incoming edges for "
             "element with id {} and type {} in station {}.",
             element->id(), element->get_type_str(), station->ds100_);
-        CHECK_MESSAGE(expected == incoming, message);
+        CHECK_MESSAGE((expected == incoming), message);
       }
     }
   }
@@ -384,18 +385,18 @@ void check_network(infrastructure const& infra) {
         if (node_ptr->next_node_ != nullptr) {
           ++(incoming_edges[node_ptr->next_node_->element_->id()]);
 
-          CHECK_MESSAGE(node_ptr->next_node_->next_node_ != node_ptr,
+          CHECK_MESSAGE((node_ptr->next_node_->next_node_ != node_ptr),
                         cycle_message);
-          CHECK_MESSAGE(node_ptr->next_node_->branch_node_ != node_ptr,
+          CHECK_MESSAGE((node_ptr->next_node_->branch_node_ != node_ptr),
                         cycle_message);
         }
 
         if (node_ptr->branch_node_ != nullptr) {
           ++(incoming_edges[node_ptr->branch_node_->element_->id()]);
 
-          CHECK_MESSAGE(node_ptr->branch_node_->next_node_ != node_ptr,
+          CHECK_MESSAGE((node_ptr->branch_node_->next_node_ != node_ptr),
                         cycle_message);
-          CHECK_MESSAGE(node_ptr->branch_node_->branch_node_ != node_ptr,
+          CHECK_MESSAGE((node_ptr->branch_node_->branch_node_ != node_ptr),
                         cycle_message);
         }
       }
@@ -404,7 +405,7 @@ void check_network(infrastructure const& infra) {
 
   check_incoming(infra, incoming_edges, expected_incoming);
 
-  CHECK(total_elements == infra->graph_.elements_.size());
+  CHECK_EQ(total_elements, infra->graph_.elements_.size());
 }
 
 void check_station_routes(infrastructure const& infra) {
@@ -436,7 +437,7 @@ void check_station_route_graph(infrastructure const& infra) {
     auto const& succs = infra->station_route_graph_.successors_[sr->id_];
 
     for (auto const& succ : succs) {
-      CHECK_MESSAGE(succ->id_ != sr->id_,
+      CHECK_MESSAGE((succ->id_ != sr->id_),
                     "Station route can't be its own successor!");
     }
   }
@@ -469,26 +470,29 @@ void check_speed_limit_values(infrastructure const& infra) {
   }
 }
 
-void check_signal_station_routes(infrastructure const& infra) {
-  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
-    auto const& first_node = ssr->nodes().front();
-    auto const& last_node = ssr->nodes().back();
-
-    auto const first_node_is_valid =
-        interlocking_route::valid_ends().contains(first_node->type());
-    auto const last_node_is_valid =
-        interlocking_route::valid_ends().contains(last_node->type());
-
-    CHECK_MESSAGE(first_node_is_valid,
-                  fmt::format("First element's type must be from the list of "
-                              "valid elements, but was {}.",
-                              first_node->element_->get_type_str()));
-
-    CHECK_MESSAGE(last_node_is_valid,
-                  fmt::format("Last element's type must be from the list of "
-                              "valid elements, but was {}.",
-                              last_node->element_->get_type_str()));
-  }
+void check_signal_station_routes(infrastructure const&) {
+  utls::sassert(false, "Not implemented");
+  //  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
+  //    auto const& first_node = ssr->nodes().front();
+  //    auto const& last_node = ssr->nodes().back();
+  //
+  //    auto const first_node_is_valid =
+  //        interlocking_route::valid_ends().contains(first_node->type());
+  //    auto const last_node_is_valid =
+  //        interlocking_route::valid_ends().contains(last_node->type());
+  //
+  //    CHECK_MESSAGE(first_node_is_valid,
+  //                  fmt::format("First element's type must be from the list of
+  //                  "
+  //                              "valid elements, but was {}.",
+  //                              first_node->element_->get_type_str()));
+  //
+  //    CHECK_MESSAGE(last_node_is_valid,
+  //                  fmt::format("Last element's type must be from the list of
+  //                  "
+  //                              "valid elements, but was {}.",
+  //                              last_node->element_->get_type_str()));
+  //  }
 }
 
 void check_signal_station_route_count(infrastructure const& infra) {
@@ -530,7 +534,7 @@ void check_signal_station_route_count(infrastructure const& infra) {
   auto const ssr_count = inner_sr_count + path_sr_count;
 
   CHECK_MESSAGE(
-      ssr_count <= infra->interlocking_.interlocking_routes_.size(),
+      (ssr_count <= infra->interlocking_.interlocking_routes_.size()),
       fmt::format("Exptected at least {} signal station routes, but got {}",
                   ssr_count, infra->interlocking_.interlocking_routes_.size()));
 }
@@ -540,7 +544,7 @@ void check_section_element_types(infrastructure const& infra) {
     auto const total_track_elements = utls::count_if(
         section.elements_, [](auto&& e) { return e->is_track_element(); });
 
-    CHECK_MESSAGE(total_track_elements == section.elements_.size() - 2,
+    CHECK_MESSAGE((total_track_elements == section.elements_.size() - 2),
                   "Only the first and the last element are non-track elements "
                   "(=section elements)");
     CHECK_MESSAGE(!section.elements_.front()->is_track_element(),
@@ -559,7 +563,7 @@ void check_section_increasing_kmp(infrastructure const& infra) {
       auto const kmp2 = e2->get_km(e1);
 
       CHECK_MESSAGE(
-          kmp1 <= kmp2,
+          (kmp1 <= kmp2),
           "Elements in section not in increasing kilometerpoint order.");
     }
   }
@@ -574,7 +578,7 @@ void check_border_number(infrastructure const& infra) {
       std::size_t{0},
       [](auto&& acc, auto&& s) { return acc + s->borders_.size(); });
 
-  CHECK_MESSAGE(total_borders != 0,
+  CHECK_MESSAGE((total_borders != 0),
                 "if there is more than one station we need realized borders");
 }
 

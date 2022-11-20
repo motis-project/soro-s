@@ -40,27 +40,6 @@ date::year_month_day idx_to_date(date::year_month_day first_date,
   return {new_days};
 }
 
-bitfield::bitfield(date::year_month_day const first_date,
-                   date::year_month_day const last_date, std::string bit_string)
-    : first_date_{first_date}, last_date_{last_date} {
-
-  utls::sassert(first_date_ <= last_date_, "Last date {} before first date {}.",
-                last_date_, first_date_);
-  utls::sassert(bit_string.size() == distance(first_date, last_date) + 1,
-                "Distance between first date {} and last date {} is {}, but "
-                "bit_string has length of {}.",
-                first_date_, last_date_, distance(first_date_, last_date_),
-                bit_string.size());
-
-  std::string bits(bitfield::BITSIZE, '0');
-
-  std::reverse(std::begin(bit_string), std::end(bit_string));
-  std::copy(std::begin(bit_string), std::end(bit_string),
-            std::end(bits) - static_cast<ssize_t>(bit_string.size()));
-
-  this->bitset_.set(bits);
-}
-
 bool bitfield::ok() const noexcept {
   return this->first_date_.ok() && this->last_date_.ok();
 }
@@ -175,5 +154,37 @@ date::year_month_day bitfield::end() const noexcept {
 }
 
 std::size_t bitfield::count() const noexcept { return this->bitset_.count(); }
+
+bitfield make_bitfield(date::year_month_day const first_date,
+                       date::year_month_day const last_date,
+                       const char* const bitmask) {
+  auto const bitmask_length = distance(first_date, last_date) + 1;
+
+  utls::sasserts([&]() {
+    utls::sassert(first_date <= last_date, "Last date {} before first date {}.",
+                  last_date, first_date);
+
+    auto const strlen_length = strlen(bitmask);
+    utls::sassert(strlen_length == distance(first_date, last_date) + 1,
+                  "Distance between first date {} and last date {} is {}, but "
+                  "bit_string has length of {}.",
+                  first_date, last_date, distance(first_date, last_date),
+                  strlen_length);
+  });
+
+  std::array<char, bitfield::BITSIZE> buf;
+  std::fill(std::begin(buf), std::end(buf), '0');
+
+  std::copy(bitmask, bitmask + bitmask_length + 1,
+            std::end(buf) - static_cast<ssize_t>(bitmask_length));
+  std::reverse(std::end(buf) - static_cast<ssize_t>(bitmask_length),
+               std::end(buf));
+
+  std::string_view bits_view{std::begin(buf), std::end(buf)};
+
+  return {.first_date_ = first_date,
+          .last_date_ = last_date,
+          .bitset_ = bitfield::bitset{bits_view}};
+}
 
 }  // namespace soro::tt

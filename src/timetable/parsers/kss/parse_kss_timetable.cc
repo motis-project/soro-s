@@ -46,16 +46,13 @@ struct train_number {
 bitfield parse_services(xml_node const services_xml) {
   std::size_t total_service_days = 0;
 
-  auto const parse_date = [](std::string const& s) {
-    auto const split = utls::split(s, "-");
+  auto const parse_date = [](const char* const c) {
+    utls::sassert(strlen(c) == strlen("2022-11-19"),
+                  "Date {} has not the expected length.", c);
 
-    utls::sassert(split.size() == 3,
-                  "Expected a date to be composed out of three parts, got {}.",
-                  split.size());
-
-    date::year y{parse_int<int>(split[0])};
-    date::month m{parse_int<unsigned>(split[1])};
-    date::day d{parse_int<unsigned>(split[2])};
+    date::year const y{parse_int<int>(c, c + 4)};
+    date::month const m{parse_int<unsigned>(c + 5, c + 7)};
+    date::day const d{parse_int<unsigned>(c + 8, c + 10)};
 
     date::year_month_day date{y, m, d};
 
@@ -92,16 +89,20 @@ bitfield parse_services(xml_node const services_xml) {
           parse_date(service_xml.attribute("startDate").value());
       auto const end_date =
           parse_date(service_xml.attribute("endDate").value());
+      auto const bitmask = service_xml.attribute("bitMask").value();
 
-      std::string bitmask(service_xml.attribute("bitMask").value());
+      utls::sasserts([&]() {
+        auto const bitmask_length = strlen(bitmask);
 
-      total_service_days += utls::count(bitmask, '1');
+        utls::sassert(bitmask_length == distance(start_date, end_date) + 1,
+                      "Bitmask has not the same size as distance between start "
+                      "and end date!");
 
-      utls::sassert(bitmask.size() == distance(start_date, end_date) + 1,
-                    "Bitmask has not the same size as distance between start "
-                    "and end date!");
+        total_service_days +=
+            std::count(bitmask, bitmask + bitmask_length, '1');
+      });
 
-      bitfield bf(start_date, end_date, std::move(bitmask));
+      auto const bf = make_bitfield(start_date, end_date, bitmask);
 
       accumulated_bitfield.ok() ? accumulated_bitfield |= bf
                                 : accumulated_bitfield = bf;
@@ -195,15 +196,21 @@ raw_train::run parse_sequence(xml_node const sequence_xml,
 
   auto const sequence_points_xml = sequence_xml.child("sequenceServicePoints");
   for (auto const point_xml : sequence_points_xml.children()) {
-    auto const ds100 = point_xml.child_value("servicePoint");
-    auto const route_name = point_xml.child_value("trackSystem");
+    std::string_view const ds100{point_xml.child_value("servicePoint")};
+    std::string_view const route_name{point_xml.child_value("trackSystem")};
 
-    auto const station = infra->ds100_to_station_.at(ds100);
+    auto station_it = infra->ds100_to_station_.find(ds100);
+    if (station_it == std::end(infra->ds100_to_station_)) {
+      uLOG(utl::warn) << "Could not find station " << ds100 << ".";
+      return {};
+    }
 
-    auto route_it = station->station_routes_.find(route_name);
-    if (route_it != std::end(station->station_routes_)) {
+    auto route_it = station_it->second->station_routes_.find(route_name);
+    if (route_it != std::end(station_it->second->station_routes_)) {
       run.routes_.push_back(route_it->second);
     } else {
+//      uLOG(utl::warn) << "Could not find station route " << route_name << " in "
+//                      << ds100 << ".";
       return {};
     }
 
@@ -269,7 +276,7 @@ raw_train::characteristic parse_characteristic(xml_node const charac_xml) {
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
-  utl::scoped_timer timetable_timer("Parsing Timetable");
+  utl::scoped_timer const timetable_timer("Parsing Timetable");
 
   base_timetable bt;
 
@@ -277,9 +284,10 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
   std::size_t construction_trains = 0;
   std::size_t worked_on_trains = 0;
   std::size_t failed_parsing = 0;
+  std::size_t could_not_determine_ir_run = 0;
   std::size_t successfully_parsed = 0;
 
-  std::set<std::pair<uint32_t, uint32_t>> train_numbers;
+  //  std::set<std::pair<uint32_t, uint32_t>> train_numbers;
 
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
     auto const loaded_file = utls::load_file(dir_entry.path());
@@ -315,25 +323,26 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
       for (auto const construction_train_xml :
            train_xml.child("fineConstruction").children("constructionTrain")) {
 
-        train t;
+        auto t = soro::make_unique<train>();
 
-        std::pair<uint32_t, uint32_t> train_number = {
-            utls::parse_int<uint32_t>(
-                construction_train_xml.child("trainNumber")
-                    .child_value("mainNumber")),
-            utls::parse_int<uint32_t>(
-                construction_train_xml.child("trainNumber")
-                    .child_value("subNumber"))};
+        //        std::pair<uint32_t, uint32_t> const train_number = {
+        //            utls::parse_int<uint32_t>(
+        //                construction_train_xml.child("trainNumber")
+        //                    .child_value("mainNumber")),
+        //            utls::parse_int<uint32_t>(
+        //                construction_train_xml.child("trainNumber")
+        //                    .child_value("subNumber"))};
 
-        if (train_numbers.contains(train_number)) {
-          std::cout << " Found doubl train number " << train_number.first << " "
-                    << train_number.second << '\n';
-        } else {
-          train_numbers.insert(train_number);
-        }
+        //        if (train_numbers.contains(train_number)) {
+        //          std::cout << " Found doubl train number " <<
+        //          train_number.first << " "
+        //                    << train_number.second << '\n';
+        //        } else {
+        //          train_numbers.insert(train_number);
+        //        }
 
         auto const services_xml = construction_train_xml.child("services");
-        t.bitfield_ = parse_services(services_xml);
+        t->bitfield_ = parse_services(services_xml);
 
         auto const characteristic_xml =
             construction_train_xml.child("characteristic");
@@ -342,14 +351,22 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
         auto const sequence_xml = construction_train_xml.child("sequence");
         auto const run = parse_sequence(sequence_xml, infra);
 
-        t.path_ = get_interlocking_route_path(run, charac.freight_,
-                                              infra->interlocking_,
-                                              infra->station_route_graph_);
-
         if (run.routes_.empty()) {
           ++failed_parsing;
           continue;
         }
+
+        t->path_ = get_interlocking_route_path(run, charac.freight_,
+                                               infra->interlocking_,
+                                               infra->station_route_graph_);
+
+        if (t->path_.empty()) {
+          ++could_not_determine_ir_run;
+          continue;
+        }
+
+        bt.train_store_.emplace_back();
+        bt.train_store_.back() = std::move(t);
 
         ++construction_trains;
       }
@@ -365,6 +382,8 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
   uLOG(utl::info) << "Trains successfully parsed: " << successfully_parsed;
   uLOG(utl::info) << "Trains NOT successfully parsed: " << failed_parsing;
   uLOG(utl::info) << "Construction trains parsed: " << construction_trains;
+  uLOG(utl::info) << "Could not determine interlocking route run for : "
+                  << could_not_determine_ir_run << " trains.";
 
   return bt;
 }

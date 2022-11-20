@@ -24,8 +24,9 @@ speed get_initial_spl(station_route const& first_route,
   speed_limit last_spl;
 
   auto const start = first_route.get_halt_idx(freight);
+  utls::sassert(start.has_value(), "First Route does not have an halt.");
 
-  for (node::idx idx = start; idx > 0; --idx) {
+  for (node::idx idx = start.value(); idx > 0; --idx) {
     auto const node = first_route.nodes(idx);
 
     if (node->is(type::SPEED_LIMIT)) {
@@ -179,8 +180,8 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
               "Last interval should be empty");
   list.back().distance_ = list[list.size() - 2].distance_;
 
-  list.front().speed_limit_ = get_initial_spl(
-      *tr.path_.front()->station_routes_.front(), infra, tr.freight_);
+  list.front().speed_limit_ =
+      get_initial_spl(*tr.path_.front()->first_sr(infra), infra, tr.freight_);
 
   propagate_speed_limits(list);
   while (adjust_speed_limits(list, tr.physics_))
