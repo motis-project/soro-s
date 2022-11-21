@@ -132,4 +132,75 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   }
 }
 
+/**
+ * Generates a graph with given amount of trains, tracks and a given minimum and
+ * maximum amount of nodes per train.
+ *
+ * Example: 2 trains with 5 tracks, and minimum of 2 and maximum of 5 could
+ * yield a graph, where:
+ * train A follows tracks 1, 2, 3, 4 and 5 (all 5 tracks)
+ * train B follows tracks 3 and 1 (just 2 tracks)
+ */
+ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
+                                  int max_nodes) {
+  ordering_graph graph;
+
+  // get random number generator
+  srand((unsigned)time(NULL));
+
+  // are min and max valid?
+  int min = min_nodes >= 0 ? min_nodes : 0;
+  int max = max_nodes <= track_amnt ? max_nodes : track_amnt;
+
+  // generate nodes for each train and connect them
+  for (auto train = 0; train < train_amnt; train++) {
+    // amount of tracks this train will use for now
+    auto node_amnt = min + (rand() % (max - min));
+
+    for (auto n = 0; n < node_amnt; n++) {
+      // choose a random new track that this train will use
+      std::vector<int> chosen_ids;
+      int track_id;
+      while (true) {
+        track_id = rand() % track_amnt;
+        // track must not already be used by this train
+        if (std::find(chosen_ids.begin(), chosen_ids.end(), track_id) ==
+            chosen_ids.end()) {
+          chosen_ids.emplace_back(track_id);
+          break;
+        }
+      }
+      auto size = graph.nodes_.size();
+      graph.nodes_.emplace_back(static_cast<ordering_node::id>(size), track_id,
+                                train);
+      // connect the node before this one with the new one
+      if (n != 0) {
+        graph.nodes_[size - 1].out_.emplace_back(size);
+        graph.nodes_[size].in_.emplace_back(size - 1);
+      }
+    }
+  }
+
+  // iterate over all nodes and test, whether future nodes have other trains on
+  // the same track to generate edges (nodes further back will be trains with
+  // higher ids!)
+  auto size = graph.nodes_.size();
+  for (auto firstIndex = 0; firstIndex < size; firstIndex++) {
+    for (auto secondIndex = firstIndex + 1; secondIndex < size; secondIndex++) {
+      // other train on different track is irrelevant and same
+      // train can not have same track
+      if (graph.nodes_[firstIndex].ir_id_ != graph.nodes_[secondIndex].ir_id_)
+        continue;
+      // connect first train with problematic second
+      graph.nodes_[firstIndex].out_.emplace_back(graph.nodes_[secondIndex].id_);
+      graph.nodes_[secondIndex].in_.emplace_back(graph.nodes_[firstIndex].id_);
+      // to prevent unnecessary edges (will be added transivitely): move
+      // firstIndex further
+      break;
+    }
+  }
+
+  return graph;
+}
+
 }  // namespace soro::simulation
