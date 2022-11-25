@@ -1,4 +1,4 @@
-import { getFileContents } from "../../utl/getFileContents.js";
+import { getFileContents } from "../../../utl/getFileContents.js";
 
 export class TimetableComponent {
   constructor(container) {

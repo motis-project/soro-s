@@ -1,5 +1,5 @@
-import { getFileContents } from "../../utl/getFileContents.js";
-import { iterate } from "../../utl/iterate.js";
+import { getFileContents } from "../../../utl/getFileContents.js";
+import { iterate } from "../../../utl/iterate.js";
 
 function createInputField(name, maxSpeedsDiv) {
   let input = document.createElement('input');

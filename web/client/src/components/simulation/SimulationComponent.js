@@ -1,10 +1,10 @@
-import * as d3 from "../../deps/d3/d3.js";
-import { getFileContents } from "../../utl/getFileContents.js";
+import * as d3 from "../../../deps/d3/d3.js";
+import { getFileContents } from "../../../utl/getFileContents.js";
 // import { Module } from "../../soro-client.js";
-import { iterate } from "../../utl/iterate.js";
+import { iterate } from "../../../utl/iterate.js";
 import { Tooltip } from "./Tooltip.js";
-import { iterateDist } from "../../utl/iterate.js";
-import { timeFormat } from "../../deps/d3/d3.js";
+import { iterateDist } from "../../../utl/iterate.js";
+import { timeFormat } from "../../../deps/d3/d3.js";
 
 const nodeWidth = 100;
 const nodeHeight = 80;
