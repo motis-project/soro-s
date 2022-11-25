@@ -1,0 +1,15 @@
+{
+  "name": "soro-s-web-client",
+  "version": "0.1.0",
+  "description": "Web client for the soro-s project of the MOTIS project group at TU Darmstadt",
+  "main": "index.js",
+  "author": "motis-project",
+  "license": "MIT",
+  "dependencies": {
+    "d3": "^7.6.1",
+    "golden-layout": "^2.6.0"
+  },
+  "devDependencies": {
+    "vite": "^3.2.4"
+  }
+}
