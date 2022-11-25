@@ -2,14 +2,23 @@
   "name": "soro-s-web-client",
   "version": "0.1.0",
   "description": "Web client for the soro-s project of the MOTIS project group at TU Darmstadt",
-  "main": "index.js",
+  "type": "module",
   "author": "motis-project",
   "license": "MIT",
   "dependencies": {
+    "vue": "^3.2.45",
     "d3": "^7.6.1",
     "golden-layout": "^2.6.0"
   },
   "devDependencies": {
-    "vite": "^3.2.4"
+    "@vitejs/plugin-vue": "^3.2.0",
+    "typescript": "^4.6.4",
+    "vite": "^3.2.4",
+    "vue-tsc": "^1.0.9"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
   }
 }
