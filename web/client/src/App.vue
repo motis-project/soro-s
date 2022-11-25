@@ -1,4 +1,4 @@
-<script setup lang="js">
+<script setup>
   // Define global functions
   let overlayContainer = document.getElementById('overlayContainer');
   let overlayToggleButton = document.getElementById('overlayToggleButton');
