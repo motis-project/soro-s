@@ -1,3 +1,77 @@
+<template>
+  <div class="overlay-container hidden" id="overlayContainer">
+    <div class="overlay">
+      <div class="overlay-content">
+        <div class="window-controls">
+          <button class="matter-button-contained window-button"
+                  id="addInfrastructureComponentButton">
+            Infrastructure
+          </button>
+          <button class="matter-button-contained window-button"
+                  id="addSimulationComponentButton">Simulation
+          </button>
+          <button class="matter-button-contained window-button"
+                  id="addTimetableComponentButton">Timetable
+          </button>
+        </div>
+        <div class="data-selects">
+          <div class="material-select data-select">
+            <select class="material-select-text"
+                    id="infrastructureSelect" required>
+              <option selected value=""></option>
+            </select>
+            <span class="material-select-highlight"></span>
+            <span class="material-select-bar"></span>
+            <label class="material-select-label">Select
+              Infrastructure</label>
+          </div>
+          <div class="material-select data-select">
+            <select class="material-select-text" id="timetableSelect"
+                    required>
+              <option selected value=""></option>
+            </select>
+            <span class="material-select-highlight"></span>
+            <span class="material-select-bar"></span>
+            <label class="material-select-label">Select
+              Timetable</label>
+          </div>
+        </div>
+        <div class="dev-tools">
+          <button class="matter-button-contained window-button"
+                  id="clearCacheButton">Clear
+            Cache
+          </button>
+          <button class="matter-button-contained window-button"
+                  id="simulateButton">Simulate
+          </button>
+        </div>
+      </div>
+      <div class="sub-overlay hidden" id="subOverlay">
+        <div class="sub-overlay-content" id="subOverlayContent">
+        </div>
+        <div class="sub-overlay-close" id="subOverlayClose">
+          <i class="material-icons">close</i>
+        </div>
+      </div>
+    </div>
+    <div class="overlay-tabs" id="subOverlayTabs">
+      <div class="overlay-toggle">
+        <button class="matter-button-contained overlay-toggle-button"
+                id="overlayToggleButton">
+          <i class="material-icons"
+             style="display: flex; justify-content:center;">menu</i>
+        </button>
+      </div>
+      <div class="sub-overlay-tab-button" id="stationDetailButton">
+        <i class="material-icons">home</i>
+      </div>
+      <div class="sub-overlay-tab-button" id="disruptionDetailButton">
+        <i class="material-icons">train</i>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
   // Define global functions
   let overlayContainer = document.getElementById('overlayContainer');
@@ -218,77 +292,3 @@
     showSubOverlay();
   });
 </script>
-
-<template>
-  <div class="overlay-container hidden" id="overlayContainer">
-    <div class="overlay">
-      <div class="overlay-content">
-        <div class="window-controls">
-          <button class="matter-button-contained window-button"
-                  id="addInfrastructureComponentButton">
-            Infrastructure
-          </button>
-          <button class="matter-button-contained window-button"
-                  id="addSimulationComponentButton">Simulation
-          </button>
-          <button class="matter-button-contained window-button"
-                  id="addTimetableComponentButton">Timetable
-          </button>
-        </div>
-        <div class="data-selects">
-          <div class="material-select data-select">
-            <select class="material-select-text"
-                    id="infrastructureSelect" required>
-              <option selected value=""></option>
-            </select>
-            <span class="material-select-highlight"></span>
-            <span class="material-select-bar"></span>
-            <label class="material-select-label">Select
-              Infrastructure</label>
-          </div>
-          <div class="material-select data-select">
-            <select class="material-select-text" id="timetableSelect"
-                    required>
-              <option selected value=""></option>
-            </select>
-            <span class="material-select-highlight"></span>
-            <span class="material-select-bar"></span>
-            <label class="material-select-label">Select
-              Timetable</label>
-          </div>
-        </div>
-        <div class="dev-tools">
-          <button class="matter-button-contained window-button"
-                  id="clearCacheButton">Clear
-            Cache
-          </button>
-          <button class="matter-button-contained window-button"
-                  id="simulateButton">Simulate
-          </button>
-        </div>
-      </div>
-      <div class="sub-overlay hidden" id="subOverlay">
-        <div class="sub-overlay-content" id="subOverlayContent">
-        </div>
-        <div class="sub-overlay-close" id="subOverlayClose">
-          <i class="material-icons">close</i>
-        </div>
-      </div>
-    </div>
-    <div class="overlay-tabs" id="subOverlayTabs">
-      <div class="overlay-toggle">
-        <button class="matter-button-contained overlay-toggle-button"
-                id="overlayToggleButton">
-          <i class="material-icons"
-             style="display: flex; justify-content:center;">menu</i>
-        </button>
-      </div>
-      <div class="sub-overlay-tab-button" id="stationDetailButton">
-        <i class="material-icons">home</i>
-      </div>
-      <div class="sub-overlay-tab-button" id="disruptionDetailButton">
-        <i class="material-icons">train</i>
-      </div>
-    </div>
-  </div>
-</template>
