@@ -73,37 +73,7 @@
 </template>
 
 <script setup>
-  // Define global functions
-  let overlayContainer = document.getElementById('overlayContainer');
-  let overlayToggleButton = document.getElementById('overlayToggleButton');
-
-  var showOverlay = () => overlayContainer.classList.remove('hidden');
-  var hideOverlay = () => overlayContainer.classList.add('hidden');
-  var toggleOverlay = () => overlayContainer.classList.toggle('hidden');
-
-  let subOverlay = document.getElementById('subOverlay');
-  var showSubOverlay = () => {
-    showOverlay(), subOverlay.classList.remove('hidden');
-  }
-  var hideSubOverlay = () => subOverlay.classList.add('hidden');
-  var toggleSubOverlay = () => subOverlay.classList.toggle('hidden');
-
-  overlayToggleButton.addEventListener('click', toggleOverlay);
-
-  var disruptionMap = new Map();
-  disruptionMap.set('1', 80);
-  disruptionMap.set('2', 120);
-  var disruptionDists = false;
-
-  let subOverlayClose = document.getElementById('subOverlayClose');
-  subOverlayClose.addEventListener('click', _ => {
-    subOverlay.classList.add('hidden');
-
-    for (let overlayTab of document.getElementById('subOverlayTabs').children) {
-      overlayTab.classList.remove('enabled');
-    }
-  });
-
+  // TODO make this TS
   // import { Module, FS, IDBFS } from "./soro-client.js";
   import { GoldenLayout } from "../deps/GoldenLayout/GoldenLayout.js";
 
@@ -209,86 +179,124 @@
 
   window.infrastructureManager = new InfrastructureManager();
   window.timetableManager = new TimetableManager();
+</script>
 
-  const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
-  addInfrastructureComponent.addEventListener('click', () => {
-    window.infrastructureManager.addInfrastructureComponent();
-  });
+<script>
+import { defineComponent } from "vue";
+import { getSimulationComponent } from "../utl/goldenLayoutHelper.js";
+import { showDisruptionDetail } from "./components/disruption/disruption.js";
 
-  const addSimulationComponent = document.getElementById('addSimulationComponentButton');
-  addSimulationComponent.addEventListener('click', () => {
-    window.goldenLayout.addComponent('SimulationComponent', undefined, 'Simulation');
-  });
+export default defineComponent({
+  mounted() {
+    // Define global functions
+    let overlayContainer = document.getElementById('overlayContainer');
+    let overlayToggleButton = document.getElementById('overlayToggleButton');
 
-  const addTimetableComponent = document.getElementById('addTimetableComponentButton');
-  addTimetableComponent.addEventListener('click', () => {
-    window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
-  });
+    var showOverlay = () => overlayContainer.classList.remove('hidden');
+    var hideOverlay = () => overlayContainer.classList.add('hidden');
+    var toggleOverlay = () => overlayContainer.classList.toggle('hidden');
 
-  const simulateButton = document.getElementById('simulateButton');
-  simulateButton.addEventListener('click', () => {
-    getSimulationComponent().forEach(simComp => simComp.simulate());
-  });
+    let subOverlay = document.getElementById('subOverlay');
+    var showSubOverlay = () => {
+      showOverlay(), subOverlay.classList.remove('hidden');
+    }
+    var hideSubOverlay = () => subOverlay.classList.add('hidden');
+    var toggleSubOverlay = () => subOverlay.classList.toggle('hidden');
 
-  function fillOptions(selectElement, optionNames) {
-    selectElement.length = 1;
+    overlayToggleButton.addEventListener('click', toggleOverlay);
 
-    for (const name of optionNames) {
-      if (name === '.' || name === '..') continue;
+    var disruptionMap = new Map();
+    disruptionMap.set('1', 80);
+    disruptionMap.set('2', 120);
+    var disruptionDists = false;
 
-      let option = document.createElement("option");
-      option.label = name;
-      option.value = name;
-      selectElement.add(option);
+    let subOverlayClose = document.getElementById('subOverlayClose');
+    subOverlayClose.addEventListener('click', _ => {
+      subOverlay.classList.add('hidden');
+
+      for (let overlayTab of document.getElementById('subOverlayTabs').children) {
+        overlayTab.classList.remove('enabled');
+      }
+    });
+
+    const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
+    addInfrastructureComponent.addEventListener('click', () => {
+      window.infrastructureManager.addInfrastructureComponent();
+    });
+
+    const addSimulationComponent = document.getElementById('addSimulationComponentButton');
+    addSimulationComponent.addEventListener('click', () => {
+      window.goldenLayout.addComponent('SimulationComponent', undefined, 'Simulation');
+    });
+
+    const addTimetableComponent = document.getElementById('addTimetableComponentButton');
+    addTimetableComponent.addEventListener('click', () => {
+      window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
+    });
+
+    const simulateButton = document.getElementById('simulateButton');
+    simulateButton.addEventListener('click', () => {
+      getSimulationComponent().forEach(simComp => simComp.simulate());
+    });
+
+    function fillOptions(selectElement, optionNames) {
+      selectElement.length = 1;
+
+      for (const name of optionNames) {
+        if (name === '.' || name === '..') continue;
+
+        let option = document.createElement("option");
+        option.label = name;
+        option.value = name;
+        selectElement.add(option);
+      }
     }
 
-  }
+    const getSelectedOption = select => {
+      if (select.selectedIndex === -1) {
+        return '';
+      }
 
-  const getSelectedOption = select => {
-    if (select.selectedIndex === -1) {
-      return '';
+      return select.options[select.selectedIndex].value;
     }
 
-    return select.options[select.selectedIndex].value;
+    const infrastructureSelect = document.getElementById('infrastructureSelect');
+    fetch(window.origin + '/infrastructure/')
+        .then(response => response.json())
+        .then(dir => fillOptions(infrastructureSelect, dir['dirs']));
+
+    infrastructureSelect.addEventListener('change', () => {
+      const currentInfrastructureName = getSelectedOption(infrastructureSelect);
+      window.infrastructureManager.load(currentInfrastructureName);
+    });
+
+    const timetableSelect = document.getElementById('timetableSelect');
+    fetch(window.origin + '/timetable/')
+        .then(response => response.json())
+        .then(dir => fillOptions(timetableSelect, dir['dirs']));
+
+    timetableSelect.addEventListener('change', () => {
+      const currenTimetableName = getSelectedOption(timetableSelect);
+      window.timetableManager.load(currenTimetableName, window.infrastructureManager.get());
+    });
+
+    const clearCacheButton = document.getElementById('clearCacheButton');
+    clearCacheButton.addEventListener('click', _ => {
+      deleteAllFiles();
+    });
+
+    let stationDetailButton = document.getElementById('stationDetailButton');
+    stationDetailButton.addEventListener('click', e => {
+      stationDetailButton.classList.toggle('enabled');
+      showSubOverlay();
+    });
+
+    let disruptionDetailButton = document.getElementById('disruptionDetailButton');
+    disruptionDetailButton.addEventListener('click', e => {
+      disruptionDetailButton.classList.add('enabled');
+      showDisruptionDetail(window.timetableManager.get());
+      showSubOverlay();
+    });
   }
-
-  const infrastructureSelect = document.getElementById('infrastructureSelect');
-  fetch(window.origin + '/infrastructure/')
-      .then(response => response.json())
-      .then(dir => fillOptions(infrastructureSelect, dir['dirs']));
-
-  infrastructureSelect.addEventListener('change', () => {
-    const currentInfrastructureName = getSelectedOption(infrastructureSelect);
-    window.infrastructureManager.load(currentInfrastructureName);
-  });
-
-  const timetableSelect = document.getElementById('timetableSelect');
-  fetch(window.origin + '/timetable/')
-      .then(response => response.json())
-      .then(dir => fillOptions(timetableSelect, dir['dirs']));
-
-  timetableSelect.addEventListener('change', () => {
-    const currenTimetableName = getSelectedOption(timetableSelect);
-    window.timetableManager.load(currenTimetableName, window.infrastructureManager.get());
-  });
-
-  const clearCacheButton = document.getElementById('clearCacheButton');
-  clearCacheButton.addEventListener('click', _ => {
-    deleteAllFiles();
-  });
-
-  let stationDetailButton = document.getElementById('stationDetailButton');
-  stationDetailButton.addEventListener('click', e => {
-    stationDetailButton.classList.toggle('enabled');
-    showSubOverlay();
-  });
-
-  import { showDisruptionDetail } from "./components/disruption/disruption.js";
-
-  let disruptionDetailButton = document.getElementById('disruptionDetailButton');
-  disruptionDetailButton.addEventListener('click', e => {
-    disruptionDetailButton.classList.add('enabled');
-    showDisruptionDetail(window.timetableManager.get());
-    showSubOverlay();
-  });
+})
 </script>
