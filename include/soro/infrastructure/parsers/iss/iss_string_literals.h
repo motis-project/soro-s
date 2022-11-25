@@ -4,7 +4,7 @@
 
 #include "soro/base/soro_types.h"
 
-namespace soro {
+namespace soro::infra {
 
 constexpr const char* const STATION = "Betriebsstelle";
 
@@ -17,6 +17,8 @@ constexpr const char* const RAIL_PLAN_SECTION = "Spurplanabschnitt";
 constexpr const char* const RAIL_PLAN_SECTIONS = "Spurplanabschnitte";
 
 constexpr const char* const LINE = "Strecke";
+
+constexpr const char* const PUBLISH_ONLY = "nurVeroeffentlichung";
 
 constexpr const char* const BRAKE_PATH_FALLING = "BremswegF";
 constexpr const char* const BRAKE_PATH_RISING = "BremswegS";
@@ -247,4 +249,4 @@ constexpr size_t attribute_index(const char* const attribute) {
   return std::numeric_limits<size_t>::max();
 }
 
-}  // namespace soro
+}  // namespace soro::infra

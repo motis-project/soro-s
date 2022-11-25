@@ -23,11 +23,12 @@ void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
   soro::map<soro::size_type, soro::size_type> ms_count_to_sr_count;
 
   for (auto const& sr : infra->station_routes_) {
-    auto const ms_it = ms_count_to_sr_count.find(sr->main_signals_.size());
+    auto const ms_it =
+        ms_count_to_sr_count.find(sr->path_->main_signals_.size());
     if (ms_it != std::end(ms_count_to_sr_count)) {
       ++(ms_it->second);
     } else {
-      ms_count_to_sr_count[sr->main_signals_.size()] = 1;
+      ms_count_to_sr_count[sr->path_->main_signals_.size()] = 1;
     }
   }
 

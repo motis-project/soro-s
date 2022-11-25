@@ -1,12 +1,12 @@
 #pragma once
 
 #include "soro/infrastructure/graph/type_set.h"
-#include "soro/infrastructure/route.h"
 #include "soro/infrastructure/station/station_route.h"
 #include "soro/rolling_stock/freight.h"
 
 namespace soro::infra {
 
+struct base_infrastructure;
 struct infrastructure;
 
 struct interlocking_route {
@@ -21,10 +21,16 @@ struct interlocking_route {
 
   //  si::length length() const;
 
-  //  bool conflicts(ptr other) const;
-  bool follows(ptr potential_previous, infrastructure const& infra) const;
+  bool operator==(interlocking_route const& o) const;
+
+  bool follows(interlocking_route const& other,
+               infrastructure const& infra) const;
 
   std::vector<element_ptr> elements(infrastructure const&) const;
+
+  station_route::id first_sr_id() const;
+  station_route::id sr_id(sr_offset) const;
+  station_route::id last_sr_id() const;
 
   station_route::ptr first_sr(infrastructure const&) const;
   station_route::ptr sr(sr_offset, infrastructure const&) const;
@@ -36,20 +42,20 @@ struct interlocking_route {
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
 
-  utls::generator<const node::ptr> iterate(infrastructure const&) const;
+  utls::recursive_generator<node::id const> first_sr_nodes(
+      skip_omitted, base_infrastructure const&) const;
+  utls::recursive_generator<node::id const> last_sr_nodes(
+      skip_omitted, base_infrastructure const&) const;
 
-  //  node::idx get_halt_idx(rs::FreightTrain freight) const;
-  //  node_ptr get_halt(rs::FreightTrain freight) const;
-
-  //  node::idx size() const noexcept { return r_.size(); }
-  //  auto const& nodes() const noexcept { return r_.nodes_; }
-  //  auto const& nodes(node::idx const i) const noexcept { return r_.nodes_[i];
-  //  } auto const& omitted_nodes() const noexcept { return r_.omitted_nodes_; }
-  //  auto const& extra_spl() const noexcept { return r_.extra_speed_limits_; }
-  //  auto entire(skip_omitted skip) const { return r_.entire(skip); }
-  //  auto from_to(node::idx from, node::idx to, skip_omitted skip) const {
-  //    return r_.from_to(from, to, skip);
-  //  }
+  utls::recursive_generator<route_node> iterate(skip_omitted,
+                                                infrastructure const&) const;
+  utls::recursive_generator<route_node> from_to(node::idx, node::idx,
+                                                skip_omitted,
+                                                infrastructure const&) const;
+  utls::recursive_generator<route_node> to(node::idx, skip_omitted,
+                                           infrastructure const&) const;
+  utls::recursive_generator<route_node> from(node::idx, skip_omitted,
+                                             infrastructure const&) const;
 
   node::ptr signal_eotd(infrastructure const& infra) const;
   soro::vector<node::ptr> route_eotds(infrastructure const& infra) const;

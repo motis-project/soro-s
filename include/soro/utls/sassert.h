@@ -54,7 +54,7 @@ inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
     using clock = std::chrono::system_clock;
 
     auto const now = clock::to_time_t(clock::now());
-    struct tm tmp;
+    struct tm tmp {};
 #if _MSC_VER >= 1400
     gmtime_s(&tmp, &now);
 #else

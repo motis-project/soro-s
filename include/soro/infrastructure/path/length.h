@@ -11,12 +11,12 @@
 namespace soro::infra {
 
 template <typename Iterable>
-  requires utls::yields<element_ptr, Iterable> &&
+  requires utls::yields<element::ptr, Iterable> &&
            utls::is_input_iterable<Iterable>
 si::length get_path_length_from_elements(Iterable&& element_iter) {
   si::length distance = si::ZERO<si::length>;
 
-  element_ptr last_element = *std::begin(element_iter);
+  element::ptr last_element = *std::begin(element_iter);
   for (auto const& current_element : element_iter) {
     auto const kmp = last_element->get_km(current_element);
     auto const next_kmp = current_element->get_km(last_element);
@@ -37,18 +37,18 @@ si::length get_path_length_from_elements(Iterable&& node_iter) {
 }
 
 template <typename Iterable>
-  requires utls::yields<element_ptr, Iterable> &&
+  requires utls::yields<element::ptr, Iterable> &&
            utls::is_input_iterable<Iterable>
 si::length get_path_length_from_sections(Iterable&& element_iter) {
   auto iter = std::begin(element_iter);
 
   si::length distance = si::ZERO<si::length>;
 
-  element_ptr last_section = *iter;
-  element_ptr next_to_last_section = *(++iter);
+  element::ptr last_section = *iter;
+  element::ptr next_to_last_section = *(++iter);
 
-  element_ptr next_section = next_to_last_section;
-  element_ptr prev_to_next_section = last_section;
+  element::ptr next_section = next_to_last_section;
+  element::ptr prev_to_next_section = last_section;
 
   while (iter != std::end(element_iter)) {
     while (iter != std::end(element_iter) && (*iter)->is_track_element()) {
@@ -78,7 +78,8 @@ si::length get_path_length_from_sections(Iterable&& element_iter) {
 }
 
 template <typename Iterable>
-  requires utls::yields<node_ptr, Iterable> && utls::is_input_iterable<Iterable>
+  requires utls::yields<node::ptr, Iterable> &&
+           utls::is_input_iterable<Iterable>
 si::length get_path_length_from_sections(Iterable&& node_iter) {
   return get_path_length_from_sections(utls::coro_map(
       node_iter, [](auto&& node_ptr) { return node_ptr->element_; }));

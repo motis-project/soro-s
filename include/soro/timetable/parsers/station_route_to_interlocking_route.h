@@ -6,9 +6,10 @@
 
 namespace soro::tt {
 
-soro::vector<infra::ir_ptr> get_interlocking_route_path(
-    raw_train::run const& run, rs::FreightTrain const freight,
-    infra::interlocking_subsystem const& ssr_man,
-    infra::station_route_graph const& srg);
+soro::vector<infra::interlocking_route::id> get_interlocking_route_path(
+    raw_train::run const& run, rs::FreightTrain freight,
+    infra::infrastructure const& infra);
+
+void print_ir_generating_failures();
 
 }  // namespace soro::tt

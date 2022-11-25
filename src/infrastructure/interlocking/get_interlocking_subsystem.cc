@@ -1,7 +1,7 @@
 #include "soro/infrastructure/interlocking/get_interlocking_subsystem.h"
 
 #include "utl/concat.h"
-#include "utl/enumerate.h"
+#include "utl/erase_duplicates.h"
 #include "utl/logging.h"
 #include "utl/pairwise.h"
 #include "utl/pipes.h"
@@ -44,18 +44,25 @@ auto get_halting_at(soro::vector<interlocking_route> const& interlocking_routes,
   return halting_at;
 }
 
-// auto get_starting_at(soro::vector<ir_ptr> const& ssrs) {
-//   soro::map<node::id, soro::vector<ir_ptr>> starting_at;
-//
-//   for (auto const& ssr : ssrs) {
-//     auto const start_id = ssr->nodes().front()->id_;
-//     insert_or(starting_at, start_id, {ssr},
-//               [](auto&& vec, auto&& ssr_vec) { utls::append(vec, ssr_vec);
-//               });
-//   }
-//
-//   return starting_at;
-// }
+auto get_starting_at(
+    soro::vector<interlocking_route> const& interlocking_routes,
+    base_infrastructure const& infra) {
+  soro::vector<soro::vector<interlocking_route::id>> starting_at(
+      infra.graph_.nodes_.size());
+
+  for (auto const& interlocking_route : interlocking_routes) {
+
+    // TODO(julian) when we wont pass base_infrastructure, but instead
+    // infrastructure we can simply use interlocking_route->first_node(infra)
+    auto const& first_sr =
+        *infra.station_routes_[interlocking_route.station_routes_.front()];
+    auto const first_node = first_sr.nodes(interlocking_route.start_offset_);
+
+    starting_at[first_node->id_].emplace_back(interlocking_route.id_);
+  }
+
+  return starting_at;
+}
 
 soro::vector<soro::vector<interlocking_route::id>> get_sr_to_participating_irs(
     soro::vector<interlocking_route> const& interlocking_routes,
@@ -201,7 +208,7 @@ soro::vector<interlocking_route> get_internal_interlocking_route(
     station_route::ptr sr) {
   soro::vector<interlocking_route> interlocking_routes;
 
-  for (auto [from, to] : utl::pairwise(sr->main_signals_)) {
+  for (auto [from, to] : utl::pairwise(sr->path_->main_signals_)) {
     interlocking_routes.emplace_back(
         interlocking_route{.id_ = interlocking_route::INVALID,
                            .start_offset_ = from,
@@ -255,9 +262,9 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
     ir.station_routes_.emplace_back(route->id_);
 
     if (route->can_end_an_interlocking(srg)) {
-      ir.end_offset_ = route->main_signals_.empty()
-                           ? route->nodes().size() - 1
-                           : route->main_signals_.back();
+      ir.end_offset_ = route->path_->main_signals_.empty()
+                           ? route->size() - 1
+                           : route->path_->main_signals_.back();
       routes.push_back(std::move(ir));
       return;
     }
@@ -269,9 +276,10 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
 
   interlocking_route const initial_ir{
       .id_ = interlocking_route::INVALID,
-      .start_offset_ =
-          sr->main_signals_.empty() ? node::idx{0} : sr->main_signals_.back(),
-      .end_offset_ = static_cast<node::idx>(sr->nodes().size()),
+      .start_offset_ = sr->path_->main_signals_.empty()
+                           ? node::idx{0}
+                           : sr->path_->main_signals_.back(),
+      .end_offset_ = static_cast<node::idx>(sr->size()),
       .station_routes_ = {sr->id_}};
 
   for (auto const& succ : srg.successors_[sr->id_]) {
@@ -331,7 +339,7 @@ soro::vector<interlocking_route> get_interlocking_routes(
                                            sr, infra.station_route_graph_));
     }
 
-    if (sr->main_signals_.size() > 1) {
+    if (sr->path_->main_signals_.size() > 1) {
       utl::concat(interlocking_routes, get_internal_interlocking_route(sr));
     }
 
@@ -371,21 +379,26 @@ void print_interlocking_stats(soro::vector<interlocking_route> const& irs) {
   //                << " signal station routes starting on a halt";
 }
 
-// auto get_station_to_ssrs(soro::vector<ir_ptr> const& ssrs,
-//                          base_infrastructure const& iss) {
-//   soro::vector<soro::vector<ir_ptr>> station_to_ssrs(iss.stations_.size());
-//
-//   for (auto const& ssr : ssrs) {
-//     utl::all(ssr->station_routes_) |
-//         utl::transform([](auto&& sr) { return sr->station_; }) |  // NOLINT
-//         utl::unique() |  // NOLINT
-//         utl::for_each([&](auto&& station) {
-//           station_to_ssrs[station->id_].push_back(ssr);
-//         });
-//   }
-//
-//   return station_to_ssrs;
-// }
+auto get_station_to_interlocking_routes(
+    soro::vector<interlocking_route> const& interlocking_routes,
+    base_infrastructure const& infra) {
+  soro::vector<soro::vector<interlocking_route::id>> station_to_irs(
+      infra.stations_.size());
+
+  for (auto const& ir : interlocking_routes) {
+    utl::all(ir.station_routes_) | utl::transform([&](auto&& sr) {
+      return infra.station_routes_[sr]->station_;
+    }) | utl::for_each([&](auto&& station) {
+      station_to_irs[station->id_].push_back(ir.id_);
+    });
+  }
+
+  for (auto& station_irs : station_to_irs) {
+    utl::erase_duplicates(station_irs);
+  }
+
+  return station_to_irs;
+}
 
 interlocking_subsystem get_interlocking_subsystem(
     base_infrastructure const& infra, bool const determine_exclusions) {
@@ -396,14 +409,14 @@ interlocking_subsystem get_interlocking_subsystem(
   irs.interlocking_routes_ = get_interlocking_routes(infra);
 
   irs.halting_at_ = get_halting_at(irs.interlocking_routes_, infra);
-  //    irs.starting_at_ = get_starting_at(irs.interlocking_routes_);
+  irs.starting_at_ = get_starting_at(irs.interlocking_routes_, infra);
   irs.sr_to_participating_irs_ =
       get_sr_to_participating_irs(irs.interlocking_routes_, infra);
-  //  irs.station_to_irs_ = get_station_to_ssrs(irs.interlocking_routes_,
-  //  infra);
+  irs.station_to_irs_ =
+      get_station_to_interlocking_routes(irs.interlocking_routes_, infra);
 
   if (determine_exclusions) {
-    irs.exclusions_ = get_ssr_conflicts(infra, irs);
+    irs.exclusions_ = get_interlocking_route_exclusions(irs, infra);
   }
 
   print_interlocking_stats(irs.interlocking_routes_);

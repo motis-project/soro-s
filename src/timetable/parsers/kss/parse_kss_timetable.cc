@@ -140,7 +140,7 @@ relative_time parse_time_offset(xml_node const time_xml) {
   }
 
   return relative_time{result};
-};
+}
 
 duration2 parse_duration(char const* const dur_str) {
   utls::sassert(dur_str[0] == 'P');
@@ -188,7 +188,7 @@ duration2 parse_duration(char const* const dur_str) {
   }
 
   return duration2{dur};
-};
+}
 
 raw_train::run parse_sequence(xml_node const sequence_xml,
                               infrastructure const& infra) {
@@ -209,8 +209,9 @@ raw_train::run parse_sequence(xml_node const sequence_xml,
     if (route_it != std::end(station_it->second->station_routes_)) {
       run.routes_.push_back(route_it->second);
     } else {
-//      uLOG(utl::warn) << "Could not find station route " << route_name << " in "
-//                      << ds100 << ".";
+      //      uLOG(utl::warn) << "Could not find station route " << route_name
+      //      << " in "
+      //                      << ds100 << ".";
       return {};
     }
 
@@ -274,18 +275,38 @@ raw_train::characteristic parse_characteristic(xml_node const charac_xml) {
   return c;
 }
 
+enum class failure_reason : uint8_t {
+  worked_on_train,
+  failed_getting_station_route_path,
+  failed_getting_interlocking_route_path,
+};
+
+static std::map<failure_reason, std::size_t> failures = {  // NOLINT
+    {failure_reason::worked_on_train, 0},
+    {failure_reason::failed_getting_station_route_path, 0},
+    {failure_reason::failed_getting_interlocking_route_path, 0}};
+
+static std::map<failure_reason, std::string> failure_text = {  // NOLINT
+    {failure_reason::worked_on_train, "Skipped worked on trains: "},
+    {failure_reason::failed_getting_station_route_path,
+     "Failed getting station route path for trains: "},
+    {failure_reason::failed_getting_interlocking_route_path,
+     "Failed generating interlocking route path: "}};
+
+void print_failures() {
+  for (auto const& [reason, count] : failures) {
+    uLOG(utl::warn) << failure_text[reason] << count;
+  }
+}
+
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
   utl::scoped_timer const timetable_timer("Parsing Timetable");
 
   base_timetable bt;
 
-  std::size_t released_trains = 0;
-  std::size_t construction_trains = 0;
-  std::size_t worked_on_trains = 0;
-  std::size_t failed_parsing = 0;
-  std::size_t could_not_determine_ir_run = 0;
-  std::size_t successfully_parsed = 0;
+  std::size_t total_trains = 0;
+  std::size_t total_train_runs = 0;
 
   //  std::set<std::pair<uint32_t, uint32_t>> train_numbers;
 
@@ -305,15 +326,14 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
     auto const timetable_xml = railml_xml.child("timetable");
 
     for (auto const train_xml : timetable_xml.children("train")) {
+      ++total_trains;
+
       // don't parse worked on trains
       auto const train_status = train_xml.attribute("trainStatus").value();
       if (!utls::equal(train_status, "freig")) {
-        utls::sassert(utls::equal(train_status, "inArbeit"));
-        ++worked_on_trains;
+        ++failures[failure_reason::worked_on_train];
         continue;
       }
-
-      ++released_trains;
 
       //      std::integral auto const id =
       //          parse_int<train::id>(train_xml.attribute("trainID").value());
@@ -322,24 +342,17 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
       //    auto const entries_xml = train_xml.child("timetableentries");
       for (auto const construction_train_xml :
            train_xml.child("fineConstruction").children("constructionTrain")) {
+        ++total_train_runs;
 
         auto t = soro::make_unique<train>();
 
-        //        std::pair<uint32_t, uint32_t> const train_number = {
-        //            utls::parse_int<uint32_t>(
-        //                construction_train_xml.child("trainNumber")
-        //                    .child_value("mainNumber")),
-        //            utls::parse_int<uint32_t>(
-        //                construction_train_xml.child("trainNumber")
-        //                    .child_value("subNumber"))};
+        auto const sequence_xml = construction_train_xml.child("sequence");
+        auto const run = parse_sequence(sequence_xml, infra);
 
-        //        if (train_numbers.contains(train_number)) {
-        //          std::cout << " Found doubl train number " <<
-        //          train_number.first << " "
-        //                    << train_number.second << '\n';
-        //        } else {
-        //          train_numbers.insert(train_number);
-        //        }
+        if (run.routes_.empty()) {
+          ++failures[failure_reason::failed_getting_station_route_path];
+          continue;
+        }
 
         auto const services_xml = construction_train_xml.child("services");
         t->bitfield_ = parse_services(services_xml);
@@ -348,42 +361,26 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
             construction_train_xml.child("characteristic");
         auto const charac = parse_characteristic(characteristic_xml);
 
-        auto const sequence_xml = construction_train_xml.child("sequence");
-        auto const run = parse_sequence(sequence_xml, infra);
-
-        if (run.routes_.empty()) {
-          ++failed_parsing;
-          continue;
-        }
-
-        t->path_ = get_interlocking_route_path(run, charac.freight_,
-                                               infra->interlocking_,
-                                               infra->station_route_graph_);
+        t->path_ = get_interlocking_route_path(run, charac.freight_, infra);
 
         if (t->path_.empty()) {
-          ++could_not_determine_ir_run;
+          ++failures[failure_reason::failed_getting_interlocking_route_path];
           continue;
         }
 
         bt.train_store_.emplace_back();
         bt.train_store_.back() = std::move(t);
-
-        ++construction_trains;
       }
-
-      ++successfully_parsed;
     }
   }
 
-  uLOG(utl::info) << "Total trains in data: "
-                  << worked_on_trains + released_trains;
-  uLOG(utl::info) << "Released trains: " << released_trains;
-  uLOG(utl::info) << "Worked on trains: " << worked_on_trains;
-  uLOG(utl::info) << "Trains successfully parsed: " << successfully_parsed;
-  uLOG(utl::info) << "Trains NOT successfully parsed: " << failed_parsing;
-  uLOG(utl::info) << "Construction trains parsed: " << construction_trains;
-  uLOG(utl::info) << "Could not determine interlocking route run for : "
-                  << could_not_determine_ir_run << " trains.";
+  uLOG(utl::info) << "Total trains in data: " << total_trains;
+  uLOG(utl::info) << "Total train runs in data: " << total_train_runs;
+  uLOG(utl::info) << "Total trains runs successfully parsed: "
+                  << bt.train_store_.size();
+
+  print_failures();
+  print_ir_generating_failures();
 
   return bt;
 }

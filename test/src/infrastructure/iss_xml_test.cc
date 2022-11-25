@@ -12,7 +12,6 @@
 
 #include "soro/utls/container/constexpr_map.h"
 #include "soro/utls/execute_if.h"
-#include "soro/utls/graph/traversal.h"
 
 #include "soro/infrastructure/infrastructure.h"
 
@@ -28,35 +27,49 @@ using namespace soro::utls;
 using namespace soro::infra;
 
 constexpr std::array<std::pair<type, size_t>,
-                     static_cast<size_t>(type::INVALID)>
-    expected_edges_arr{{
-        {type::BORDER, 1},
-        {type::BUMPER, 1},
-        {type::TRACK_END, 1},
-        {type::KM_JUMP, 2},
-        {type::LINE_SWITCH, 2},
-        {type::SIMPLE_SWITCH, 3},
-        {type::CROSS, 4},
-        {type::MAIN_SIGNAL, 1},
-        {type::PROTECTION_SIGNAL, 1},
-        {type::APPROACH_SIGNAL, 1},
-        {type::RUNTIME_CHECKPOINT, 1},
-        {type::EOTD, 1},
-        {type::SPEED_LIMIT, 1},
-        {type::TUNNEL, 1},
-        {type::CTC, 1},
-        {type::SLOPE, 1},
-        {type::HALT, 1},
-    }};
+                     static_cast<std::size_t>(type::INVALID) + 1> const
+    expected_edges_arr{{// end elements
+                        {type::BUMPER, 1},
+                        {type::TRACK_END, 1},
+                        // simple elements
+                        {type::KM_JUMP, 2},
+                        {type::BORDER, 1},
+                        {type::LINE_SWITCH, 2},
+                        // simple switch
+                        {type::SIMPLE_SWITCH, 3},
+                        // cross
+                        {type::CROSS, 4},
+                        // directed track elements
+                        {type::MAIN_SIGNAL, 1},
+                        {type::PROTECTION_SIGNAL, 1},
+                        {type::APPROACH_SIGNAL, 1},
+                        {type::RUNTIME_CHECKPOINT, 1},
+                        {type::EOTD, 1},
+                        {type::SPEED_LIMIT, 1},
+                        {type::POINT_SPEED, 1},
+                        {type::BRAKE_PATH, 1},
+                        {type::CTC, 1},
+                        {type::FORCED_HALT, 1},
+                        {type::HALT, 1},
+                        // undirected track elements
+                        {type::TUNNEL, 2},
+                        {type::ENTRY, 2},
+                        {type::TRACK_NAME, 2},
+                        {type::RUNTIME_CHECKPOINT_UNDIRECTED, 2},
+                        {type::LEVEL_CROSSING, 2},
+                        {type::SLOPE, 2},
+                        //
+                        {type::INVALID, 0}}};
 
-static_assert(expected_edges_arr.size() == static_cast<size_t>(type::INVALID));
+// Please add the missing types to the expeced edges array
+static_assert(expected_edges_arr.back().first == type::INVALID &&
+              expected_edges_arr.back().second == 0);
 
 auto constexpr expected_edges =
     utls::constexpr_map<type, size_t, expected_edges_arr.size()>{
         expected_edges_arr};
 
 void check_switch(simple_switch const& ss, soro::string const& station_name) {
-
   using namespace std::string_literals;
   using namespace std::literals;
 
@@ -412,20 +425,24 @@ void check_station_routes(infrastructure const& infra) {
   for (auto const& sr : infra->station_routes_) {
     CHECK(station_route::valid(sr->id_));
 
+    CHECK_NE(sr->path_, nullptr);
+
     CHECK(!sr->nodes().empty());
     CHECK(!sr->name_.empty());
 
-    CHECK_NE(sr->start_element_, nullptr);
-    CHECK_NE(sr->end_element_, nullptr);
+    CHECK_NE(sr->path_->start_, nullptr);
+    CHECK_NE(sr->path_->end_, nullptr);
 
     REQUIRE_NE(sr->station_, nullptr);
 
-    if (sr->nodes().back()->next_node_ != nullptr) {
-      CHECK_NE(sr->to_, nullptr);
+    if (sr->nodes().back()->next_node_ != nullptr && !sr->is_in_route() &&
+        !sr->is_contained_route()) {
+      CHECK(sr->to_station_.has_value());
     }
 
-    if (!sr->nodes().front()->reverse_edges_.empty()) {
-      CHECK_NE(sr->from_, nullptr);
+    if (!sr->nodes().front()->reverse_edges_.empty() && !sr->is_out_route() &&
+        !sr->is_contained_route()) {
+      CHECK(sr->from_station_.has_value());
     }
 
     CHECK(si::valid(sr->length_));
@@ -468,75 +485,6 @@ void check_speed_limit_values(infrastructure const& infra) {
       }
     });
   }
-}
-
-void check_signal_station_routes(infrastructure const&) {
-  utls::sassert(false, "Not implemented");
-  //  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
-  //    auto const& first_node = ssr->nodes().front();
-  //    auto const& last_node = ssr->nodes().back();
-  //
-  //    auto const first_node_is_valid =
-  //        interlocking_route::valid_ends().contains(first_node->type());
-  //    auto const last_node_is_valid =
-  //        interlocking_route::valid_ends().contains(last_node->type());
-  //
-  //    CHECK_MESSAGE(first_node_is_valid,
-  //                  fmt::format("First element's type must be from the list of
-  //                  "
-  //                              "valid elements, but was {}.",
-  //                              first_node->element_->get_type_str()));
-  //
-  //    CHECK_MESSAGE(last_node_is_valid,
-  //                  fmt::format("Last element's type must be from the list of
-  //                  "
-  //                              "valid elements, but was {}.",
-  //                              last_node->element_->get_type_str()));
-  //  }
-}
-
-void check_signal_station_route_count(infrastructure const& infra) {
-  soro::size_type inner_sr_count = 0;
-  soro::size_type path_sr_count = 0;
-
-  for (auto const& sr : infra->station_routes_) {
-    if (sr->main_signals_.empty()) {
-      continue;
-    }
-
-    soro::size_type reachable_ms = 0;
-
-    auto const& handle_node = [&](auto&& sr_ptr, auto&&) {
-      if (sr_ptr != sr && !sr_ptr->main_signals_.empty()) {
-        ++reachable_ms;
-      }
-
-      return false;
-    };
-
-    auto const& get_neighbours = [&](auto&& sr_ptr) {
-      if (sr_ptr == sr || sr_ptr->main_signals_.empty()) {
-        return infra->station_route_graph_.successors_[sr_ptr->id_];
-      } else {
-        return decltype(infra->station_route_graph_.successors_.front()){};
-      }
-    };
-
-    utls::dfs(sr, handle_node, get_neighbours);
-
-    path_sr_count += reachable_ms;
-
-    if (sr->main_signals_.size() > 1) {
-      inner_sr_count += sr->main_signals_.size() - 1;
-    }
-  }
-
-  auto const ssr_count = inner_sr_count + path_sr_count;
-
-  CHECK_MESSAGE(
-      (ssr_count <= infra->interlocking_.interlocking_routes_.size()),
-      fmt::format("Exptected at least {} signal station routes, but got {}",
-                  ssr_count, infra->interlocking_.interlocking_routes_.size()));
 }
 
 void check_section_element_types(infrastructure const& infra) {
@@ -583,7 +531,6 @@ void check_border_number(infrastructure const& infra) {
 }
 
 void check_border_pairs(infrastructure const& infra) {
-
   for (auto const& station_a : infra->stations_) {
     for (auto const& border_a : station_a->borders_) {
       auto const border_b =
@@ -605,7 +552,9 @@ void check_orientation_flags_on_track_elements(infrastructure const& infra) {
            node->next_node_->element_->is_track_element()) {
 
       bool const same_orientation =
-          node->element_->rising() == node->next_node_->element_->rising();
+          node->element_->rising() == node->next_node_->element_->rising() ||
+          node->element_->is_undirected_track_element() ||
+          node->next_node_->element_->is_undirected_track_element();
       CHECK_MESSAGE(same_orientation,
                     "Consecutive track elements must have the same orientation "
                     "determined by the rising flag");
@@ -642,9 +591,6 @@ void check_infra(infrastructure const& infra) {
   check_station_routes(infra);
   check_station_route_graph(infra);
 
-  check_signal_station_route_count(infra);
-  check_signal_station_routes(infra);
-
   check_section_element_types(infra);
   check_section_increasing_kmp(infra);
 
@@ -652,31 +598,18 @@ void check_infra(infrastructure const& infra) {
   check_border_number(infra);
 }
 
-TEST_SUITE("parse base_infrastructure") {
-
-  TEST_CASE("infra from folder") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    check_infra(infra);
-  }
+TEST_CASE("parse infrastructure") {
+  for (auto const& opts : get_all_infra_opts()) {
+    infrastructure const not_serialized(opts);
 
 #if defined(SERIALIZE)
-  TEST_CASE("serialize infrastructure test") {  // NOLINT
-    {
-      infrastructure const infra(SMALL_OPTS);
-      infra.save("test.raw");
-    }
-
-    infrastructure const deserialized("test.raw");
-    check_infra(deserialized);
-  }
+    infra.save("test.raw");
+    infrastructure const infra("test.raw");
+#else
+    auto const& infra = not_serialized;
 #endif
-}
 
-TEST_SUITE("parse infrastructure - de_export" *
-           doctest::skip(!fs::exists(DE_ISS_FOLDER))) {
-
-  TEST_CASE("parse de_export") {
-    infrastructure const infra(DE_ISS_FOLDER);
+    CAPTURE(infra);
     check_infra(infra);
   }
 }

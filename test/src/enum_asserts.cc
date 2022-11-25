@@ -3,7 +3,8 @@
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
-#include "soro/infrastructure/route.h"
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/station/station_route.h"
 #include "soro/rolling_stock/ctc.h"
 #include "soro/rolling_stock/freight.h"
 

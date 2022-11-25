@@ -1,7 +1,6 @@
 #include "soro/infrastructure/station/station_route_graph.h"
 
 #include "utl/timer.h"
-#include "utl/to_vec.h"
 
 #include "soro/infrastructure/station/station.h"
 
@@ -9,14 +8,15 @@ namespace soro::infra {
 
 auto get_successors_from_through_route(station_route::ptr sr) {
   bool const ends_in_track_end = sr->nodes().back()->is(type::TRACK_END);
-  if (ends_in_track_end || sr->to_ == nullptr) {
+  if (ends_in_track_end || !sr->to_station_.has_value()) {
     return soro::vector<station_route::ptr>();
   }
 
   auto const& to_border = sr->nodes().back()->next_node_->element_;
 
-  if (auto it = sr->to_->element_to_routes_.find(to_border->id());
-      it != std::end(sr->to_->element_to_routes_)) {
+  if (auto it =
+          sr->to_station_.value()->element_to_routes_.find(to_border->id());
+      it != std::end(sr->to_station_.value()->element_to_routes_)) {
     return it->second;
   } else {
     return soro::vector<station_route::ptr>();

@@ -98,7 +98,7 @@ struct route_graph {
   std::vector<std::vector<route_node_id>> conflicts_;
 
   std::vector<runtime::timestamps> runtime_timestamps_;
-  std::map<infra::element_ptr, std::vector<occupancy>> element_occupancies_;
+  std::map<infra::element::ptr, std::vector<occupancy>> element_occupancies_;
 };
 
 route_graph get_route_graph(infra::base_infrastructure const& iss,

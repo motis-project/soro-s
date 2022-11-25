@@ -7,15 +7,15 @@
 
 namespace soro::infra {
 
-inline bool neighbours(element_ptr e1, element_ptr e2) {
+inline bool neighbours(element::ptr e1, element::ptr e2) {
   return utls::any_of(e1->neighbours(),
                       [&](auto&& neigh) { return neigh->id() == e2->id(); });
 }
 
 template <typename Iterable>
-  requires utls::yields<element_ptr, Iterable> bool
+  requires utls::yields<element::ptr, Iterable> bool
 is_path(Iterable&& iterable) {
-  element_ptr last_element = *std::cbegin(iterable);
+  element::ptr last_element = *std::cbegin(iterable);
 
   for (auto it = ++std::cbegin(iterable); it != std::cend(iterable); ++it) {
     if (!neighbours(last_element, *it)) {
@@ -29,7 +29,7 @@ is_path(Iterable&& iterable) {
 }
 
 template <typename Iterable>
-  requires utls::yields<node_ptr, Iterable> bool
+  requires utls::yields<node::ptr, Iterable> bool
 is_path(Iterable&& iterable) {
   return is_path(
       utls::coro_map(iterable, [](auto&& n) { return n->element_; }));

@@ -10,22 +10,4 @@
 using namespace soro;
 using namespace infra;
 
-TEST_SUITE("signal station route suite") {
-
-  TEST_CASE("signal station route exclusion") {  // NOLINT
-  }
-
-  TEST_CASE("interlocking routes are paths") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-
-    utls::sassert(false, "Not implemented");
-    //    for (auto const& ir : infra->interlocking_.interlocking_routes_) {
-    //      CHECK(is_path(utls::coro_map(ir->entire(skip_omitted::OFF),
-    //      [](auto&& r) {
-    //        return r.node_->element_;
-    //      })));
-    //
-    //      CHECK(is_path(ir->nodes()));
-    //    }
-  }
-}
+TEST_SUITE("interlocking route suite") {}

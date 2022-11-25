@@ -12,13 +12,13 @@ using namespace soro::infra;
 TEST_SUITE("timetable") {
   void check_arrival_departures(timetable const& tt) {
     for (auto const& train : tt) {
-      CHECK_MESSAGE(train->stop_times_.front().arrival_ == INVALID_TIME,
+      CHECK_MESSAGE((train->stop_times_.front().arrival_ == INVALID_TIME),
                     "First arrival must be invalid");
-      CHECK_MESSAGE(train->stop_times_.front().departure_ != INVALID_TIME,
+      CHECK_MESSAGE((train->stop_times_.front().departure_ != INVALID_TIME),
                     "First departure must be valid");
-      CHECK_MESSAGE(train->stop_times_.back().arrival_ != INVALID_TIME,
+      CHECK_MESSAGE((train->stop_times_.back().arrival_ != INVALID_TIME),
                     "Last arrival must be valid");
-      CHECK_MESSAGE(train->stop_times_.back().departure_ == INVALID_TIME,
+      CHECK_MESSAGE((train->stop_times_.back().departure_ == INVALID_TIME),
                     "Last departure must be invalid");
 
       std::size_t idx = 0;
@@ -36,22 +36,23 @@ TEST_SUITE("timetable") {
     }
   }
 
-  void check_no_nullptrs(timetable const& tt) {
+  void check_no_invalids(timetable const& tt) {
     for (auto const& train : tt) {
-      for (auto const& ssr : train->path_) {
-        CHECK_MESSAGE(ssr != nullptr, "Signal station route is nulllptr!");
+      for (auto const& ir_id : train->path_) {
+        CHECK_MESSAGE(interlocking_route::valid(ir_id),
+                      "Signal station route is nullptr!");
       }
     }
   }
 
   void check_unique_ascending_ids(timetable const& tt) {
     for (auto const [tr1, tr2] : utl::pairwise(tt)) {
-      CHECK_MESSAGE(tr1->id_ + 1 == tr2->id_,
+      CHECK_MESSAGE((tr1->id_ + 1 == tr2->id_),
                     "IDs must be consecutive and ascending!");
     }
 
     if (!tt->trains_.empty()) {
-      CHECK_MESSAGE(tt->trains_.back()->id_ == tt->trains_.size() - 1,
+      CHECK_MESSAGE((tt->trains_.back()->id_ == tt->trains_.size() - 1),
                     "Last ID must be number of train runs - 1!");
     }
   }
@@ -59,7 +60,7 @@ TEST_SUITE("timetable") {
   void check_timetable(timetable const& tt) {
     check_unique_ascending_ids(tt);
     check_arrival_departures(tt);
-    check_no_nullptrs(tt);
+    check_no_invalids(tt);
   }
 
   TEST_CASE("parse overtake") {  // NOLINT

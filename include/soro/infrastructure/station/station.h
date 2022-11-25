@@ -27,7 +27,7 @@ struct station {
   soro::string ds100_;
 
   soro::vector<section::id> sections_;
-  soro::vector<element_ptr> elements_;
+  soro::vector<element::ptr> elements_;
 
   soro::map<soro::string, soro::ptr<station_route>> station_routes_;
   soro::map<element_id, soro::vector<soro::ptr<station_route>>>
@@ -55,10 +55,10 @@ struct border {
   soro::string neighbour_name_;
 
   station::ptr station_{nullptr};
-  element_ptr element_{nullptr};
+  element::ptr element_{nullptr};
 
   station::ptr neighbour_{nullptr};
-  element_ptr neighbour_element_{nullptr};
+  element::ptr neighbour_element_{nullptr};
 
   line_id line_{INVALID_LINE_ID};
   track_sign track_sign_{INVALID_TRACK_SIGN};

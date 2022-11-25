@@ -25,19 +25,31 @@ std::vector<element_ptr> interlocking_route::elements(
   return elements;
 }
 
+station_route::id interlocking_route::first_sr_id() const {
+  return this->station_routes_.front();
+}
+
+station_route::id interlocking_route::sr_id(sr_offset const sr_offset) const {
+  return this->station_routes_[sr_offset];
+}
+
+station_route::id interlocking_route::last_sr_id() const {
+  return this->station_routes_.back();
+}
+
 station_route::ptr interlocking_route::first_sr(
     infrastructure const& infra) const {
-  return infra->station_routes_[station_routes_.front()];
+  return infra->station_routes_[this->first_sr_id()];
 }
 
 station_route::ptr interlocking_route::sr(sr_offset const sr_offset,
                                           infrastructure const& infra) const {
-  return infra->station_routes_[this->station_routes_[sr_offset]];
+  return infra->station_routes_[this->sr_id(sr_offset)];
 }
 
 station_route::ptr interlocking_route::last_sr(
     infrastructure const& infra) const {
-  return infra->station_routes_[station_routes_.back()];
+  return infra->station_routes_[this->last_sr_id()];
 }
 
 node::ptr interlocking_route::first_node(infrastructure const& infra) const {
@@ -75,46 +87,55 @@ bool interlocking_route::ends_on_ms(infrastructure const& infra) const {
 //   return get_path_length_from_elements(nodes());
 // }
 
-// bool interlocking_route::conflicts(ir_ptr other) const {
-//   if (this == other) {
-//     return true;
-//   }
-//
-//   return utls::overlap_non_sorted(elements(), other->elements());
-// }
-//
-bool interlocking_route::follows(interlocking_route::ptr potential_previous,
+bool interlocking_route::follows(interlocking_route const& other,
                                  infrastructure const& infra) const {
-  return starts_on_ms(infra) && potential_previous->ends_on_ms(infra) &&
-         first_node(infra) == potential_previous->last_node(infra);
-};
+  return this->first_node(infra) == other.last_node(infra);
+}
 
-utls::generator<const node::ptr> interlocking_route::iterate(
-    infrastructure const& infra) const {
-  auto const first_sr = infra->station_routes_[station_routes_.front()];
-  for (auto i = start_offset_; i < first_sr->nodes().size() - 1; ++i) {
-    co_yield first_sr->nodes(i);
-  }
+bool interlocking_route::operator==(interlocking_route const& o) const {
+  return this->id_ == o.id_;
+}
 
-  for (auto i = 1U; i < station_routes_.size() - 1; ++i) {
-    auto const sr = infra->station_routes_[station_routes_[i]];
-
-    for (node::idx n_idx = 0; n_idx < sr->nodes().size() - 1; ++n_idx) {
-      co_yield sr->nodes(n_idx);
-    }
-  }
-
-  auto const last_sr = infra->station_routes_[station_routes_.back()];
-  for (auto i = 0; i < end_offset_; ++i) {
-    co_yield last_sr->nodes(i);
+utls::recursive_generator<node::id const> interlocking_route::first_sr_nodes(
+    skip_omitted const skip, base_infrastructure const& infra) const {
+  auto const first_sr = infra.station_routes_[this->first_sr_id()];
+  for (auto rn : first_sr->from(this->start_offset_, skip)) {
+    co_yield rn.node_->id_;
   }
 }
 
+utls::recursive_generator<node::id const> interlocking_route::last_sr_nodes(
+    skip_omitted const skip, base_infrastructure const& infra) const {
+  auto const last_sr = infra.station_routes_[this->last_sr_id()];
+  for (auto rn : last_sr->to(this->end_offset_, skip)) {
+    co_yield rn.node_->id_;
+  }
+}
+
+// utls::recursive_generator<route_node> interlocking_route::from_to(
+//     node::idx const from, node::idx const to, skip_omitted,
+//     infrastructure const&) const {}
+// utls::recursive_generator<route_node> interlocking_route::to(
+//     node::idx, skip_omitted, infrastructure const&) const {}
+// utls::recursive_generator<route_node> interlocking_route::from(
+//     node::idx, skip_omitted, infrastructure const&) const {}
+
+utls::recursive_generator<route_node> interlocking_route::iterate(
+    skip_omitted const skip_omitted, infrastructure const& infra) const {
+  co_yield first_sr(infra)->from(start_offset_, skip_omitted);
+
+  for (auto i = 1U; i < station_routes_.size() - 1; ++i) {
+    co_yield this->sr(static_cast<sr_offset>(i), infra)->iterate(skip_omitted);
+  }
+
+  co_yield last_sr(infra)->to(end_offset_, skip_omitted);
+}
+
 node::ptr interlocking_route::signal_eotd(infrastructure const& infra) const {
-  for (auto const n : this->iterate(infra)) {
-    if (n->is(type::EOTD) &&
-        infra->graph_.element_data_[n->id_].as<eotd>().signal_) {
-      return n;
+  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
+    if (rn.node_->is(type::EOTD) &&
+        infra->graph_.element_data_[rn.node_->id_].as<eotd>().signal_) {
+      return rn.node_;
     }
   }
 
@@ -123,8 +144,15 @@ node::ptr interlocking_route::signal_eotd(infrastructure const& infra) const {
 }
 
 soro::vector<node::ptr> interlocking_route::route_eotds(
-    infrastructure const&) const {
+    infrastructure const& infra) const {
   std::vector<node::ptr> result;
+
+  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
+    if (rn.node_->is(type::EOTD)) {
+      result.emplace_back(rn.node_);
+    }
+  }
+
   utls::sassert(false, "Not implemented");
   return result;
 }

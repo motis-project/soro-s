@@ -97,7 +97,8 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
   uLOG(info) << "Maximum over punctuality: " << max_too_early;
 }
 
-void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
+void test_event_existance_in_timestamps(train const& tr, timestamps const& ts,
+                                        infrastructure const& infra) {
   std::set<type> event_types;
 
   for (auto const& timestamp : ts.times_) {
@@ -105,7 +106,7 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
   }
 
   size_t ts_idx = 0;
-  for (auto const& rich_node : tr.iterate(skip_omitted::ON)) {
+  for (auto const& rich_node : tr.iterate(skip_omitted::ON, infra)) {
     if (!event_types.contains(rich_node.node_->type())) {
       continue;
     }
@@ -134,7 +135,7 @@ void check_runtime_with_events(infrastructure const& infra, timetable const& tt,
 
     check_ascending_timestamps(timestamps);
 
-    test_event_existance_in_timestamps(*train, timestamps);
+    test_event_existance_in_timestamps(*train, timestamps, infra);
   }
 }
 

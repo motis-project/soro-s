@@ -143,7 +143,7 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
   length current_distance = ZERO<length>;
 
   element_ptr prev_element = tr.get_start_node()->element_;
-  for (auto const& rn : tr.iterate(skip_omitted::OFF)) {
+  for (auto const& rn : tr.iterate(skip_omitted::OFF, infra)) {
     current_distance += rn.node_->element_->get_distance(prev_element);
     prev_element = rn.node_->element_;
 
@@ -181,7 +181,7 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
   list.back().distance_ = list[list.size() - 2].distance_;
 
   list.front().speed_limit_ =
-      get_initial_spl(*tr.path_.front()->first_sr(infra), infra, tr.freight_);
+      get_initial_spl(*tr.first_station_route(infra), infra, tr.freight_);
 
   propagate_speed_limits(list);
   while (adjust_speed_limits(list, tr.physics_))

@@ -7,12 +7,12 @@ namespace soro::runtime {
 
 struct event {
   event() = delete;
-  event(infra::node_ptr const node, si::length const dist)
+  event(infra::node::ptr const node, si::length const dist)
       : node_(node), distance_(dist) {}
 
   auto type() const { return node_->element_->type(); }
 
-  infra::node_ptr node_{nullptr};
+  infra::node::ptr node_{nullptr};
   si::length distance_{si::ZERO<si::length>};
 };
 

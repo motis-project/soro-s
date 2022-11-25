@@ -12,12 +12,12 @@ namespace soro::runtime {
 struct timestamp {
   timestamp() = delete;
   timestamp(utls::unixtime const arrival, utls::unixtime const departure,
-            infra::element_ptr element)
+            infra::element::ptr element)
       : arrival_{arrival}, departure_{departure}, element_{element} {}
 
   utls::unixtime arrival_;
   utls::unixtime departure_;
-  infra::element_ptr element_{nullptr};
+  infra::element::ptr element_{nullptr};
 };
 
 struct timestamps {

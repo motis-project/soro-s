@@ -74,7 +74,9 @@ kilometrage get_km(simple_switch const& e, element_ptr neigh) {
 
 kilometrage get_km(track_element const& e, element_ptr) { return e.km_; }
 
-kilometrage get_km(undirected_track_element const& e, element_ptr) { return e.km_; }
+kilometrage get_km(undirected_track_element const& e, element_ptr) {
+  return e.km_;
+}
 
 kilometrage get_km(cross const& e, element_ptr neigh) {
   if (neigh == e.rising_start_left() || neigh == e.falling_start_left()) {
@@ -93,7 +95,7 @@ kilometrage element::get_km(element_ptr neigh) const {
   return this->apply([&](auto&& x) { return infra::get_km(x, neigh); });
 }
 
-node_ptr default_reverse_ahead(node_ptr n) {
+node::ptr default_reverse_ahead(node::ptr n) {
   for (auto const& in : n->reverse_edges_) {
     if (in->next_node_ == n) {
       return in;
@@ -103,15 +105,15 @@ node_ptr default_reverse_ahead(node_ptr n) {
   throw utl::fail("Could not find reverse ahead in element {}", n->id_);
 }
 
-node_ptr reverse_ahead(end_element const&, node_ptr n) {  // NOLINT
+node::ptr reverse_ahead(end_element const&, node::ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 
-node_ptr reverse_ahead(simple_element const&, node_ptr n) {  // NOLINT
+node::ptr reverse_ahead(simple_element const&, node::ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 
-node_ptr reverse_ahead(simple_switch const& e, node_ptr n) {
+node::ptr reverse_ahead(simple_switch const& e, node::ptr n) {
   for (auto const& in : n->reverse_edges_) {
     bool const is_branch = in->element_ == e.rising_branch_neighbour() ||
                            in->element_ == e.falling_branch_neighbour();
@@ -134,19 +136,20 @@ node_ptr reverse_ahead(simple_switch const& e, node_ptr n) {
   throw utl::fail("Could not find reverse ahead in switch {}", e.id_);
 }
 
-node_ptr reverse_ahead(track_element const&, node_ptr n) {  // NOLINT
+node::ptr reverse_ahead(track_element const&, node::ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 
-node_ptr reverse_ahead(undirected_track_element const&, node_ptr n) {  // NOLINT
+node::ptr reverse_ahead(undirected_track_element const&,
+                        node::ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 
-node_ptr reverse_ahead(cross const&, node_ptr n) {  // NOLINT
+node::ptr reverse_ahead(cross const&, node::ptr n) {  // NOLINT
   return default_reverse_ahead(n);
 }
 
-node_ptr element::reverse_ahead(node_ptr n) const {
+node::ptr element::reverse_ahead(node::ptr n) const {
   return e_.apply([&](auto&& x) { return infra::reverse_ahead(x, n); });
 }
 

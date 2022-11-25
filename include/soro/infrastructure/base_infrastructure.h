@@ -26,6 +26,7 @@ struct base_infrastructure {
 
   soro::vector<station::ptr> stations_;
   soro::vector<station_route::ptr> station_routes_;
+  soro::vector<station_route::path::ptr> station_route_paths_;
 
   soro::map<soro::string, station::ptr> ds100_to_station_;
   soro::map<element_id, station::ptr> element_to_station_;
@@ -41,6 +42,7 @@ struct base_infrastructure {
 
   soro::vector<soro::unique_ptr<station>> station_store_;
   soro::vector<soro::unique_ptr<station_route>> station_route_store_;
+  soro::vector<soro::unique_ptr<station_route::path>> station_route_path_store_;
 };
 
 }  // namespace soro::infra

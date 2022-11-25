@@ -8,13 +8,22 @@
 
 namespace soro::infra {
 
+struct omitted_rp_node {
+  bool operator==(omitted_rp_node const& o) const {
+    return this->rp_node_id_ == o.rp_node_id_ && this->type_ == o.type_;
+  }
+
+  rail_plan_node_id rp_node_id_;
+  type type_;
+};
+
 struct intermediate_station_route {
   rail_plan_node_id start_{INVALID_RP_NODE_ID};
   rail_plan_node_id end_{INVALID_RP_NODE_ID};
   rail_plan_node_id rp_passenger_halt_{INVALID_RP_NODE_ID};
   rail_plan_node_id rp_freight_halt_{INVALID_RP_NODE_ID};
 
-  soro::vector<rail_plan_node_id> omitted_rp_nodes_;
+  soro::vector<omitted_rp_node> omitted_rp_nodes_;
 
   soro::array<bool, STATION_ROUTE_ATTRIBUTES.size()> attributes_{
       DEFAULT_ATTRIBUTE_ARRAY};

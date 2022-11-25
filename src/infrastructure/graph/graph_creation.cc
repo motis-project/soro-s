@@ -28,8 +28,8 @@ element* create_element(graph& network, station& station,
     return create_element_t<track_element>(network, station, mats, type, rp_id,
                                            rising);
   } else if (is_undirected_track_element(type)) {
-    return create_element_t<undirected_track_element>(network, station, mats, type, rp_id,
-                                           rising);
+    return create_element_t<undirected_track_element>(network, station, mats,
+                                                      type, rp_id, rising);
   }
 
   throw utl::fail("Could not dispatch create element for type: {}", type);
@@ -212,10 +212,10 @@ void set_neighbour(undirected_track_element& e, std::string const&,
                    element* neigh, bool rising) {
   if (rising) {
     e.end_rising_neighbour() == nullptr ? e.end_rising_neighbour() = neigh
-                                          : e.start_rising_neighbour() = neigh;
+                                        : e.start_rising_neighbour() = neigh;
   } else {
     e.end_falling_neighbour() == nullptr ? e.end_falling_neighbour() = neigh
-                                           : e.start_falling_neighbour() = neigh;
+                                         : e.start_falling_neighbour() = neigh;
   }
 }
 
@@ -294,12 +294,12 @@ bool misaligned_join(element const& e) {
   return e.apply([](auto&& x) { return misaligned_join(x); });
 }
 
-node_ptr get_node(end_element const& e, bool const rising, element_ptr) {
+node::ptr get_node(end_element const& e, bool const rising, element::ptr) {
   return rising ? e.top() : e.bot();
 }
 
-node_ptr get_node(simple_element const& s, bool const rising,
-                  element_ptr neigh) {
+node::ptr get_node(simple_element const& s, bool const rising,
+                   element::ptr neigh) {
   if (s.type_ == type::LINE_SWITCH && (neigh == s.end_rising_neighbour() ||
                                        neigh == s.end_falling_neighbour())) {
     bool const swap = s.rising_ == s.end_rising_;
@@ -310,17 +310,17 @@ node_ptr get_node(simple_element const& s, bool const rising,
   return rising ? s.top() : s.bot();
 }
 
-node_ptr get_node(track_element const& e, bool const, element_ptr) {
+node::ptr get_node(track_element const& e, bool const, element::ptr) {
   return e.get_node();
 }
 
-node_ptr get_node(undirected_track_element const& e, bool const rising,
-                  element_ptr) {
+node::ptr get_node(undirected_track_element const& e, bool const rising,
+                   element::ptr) {
   return rising ? e.top() : e.bot();
 }
 
-node_ptr get_node(simple_switch const& e, bool const rising,
-                  element_ptr neigh) {
+node::ptr get_node(simple_switch const& e, bool const rising,
+                   element::ptr neigh) {
   bool const is_stem =
       neigh == e.rising_stem_neighbour() || neigh == e.falling_stem_neighbour();
   bool const is_branch = neigh == e.rising_branch_neighbour() ||
@@ -338,7 +338,7 @@ node_ptr get_node(simple_switch const& e, bool const rising,
   return swap ? (rising ? e.bot() : e.top()) : (rising ? e.top() : e.bot());
 }
 
-node_ptr get_node(cross const& e, bool const rising, element_ptr neigh) {
+node::ptr get_node(cross const& e, bool const rising, element::ptr neigh) {
   bool const is_start_left =
       neigh == e.rising_start_left() || neigh == e.falling_start_left();
   bool const is_end_left =
@@ -371,11 +371,11 @@ node_ptr get_node(cross const& e, bool const rising, element_ptr neigh) {
   throw utl::fail("neigh does not appear in neighbours");
 }
 
-node_ptr get_node(element const& e, bool const rising, element_ptr neigh) {
+node::ptr get_node(element const& e, bool const rising, element::ptr neigh) {
   return e.apply([&](auto&& x) { return get_node(x, rising, neigh); });
 }
 
-non_const_ptr<node> to_non_const(node_ptr ptr) {
+non_const_ptr<node> to_non_const(node::ptr ptr) {
 #if defined(SERIALIZE)
   return static_cast<non_const_ptr<node>>(ptr);
 #else
@@ -383,7 +383,7 @@ non_const_ptr<node> to_non_const(node_ptr ptr) {
 #endif
 }
 
-non_const_element_ptr to_non_const(element_ptr ptr) {
+non_const_element_ptr to_non_const(element::ptr ptr) {
 #if defined(SERIALIZE)
   return static_cast<non_const_element_ptr>(ptr);
 #else
@@ -391,7 +391,7 @@ non_const_element_ptr to_non_const(element_ptr ptr) {
 #endif
 }
 
-void connect_nodes(end_element& e, element_ptr this_ptr) {
+void connect_nodes(end_element& e, element::ptr this_ptr) {
   auto top_ptr = to_non_const(e.top());
   auto bot_ptr = to_non_const(e.bot());
 
@@ -403,7 +403,7 @@ void connect_nodes(end_element& e, element_ptr this_ptr) {
   }
 }
 
-void connect_nodes(simple_element& e, element_ptr this_ptr) {
+void connect_nodes(simple_element& e, element::ptr this_ptr) {
   auto top_ptr = to_non_const(e.top());
   auto bot_ptr = to_non_const(e.bot());
 
@@ -439,7 +439,7 @@ void connect_nodes(simple_element& e, element_ptr this_ptr) {
   }
 }
 
-void connect_nodes(undirected_track_element& e, element_ptr this_ptr) {
+void connect_nodes(undirected_track_element& e, element::ptr this_ptr) {
   auto top_ptr = to_non_const(e.top());
   auto bot_ptr = to_non_const(e.bot());
 
@@ -452,8 +452,8 @@ void connect_nodes(undirected_track_element& e, element_ptr this_ptr) {
   }
 }
 
-void connect_nodes(simple_switch& e, element_ptr this_ptr) {
-  auto const& connect = [&](std::pair<element_ptr, element_ptr> neighs,
+void connect_nodes(simple_switch& e, element::ptr this_ptr) {
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);
@@ -484,13 +484,13 @@ void connect_nodes(simple_switch& e, element_ptr this_ptr) {
   }
 }
 
-void connect_nodes(track_element& e, element_ptr this_ptr) {
+void connect_nodes(track_element& e, element::ptr this_ptr) {
   auto node = to_non_const(e.get_node());
   node->next_node_ = get_node(*e.ahead(), e.rising_, this_ptr);
 }
 
-void connect_nodes(cross& e, element_ptr this_ptr) {
-  auto const& connect = [&](std::pair<element_ptr, element_ptr> neighs,
+void connect_nodes(cross& e, element::ptr this_ptr) {
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);
@@ -572,7 +572,7 @@ section::id create_section(graph& n) {
 }
 
 void connect_border(simple_element& from_border, bool low_border,
-                    element_ptr to_border) {
+                    element::ptr to_border) {
   assert(to_border != nullptr);
   if (low_border) {
     from_border.end_rising_neighbour() = to_border;

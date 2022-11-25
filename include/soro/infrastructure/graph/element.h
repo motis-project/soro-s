@@ -310,6 +310,8 @@ struct element {
   ~element() = default;
 #endif
 
+  using ptr = element_ptr;
+
   using member_t =
       soro::variant<end_element, track_element, undirected_track_element,
                     simple_element, simple_switch, cross>;
@@ -371,8 +373,8 @@ struct element {
 
   bool is_switch() const;
 
-  kilometrage get_km(element_ptr neigh) const;
-  si::length get_distance(element_ptr const neigh) const;
+  kilometrage get_km(element::ptr neigh) const;
+  si::length get_distance(element::ptr const neigh) const;
   node_ptr reverse_ahead(node_ptr n) const;
 
   member_t e_;

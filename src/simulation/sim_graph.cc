@@ -74,15 +74,15 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
     //    init_sn.exit_dpd_ = get_init_dpd(tr->first_departure());
     nodes_.push_back(init_sn);
 
-    for (auto const& ssr : tr->path_) {
+    for (auto const& ir_id : tr->path_) {
       sim_node sn;
       sn.id_ = nodes_.size();
       sn.train_id_ = tr->id_;
-      sn.ir_id_ = ssr->id_;
+      sn.ir_id_ = ir_id;
 
       nodes_.push_back(sn);
 
-      ssr_to_node_[tr->id_][ssr->id_] = sn.id_;
+      ssr_to_node_[tr->id_][ir_id] = sn.id_;
     }
 
     // create two sentinel node at the end of the simulation train run

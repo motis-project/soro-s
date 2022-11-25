@@ -11,17 +11,13 @@ auto constexpr get_default_invalid() {
     return std::numeric_limits<T>::max();
   }
 
-  if constexpr (std::is_floating_point_v<T>) {
-    return std::numeric_limits<T>::quiet_NaN();
-  }
-
   if constexpr (std::is_pointer_v<T>) {
     return nullptr;
   }
 }
 
 template <typename T, T INVALID = get_default_invalid<T>()>
-  requires std::is_fundamental_v<T> || std::is_pointer_v<T>
+  requires std::is_integral_v<T> || std::is_pointer_v<T>
 struct optional {
   using value_type = T;
   static constexpr const auto INVALID_VALUE = INVALID;
@@ -134,7 +130,8 @@ private:
   T val_{INVALID_VALUE};
 };
 
-template <typename T, T INVALID>
+template <typename T, T INVALID = get_default_invalid<T>()>
+  requires std::is_integral_v<T> || std::is_pointer_v<T>
 optional<T, INVALID> make_optional(T&& value) {
   return optional<T, INVALID>(std::forward<T>(value));
 }

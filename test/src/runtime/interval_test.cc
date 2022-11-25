@@ -22,7 +22,7 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
         get_interval_list(*train, event_types, border_types, infra);
 
     CHECK_MESSAGE(
-        intervals.back().distance_ == train->path_length(),
+        intervals.back().distance_ == train->path_length(infra),
         "Last interval length should be the same length as total train"
         "path length");
 
@@ -55,7 +55,7 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
       intervals_count.insert(std::pair(type, 0));
     }
 
-    for (auto const& rn : train->iterate(skip_omitted::ON)) {
+    for (auto const& rn : train->iterate(skip_omitted::ON, infra)) {
       auto const it = total_path_count.find(rn.node_->element_->type());
       if (it != std::cend(total_path_count)) {
         total_path_count[rn.node_->element_->type()] += 1;

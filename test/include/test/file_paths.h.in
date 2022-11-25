@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <vector>
 
+#include "utl/erase_if.h"
+
 #include "soro/utls/coroutine/generator.h"
 
 #include "soro/infrastructure/infrastructure_options.h"
@@ -39,7 +41,16 @@ infra::infrastructure_options const DE_ISS_OPTS = {
     .infrastructure_path_ = DE_ISS_FOLDER,
 };
 
-const std::vector<infra::infrastructure_options> ALL_INFRA_OPTS = {SMALL_OPTS};
+inline std::vector<infra::infrastructure_options> get_all_infra_opts() {
+  std::vector<infra::infrastructure_options> all_infra_opts = {SMALL_OPTS,
+                                                               DE_ISS_OPTS};
+
+  utl::erase_if(all_infra_opts, [](auto&& opts) {
+    return !std::filesystem::exists(opts.infrastructure_path_);
+  });
+
+  return all_infra_opts;
+}
 
 // --- timetable files ---
 
@@ -62,23 +73,44 @@ tt::timetable_options const DE_KSS_OPTS = {.timetable_path_ = DE_KSS_FOLDER};
 const std::vector<tt::timetable_options> ALL_TIMETABLE_OPTIONS = {OVERTAKE_OPTS,
                                                                   FOLLOW_OPTS};
 
-// --- All Test Scenarios ---
+// --- Test Scenarios ---
 struct test_scenario {
   infra::infrastructure_options infra_opts_;
   tt::timetable_options timetable_opts_;
 };
 
-inline soro::utls::generator<test_scenario> GET_ALL_TEST_SCENARIOS() {
-  for (auto const& infra : ALL_INFRA_OPTS) {
-    for (auto const& tt : ALL_TIMETABLE_OPTIONS) {
-      std::cout << "Test Scenario:\n";
-      std::cout << "Infrastructure Path: " << infra.infrastructure_path_
-                << '\n';
-      std::cout << "Timetable Path: " << tt.timetable_path_ << '\n';
+test_scenario const FOLLOW_SCENARIO{.infra_opts_ = SMALL_OPTS,
+                                    .timetable_opts_ = FOLLOW_OPTS};
 
-      co_yield {.infra_opts_ = infra, .timetable_opts_ = tt};
-    }
-  }
+test_scenario const OVERTAKE_SCENARIO{.infra_opts_ = SMALL_OPTS,
+                                      .timetable_opts_ = OVERTAKE_OPTS};
+
+test_scenario const DE_SCENARIO{.infra_opts_ = DE_ISS_OPTS,
+                                .timetable_opts_ = DE_KSS_OPTS};
+
+inline std::vector<test_scenario> get_all_test_scenarios() {
+  std::vector<test_scenario> scenarios{FOLLOW_SCENARIO, OVERTAKE_SCENARIO,
+                                       DE_SCENARIO};
+
+  utl::erase_if(scenarios, [](auto&& scenario) {
+    return !std::filesystem::exists(
+               scenario.infra_opts_.infrastructure_path_) ||
+           !std::filesystem::exists(scenario.timetable_opts_.timetable_path_);
+  });
+
+  return scenarios;
 }
+
+#define DOCTEST_VALUE_PARAMETERIZED_DATA(data, data_container)            \
+  static size_t _doctest_subcase_idx = 0;                                 \
+  std::for_each(                                                          \
+      data_container.begin(), data_container.end(), [&](const auto& in) { \
+        DOCTEST_SUBCASE((std::string(#data_container "[") +               \
+                         std::to_string(_doctest_subcase_idx++) + "]")    \
+                            .c_str()) {                                   \
+          data = in;                                                      \
+        }                                                                 \
+      });                                                                 \
+  _doctest_subcase_idx = 0
 
 }  // namespace soro

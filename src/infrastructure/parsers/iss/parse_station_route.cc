@@ -2,6 +2,7 @@
 
 #include "utl/logging.h"
 
+#include "soro/utls/parse_int.h"
 #include "soro/utls/string.h"
 
 #include "soro/infrastructure/parsers/iss/parse_track_element.h"
@@ -39,8 +40,11 @@ intermediate_station_route parse_station_route(
   auto const omitted_nodes = xml_station_route.child(OMITTED_NODES);
   if (static_cast<bool>(omitted_nodes)) {
     for (auto const& omit_node : omitted_nodes.children(OMITTED_NODE)) {
+      std::integral auto const rp_node_id =
+          utls::parse_int<rail_plan_node_id>(omit_node.attribute(ID).value());
+      auto const type = get_type(omit_node.attribute(TYPE).value());
       i_station_route.omitted_rp_nodes_.push_back(
-          std::stoul(omit_node.attribute(ID).value()));
+          omitted_rp_node{.rp_node_id_ = rp_node_id, .type_ = type});
     }
   }
 
