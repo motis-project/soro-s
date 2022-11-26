@@ -7,6 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "vue": "^3.2.45",
+    "vuex": "^4.1.0",
     "d3": "^7.6.1",
     "golden-layout": "^2.6.0"
   },
