@@ -22,6 +22,8 @@ import {
   highlightSignalStationRoute,
   highlightStationRoute
 } from "./infrastructure/map/infrastructureMap.js";
+import { mapState } from 'vuex';
+import { InfrastructureNameSpace } from "../../stores/infrastructure-store.js"; // TODO rewrite with global namespace
 
 export default {
   name: "InfrastructureComponent",
@@ -35,6 +37,36 @@ export default {
     }
   },
 
+  computed: mapState(InfrastructureNameSpace, [
+      'currentInfrastructure',
+      'highlightedSignalStationRouteID',
+      'highlightedStationRouteID',
+  ]),
+
+  watch: {
+    currentInfrastructure(newInfrastructure) {
+      this._libreGLMap = newInfrastructure
+          ? createMap(this.container.element, newInfrastructure, this._tooltip)
+          : undefined;
+    },
+
+    highlightedSignalStationRouteID(newID, oldID) {
+      if (newID) {
+        highlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), newID);
+      } else {
+        deHighlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), oldID);
+      }
+    },
+
+    highlightedStationRouteID(newID, oldID) {
+      if (newID) {
+        highlightStationRoute(this._libreGLMap, window.infrastructureManager.get(), newID);
+      } else {
+        deHighlightStationRoute(this._libreGLMap, oldID);
+      }
+    },
+  },
+
   methods: {
     setContainer(container) {
       this.container = container;
@@ -44,29 +76,6 @@ export default {
 
     setComponentState(componentState) {
       this.componentState = componentState;
-      this.changeInfrastructure(this.componentState.getCurrentInfrastructure());
-    },
-
-    changeInfrastructure(newInfrastructureName) {
-      this._libreGLMap = newInfrastructureName
-          ? createMap(this.container.element, newInfrastructureName, this._tooltip)
-          : undefined;
-    },
-
-    highlightSignalStationRoute(signalStationRouteID) {
-      highlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), signalStationRouteID);
-    },
-
-    deHighlightSignalStationRoute(signalStationRouteID) {
-      deHighlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), signalStationRouteID);
-    },
-
-    highlightStationRoute(stationRouteID) {
-      highlightStationRoute(this._libreGLMap, window.infrastructureManager.get(), stationRouteID);
-    },
-
-    deHighlightStationRoute(stationRouteID) {
-      deHighlightStationRoute(this._libreGLMap, stationRouteID);
     },
   }
 }

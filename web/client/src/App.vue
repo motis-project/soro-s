@@ -131,7 +131,6 @@
 import { defineComponent } from "vue";
 import { getSimulationComponent } from "./util/goldenLayoutHelper.js";
 import { showDisruptionDetail } from "./components/disruption/disruption.js";
-import { InfrastructureManager } from "./model/InfrastructureManager.js";
 import { TimetableManager } from "./model/TimetableManager.js";
 
 const initLayout = {
@@ -185,7 +184,6 @@ export default {
 
   methods: {
     initManagers() {
-      window.infrastructureManager = new InfrastructureManager();
       window.timetableManager = new TimetableManager();
     },
 
