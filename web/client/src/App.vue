@@ -128,10 +128,8 @@
 </script>
 
 <script>
-import { defineComponent } from "vue";
 import { getSimulationComponent } from "./util/goldenLayoutHelper.js";
 import { showDisruptionDetail } from "./components/disruption/disruption.js";
-import { TimetableManager } from "./model/TimetableManager.js";
 
 const initLayout = {
   root: {
@@ -177,16 +175,11 @@ const initLayout = {
 
 export default {
   mounted() {
-    this.initManagers();
     this.initGLayout();
     this.initListeners();
   },
 
   methods: {
-    initManagers() {
-      window.timetableManager = new TimetableManager();
-    },
-
     initGLayout() {
       this.$refs.GLayoutRoot.loadGLLayout(initLayout);
     },
