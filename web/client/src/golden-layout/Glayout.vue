@@ -21,7 +21,9 @@ import {
   ref,
   markRaw,
   readonly,
+  defineExpose,
   defineAsyncComponent,
+  defineProps,
   nextTick,
   getCurrentInstance,
 } from "vue";
@@ -37,12 +39,27 @@ import {
   VirtualLayout,
   ResolvedLayoutConfig,
 } from "golden-layout";
-import GlComponent from "./gl-component.vue";
+import GlComponent from "@/components/GlComponent.vue";
 
+/*******************
+ * Prop
+ *******************/
+const props = defineProps({
+  glcPath: String,
+});
+
+/*******************
+ * Data
+ *******************/
 const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
- const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
+
+const MapComponents = new Map<
+    ComponentContainer,
+    { refId: number; glc: GlComponent }
+    >();
+
 const AllComponents = ref(new Map<number, any>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
@@ -50,9 +67,15 @@ let GlBoundingClientRect: DOMRect;
 
 const instance = getCurrentInstance();
 
-const addComponent = (componentType: string) => {
+/*******************
+ * Method
+ *******************/
+/** @internal */
+const addComponent = (componentType: string, title: string) => {
   const glc = markRaw(
-      defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
+      defineAsyncComponent(
+          () => import(props.glcPath + componentType + ".vue")
+      )
   );
 
   let index = CurIndex;
@@ -64,15 +87,15 @@ const addComponent = (componentType: string) => {
   return index;
 };
 
-const addGLComponent = async (componentType: string) => {
+const addGLComponent = async (componentType: string, title: string) => {
   if (componentType.length == 0)
     throw new Error("addGLComponent: Component's type is empty");
 
-  const index = addComponent(componentType);
+  const index = addComponent(componentType, title);
 
   await nextTick(); // wait 1 tick for vue to add the dom
 
-  GLayout.addComponent(componentType, { refId: index });
+  GLayout.addComponent(componentType, { refId: index }, title);
 };
 
 const loadGLLayout = async (
@@ -128,6 +151,9 @@ const getLayoutConfig = () => {
   return GLayout.saveLayout();
 };
 
+/*******************
+ * Mount
+ *******************/
 onMounted(() => {
   if (GLRoot.value == null)
     throw new Error("Golden Layout can't find the root DOM!");
@@ -154,7 +180,9 @@ onMounted(() => {
   ): void => {
     const component = MapComponents.get(container);
     if (!component || !component?.glc) {
-      throw new Error("handleContainerVirtualRectingRequiredEvent: Component not found");
+      throw new Error(
+          "handleContainerVirtualRectingRequiredEvent: Component not found"
+      );
     }
 
     const containerBoundingClientRect =
@@ -170,7 +198,6 @@ onMounted(() => {
       visible: boolean
   ): void => {
     const component = MapComponents.get(container);
-
     if (!component || !component?.glc) {
       throw new Error(
           "handleContainerVirtualVisibilityChangeRequiredEvent: Component not found"
@@ -203,21 +230,39 @@ onMounted(() => {
     if (itemConfig && itemConfig.componentState) {
       refId = (itemConfig.componentState as Json).refId as number;
     } else {
-      throw new Error("bindComponentEventListener: component's ref id is required");
+      throw new Error(
+          "bindComponentEventListener: component's ref id is required"
+      );
     }
 
     const ref = GlcKeyPrefix.value + refId;
-    const component = instance?.refs[ref] as typeof GlComponent;
+    const component = instance?.refs[ref] as GlComponent;
 
-    MapComponents.set(container, { refId: refId, glc: component[0] });
-    component[0].setContainer(container);
-    component[0].setComponentState(itemConfig.componentState);
+    MapComponents.set(container, { refId: refId, glc: component });
 
-    container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent;
-    container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent;
-    container.virtualZIndexChangeRequiredEvent = handleContainerVirtualZIndexChangeRequiredEvent;
+    container.virtualRectingRequiredEvent = (container, width, height) =>
+        handleContainerVirtualRectingRequiredEvent(
+            container,
+            width,
+            height
+        );
 
-    // TODO fire resize
+    container.virtualVisibilityChangeRequiredEvent = (container, visible) =>
+        handleContainerVirtualVisibilityChangeRequiredEvent(
+            container,
+            visible
+        );
+
+    container.virtualZIndexChangeRequiredEvent = (
+        container,
+        logicalZIndex,
+        defaultZIndex
+    ) =>
+        handleContainerVirtualZIndexChangeRequiredEvent(
+            container,
+            logicalZIndex,
+            defaultZIndex
+        );
 
     return {
       component,
@@ -247,6 +292,9 @@ onMounted(() => {
   GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 });
 
+/*******************
+ * Expose
+ *******************/
 defineExpose({
   addGLComponent,
   loadGLLayout,
