@@ -1,10 +1,10 @@
-import { getInfrastructureComponents } from "../utl/goldenLayoutHelper.js";
+import { getInfrastructureComponents } from "../util/goldenLayoutHelper.js";
 
 function loadInfrastructureFromIDBFS(filePath) {
   console.log("This is to be removed");
 }
 
-export class InfrastructureManager {
+export class InfrastructureManager { // TODO rebuild to vuex store
   _current = undefined;
 
   constructor() {

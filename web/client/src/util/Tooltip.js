@@ -1,4 +1,4 @@
-import { select } from "../deps/d3/d3-selection.js";
+import { select } from "d3";
 
 function makeIntoPermanent(mouseTooltip) {
   // on rightclick dismiss permanent tooltip

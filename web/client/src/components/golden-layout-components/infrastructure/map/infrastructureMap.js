@@ -3,7 +3,7 @@ import * as maplibre from "../deps/maplibre-gl.js";
 import { addIcons } from "./addIcons.js";
 import { iconUrl } from "./addIcons.js";
 import { iconExtension } from "./addIcons.js";
-import { iterate } from "../../../../utl/iterate.js";
+import { iterate } from "../../../../util/iterate.js";
 import { elementTypes } from "./elementTypes.js";
 import { elementTypesReadable } from "./elementTypes.js";
 

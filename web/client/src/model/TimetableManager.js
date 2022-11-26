@@ -4,10 +4,7 @@
 //   saveFileToIDBFS,
 //   timetableFileExists
 // } from "../utl/IDBFSHelper.js";
-import {
-  getComponents,
-  getTimetableComponents
-} from "../utl/goldenLayoutHelper.js";
+import { getComponents, getTimetableComponents } from "../util/goldenLayoutHelper.js";
 
 // import { Module } from "../soro-client.js";
 
@@ -39,7 +36,7 @@ function loadTimetableFromIDBFS(filePath, currentInfrastructure) {
    */
 }
 
-export class TimetableManager {
+export class TimetableManager {  // TODO rebuild to vuex store
   constructor() {
   }
 

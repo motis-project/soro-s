@@ -1,4 +1,4 @@
-import * as d3 from "../../../deps/d3/d3.js";
+import * as d3 from "d3";
 
 function cloneIntoPermanent(mouseTooltip, highlightedSSR) {
   let permanentTooltip = mouseTooltip.clone(true);
