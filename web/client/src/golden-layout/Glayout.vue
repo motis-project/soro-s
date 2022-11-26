@@ -39,7 +39,7 @@ import {
   VirtualLayout,
   ResolvedLayoutConfig,
 } from "golden-layout";
-import GlComponent from "@/components/GlComponent.vue";
+import GlComponent from "./GlComponent.vue";
 
 /*******************
  * Prop
@@ -74,7 +74,7 @@ const instance = getCurrentInstance();
 const addComponent = (componentType: string, title: string) => {
   const glc = markRaw(
       defineAsyncComponent(
-          () => import(props.glcPath + componentType + ".vue")
+          () => import(`../components/golden-layout-components/${componentType}.vue`)
       )
   );
 
@@ -236,7 +236,7 @@ onMounted(() => {
     }
 
     const ref = GlcKeyPrefix.value + refId;
-    const component = instance?.refs[ref] as GlComponent;
+    const component = instance?.refs[ref][0] as GlComponent;
 
     MapComponents.set(container, { refId: refId, glc: component });
 

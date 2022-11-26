@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="full-height">
     <div :class="overlayContainerClasses" ref="overlayContainer">
       <div class="overlay">
         <div class="overlay-content">
@@ -56,7 +56,7 @@
 <script setup>
   // TODO make this TS
   // import { Module, FS, IDBFS } from "./soro-client.js";
-  import glayout from './golden-layout/glayout.vue';
+  import Glayout from './golden-layout/Glayout.vue';
   import Disruption from "./components/disruption.vue";
   import SoroSelect from "./components/select/soro-select.vue";
 
@@ -94,14 +94,6 @@
   //   })
   //
   // }
-
-  const c = {
-    settings: {
-      showPopoutIcon: false,
-      showMaximiseIcon: false,
-      showCloseIcon: false
-    }
-  };
 </script>
 
 <script>
@@ -212,15 +204,15 @@ export default {
     },
 
     addInfrastructureTab() {
-      // TODO add to golden-layout
+      this.$refs.GLayoutRoot.addGLComponent('InfrastructureComponent', 'Infra');
     },
 
     addSimulationTab() {
-      // TODO add to golden-layout
+      this.$refs.GLayoutRoot.addGLComponent('SimulationComponent', 'Simulation');
     },
 
     addTimetableTab() {
-      // TODO add to golden-layout
+      this.$refs.GLayoutRoot.addGLComponent('TimetableComponent', 'Timetable');
     },
 
     triggerSimulation() {
@@ -239,3 +231,22 @@ export default {
   },
 }
 </script>
+
+<style>
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.full-height, #app {
+  height: 100%;
+}
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
