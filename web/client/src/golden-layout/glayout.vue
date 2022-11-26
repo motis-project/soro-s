@@ -42,12 +42,7 @@ import GlComponent from "./gl-component.vue";
 const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
-
-const MapComponents = new Map<
-    ComponentContainer,
-    { refId: number; glc: typeof GlComponent }
-    >();
-
+ const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
 const AllComponents = ref(new Map<number, any>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
@@ -55,7 +50,6 @@ let GlBoundingClientRect: DOMRect;
 
 const instance = getCurrentInstance();
 
-/** @internal */
 const addComponent = (componentType: string) => {
   const glc = markRaw(
       defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
@@ -160,9 +154,7 @@ onMounted(() => {
   ): void => {
     const component = MapComponents.get(container);
     if (!component || !component?.glc) {
-      throw new Error(
-          "handleContainerVirtualRectingRequiredEvent: Component not found"
-      );
+      throw new Error("handleContainerVirtualRectingRequiredEvent: Component not found");
     }
 
     const containerBoundingClientRect =
@@ -211,9 +203,7 @@ onMounted(() => {
     if (itemConfig && itemConfig.componentState) {
       refId = (itemConfig.componentState as Json).refId as number;
     } else {
-      throw new Error(
-          "bindComponentEventListener: component's ref id is required"
-      );
+      throw new Error("bindComponentEventListener: component's ref id is required");
     }
 
     const ref = GlcKeyPrefix.value + refId;
@@ -223,29 +213,11 @@ onMounted(() => {
     component[0].setContainer(container);
     component[0].setComponentState(itemConfig.componentState);
 
-    container.virtualRectingRequiredEvent = (container, width, height) =>
-        handleContainerVirtualRectingRequiredEvent(
-            container,
-            width,
-            height
-        );
+    container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent;
+    container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent;
+    container.virtualZIndexChangeRequiredEvent = handleContainerVirtualZIndexChangeRequiredEvent;
 
-    container.virtualVisibilityChangeRequiredEvent = (container, visible) =>
-        handleContainerVirtualVisibilityChangeRequiredEvent(
-            container,
-            visible
-        );
-
-    container.virtualZIndexChangeRequiredEvent = (
-        container,
-        logicalZIndex,
-        defaultZIndex
-    ) =>
-        handleContainerVirtualZIndexChangeRequiredEvent(
-            container,
-            logicalZIndex,
-            defaultZIndex
-        );
+    // TODO fire resize
 
     return {
       component,
