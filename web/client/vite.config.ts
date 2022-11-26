@@ -13,6 +13,10 @@ export default defineConfig({
                 target: 'http://0.0.0.0:8080',
                 changeOrigin: true,
             },
+            '/font': {
+                target: 'http://0.0.0.0:8080',
+                changeOrigin: true,
+            },
         },
     },
 })
