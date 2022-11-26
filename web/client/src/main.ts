@@ -14,3 +14,4 @@ const store = createStore({
 const app = createApp(App);
 app.use(store)
 app.mount('#app')
+// TODO README for installation and stuffs
