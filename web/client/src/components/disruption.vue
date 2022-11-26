@@ -13,6 +13,11 @@ import { iterate } from "../util/iterate.js";
 import { mapState } from 'vuex';
 import { TimetableNamespace } from "../stores/timetable-store.js";
 
+const disruptionMap = new Map();
+disruptionMap.set('1', 80);
+disruptionMap.set('2', 120);
+let disruptionDists = false;
+
 function createInputField(name, maxSpeedsDiv) {
   let input = document.createElement('input');
   input.type = 'text';

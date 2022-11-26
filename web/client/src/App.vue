@@ -1,73 +1,47 @@
 <template>
   <div>
-    <div class="overlay-container hidden" id="overlayContainer">
+    <div :class="overlayContainerClasses" ref="overlayContainer">
       <div class="overlay">
         <div class="overlay-content">
           <div class="window-controls">
-            <button class="matter-button-contained window-button"
-                    id="addInfrastructureComponentButton">
+            <button class="matter-button-contained window-button" @click="addInfrastructureTab">
               Infrastructure
             </button>
-            <button class="matter-button-contained window-button"
-                    id="addSimulationComponentButton">Simulation
+            <button class="matter-button-contained window-button" @click="addSimulationTab">
+              Simulation
             </button>
-            <button class="matter-button-contained window-button"
-                    id="addTimetableComponentButton">Timetable
+            <button class="matter-button-contained window-button" @click="addTimetableTab">
+              Timetable
             </button>
           </div>
           <div class="data-selects">
-            <div class="material-select data-select">
-              <select class="material-select-text"
-                      id="infrastructureSelect" required>
-                <option selected value=""></option>
-              </select>
-              <span class="material-select-highlight"></span>
-              <span class="material-select-bar"></span>
-              <label class="material-select-label">Select
-                Infrastructure</label>
-            </div>
-            <div class="material-select data-select">
-              <select class="material-select-text" id="timetableSelect"
-                      required>
-                <option selected value=""></option>
-              </select>
-              <span class="material-select-highlight"></span>
-              <span class="material-select-bar"></span>
-              <label class="material-select-label">Select
-                Timetable</label>
-            </div>
+            <soro-select label="Select Infrastructure" @change="loadInfrastructure" />
+            <soro-select label="Select Timetable" @change="loadTimetable" />
           </div>
           <div class="dev-tools">
-            <button class="matter-button-contained window-button"
-                    id="clearCacheButton">Clear
-              Cache
-            </button>
-            <button class="matter-button-contained window-button"
-                    id="simulateButton">Simulate
-            </button>
+            <button class="matter-button-contained window-button" @click="deleteAllFiles">Clear Cache</button>
+            <button class="matter-button-contained window-button" @click="triggerSimulation">Simulate</button>
           </div>
         </div>
-        <div class="sub-overlay hidden" id="subOverlay">
+        <div :class="subOverlayClasses" ref="subOverlay">
           <div class="sub-overlay-content" id="subOverlayContent">
-            <disruption />
+            <disruption ref="disruption" />
           </div>
-          <div class="sub-overlay-close" id="subOverlayClose">
+          <div class="sub-overlay-close" ref="subOverlayClose" @click="onSubOverlayCloseClicked">
             <i class="material-icons">close</i>
           </div>
         </div>
       </div>
-      <div class="overlay-tabs" id="subOverlayTabs">
+      <div class="overlay-tabs" ref="subOverlayTabs">
         <div class="overlay-toggle">
-          <button class="matter-button-contained overlay-toggle-button"
-                  id="overlayToggleButton">
-            <i class="material-icons"
-               style="display: flex; justify-content:center;">menu</i>
+          <button class="matter-button-contained overlay-toggle-button" @click="toggleOverlay">
+            <i class="material-icons" style="display: flex; justify-content:center;">menu</i>
           </button>
         </div>
-        <div class="sub-overlay-tab-button" id="stationDetailButton">
+        <div class="sub-overlay-tab-button" ref="stationDetailButton" @click="onStationDetailClicked">
           <i class="material-icons">home</i>
         </div>
-        <div class="sub-overlay-tab-button" id="disruptionDetailButton">
+        <div class="sub-overlay-tab-button" ref="disruptionDetailButton" @click="onDisruptionDetailClicked">
           <i class="material-icons">train</i>
         </div>
       </div>
@@ -84,6 +58,7 @@
   // import { Module, FS, IDBFS } from "./soro-client.js";
   import glayout from './golden-layout/glayout.vue';
   import Disruption from "./components/disruption.vue";
+  import SoroSelect from "./components/select/soro-select.vue";
 
   // import {
   //   saveToPersistent,
@@ -130,7 +105,9 @@
 </script>
 
 <script>
-import { getSimulationComponent } from "./util/goldenLayoutHelper.js";
+import { mapActions } from 'vuex';
+import {InfrastructureNameSpace} from "./stores/infrastructure-store.js";
+import {TimetableNamespace} from "./stores/timetable-store.js";
 
 const initLayout = {
   root: {
@@ -143,11 +120,6 @@ const initLayout = {
             title: 'Infrastructure',
             type: 'component',
             componentType: 'InfrastructureComponent',
-            componentState: {
-              getCurrentInfrastructure: () => {
-                return undefined
-              }
-            }
           },
           {
             title: 'Simulation',
@@ -175,127 +147,95 @@ const initLayout = {
 };
 
 export default {
+  data() {
+    return {
+      overlay: false,
+      subOverlay: false,
+    }
+  },
+
   mounted() {
-    this.initGLayout();
-    this.initListeners();
+    this.loadInfrastructures();
+    this.loadTimetables();
+    this.$refs.GLayoutRoot.loadGLLayout(initLayout);
+  },
+
+  computed: {
+    overlayContainerClasses() {
+      return `overlay-container ${this.overlay ? '' : 'hidden'}`
+    },
+
+    subOverlayClasses() {
+      return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`
+    }
   },
 
   methods: {
-    initGLayout() {
-      this.$refs.GLayoutRoot.loadGLLayout(initLayout);
+    toggleOverlay() {
+      this.overlay = !this.overlay;
     },
 
-    initListeners() {
-      // Define global functions
-      let overlayContainer = document.getElementById('overlayContainer');
-      let overlayToggleButton = document.getElementById('overlayToggleButton');
+    showSubOverlay() {
+      this.overlay = true;
+      this.subOverlay = true;
+    },
 
-      var showOverlay = () => overlayContainer.classList.remove('hidden');
-      var hideOverlay = () => overlayContainer.classList.add('hidden');
-      var toggleOverlay = () => overlayContainer.classList.toggle('hidden');
+    hideSubOverlay() {
+      this.subOverlay = false;
+    },
 
-      let subOverlay = document.getElementById('subOverlay');
-      var showSubOverlay = () => {
-        showOverlay(), subOverlay.classList.remove('hidden');
+    toggleSubOverlay() {
+      if (!this.subOverlay) {
+        this.showSubOverlay();
+      } else {
+        this.hideSubOverlay();
       }
-      var hideSubOverlay = () => subOverlay.classList.add('hidden');
-      var toggleSubOverlay = () => subOverlay.classList.toggle('hidden');
+    },
 
-      overlayToggleButton.addEventListener('click', toggleOverlay);
+    onStationDetailClicked() {
+      this.$refs.stationDetailButton.classList.toggle('enabled');
+      this.showSubOverlay();
+    },
 
-      var disruptionMap = new Map();
-      disruptionMap.set('1', 80);
-      disruptionMap.set('2', 120);
-      var disruptionDists = false;
+    onDisruptionDetailClicked() {
+      this.$refs.disruptionDetailButton.classList.add('enabled');
+      this.$refs.disruption.showDetail();
+      this.showSubOverlay();
+    },
 
-      let subOverlayClose = document.getElementById('subOverlayClose');
-      subOverlayClose.addEventListener('click', _ => {
-        subOverlay.classList.add('hidden');
+    onSubOverlayCloseClicked() {
+      this.hideSubOverlay();
 
-        for (let overlayTab of document.getElementById('subOverlayTabs').children) {
-          overlayTab.classList.remove('enabled');
-        }
-      });
-
-      const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
-      addInfrastructureComponent.addEventListener('click', () => {
-        window.infrastructureManager.addInfrastructureComponent();
-      });
-
-      const addSimulationComponent = document.getElementById('addSimulationComponentButton');
-      addSimulationComponent.addEventListener('click', () => {
-        window.goldenLayout.addComponent('SimulationComponent', undefined, 'Simulation');
-      });
-
-      const addTimetableComponent = document.getElementById('addTimetableComponentButton');
-      addTimetableComponent.addEventListener('click', () => {
-        window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
-      });
-
-      const simulateButton = document.getElementById('simulateButton');
-      simulateButton.addEventListener('click', () => {
-        getSimulationComponent().forEach(simComp => simComp.simulate());
-      });
-
-      function fillOptions(selectElement, optionNames) {
-        selectElement.length = 1;
-
-        for (const name of optionNames) {
-          if (name === '.' || name === '..') continue;
-
-          let option = document.createElement("option");
-          option.label = name;
-          option.value = name;
-          selectElement.add(option);
-        }
+      for (let overlayTab of this.$refs.subOverlayTabs.children) {
+        overlayTab.classList.remove('enabled');
       }
+    },
 
-      const getSelectedOption = select => {
-        if (select.selectedIndex === -1) {
-          return '';
-        }
+    addInfrastructureTab() {
+      // TODO add to golden-layout
+    },
 
-        return select.options[select.selectedIndex].value;
-      }
+    addSimulationTab() {
+      // TODO add to golden-layout
+    },
 
-      const infrastructureSelect = document.getElementById('infrastructureSelect');
-      fetch(window.origin + '/infrastructure/')
-          .then(response => response.json())
-          .then(dir => fillOptions(infrastructureSelect, dir['dirs']));
+    addTimetableTab() {
+      // TODO add to golden-layout
+    },
 
-      infrastructureSelect.addEventListener('change', () => {
-        const currentInfrastructureName = getSelectedOption(infrastructureSelect);
-        window.infrastructureManager.load(currentInfrastructureName);
-      });
+    triggerSimulation() {
+      // TODO trigger simulation in store (has to move first)
+    },
 
-      const timetableSelect = document.getElementById('timetableSelect');
-      fetch(window.origin + '/timetable/')
-          .then(response => response.json())
-          .then(dir => fillOptions(timetableSelect, dir['dirs']));
+    ...mapActions(InfrastructureNameSpace, {
+      loadInfrastructures: 'initialLoad',
+      loadInfrastructure: 'load',
+    }),
 
-      timetableSelect.addEventListener('change', () => {
-        const currenTimetableName = getSelectedOption(timetableSelect);
-        window.timetableManager.load(currenTimetableName, window.infrastructureManager.get());
-      });
-
-      const clearCacheButton = document.getElementById('clearCacheButton');
-      clearCacheButton.addEventListener('click', _ => {
-        deleteAllFiles();
-      });
-
-      let stationDetailButton = document.getElementById('stationDetailButton');
-      stationDetailButton.addEventListener('click', e => {
-        stationDetailButton.classList.toggle('enabled');
-        showSubOverlay();
-      });
-
-      let disruptionDetailButton = document.getElementById('disruptionDetailButton');
-      disruptionDetailButton.addEventListener('click', e => {
-        disruptionDetailButton.classList.add('enabled');
-        showDisruptionDetail(window.timetableManager.get());
-        showSubOverlay();
-      });
-    }
+    ...mapActions(TimetableNamespace, {
+      loadTimetables: 'initialLoad',
+      loadTimetable: 'load',
+    }),
   },
 }
 </script>

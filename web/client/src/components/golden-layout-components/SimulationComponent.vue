@@ -18,6 +18,9 @@
 
 <script>
 import { d3Graph } from './simulation/d3Graph.js';
+import { mapState } from 'vuex';
+import {InfrastructureNameSpace} from "../../stores/infrastructure-store.js";
+import {TimetableNamespace} from "../../stores/timetable-store.js";
 
 const nodeWidth = 100;
 const nodeHeight = 80;
@@ -46,6 +49,16 @@ export default {
     }
   },
 
+  computed: {
+    ...mapState(InfrastructureNameSpace, ['currentInfrastructure']),
+    ...mapState(TimetableNamespace, ['currentTimetable']),
+  },
+
+  watch: {
+    currentInfrastructure: { handler() { this.reloadGraph() }  },
+    currentTimetable: { handler() { this.reloadGraph() } },
+  },
+
   methods: {
     setContainer(container) {
       this.container = container;
@@ -56,17 +69,9 @@ export default {
       this.componentState = componentState;
     },
 
-    changeInfrastructure(newInfrastructure) {
-      const currentTimetable = window.timetableManager.get();
-      if (currentTimetable) {
-        this._d3Graph.createGraph(newInfrastructure, currentTimetable);
-      }
-    },
-
-    changeTimetable(newTimetable) {
-      const currentInfrastructure = window.infrastructureManager.get();
-      if (currentInfrastructure) {
-        this._d3Graph.createGraph(currentInfrastructure, newTimetable);
+    reloadGraph() {
+      if (this.currentTimetable && this.currentInfrastructure) {
+        this._d3Graph.createGraph(this.currentInfrastructure, this.currentTimetable);
       }
     },
 

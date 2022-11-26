@@ -4,7 +4,6 @@
 //   saveFileToIDBFS,
 //   timetableFileExists
 // } from "../utl/IDBFSHelper.js";
-import { getComponents, getTimetableComponents } from "../util/goldenLayoutHelper.js";
 import {InfrastructureNameSpace} from "./infrastructure-store.js";
 
 // import { Module } from "../soro-client.js";
@@ -43,16 +42,31 @@ export const TimetableStore = {
     namespaced: true,
 
     state() {
-        return { currentTimetable: null }
+        return {
+            timetables: [],
+            currentTimetable: null,
+        }
     },
 
     mutations: {
+        setTimetables(state, timetables) {
+            state.timetables = timetables;
+        },
+
         setCurrentTimetable(state, currentTimetable) {
             state.currentTimetable = currentTimetable;
         },
     },
 
     actions: {
+        initialLoad({ commit }) {
+            fetch(window.origin + '/timetable/')
+                .then(response => response.json())
+                .then(dir => {
+                    commit('setTimetables', dir.dirs);
+                });
+        },
+
         load({ commit, rootState }, timetableFilename) {
             const currentInfrastructure = rootState[`${InfrastructureNameSpace}/currentInfrastructure`];
             if (!currentInfrastructure) {
