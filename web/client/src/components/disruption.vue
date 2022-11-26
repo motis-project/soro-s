@@ -1,5 +1,17 @@
-import { getFileContents } from "../../util/getFileContents.js";
-import { iterate } from "../../util/iterate.js";
+<template>
+  <div id="disruptionDetail" class="disruption-detail hidden">
+    Disruption:
+    <div id="trainMaxSpeeds" ref="trainMaxSpeeds">
+      Maximum Speeds [km/h]
+      <br>
+    </div>
+  </div>
+</template>
+
+<script>
+import { iterate } from "../util/iterate.js";
+import { mapState } from 'vuex';
+import { TimetableNamespace } from "../stores/timetable-store.js";
 
 function createInputField(name, maxSpeedsDiv) {
   let input = document.createElement('input');
@@ -9,7 +21,7 @@ function createInputField(name, maxSpeedsDiv) {
   input.value = disruptionMap.get(name);
 
   input.addEventListener('input',
-    e => disruptionMap.set(e.target.name, e.target.value));
+      e => disruptionMap.set(e.target.name, e.target.value));
 
   let label = document.createElement('label');
   label.htmlFor = input.id;
@@ -48,12 +60,39 @@ function fillDisruptionDetail(currentTimetable, maxSpeedsDiv) {
   maxSpeedsDiv.appendChild(distsLabel);
 }
 
-export function showDisruptionDetail(currentTimetable) {
-  getFileContents("./components/disruption/disruption.html")
-    .then(html => {
-      document.getElementById('subOverlayContent').innerHTML = html;
+export default {
+  name: "disruption",
 
-      let maxSpeeds = document.getElementById('trainMaxSpeeds');
-      fillDisruptionDetail(currentTimetable, maxSpeeds);
-    });
+  computed: mapState(TimetableNamespace, ['currentTimetable']),
+
+  methods: {
+    showDetail() {
+      fillDisruptionDetail(this.currentTimetable, this.$refs.trainMaxSpeeds);
+    },
+  },
 }
+</script>
+
+<style scoped>
+.disruption-detail {
+  margin-top: 10px;
+
+  background: transparent;
+  color: #777;
+  width: 100%;
+  height: 100%;
+  box-shadow: 3px 3px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.2s ease;
+  flex-direction: column;
+  visibility: visible;
+}
+
+.disruption-detail.hidden {
+  left: calc(0px - calc(var(--overlay-width) + var(--overlay-padding-left)));
+}
+</style>

@@ -49,6 +49,7 @@
         </div>
         <div class="sub-overlay hidden" id="subOverlay">
           <div class="sub-overlay-content" id="subOverlayContent">
+            <disruption />
           </div>
           <div class="sub-overlay-close" id="subOverlayClose">
             <i class="material-icons">close</i>
@@ -82,6 +83,7 @@
   // TODO make this TS
   // import { Module, FS, IDBFS } from "./soro-client.js";
   import glayout from './golden-layout/glayout.vue';
+  import Disruption from "./components/disruption.vue";
 
   // import {
   //   saveToPersistent,
@@ -129,7 +131,6 @@
 
 <script>
 import { getSimulationComponent } from "./util/goldenLayoutHelper.js";
-import { showDisruptionDetail } from "./components/disruption/disruption.js";
 
 const initLayout = {
   root: {
