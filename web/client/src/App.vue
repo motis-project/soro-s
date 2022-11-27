@@ -123,11 +123,6 @@ const initLayout = {
 						type: 'component',
 						componentType: 'InfrastructureComponent',
 					},
-					{
-						title: 'Simulation',
-						type: 'component',
-						componentType: 'SimulationComponent',
-					},
 				]
 			}
 		]
