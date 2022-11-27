@@ -9,7 +9,7 @@
         :key="option"
         :value="option"
         :selected="option === selectedOption"
-        :label="option"
+        :label="option ?? ''"
       >
         {{ option }}
       </option>
@@ -39,13 +39,15 @@ export default {
   data() {
     return {
       extendedOptions: [],
-      selectedOption: "",
+      selectedOption: null,
     }
   },
 
-  created() {
-    this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..');
-    this.extendedOptions.push("");
-  }
+  watch: {
+    options() {
+      this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..');
+      this.extendedOptions.push(null);
+    }
+  },
 }
 </script>

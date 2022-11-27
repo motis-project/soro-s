@@ -15,8 +15,16 @@
             </button>
           </div>
           <div class="data-selects">
-            <soro-select label="Select Infrastructure" @change="loadInfrastructure" />
-            <soro-select label="Select Timetable" @change="loadTimetable" />
+            <soro-select
+                label="Select Infrastructure"
+                :options="infrastructures"
+                @change="loadInfrastructure"
+            />
+            <soro-select
+                label="Select Timetable"
+                :options="timetables"
+                @change="loadTimetable"
+            />
           </div>
           <div class="dev-tools">
             <button class="matter-button-contained window-button" @click="deleteAllFiles">Clear Cache</button>
@@ -97,7 +105,7 @@
 </script>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import {InfrastructureNameSpace} from "./stores/infrastructure-store.js";
 import {TimetableNamespace} from "./stores/timetable-store.js";
 
@@ -154,7 +162,10 @@ export default {
 
     subOverlayClasses() {
       return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`
-    }
+    },
+
+    ...mapState(InfrastructureNameSpace, ['infrastructures']),
+    ...mapState(TimetableNamespace, ['timetables']),
   },
 
   methods: {
