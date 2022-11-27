@@ -39,10 +39,21 @@ struct serializable {
   }
 
   serializable(serializable const&) = delete;
-  auto& operator=(serializable const&) = delete;
+  serializable& operator=(serializable const&) = delete;
 
-  serializable(serializable&&) = delete;
-  auto& operator=(serializable&&) = delete;
+  void move(serializable&& o) noexcept {
+    this->mem_ = std::move(o.mem_);
+    this->access_ = std::addressof(this->mem_.template as<T>());
+  }
+
+  serializable(serializable&& o) noexcept {
+    this->move(std::forward<serializable>(o));
+  }
+
+  serializable& operator=(serializable&& o) noexcept {
+    this->move(std::forward<serializable>(o));
+    return *this;
+  }
 
   ~serializable() = default;
 
@@ -51,7 +62,7 @@ struct serializable {
 
 protected:
   cista::variant<cista::buf<cista::mmap>, T> mem_{T{}};
-  T* access_{std::addressof(mem_.template as<T>())};
+  T const* access_{std::addressof(mem_.template as<T>())};
 };
 
 }  // namespace soro::utls

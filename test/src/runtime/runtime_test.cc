@@ -17,11 +17,11 @@ using namespace soro::infra;
 using namespace soro::runtime;
 
 void check_halt_count(train const& train, timestamps const& ts) {
-  auto const halt_count = std::count_if(
+  std::size_t const halt_count = std::count_if(
       std::cbegin(ts.times_), std::cend(ts.times_),
       [](auto&& stamp) { return stamp.element_->is(type::HALT); });
 
-  CHECK_MESSAGE(train.total_halts() == halt_count,
+  CHECK_MESSAGE((train.total_halts() == halt_count),
                 "There should be as many halt events in the timestamps as "
                 "there are halts in the train run.");
 }
@@ -31,19 +31,20 @@ void check_ascending_timestamps(timestamps const& ts) {
   for (size_t idx = 1; idx < ts.times_.size(); ++idx) {
     auto const& time_stamp = ts.times_[idx];
 
-    CHECK_MESSAGE(time_stamp.arrival_ <= time_stamp.departure_,
+    CHECK_MESSAGE((time_stamp.arrival_ <= time_stamp.departure_),
                   "Arrival must happen before/same time as departure!");
 
-    CHECK_MESSAGE(time_stamp.arrival_ > 0, "No negative timestamps allowed!");
-    CHECK_MESSAGE(time_stamp.departure_ > 0, "No negative timestamps allowed!");
+    CHECK_MESSAGE((time_stamp.arrival_ > 0), "No negative timestamps allowed!");
+    CHECK_MESSAGE((time_stamp.departure_ > 0),
+                  "No negative timestamps allowed!");
 
     if (valid(last_time_stamp.arrival_)) {
-      CHECK_MESSAGE(last_time_stamp.arrival_ <= time_stamp.arrival_,
+      CHECK_MESSAGE((last_time_stamp.arrival_ <= time_stamp.arrival_),
                     "Non increasing time stamps!");
     }
 
     if (valid(time_stamp.departure_)) {
-      CHECK_MESSAGE(last_time_stamp.departure_ <= time_stamp.departure_,
+      CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.departure_),
                     "Non increasing time stamps!");
     }
 
@@ -106,7 +107,11 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts,
   }
 
   size_t ts_idx = 0;
-  for (auto const& rich_node : tr.iterate(skip_omitted::ON, infra)) {
+  for (auto const& rich_node : tr.iterate(infra)) {
+    if (rich_node.omitted_) {
+      continue;
+    }
+
     if (!event_types.contains(rich_node.node_->type())) {
       continue;
     }
@@ -121,7 +126,7 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts,
     ++ts_idx;
   }
 
-  CHECK_MESSAGE(ts_idx == ts.times_.size(), "Did not check every timestamp");
+  CHECK_MESSAGE((ts_idx == ts.times_.size()), "Did not check every timestamp");
 }
 
 void check_runtime_with_events(infrastructure const& infra, timetable const& tt,
@@ -148,8 +153,8 @@ void check_runtime(infrastructure const& infra, timetable const& tt) {
 
 TEST_SUITE("overtake runtime") {
   TEST_CASE("overtake") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(OVERTAKE_OPTS, infra);
+    infrastructure const infra(soro::test::SMALL_OPTS);
+    timetable const tt(soro::test::OVERTAKE_OPTS, infra);
     check_runtime(infra, tt);
     check_delays(infra, tt);
   }
@@ -157,8 +162,8 @@ TEST_SUITE("overtake runtime") {
 
 TEST_SUITE("follow runtime") {
   TEST_CASE("follow") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(FOLLOW_OPTS, infra);
+    infrastructure const infra(soro::test::SMALL_OPTS);
+    timetable const tt(soro::test::FOLLOW_OPTS, infra);
     check_runtime(infra, tt);
     check_delays(infra, tt);
   }

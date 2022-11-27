@@ -7,7 +7,7 @@
 #include "utl/logging.h"
 
 #include "soro/base/soro_types.h"
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 
 EMSCRIPTEN_BINDINGS(cista) {
   emscripten::class_<soro::data::generic_string>("soro::data::generic_string");

@@ -11,7 +11,7 @@
 #include "soro/utls/coroutine/collect.h"
 #include "soro/utls/coroutine/coro_map.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 
 namespace soro::infra {
@@ -597,7 +597,7 @@ auto get_station_route_exclusions(
   return exclusions;
 }
 
-auto get_sorted_station_route_nodes(base_infrastructure const& infra) {
+auto get_sorted_station_route_nodes(infrastructure_t const& infra) {
   utl::scoped_timer const sorted_timer("Creating sorted station route nodes");
   return soro::to_vec(infra.station_routes_, [](auto&& station_route) {
     std::vector<node::id> node_ids =
@@ -609,7 +609,7 @@ auto get_sorted_station_route_nodes(base_infrastructure const& infra) {
 }
 
 std::vector<std::vector<station_route::id>> get_station_route_exclusions(
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   utl::manual_timer const sr_timer("Determining Station Route Exclusions");
 
   std::vector<std::vector<node::id>> const sorted_station_routes =
@@ -651,7 +651,7 @@ std::vector<std::vector<station_route::id>> get_station_route_exclusions(
 auto generate_ir_exclusions_from_sr_exclusions(
     interlocking_route const& ir, interlocking_subsystem const& irs,
     std::vector<std::vector<station_route::id>> const& sr_exclusions,
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
 
   if (ir.id_ % 10'000 == 0) {
     std::cout << "Genearting route exclusions: " << ir.id_ << std::endl;
@@ -700,10 +700,10 @@ auto generate_ir_exclusions_from_sr_exclusions(
         std::vector<node::id> candidate_nodes;
         if (conflict_in_first) {
           candidate_nodes = utls::collect<std::vector<node::id>>(
-              candidate.first_sr_nodes(skip_omitted::OFF, infra));
+              candidate.first_sr_nodes(infra));
         } else {
           candidate_nodes = utls::collect<std::vector<node::id>>(
-              candidate.last_sr_nodes(skip_omitted::OFF, infra));
+              candidate.last_sr_nodes(infra));
         }
         utls::sort(candidate_nodes);
 
@@ -714,12 +714,12 @@ auto generate_ir_exclusions_from_sr_exclusions(
     }
   };
 
-  auto first_sr_nodes = utls::collect<std::vector<node::id>>(
-      ir.first_sr_nodes(skip_omitted::OFF, infra));
+  auto first_sr_nodes =
+      utls::collect<std::vector<node::id>>(ir.first_sr_nodes(infra));
   utls::sort(first_sr_nodes);
 
-  auto last_sr_nodes = utls::collect<std::vector<node::id>>(
-      ir.last_sr_nodes(skip_omitted::OFF, infra));
+  auto last_sr_nodes =
+      utls::collect<std::vector<node::id>>(ir.last_sr_nodes(infra));
   utls::sort(last_sr_nodes);
 
   x(ir.first_sr_id(), first_sr_nodes);
@@ -776,7 +776,7 @@ soro::vector<soro::vector<interlocking_route::id>>
 get_interlocking_route_exclusions(
     interlocking_subsystem const& irs,
     std::vector<std::vector<station_route::id>> const& sr_exclusions,
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   utl::scoped_timer const timer("Determining Interlocking Route Exclusions");
   return soro::to_vec(irs.interlocking_routes_, [&](auto&& ir) {
     return generate_ir_exclusions_from_sr_exclusions(ir, irs, sr_exclusions,
@@ -801,7 +801,7 @@ void print_vecvec_stats(VecVec const& vecvec) {
 
 soro::vector<soro::vector<interlocking_route::id>>
 get_interlocking_route_exclusions(interlocking_subsystem const& irs,
-                                  base_infrastructure const& infra) {
+                                  infrastructure_t const& infra) {
   utl::scoped_timer const timer("Calculating interlocking route exclusions");
 
   std::size_t max_station_route_station = 0;

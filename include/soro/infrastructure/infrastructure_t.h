@@ -18,7 +18,9 @@ struct default_values {
   si::speed stationary_speed_limit_{si::INVALID<si::speed>};
 };
 
-struct base_infrastructure {
+struct infrastructure_t {
+  using ptr = soro::ptr<infrastructure_t>;
+
   graph graph_;
 
   default_values defaults_;
@@ -43,6 +45,8 @@ struct base_infrastructure {
   soro::vector<soro::unique_ptr<station>> station_store_;
   soro::vector<soro::unique_ptr<station_route>> station_route_store_;
   soro::vector<soro::unique_ptr<station_route::path>> station_route_path_store_;
+
+  soro::string source_{};
 };
 
 }  // namespace soro::infra

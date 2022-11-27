@@ -288,7 +288,7 @@ struct deduplicated_paths {
   soro::vector<station_route::path::ptr> station_route_id_to_path_id_;
 };
 
-deduplicated_paths get_station_route_paths(base_infrastructure const& infra,
+deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
                                            construction_materials const& mats) {
   utl::scoped_timer timer("Deduplicating Paths");
 
@@ -410,9 +410,9 @@ deduplicated_paths get_station_route_paths(base_infrastructure const& infra,
   return result;
 }
 
-void calculate_station_routes(base_infrastructure& infra,
+void calculate_station_routes(infrastructure_t& infra,
                               construction_materials const& mats) {
-  utl::scoped_timer calc_timer("Calculating Station Routes");
+  utl::scoped_timer const calc_timer("Calculating Station Routes");
 
   auto deduplicated_paths = get_station_route_paths(infra, mats);
   infra.station_route_path_store_ = std::move(deduplicated_paths.path_store_);
@@ -570,7 +570,7 @@ void calculate_station_routes(base_infrastructure& infra,
 }
 
 soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
-                                            base_infrastructure& iss,
+                                            infrastructure_t& iss,
                                             construction_materials& mats,
                                             station::id const id) {
   auto station = soro::make_unique<struct station>();
@@ -600,7 +600,7 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
   return station;
 }
 
-void complete_borders(base_infrastructure& iss) {
+void complete_borders(infrastructure_t& iss) {
   sassert(!iss.station_store_.empty(), "Requires station already constructed");
   sassert(!iss.ds100_to_station_.empty(), "Requires DS100 to station mapping");
 
@@ -687,7 +687,7 @@ void complete_borders(base_infrastructure& iss) {
   }
 }
 
-auto get_element_to_station_map(base_infrastructure const& iss) {
+auto get_element_to_station_map(infrastructure_t const& iss) {
   soro::map<element_id, station::ptr> element_to_station;
 
   for (auto const& station : iss.stations_) {
@@ -707,7 +707,7 @@ soro::map<soro::string, station::ptr> get_ds100_to_station(
          utl::emplace<soro::map<string, station::ptr>>();
 }
 
-void log_stats(base_infrastructure const& iss) {
+void log_stats(infrastructure_t const& iss) {
   uLOG(info) << "Parsed ISS with " << iss.stations_.size() << " stations.";
   uLOG(info) << "Parsed ISS with " << iss.graph_.elements_.size()
              << " elements and " << iss.graph_.nodes_.size() << " nodes.";
@@ -828,7 +828,7 @@ std::pair<default_values, rs::rolling_stock> parse_core_data(
   return {dv, rs};
 }
 
-void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
+void parse_xml_into_iss(std::string const& iss_xml, infrastructure_t& iss,
                         construction_materials& mats) {
   xml_document d;
   auto success = d.load_buffer(reinterpret_cast<void const*>(iss_xml.data()),
@@ -846,11 +846,11 @@ void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
   }
 }
 
-std::pair<base_infrastructure, construction_materials> parse_iss(
+std::pair<infrastructure_t, construction_materials> parse_iss(
     std::vector<utls::loaded_file> const& rail_plan_files) {
   utl::scoped_timer const station_timer("Parsing ISS Stations");
 
-  std::pair<base_infrastructure, construction_materials> result;
+  std::pair<infrastructure_t, construction_materials> result;
   auto& iss = result.first;
   auto& mats = result.second;
 
@@ -863,7 +863,7 @@ std::pair<base_infrastructure, construction_materials> parse_iss(
 }
 
 auto get_layouted_positions(
-    base_infrastructure const& iss, iss_files const& iss_files,
+    infrastructure_t const& iss, iss_files const& iss_files,
     soro::vector<gps> const& station_positions,
     soro::map<rail_plan_node_id, element_id> const& rp_id_to_element_id) {
   auto const layout = layout::get_layout(
@@ -874,7 +874,7 @@ auto get_layouted_positions(
 }
 
 soro::vector<soro::string> get_full_station_names(
-    base_infrastructure const& base_infra,
+    infrastructure_t const& base_infra,
     regulatory_station_data const& regulatory_data) {
   return soro::to_vec(base_infra.stations_, [&](station::ptr s) {
     auto const it = regulatory_data.ds100_to_full_name_.find(s->ds100_);
@@ -883,7 +883,7 @@ soro::vector<soro::string> get_full_station_names(
   });
 }
 
-base_infrastructure parse_iss(infrastructure_options const& options) {
+infrastructure_t parse_iss(infrastructure_options const& options) {
   utl::scoped_timer const parse_timer("Parsing ISS");
   auto const iss_files = get_iss_files(options.infrastructure_path_);
 
@@ -924,6 +924,8 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   }
 
   log_stats(iss);
+
+  iss.source_ = options.infrastructure_path_.string();
 
   return std::move(iss);
 }

@@ -24,10 +24,11 @@ struct optional {
 
   constexpr optional() noexcept = default;
   constexpr explicit optional(T const val) noexcept : val_{val} {}
-  constexpr optional(optional const& other) = default;
-  constexpr optional(optional&& other) noexcept = default;
 
+  constexpr optional(optional const& other) = default;
   constexpr optional& operator=(optional const&) = default;
+
+  constexpr optional(optional&& other) noexcept = default;
   constexpr optional& operator=(optional&&) noexcept = default;
 
   constexpr ~optional() = default;

@@ -8,7 +8,7 @@
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/string.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 
 namespace soro::layout {
 

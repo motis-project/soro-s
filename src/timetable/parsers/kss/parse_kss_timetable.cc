@@ -279,24 +279,54 @@ enum class failure_reason : uint8_t {
   worked_on_train,
   failed_getting_station_route_path,
   failed_getting_interlocking_route_path,
+  first_stop_is_no_halt_and_train_is_not_breaking_in,
+  first_stop_is_halt_and_first_sr_has_no_halt
 };
 
 static std::map<failure_reason, std::size_t> failures = {  // NOLINT
     {failure_reason::worked_on_train, 0},
     {failure_reason::failed_getting_station_route_path, 0},
-    {failure_reason::failed_getting_interlocking_route_path, 0}};
+    {failure_reason::failed_getting_interlocking_route_path, 0},
+    {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in, 0},
+    {failure_reason::first_stop_is_halt_and_first_sr_has_no_halt, 0}
+
+};
 
 static std::map<failure_reason, std::string> failure_text = {  // NOLINT
     {failure_reason::worked_on_train, "Skipped worked on trains: "},
     {failure_reason::failed_getting_station_route_path,
      "Failed getting station route path for trains: "},
     {failure_reason::failed_getting_interlocking_route_path,
-     "Failed generating interlocking route path: "}};
+     "Failed generating interlocking route path: "},
+    {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in,
+     "First stop is not a halt, but train is not breaking in: "},
+    {failure_reason::first_stop_is_halt_and_first_sr_has_no_halt,
+     "First stop is halt, but first station route has no halt: "}
+
+};
 
 void print_failures() {
   for (auto const& [reason, count] : failures) {
     uLOG(utl::warn) << failure_text[reason] << count;
   }
+}
+
+bool ignore_for_now(train::ptr const train, infrastructure const& infra) {
+
+  if (!train->stops.front().is_halt() && !train->break_in_) {
+    ++failures
+        [failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in];
+    return true;
+  }
+
+  auto const first_halt =
+      train->first_station_route(infra)->get_halt_node(train->freight_);
+  if (train->stops.front().is_halt() && !first_halt.has_value()) {
+    ++failures[failure_reason::first_stop_is_halt_and_first_sr_has_no_halt];
+    return true;
+  }
+
+  return false;
 }
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
@@ -307,8 +337,6 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
   std::size_t total_trains = 0;
   std::size_t total_train_runs = 0;
-
-  //  std::set<std::pair<uint32_t, uint32_t>> train_numbers;
 
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
     auto const loaded_file = utls::load_file(dir_entry.path());
@@ -335,11 +363,6 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
         continue;
       }
 
-      //      std::integral auto const id =
-      //          parse_int<train::id>(train_xml.attribute("trainID").value());
-      //      std::cout << "id: " << id << '\n';
-
-      //    auto const entries_xml = train_xml.child("timetableentries");
       for (auto const construction_train_xml :
            train_xml.child("fineConstruction").children("constructionTrain")) {
         ++total_train_runs;
@@ -365,6 +388,10 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
         if (t->path_.empty()) {
           ++failures[failure_reason::failed_getting_interlocking_route_path];
+          continue;
+        }
+
+        if (ignore_for_now(t.get(), infra)) {
           continue;
         }
 

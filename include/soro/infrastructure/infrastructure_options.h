@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cista/reflection/comparable.h"
+
 #include <filesystem>
 
 namespace soro::infra {
@@ -12,6 +14,8 @@ namespace soro::infra {
 //   - ISS 'example/', a folder which contains an 'Index.xml'
 
 struct infrastructure_options {
+  CISTA_COMPARABLE();
+
   bool determine_interlocking_{true};
   bool determine_conflicts_{false};
   bool determine_layout_{false};

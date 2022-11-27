@@ -74,9 +74,11 @@ struct train {
 
   infra::station_route::ptr first_station_route(
       infra::infrastructure const&) const;
+  infra::interlocking_route const& first_interlocking_route(
+      infra::infrastructure const&) const;
 
   utls::recursive_generator<infra::route_node> iterate(
-      infra::skip_omitted skip, infra::infrastructure const& infra) const;
+      infra::infrastructure const& infra) const;
 
   bool has_event_in_interval(utls::unixtime start, utls::unixtime end) const;
 
@@ -92,6 +94,8 @@ struct train {
   bitfield bitfield_;
   soro::vector<stop> stops;
   soro::vector<stop_time> stop_times_;
+
+  si::length length_{si::INVALID<si::length>};
 
   bool break_in_;
   bool break_out_;

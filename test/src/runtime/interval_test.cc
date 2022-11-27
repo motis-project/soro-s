@@ -22,24 +22,24 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
         get_interval_list(*train, event_types, border_types, infra);
 
     CHECK_MESSAGE(
-        intervals.back().distance_ == train->path_length(infra),
+        (intervals.back().distance_ == train->path_length(infra)),
         "Last interval length should be the same length as total train"
         "path length");
 
     length last_distance = intervals.front().distance_;
     for (auto const& interval : intervals) {
-      CHECK_MESSAGE(interval.speed_limit_ != ZERO<speed>,
+      CHECK_MESSAGE((interval.speed_limit_ != ZERO<speed>),
                     "Found interval with speed limit 0!");
       CHECK_MESSAGE(valid(interval.speed_limit_),
                     "Found interval with invalid speed limit!");
 
-      CHECK_MESSAGE(last_distance <= interval.distance_,
+      CHECK_MESSAGE((last_distance <= interval.distance_),
                     "Found non increasing distance");
 
       for (auto const& e : interval.events_) {
-        CHECK_MESSAGE(e.distance_ <= interval.distance_,
+        CHECK_MESSAGE((e.distance_ <= interval.distance_),
                       "Event distance is larger than interval distance!");
-        CHECK_MESSAGE(e.distance_ >= last_distance,
+        CHECK_MESSAGE((e.distance_ >= last_distance),
                       "Event distance smaller than last distance!");
         last_distance = e.distance_;
       }
@@ -55,7 +55,11 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
       intervals_count.insert(std::pair(type, 0));
     }
 
-    for (auto const& rn : train->iterate(skip_omitted::ON, infra)) {
+    for (auto const& rn : train->iterate(infra)) {
+      if (rn.omitted_) {
+        continue;
+      }
+
       auto const it = total_path_count.find(rn.node_->element_->type());
       if (it != std::cend(total_path_count)) {
         total_path_count[rn.node_->element_->type()] += 1;
@@ -72,7 +76,7 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
     }
 
     for (auto const& type : event_types) {
-      CHECK_MESSAGE(intervals_count[type] == total_path_count[type],
+      CHECK_MESSAGE((intervals_count[type] == total_path_count[type]),
                     "Event type count in intervals must be equal "
                     "than total path events!");
     }
@@ -81,8 +85,14 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
 
 TEST_SUITE("interval") {
   TEST_CASE("interval case") {
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(FOLLOW_OPTS, infra);
+    infrastructure const infra(soro::test::SMALL_OPTS);
+    timetable const tt(soro::test::FOLLOW_OPTS, infra);
+    check_interval_list(infra, tt);
+  }
+
+  TEST_CASE("kssinterval") {
+    infrastructure const infra(soro::test::DE_ISS_OPTS);
+    timetable const tt(soro::test::DE_KSS_OPTS, infra);
     check_interval_list(infra, tt);
   }
 }

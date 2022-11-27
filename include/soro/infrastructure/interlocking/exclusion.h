@@ -41,15 +41,15 @@ std::vector<std::vector<exclusion_path::id>> get_exclusion_path_exclusions(
 
 soro::vector<soro::vector<interlocking_route::id>>
 get_interlocking_route_exclusions(interlocking_subsystem const& irs,
-                                  base_infrastructure const& iss);
+                                  infrastructure_t const& iss);
 
-soro::vector<element_ptr> get_exclusion_elements(
-    interlocking_route const& ssr, base_infrastructure const& iss);
+soro::vector<element_ptr> get_exclusion_elements(interlocking_route const& ssr,
+                                                 infrastructure_t const& iss);
 
 namespace detail {
 
 std::vector<std::vector<station_route::id>> get_station_route_exclusions(
-    base_infrastructure const& infra);
+    infrastructure_t const& infra);
 
 }  // namespace detail
 

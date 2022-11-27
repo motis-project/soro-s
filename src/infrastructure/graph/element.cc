@@ -2,6 +2,7 @@
 
 #include "utl/overloaded.h"
 
+#include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
 #include "soro/infrastructure/graph/node.h"
@@ -18,6 +19,10 @@ element_id element::id() const {
 
 bool element::rising() const {
   return this->e_.apply([](auto&& e) { return e.rising_; });
+}
+
+bool element::falling() const {
+  return !this->e_.apply([](auto&& e) { return e.rising_; });
 }
 
 enum type element::type() const {
@@ -52,6 +57,10 @@ bool element::is_switch() const {
 kilometrage get_km(end_element const& e, element_ptr) { return e.km_; }
 
 kilometrage get_km(simple_element const& e, element_ptr neigh) {
+  utls::sassert(utls::contains(e.neighbours_, neigh),
+                "Neigh {} not contained in neighbours for element {}.",
+                neigh->id(), e.id_);
+
   if (neigh == e.start_falling_neighbour() ||
       neigh == e.start_rising_neighbour()) {
     return e.start_km_;
@@ -61,6 +70,10 @@ kilometrage get_km(simple_element const& e, element_ptr neigh) {
 }
 
 kilometrage get_km(simple_switch const& e, element_ptr neigh) {
+  utls::sassert(utls::contains(e.neighbours_, neigh),
+                "Neigh {} not contained in neighbours for element {}.",
+                neigh->id(), e.id_);
+
   if (neigh == e.rising_start_neighbour() ||
       neigh == e.falling_start_neighbour()) {
     return e.start_km_;
@@ -79,6 +92,10 @@ kilometrage get_km(undirected_track_element const& e, element_ptr) {
 }
 
 kilometrage get_km(cross const& e, element_ptr neigh) {
+  utls::sassert(utls::contains(e.neighbours_, neigh),
+                "Neigh {} not contained in neighbours for element {}.",
+                neigh->id(), e.id_);
+
   if (neigh == e.rising_start_left() || neigh == e.falling_start_left()) {
     return e.start_left_km_;
   } else if (neigh == e.rising_end_left() || neigh == e.falling_end_left()) {
@@ -91,7 +108,7 @@ kilometrage get_km(cross const& e, element_ptr neigh) {
   }
 }
 
-kilometrage element::get_km(element_ptr neigh) const {
+kilometrage element::get_km(element_ptr const neigh) const {
   return this->apply([&](auto&& x) { return infra::get_km(x, neigh); });
 }
 

@@ -21,8 +21,7 @@ bool train::ctc() const { return ctc_ == rs::CTC::YES; }
 
 si::length train::path_length(infrastructure const& infra) const {
   return get_path_length_from_elements(
-      utls::coro_map(this->iterate(skip_omitted::OFF, infra),
-                     [](auto&& rn) { return rn.node_; }));
+      utls::coro_map(this->iterate(infra), [](auto&& rn) { return rn.node_; }));
 }
 
 utls::unixtime train::first_departure() const {
@@ -37,35 +36,43 @@ std::size_t train::total_halts() const {
   return utls::count_if(stop_times_, [](auto&& st) { return st.is_halt(); });
 }
 
-infra::node::ptr train::get_start_node() const {
+node::ptr train::get_start_node() const {
   utls::sassert(false, "Not implemented");
   return nullptr;
   //  return path_.front()->get_halt(freight_);
 }
 
-infra::node::ptr train::get_end_node() const {
+node::ptr train::get_end_node() const {
   utls::sassert(false, "Not implemented");
   return nullptr;
   //  return path_.back()->get_halt(freight_);
 }
 
-infra::station_route::ptr train::first_station_route(
-    infra::infrastructure const& infra) const {
+station_route::ptr train::first_station_route(
+    infrastructure const& infra) const {
   return infra->interlocking_.interlocking_routes_[this->path_.front()]
       .first_sr(infra);
 }
 
-utls::recursive_generator<infra::route_node> train::iterate(
-    skip_omitted const, infrastructure const&) const {
+interlocking_route const& train::first_interlocking_route(
+    infrastructure const& infra) const {
+  return infra->interlocking_.interlocking_routes_[this->path_.front()];
+}
+
+utls::recursive_generator<route_node> train::iterate(
+    infrastructure const&) const {
   utls::sassert(false, "Not implemented");
+
   route_node rn;
   co_yield rn;
 
   //  if (break_in_) {
-  //    co_yield path_.front()->iterate(skip, infra);
+  //    this->first_interlocking_route(infra).from
+  //    co_yield
+  //    infra->interlocking_.interlocking_routes_path_.front()->iterate(skip,
+  //    infra);
   //  } else {
   //    co_yield path_.front()->from
-  //
   //  }
   //
   //  if (break_in_ || !stops.front().is_halt()) {
@@ -73,7 +80,6 @@ utls::recursive_generator<infra::route_node> train::iterate(
   //  } else {
   //    co_yield path_.front()->f
   //  }
-  //
   //
   //  for (auto path_idx = 1U; path_idx < path_.size() - 1; ++path_idx) {
   //    co_yield path_[path_idx]->iterate(skip, infra);

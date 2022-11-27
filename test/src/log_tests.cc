@@ -17,8 +17,6 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace utl;
 
-TEST_SUITE_BEGIN("log_test_suite");  // NOLINT
-
 void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
   soro::map<soro::size_type, soro::size_type> ms_count_to_sr_count;
 
@@ -121,8 +119,7 @@ void logs(infrastructure const& infra) {
 }
 
 TEST_CASE("log infrastructure stats") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  logs(infra);
+  for (auto const& infra : soro::test::get_infrastructure_scenarios()) {
+    logs(infra);
+  }
 }
-
-TEST_SUITE_END();  // NOLINT

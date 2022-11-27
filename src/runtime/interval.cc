@@ -143,7 +143,7 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
   length current_distance = ZERO<length>;
 
   element_ptr prev_element = tr.get_start_node()->element_;
-  for (auto const& rn : tr.iterate(skip_omitted::OFF, infra)) {
+  for (auto const& rn : tr.iterate(infra)) {
     current_distance += rn.node_->element_->get_distance(prev_element);
     prev_element = rn.node_->element_;
 

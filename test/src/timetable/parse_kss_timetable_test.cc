@@ -267,11 +267,10 @@ void same_path_station_routes(infrastructure const& infra) {
   std::cout << "same paths: " << (same_path_count / 2) << std::endl;
 }
 
-TEST_SUITE("parse de_kss" *
-           doctest::skip(!std::filesystem::exists(DE_KSS_FOLDER))) {
+TEST_SUITE("parse de_kss" * doctest::skip()) {
 
   TEST_CASE("parse de_kss") {
-    auto opts = DE_ISS_OPTS;
+    auto opts = soro::test::DE_ISS_OPTS;
     opts.determine_interlocking_ = false;
     opts.determine_conflicts_ = false;
     infrastructure const infra(opts);

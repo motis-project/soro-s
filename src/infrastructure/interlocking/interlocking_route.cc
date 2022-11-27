@@ -25,6 +25,22 @@ std::vector<element_ptr> interlocking_route::elements(
   return elements;
 }
 
+node::idx interlocking_route::size(infrastructure const& infra) const {
+  node::idx result = 0;
+
+  if (this->station_routes_.size() == 1) {
+    return this->end_offset_ - this->start_offset_;
+  }
+
+  for (auto const sr : this->station_routes_) {
+    result += infra->station_routes_[sr]->size();
+  }
+
+  result = result - this->start_offset_ - this->end_offset_ + 1;
+
+  return result;
+}
+
 station_route::id interlocking_route::first_sr_id() const {
   return this->station_routes_.front();
 }
@@ -97,42 +113,57 @@ bool interlocking_route::operator==(interlocking_route const& o) const {
 }
 
 utls::recursive_generator<node::id const> interlocking_route::first_sr_nodes(
-    skip_omitted const skip, base_infrastructure const& infra) const {
+    infrastructure_t const& infra) const {
   auto const first_sr = infra.station_routes_[this->first_sr_id()];
-  for (auto rn : first_sr->from(this->start_offset_, skip)) {
+  for (auto rn : first_sr->from(this->start_offset_)) {
     co_yield rn.node_->id_;
   }
 }
 
 utls::recursive_generator<node::id const> interlocking_route::last_sr_nodes(
-    skip_omitted const skip, base_infrastructure const& infra) const {
+    infrastructure_t const& infra) const {
   auto const last_sr = infra.station_routes_[this->last_sr_id()];
-  for (auto rn : last_sr->to(this->end_offset_, skip)) {
+  for (auto rn : last_sr->to(this->end_offset_)) {
     co_yield rn.node_->id_;
   }
 }
 
-// utls::recursive_generator<route_node> interlocking_route::from_to(
-//     node::idx const from, node::idx const to, skip_omitted,
-//     infrastructure const&) const {}
+utls::recursive_generator<route_node> interlocking_route::from_to(
+    node::idx const from, node::idx const to,
+    infrastructure const& infra) const {
+
+  if (this->station_routes_.size() == 1) {
+    co_yield first_sr(infra)->from_to(start_offset_ + from, end_offset_ - to);
+
+  } else {
+
+    co_yield first_sr(infra)->from(start_offset_ + from);
+
+    for (auto i = 1U; i < station_routes_.size() - 1; ++i) {
+      co_yield this->sr(static_cast<sr_offset>(i), infra)->iterate();
+    }
+
+    co_yield last_sr(infra)->to(end_offset_ - to);
+  }
+}
+
 // utls::recursive_generator<route_node> interlocking_route::to(
 //     node::idx, skip_omitted, infrastructure const&) const {}
+//
 // utls::recursive_generator<route_node> interlocking_route::from(
 //     node::idx, skip_omitted, infrastructure const&) const {}
 
 utls::recursive_generator<route_node> interlocking_route::iterate(
-    skip_omitted const skip_omitted, infrastructure const& infra) const {
-  co_yield first_sr(infra)->from(start_offset_, skip_omitted);
-
-  for (auto i = 1U; i < station_routes_.size() - 1; ++i) {
-    co_yield this->sr(static_cast<sr_offset>(i), infra)->iterate(skip_omitted);
-  }
-
-  co_yield last_sr(infra)->to(end_offset_, skip_omitted);
+    infrastructure const&) const {
+  utls::sassert(false, "");
+  route_node rn;
+  co_yield rn;
 }
 
 node::ptr interlocking_route::signal_eotd(infrastructure const& infra) const {
-  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
+  utls::sassert(false, "Not implemented");
+
+  for (auto const rn : this->iterate(infra)) {
     if (rn.node_->is(type::EOTD) &&
         infra->graph_.element_data_[rn.node_->id_].as<eotd>().signal_) {
       return rn.node_;
@@ -144,16 +175,16 @@ node::ptr interlocking_route::signal_eotd(infrastructure const& infra) const {
 }
 
 soro::vector<node::ptr> interlocking_route::route_eotds(
-    infrastructure const& infra) const {
+    infrastructure const&) const {
+  utls::sassert(false, "Not implemented");
   std::vector<node::ptr> result;
 
-  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
-    if (rn.node_->is(type::EOTD)) {
-      result.emplace_back(rn.node_);
-    }
-  }
+  //  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
+  //    if (rn.node_->is(type::EOTD)) {
+  //      result.emplace_back(rn.node_);
+  //    }
+  //  }
 
-  utls::sassert(false, "Not implemented");
   return result;
 }
 

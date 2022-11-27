@@ -5,7 +5,7 @@
 
 #include "utl/enumerate.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/simulation/sim_graph.h"
 #include "soro/timetable/timetable.h"
 #include "soro/utls/parallel_for.h"
@@ -174,13 +174,13 @@ using namespace soro::infra;
 */
 
 TEST_CASE("build_soro-s_graph_overtake") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  timetable const tt(OVERTAKE_OPTS, infra);
+  infrastructure const infra(soro::test::SMALL_OPTS);
+  timetable const tt(soro::test::OVERTAKE_OPTS, infra);
 }
 
 TEST_CASE("build_soro-s_graph_follow") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  timetable const tt(FOLLOW_OPTS, infra);
+  infrastructure const infra(soro::test::SMALL_OPTS);
+  timetable const tt(soro::test::FOLLOW_OPTS, infra);
 
   sim_graph const sg(infra, tt);
 }

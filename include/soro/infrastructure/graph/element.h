@@ -356,6 +356,7 @@ struct element {
   element_id id() const;
 
   bool rising() const;
+  bool falling() const;
 
   enum type type() const;
 

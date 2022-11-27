@@ -1,30 +1,11 @@
+#include "test/infrastructure/graph_test.h"
+
 #include "doctest/doctest.h"
-
-#include <cstddef>
-#include <string>
-
-#include "cista/serialization.h"
 #include "fmt/format.h"
 
-#include "utl/enumerate.h"
-#include "utl/pipes.h"
-#include "utl/to_vec.h"
-
 #include "soro/utls/container/constexpr_map.h"
-#include "soro/utls/execute_if.h"
 
-#include "soro/infrastructure/infrastructure.h"
-
-#include "test/file_paths.h"
-
-#if defined(SERIALIZE)
-#include "cista/serialization.h"
-#endif
-
-using namespace soro;
-using namespace soro::si;
-using namespace soro::utls;
-using namespace soro::infra;
+namespace soro::infra::test {
 
 constexpr std::array<std::pair<type, size_t>,
                      static_cast<std::size_t>(type::INVALID) + 1> const
@@ -61,7 +42,7 @@ constexpr std::array<std::pair<type, size_t>,
                         //
                         {type::INVALID, 0}}};
 
-// Please add the missing types to the expeced edges array
+// Please add the missing types to the expected edges array
 static_assert(expected_edges_arr.back().first == type::INVALID &&
               expected_edges_arr.back().second == 0);
 
@@ -255,7 +236,7 @@ void check_cross(cross const& cross, soro::string const& station_name) {
 }
 
 void check_outgoing(element const& element, station const& station) {
-  size_t outgoing = 0;
+  std::size_t outgoing = 0;
   for (auto const& node_ptr : element.nodes()) {
     // Count outgoing edges
     outgoing += node_ptr->next_node_ != nullptr ? 1 : 0;
@@ -296,8 +277,8 @@ void check_outgoing(element const& element, station const& station) {
 }
 
 void check_incoming(infrastructure const& infra,
-                    std::vector<size_t> const& incoming_edges,
-                    std::vector<size_t> const& expected_incoming) {
+                    std::vector<std::size_t> const& incoming_edges,
+                    std::vector<std::size_t> const& expected_incoming) {
   for (auto const& station : infra->stations_) {
     for (auto const& element : station->elements_) {
 
@@ -346,10 +327,10 @@ void check_neighbours(element const& e) {
   }
 }
 
-void check_network(infrastructure const& infra) {
-  size_t total_elements = 0;
-  std::vector<size_t> incoming_edges(infra->graph_.elements_.size(), 0);
-  std::vector<size_t> expected_incoming(infra->graph_.elements_.size(), 0);
+void check_graph(infrastructure const& infra) {
+  std::size_t total_elements = 0;
+  std::vector<std::size_t> incoming_edges(infra->graph_.elements_.size(), 0);
+  std::vector<std::size_t> expected_incoming(infra->graph_.elements_.size(), 0);
 
   for (auto const& station : infra->stations_) {
     total_elements += station->elements_.size();
@@ -421,195 +402,6 @@ void check_network(infrastructure const& infra) {
   CHECK_EQ(total_elements, infra->graph_.elements_.size());
 }
 
-void check_station_routes(infrastructure const& infra) {
-  for (auto const& sr : infra->station_routes_) {
-    CHECK(station_route::valid(sr->id_));
+void do_graph_tests(infrastructure const& infra) { check_graph(infra); }
 
-    CHECK_NE(sr->path_, nullptr);
-
-    CHECK(!sr->nodes().empty());
-    CHECK(!sr->name_.empty());
-
-    CHECK_NE(sr->path_->start_, nullptr);
-    CHECK_NE(sr->path_->end_, nullptr);
-
-    REQUIRE_NE(sr->station_, nullptr);
-
-    if (sr->nodes().back()->next_node_ != nullptr && !sr->is_in_route() &&
-        !sr->is_contained_route()) {
-      CHECK(sr->to_station_.has_value());
-    }
-
-    if (!sr->nodes().front()->reverse_edges_.empty() && !sr->is_out_route() &&
-        !sr->is_contained_route()) {
-      CHECK(sr->from_station_.has_value());
-    }
-
-    CHECK(si::valid(sr->length_));
-  }
-}
-
-void check_station_route_graph(infrastructure const& infra) {
-  for (auto const& sr : infra->station_routes_) {
-    auto const& succs = infra->station_route_graph_.successors_[sr->id_];
-
-    for (auto const& succ : succs) {
-      CHECK_MESSAGE((succ->id_ != sr->id_),
-                    "Station route can't be its own successor!");
-    }
-  }
-}
-
-template <typename Container>
-void check_continuous_ascending_ids(Container const& c) {
-  for (auto [e1, e2] : utl::pairwise(c)) {
-    if constexpr (soro::is_pointer<std::remove_reference_t<decltype(e1)>>()) {
-      CHECK(e1->id_ + 1 == e2->id_);
-    } else {
-      CHECK(e1.id_ + 1 == e2.id_);
-    }
-  }
-}
-
-void check_ascending_ids(infrastructure const& infra) {
-  check_continuous_ascending_ids(infra->stations_);
-  check_continuous_ascending_ids(infra->station_routes_);
-}
-
-void check_speed_limit_values(infrastructure const& infra) {
-  // if a special speed limit band is ending, it does not need a speed value
-  for (auto const& data : infra->graph_.element_data_) {
-    execute_if<speed_limit>(data, [](auto&& spl) {
-      if (spl.type_ != speed_limit::type::END_SPECIAL) {
-        CHECK(valid(spl.limit_));
-      }
-    });
-  }
-}
-
-void check_section_element_types(infrastructure const& infra) {
-  for (auto const& section : infra->graph_.sections_) {
-    auto const total_track_elements = utls::count_if(
-        section.elements_, [](auto&& e) { return e->is_track_element(); });
-
-    CHECK_MESSAGE((total_track_elements == section.elements_.size() - 2),
-                  "Only the first and the last element are non-track elements "
-                  "(=section elements)");
-    CHECK_MESSAGE(!section.elements_.front()->is_track_element(),
-                  "Only the first and the last element are non-track elements "
-                  "(=section elements)");
-    CHECK_MESSAGE(!section.elements_.back()->is_track_element(),
-                  "Only the first and the last element are non-track elements "
-                  "(=section elements)");
-  }
-}
-
-void check_section_increasing_kmp(infrastructure const& infra) {
-  for (auto const& section : infra->graph_.sections_) {
-    for (auto const [e1, e2] : utl::pairwise(section.elements_)) {
-      auto const kmp1 = e1->get_km(e2);
-      auto const kmp2 = e2->get_km(e1);
-
-      CHECK_MESSAGE(
-          (kmp1 <= kmp2),
-          "Elements in section not in increasing kilometerpoint order.");
-    }
-  }
-}
-
-void check_border_number(infrastructure const& infra) {
-  if (infra->stations_.size() == 1) {
-    return;  // no border checking with a single station
-  }
-  auto const total_borders = std::accumulate(
-      std::cbegin(infra->stations_), std::cend(infra->stations_),
-      std::size_t{0},
-      [](auto&& acc, auto&& s) { return acc + s->borders_.size(); });
-
-  CHECK_MESSAGE((total_borders != 0),
-                "if there is more than one station we need realized borders");
-}
-
-void check_border_pairs(infrastructure const& infra) {
-  for (auto const& station_a : infra->stations_) {
-    for (auto const& border_a : station_a->borders_) {
-      auto const border_b =
-          *utls::find_if(border_a.neighbour_->borders_, [&](auto&& border) {
-            return border.get_id_tuple() == border_a.get_id_tuple();
-          });
-
-      bool const matching_orientation =
-          border_a.low_border_ != border_b.low_border_;
-      CHECK_MESSAGE(matching_orientation,
-                    "Two connected borders should never have opposing mileage");
-    }
-  }
-}
-
-void check_orientation_flags_on_track_elements(infrastructure const& infra) {
-  auto const check_node_line = [](node_ptr node) {
-    while (node->next_node_ != nullptr &&
-           node->next_node_->element_->is_track_element()) {
-
-      bool const same_orientation =
-          node->element_->rising() == node->next_node_->element_->rising() ||
-          node->element_->is_undirected_track_element() ||
-          node->next_node_->element_->is_undirected_track_element();
-      CHECK_MESSAGE(same_orientation,
-                    "Consecutive track elements must have the same orientation "
-                    "determined by the rising flag");
-
-      node = node->next_node_;
-    }
-  };
-
-  for (auto const& element : infra->graph_.elements_) {
-    if (element->is_track_element()) {
-      continue;
-    }
-
-    for (auto const& node : element->nodes()) {
-      if (node->next_node_ != nullptr &&
-          node->next_node_->element_->is_track_element()) {
-        check_node_line(node->next_node_);
-      }
-
-      if (node->branch_node_ != nullptr &&
-          node->branch_node_->element_->is_track_element()) {
-        check_node_line(node->branch_node_);
-      }
-    }
-  }
-}
-
-void check_infra(infrastructure const& infra) {
-  check_speed_limit_values(infra);
-  check_network(infra);
-  check_orientation_flags_on_track_elements(infra);
-  check_ascending_ids(infra);
-
-  check_station_routes(infra);
-  check_station_route_graph(infra);
-
-  check_section_element_types(infra);
-  check_section_increasing_kmp(infra);
-
-  check_border_pairs(infra);
-  check_border_number(infra);
-}
-
-TEST_CASE("parse infrastructure") {
-  for (auto const& opts : get_all_infra_opts()) {
-    infrastructure const not_serialized(opts);
-
-#if defined(SERIALIZE)
-    infra.save("test.raw");
-    infrastructure const infra("test.raw");
-#else
-    auto const& infra = not_serialized;
-#endif
-
-    CAPTURE(infra);
-    check_infra(infra);
-  }
-}
+}  // namespace soro::infra::test

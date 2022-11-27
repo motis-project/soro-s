@@ -1317,8 +1317,8 @@ TEST_CASE("sheepmaker::sheepmaker_per_halt" * doctest::skip(true)) {  // NOLINT
 }
 
 TEST_CASE("sheepmaker::complete" * doctest::skip(true)) {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  timetable const tt(FOLLOW_OPTS, infra);
+  infrastructure const infra(soro::test::SMALL_OPTS);
+  timetable const tt(soro::test::FOLLOW_OPTS, infra);
 
   auto train = tt->trains_.front();
 

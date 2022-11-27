@@ -4,8 +4,8 @@
 
 #include "utl/zip.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
 #include "soro/infrastructure/infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/runtime/runtime.h"
 #include "soro/simulation/dpd.h"
@@ -101,7 +101,7 @@ struct route_graph {
   std::map<infra::element::ptr, std::vector<occupancy>> element_occupancies_;
 };
 
-route_graph get_route_graph(infra::base_infrastructure const& iss,
+route_graph get_route_graph(infra::infrastructure_t const& iss,
                             tt::timetable const& dt);
 
 inline bool ready(route_graph const& rg, route_node const& node) {

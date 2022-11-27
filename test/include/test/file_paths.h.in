@@ -4,15 +4,14 @@
 #include <vector>
 
 #include "utl/erase_if.h"
+#include "utl/to_vec.h"
 
-#include "soro/utls/coroutine/generator.h"
-
-#include "soro/infrastructure/infrastructure_options.h"
-#include "soro/timetable/timetable_options.h"
+#include "soro/infrastructure/infrastructure.h"
+#include "soro/timetable/timetable.h"
 
 namespace fs = std::filesystem;
 
-namespace soro {
+namespace soro::test {
 
 ///////////////////////////////////////////////////////////////////////
 // Check if you are editing file_paths.h.in instead of file_paths.h //
@@ -30,26 +29,70 @@ auto const SMALL_FOLDER = BASE_PATH / "infrastructure/small/";
 auto const DE_ISS_FOLDER = BASE_PATH / "infrastructure/de_iss/";
 
 infra::infrastructure_options const SMALL_OPTS = {
-    .determine_conflicts_ = true,
     .gps_coord_path_ = SORO_COORD_PATH,
     .infrastructure_path_ = SMALL_FOLDER,
 };
 
 infra::infrastructure_options const DE_ISS_OPTS = {
-    .determine_conflicts_ = false,
     .gps_coord_path_ = SORO_COORD_PATH,
     .infrastructure_path_ = DE_ISS_FOLDER,
 };
 
-inline std::vector<infra::infrastructure_options> get_all_infra_opts() {
-  std::vector<infra::infrastructure_options> all_infra_opts = {SMALL_OPTS,
-                                                               DE_ISS_OPTS};
+// struct infrastructure_scenario {
+//   infra::infrastructure infra_;
+// };
+
+std::vector<infra::infrastructure_options> const ALL_INFRA_OPTS = {SMALL_OPTS,
+                                                                   DE_ISS_OPTS};
+
+static std::vector<infra::infrastructure> INFRASTRUCTURE_SCENARIOS;  // NOLINT
+static std::map<infra::infrastructure_options, std::size_t>
+    INFRASTRUCTURE_SCENARIOS_MAP;  // NOLINT
+
+inline infra::infrastructure const& get_infrastructure_scenario(
+    infra::infrastructure_options const& infra_opts) {
+  auto const infra_it = INFRASTRUCTURE_SCENARIOS_MAP.find(infra_opts);
+  if (infra_it != std::end(INFRASTRUCTURE_SCENARIOS_MAP)) {
+    return INFRASTRUCTURE_SCENARIOS[infra_it->second];
+  } else {
+    INFRASTRUCTURE_SCENARIOS.emplace_back(infra_opts);
+
+    auto const [it, success] = INFRASTRUCTURE_SCENARIOS_MAP.insert(
+        {infra_opts, INFRASTRUCTURE_SCENARIOS.size() - 1});
+
+    return INFRASTRUCTURE_SCENARIOS[it->second];
+  }
+}
+
+inline std::vector<infra::infrastructure> const&
+get_infrastructure_scenarios() {
+  auto all_infra_opts = ALL_INFRA_OPTS;
 
   utl::erase_if(all_infra_opts, [](auto&& opts) {
     return !std::filesystem::exists(opts.infrastructure_path_);
   });
 
-  return all_infra_opts;
+  for (auto const& opts : all_infra_opts) {
+    get_infrastructure_scenario(opts);
+  }
+
+  return INFRASTRUCTURE_SCENARIOS;
+}
+
+inline std::vector<infra::infrastructure> const& get_infrastructure_scenarios(
+    infra::infrastructure_options const& infra_opts) {
+  auto all_infra_opts = ALL_INFRA_OPTS;
+
+  utl::erase_if(all_infra_opts, [&](auto&& opts) {
+    return !std::filesystem::exists(opts.infrastructure_path_) ||
+           opts != infra_opts;
+  });
+
+  for (auto const& opts : all_infra_opts) {
+    get_infrastructure_scenario(opts);
+  }
+
+  return INFRASTRUCTURE_SCENARIOS;
 }
 
 // --- timetable files ---
@@ -70,47 +113,72 @@ tt::timetable_options const FOLLOW_OPTS = {.timetable_path_ = FOLLOW_FOLDER};
 
 tt::timetable_options const DE_KSS_OPTS = {.timetable_path_ = DE_KSS_FOLDER};
 
-const std::vector<tt::timetable_options> ALL_TIMETABLE_OPTIONS = {OVERTAKE_OPTS,
-                                                                  FOLLOW_OPTS};
-
 // --- Test Scenarios ---
-struct test_scenario {
+
+struct timetable_scenario_opts {
+  bool exists() const {
+    return std::filesystem::exists(infra_opts_.infrastructure_path_) &&
+           std::filesystem::exists(timetable_opts_.timetable_path_);
+  }
+
   infra::infrastructure_options infra_opts_;
   tt::timetable_options timetable_opts_;
 };
 
-test_scenario const FOLLOW_SCENARIO{.infra_opts_ = SMALL_OPTS,
-                                    .timetable_opts_ = FOLLOW_OPTS};
+timetable_scenario_opts const FOLLOW_SCENARIO{.infra_opts_ = SMALL_OPTS,
+                                              .timetable_opts_ = FOLLOW_OPTS};
 
-test_scenario const OVERTAKE_SCENARIO{.infra_opts_ = SMALL_OPTS,
-                                      .timetable_opts_ = OVERTAKE_OPTS};
+timetable_scenario_opts const OVERTAKE_SCENARIO{
+    .infra_opts_ = SMALL_OPTS, .timetable_opts_ = OVERTAKE_OPTS};
 
-test_scenario const DE_SCENARIO{.infra_opts_ = DE_ISS_OPTS,
-                                .timetable_opts_ = DE_KSS_OPTS};
+timetable_scenario_opts const DE_SCENARIO{.infra_opts_ = DE_ISS_OPTS,
+                                          .timetable_opts_ = DE_KSS_OPTS};
 
-inline std::vector<test_scenario> get_all_test_scenarios() {
-  std::vector<test_scenario> scenarios{FOLLOW_SCENARIO, OVERTAKE_SCENARIO,
-                                       DE_SCENARIO};
+std::vector<timetable_scenario_opts> const ALL_TIMETABLE_SCENARIO_OPTS{
+    FOLLOW_SCENARIO, OVERTAKE_SCENARIO, DE_SCENARIO};
 
-  utl::erase_if(scenarios, [](auto&& scenario) {
-    return !std::filesystem::exists(
-               scenario.infra_opts_.infrastructure_path_) ||
-           !std::filesystem::exists(scenario.timetable_opts_.timetable_path_);
-  });
+struct timetable_scenario {
+  timetable_scenario(infra::infrastructure_options const& infra_opts,
+                     tt::timetable_options const& tt_opts)
+      : infra_{get_infrastructure_scenario(infra_opts)},
+        timetable_{tt_opts, infra_} {}
 
-  return scenarios;
+  infra::infrastructure const& infra_;
+  tt::timetable timetable_;
+};
+
+static std::vector<timetable_scenario> TIMETABLE_SCENARIOS;  // NOLINT
+static std::map<tt::timetable_options, std::size_t>
+    TIMETABLE_SCENARIOS_MAP;  // NOLINT
+
+inline timetable_scenario const& get_timetable_scenario(
+    timetable_scenario_opts const& scenario_opts) {
+
+  auto tt_it = TIMETABLE_SCENARIOS_MAP.find(scenario_opts.timetable_opts_);
+  if (tt_it != std::end(TIMETABLE_SCENARIOS_MAP)) {
+    return TIMETABLE_SCENARIOS[tt_it->second];
+  } else {
+    TIMETABLE_SCENARIOS.emplace_back(scenario_opts.infra_opts_,
+                                     scenario_opts.timetable_opts_);
+
+    auto [it, success] = TIMETABLE_SCENARIOS_MAP.insert(
+        {scenario_opts.timetable_opts_, TIMETABLE_SCENARIOS.size() - 1});
+
+    return TIMETABLE_SCENARIOS[it->second];
+  }
 }
 
-#define DOCTEST_VALUE_PARAMETERIZED_DATA(data, data_container)            \
-  static size_t _doctest_subcase_idx = 0;                                 \
-  std::for_each(                                                          \
-      data_container.begin(), data_container.end(), [&](const auto& in) { \
-        DOCTEST_SUBCASE((std::string(#data_container "[") +               \
-                         std::to_string(_doctest_subcase_idx++) + "]")    \
-                            .c_str()) {                                   \
-          data = in;                                                      \
-        }                                                                 \
-      });                                                                 \
-  _doctest_subcase_idx = 0
+inline std::vector<timetable_scenario> const& get_timetable_scenarios() {
+  auto scenario_opts = ALL_TIMETABLE_SCENARIO_OPTS;
 
-}  // namespace soro
+  utl::erase_if(scenario_opts,
+                [](auto&& scenario_opts) { return !scenario_opts.exists(); });
+
+  for (auto const& scenario_opt : scenario_opts) {
+    get_timetable_scenario(scenario_opt);
+  }
+
+  return TIMETABLE_SCENARIOS;
+}
+
+}  // namespace soro::test

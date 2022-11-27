@@ -4,7 +4,7 @@
 
 #include "soro/utls/string.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/infrastructure/parsers/iss/iss_types.h"
 
 namespace soro::layout {

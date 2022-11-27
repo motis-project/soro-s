@@ -15,9 +15,12 @@ inline bool neighbours(element::ptr e1, element::ptr e2) {
 template <typename Iterable>
   requires utls::yields<element::ptr, Iterable> bool
 is_path(Iterable&& iterable) {
-  element::ptr last_element = *std::cbegin(iterable);
+  auto it = std::begin(iterable);
 
-  for (auto it = ++std::cbegin(iterable); it != std::cend(iterable); ++it) {
+  element::ptr last_element = *it;
+  ++it;
+
+  for (; it != std::end(iterable); ++it) {
     if (!neighbours(last_element, *it)) {
       return false;
     }

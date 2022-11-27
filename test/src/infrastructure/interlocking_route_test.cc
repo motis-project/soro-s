@@ -1,3 +1,5 @@
+#include "test/infrastructure/interlocking_route_test.h"
+
 #include "doctest/doctest.h"
 
 #include "fmt/format.h"
@@ -10,11 +12,9 @@
 #include "soro/infrastructure/interlocking/exclusion.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/infrastructure/path/is_path.h"
+#include "soro/infrastructure/path/length.h"
 
-#include "test/file_paths.h"
-
-using namespace soro;
-using namespace infra;
+namespace soro::infra::test {
 
 void check_interlocking_route_count(infrastructure const& infra) {
   soro::size_type inner_sr_count = 0;
@@ -66,7 +66,7 @@ void check_station_route_exclusions(infrastructure const& infra) {
 
   for (auto const [id, exclusions] : utl::enumerate(station_route_exclusions)) {
     for (auto const excluded_route : exclusions) {
-      CHECK(!utls::contains(station_route_exclusions[excluded_route], id));
+      CHECK(utls::contains(station_route_exclusions[excluded_route], id));
     }
   }
 }
@@ -97,10 +97,13 @@ void interlocking_route_path_is_valid(interlocking_route const& ir,
   CHECK_MESSAGE(ir.valid_ends().contains(ir.last_node(infra)->type()),
                 "Interlocking route does not end on a valid type");
 
-  CHECK_MESSAGE(
-      is_path(utls::coro_map(ir.iterate(skip_omitted::OFF, infra),
-                             [](auto&& r) { return r.node_->element_; })),
-      "Interlocking route is not a path.");
+  std::vector<element::ptr> elements;
+
+  for (auto const rn : ir.iterate(infra)) {
+    elements.emplace_back(rn.node_->element_);
+  }
+
+  CHECK_MESSAGE(is_path(elements), "Interlocking route is not a path.");
 }
 
 void check_interlocking_route(interlocking_route const& ir,
@@ -114,65 +117,27 @@ void check_interlocking_routes(infrastructure const& infra) {
   }
 }
 
-TEST_SUITE("interlocking routes") {
+void check_interlocking_route_lengths(infrastructure const& infra) {
+  for (auto const& ir : infra->interlocking_.interlocking_routes_) {
+    auto const e1 = get_path_length_from_elements(
+        utls::coro_map(ir.iterate(infra), [](auto&& rn) { return rn.node_; }));
 
-  TEST_CASE("signal station route exclusion") {
-    infrastructure const infra(SMALL_OPTS);
+    auto const s1 = get_path_length_from_sections(
+        utls::coro_map(ir.iterate(infra), [](auto&& rn) { return rn.node_; }));
 
-    // TODO(julian) Implement signal station route test here
-    // compare exclusion results from CPU algorithm to GPU algorithm
-  }
-
-  TEST_CASE("signal station route get_exclusion_elements") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-
-    utls::sassert(false, "Not implemented");
-    //  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
-    //    auto const exclusion_elements = get_exclusion_elements(*ssr, *infra);
-    //
-    //    auto const& first_element = exclusion_elements.front();
-    //    auto const& last_element = exclusion_elements.back();
-    //
-    //    CHECK_MESSAGE(
-    //        interlocking_route::valid_ends().contains(first_element->type()),
-    //        fmt::format("First element's type must be from the list of "
-    //                    "valid elements, but was {}.",
-    //                    first_element->get_type_str()));
-    //    CHECK_MESSAGE(
-    //        interlocking_route::valid_ends().contains(last_element->type()),
-    //        fmt::format("Last element's type must be from the list of "
-    //                    "valid elements, but was {}.",
-    //                    last_element->get_type_str()));
-
-    /*
-     *  Every element on the path given by nodes_ must appear in the exclusion
-     * element list (EEL). The EEL might contain more than the original path
-     * elements. The original path elements in the EEL have to appear in the
-     * same order as given in the nodes_ path
-     */
-    //    auto current_element_it = std::cbegin(exclusion_elements);
-    //    for (auto const& node : ssr.iterate(infra)) {
-    //      auto const& e = node->element_;
-    //
-    //      while (e->id() != (*current_element_it)->id()) {
-    //        ++current_element_it;
-    //      }
-    //    }
-    //
-    //    CHECK_MESSAGE(current_element_it == std::cend(exclusion_elements) - 1,
-    //                  "Could not find every original path element given by
-    //                  nodes_");
-    //  }
-  }
-
-  TEST_CASE("interlocking routes de_iss") {
-    auto opts = DE_ISS_OPTS;
-    infrastructure const infra(opts);
-
-    check_interlocking_route_count(infra);
-    check_interlocking_routes(infra);
-
-    check_interlocking_route_exclusions(infra->interlocking_);
-    check_station_route_exclusions(infra);
+    CHECK_MESSAGE((e1 == s1),
+                  "Different lengths from the two length calculation funs");
+    CHECK_EQ(ir.length_, e1);
   }
 }
+
+void do_interlocking_route_tests(infrastructure const& infra) {
+  check_interlocking_route_count(infra);
+  check_interlocking_routes(infra);
+
+  check_interlocking_route_exclusions(infra->interlocking_);
+  check_station_route_exclusions(infra);
+  check_interlocking_route_lengths(infra);
+}
+
+}  // namespace soro::infra::test

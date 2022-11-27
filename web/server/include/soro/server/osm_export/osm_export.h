@@ -2,7 +2,7 @@
 
 #include "pugixml.hpp"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/infrastructure/parsers/iss/iss_types.h"
 #include "soro/server/osm_export/interpolation.h"
 
@@ -48,9 +48,8 @@ struct osm_information {
   std::vector<std::pair<std::vector<size_t>, size_t>> station_route_nodes_;
 };
 
-pugi::xml_document export_to_osm(infra::base_infrastructure const& iss);
-void export_and_write(infra::base_infrastructure const& iss,
-                      fs::path const& out);
+pugi::xml_document export_to_osm(infra::infrastructure_t const& iss);
+void export_and_write(infra::infrastructure_t const& iss, fs::path const& out);
 
 }  // namespace soro::server::osm_export
 

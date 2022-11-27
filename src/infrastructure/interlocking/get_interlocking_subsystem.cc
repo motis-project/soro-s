@@ -10,6 +10,7 @@
 #include "soro/utls/map/insert_or.h"
 
 #include "soro/infrastructure/interlocking/exclusion.h"
+#include "soro/infrastructure/path/length.h"
 
 #if defined(SORO_CUDA)
 #include "soro/infrastructure/gpu/exclusion.h"
@@ -20,7 +21,7 @@ using namespace soro::utls;
 namespace soro::infra {
 
 auto get_halting_at(soro::vector<interlocking_route> const& interlocking_routes,
-                    base_infrastructure const& infra) {
+                    infrastructure_t const& infra) {
   utl::scoped_timer const t("Creating halt to interlocking routes mapping");
 
   soro::vector<soro::vector<interlocking_route::id>> halting_at(
@@ -46,7 +47,7 @@ auto get_halting_at(soro::vector<interlocking_route> const& interlocking_routes,
 
 auto get_starting_at(
     soro::vector<interlocking_route> const& interlocking_routes,
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   soro::vector<soro::vector<interlocking_route::id>> starting_at(
       infra.graph_.nodes_.size());
 
@@ -66,7 +67,7 @@ auto get_starting_at(
 
 soro::vector<soro::vector<interlocking_route::id>> get_sr_to_participating_irs(
     soro::vector<interlocking_route> const& interlocking_routes,
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   utl::scoped_timer const participating_timer(
       "Creating station route to participating interlocking routes mapping");
 
@@ -213,7 +214,8 @@ soro::vector<interlocking_route> get_internal_interlocking_route(
         interlocking_route{.id_ = interlocking_route::INVALID,
                            .start_offset_ = from,
                            .end_offset_ = to,
-                           .station_routes_ = {sr->id_}});
+                           .station_routes_ = {sr->id_},
+                           .length_ = si::INVALID<si::length>});
   }
 
   return interlocking_routes;
@@ -280,7 +282,8 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
                            ? node::idx{0}
                            : sr->path_->main_signals_.back(),
       .end_offset_ = static_cast<node::idx>(sr->size()),
-      .station_routes_ = {sr->id_}};
+      .station_routes_ = {sr->id_},
+      .length_ = si::INVALID<si::length>};
 
   for (auto const& succ : srg.successors_[sr->id_]) {
     fill_paths(succ, initial_ir, fill_paths);
@@ -289,8 +292,33 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
   return routes;
 }
 
+si::length get_length(interlocking_route const& ir,
+                      infrastructure_t const& infra) {
+  if (ir.station_routes_.size() == 1) {
+    return get_path_length_from_elements(utls::coro_map(
+        infra.station_routes_[ir.station_routes_.front()]->from_to(
+            ir.start_offset_, ir.end_offset_),
+        [](auto&& rn) { return rn.node_->element_; }));
+  }
+
+  si::length length = si::ZERO<si::length>;
+  length += get_path_length_from_elements(utls::coro_map(
+      infra.station_routes_[ir.station_routes_.front()]->from(ir.start_offset_),
+      [](auto&& rn) { return rn.node_->element_; }));
+
+  for (auto i = 1UL; i < ir.station_routes_.size() - 1; ++i) {
+    length += infra.station_routes_[ir.station_routes_[i]]->length_;
+  }
+
+  length += get_path_length_from_elements(utls::coro_map(
+      infra.station_routes_[ir.station_routes_.back()]->to(ir.end_offset_),
+      [](auto&& rn) { return rn.node_->element_; }));
+
+  return length;
+}
+
 soro::vector<interlocking_route> get_interlocking_routes(
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   utl::scoped_timer const routes_timer("Generating Interlocking Routes");
 
   soro::vector<interlocking_route> interlocking_routes;
@@ -355,6 +383,7 @@ soro::vector<interlocking_route> get_interlocking_routes(
   interlocking_route::id current_id = 0;
   for (auto& ir : interlocking_routes) {
     ir.id_ = current_id++;
+    ir.length_ = get_length(ir, infra);
   }
 
   return interlocking_routes;
@@ -381,7 +410,7 @@ void print_interlocking_stats(soro::vector<interlocking_route> const& irs) {
 
 auto get_station_to_interlocking_routes(
     soro::vector<interlocking_route> const& interlocking_routes,
-    base_infrastructure const& infra) {
+    infrastructure_t const& infra) {
   soro::vector<soro::vector<interlocking_route::id>> station_to_irs(
       infra.stations_.size());
 
@@ -401,7 +430,7 @@ auto get_station_to_interlocking_routes(
 }
 
 interlocking_subsystem get_interlocking_subsystem(
-    base_infrastructure const& infra, bool const determine_exclusions) {
+    infrastructure_t const& infra, bool const determine_exclusions) {
   utl::scoped_timer const irs_timer("Creating Interlocking Subsystem");
 
   interlocking_subsystem irs;

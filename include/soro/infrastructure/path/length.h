@@ -16,14 +16,18 @@ template <typename Iterable>
 si::length get_path_length_from_elements(Iterable&& element_iter) {
   si::length distance = si::ZERO<si::length>;
 
-  element::ptr last_element = *std::begin(element_iter);
-  for (auto const& current_element : element_iter) {
-    auto const kmp = last_element->get_km(current_element);
-    auto const next_kmp = current_element->get_km(last_element);
+  auto it = std::begin(element_iter);
+
+  element::ptr last_element = *it;
+  ++it;
+
+  for (; it != std::end(element_iter); ++it) {
+    auto const kmp = last_element->get_km(*it);
+    auto const next_kmp = (*it)->get_km(last_element);
 
     distance += abs(kmp - next_kmp);
 
-    last_element = current_element;
+    last_element = *it;
   }
 
   return distance;

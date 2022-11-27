@@ -6,7 +6,7 @@
 
 namespace soro::infra {
 
-struct base_infrastructure;
+struct infrastructure_t;
 struct infrastructure;
 
 struct interlocking_route {
@@ -19,14 +19,14 @@ struct interlocking_route {
 
   type_set static valid_ends();
 
-  //  si::length length() const;
-
   bool operator==(interlocking_route const& o) const;
 
   bool follows(interlocking_route const& other,
                infrastructure const& infra) const;
 
   std::vector<element_ptr> elements(infrastructure const&) const;
+
+  node::idx size(infrastructure const& infra) const;
 
   station_route::id first_sr_id() const;
   station_route::id sr_id(sr_offset) const;
@@ -43,18 +43,16 @@ struct interlocking_route {
   bool ends_on_ms(infrastructure const&) const;
 
   utls::recursive_generator<node::id const> first_sr_nodes(
-      skip_omitted, base_infrastructure const&) const;
+      infrastructure_t const&) const;
   utls::recursive_generator<node::id const> last_sr_nodes(
-      skip_omitted, base_infrastructure const&) const;
+      infrastructure_t const&) const;
 
-  utls::recursive_generator<route_node> iterate(skip_omitted,
-                                                infrastructure const&) const;
+  utls::recursive_generator<route_node> iterate(infrastructure const&) const;
   utls::recursive_generator<route_node> from_to(node::idx, node::idx,
-                                                skip_omitted,
                                                 infrastructure const&) const;
-  utls::recursive_generator<route_node> to(node::idx, skip_omitted,
+  utls::recursive_generator<route_node> to(node::idx,
                                            infrastructure const&) const;
-  utls::recursive_generator<route_node> from(node::idx, skip_omitted,
+  utls::recursive_generator<route_node> from(node::idx,
                                              infrastructure const&) const;
 
   node::ptr signal_eotd(infrastructure const& infra) const;
@@ -72,6 +70,8 @@ struct interlocking_route {
   node::idx start_offset_{node::INVALID_IDX};
   node::idx end_offset_{node::INVALID_IDX};
   soro::vector<station_route::id> station_routes_{};
+
+  si::length length_{si::INVALID<si::length>};
 };
 
 // shorthand aliases

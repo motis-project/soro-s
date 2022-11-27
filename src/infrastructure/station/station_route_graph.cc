@@ -23,58 +23,61 @@ auto get_successors_from_through_route(station_route::ptr sr) {
   }
 }
 
-auto get_successors_from_in_route(station_route::ptr sr, graph const& network) {
+auto get_successors_from_in_route(station_route::ptr, graph const&) {
   soro::vector<station_route::ptr> succs;
-
-  auto const& last_element = sr->nodes().back()->element_;
-  auto const section_ids =
-      network.element_id_to_section_ids_[last_element->id()];
-
-  utl::verify(section_ids.size() == 1,
-              "There should only be a single section id associated with the "
-              "last element!");
-
-  auto const section = network.sections_[section_ids.front()];
-
-  for (auto const& element_ptr : section.elements_) {
-    if (!element_ptr->is(type::HALT)) {
-      continue;
-    }
-
-    auto it = sr->station_->element_to_routes_.find(element_ptr->id());
-    if (it == std::cend(sr->station_->element_to_routes_)) {
-      continue;
-    }
-
-    for (auto candidate : it->second) {
-      // only add the candidate as a successor if:
-      // it has the same orientation as the station route
-      bool const same_orientation =
-          candidate->nodes().front()->element_->rising() ==
-          sr->nodes().back()->element_->rising();
-
-      // and there is no backward driving, like in this example
-      // the last of the station route to exclude the following case:
-      // O - - HLT - - MS - - HLT - - O
-      // 1 ------------------->
-      // 2      ---------------------->
-      // chaining of 1 -> 2, which would yield a signal station route which
-      // starts and ends at the same MS
-      auto const distance =
-          sr->nodes().back()->element_->as<track_element>().km_ -
-          candidate->nodes().front()->element_->as<track_element>().km_;
-
-      bool const no_backward_driving = sr->nodes().back()->element_->rising()
-                                           ? distance <= si::ZERO<kilometrage>
-                                           : distance >= si::ZERO<kilometrage>;
-
-      if (same_orientation && no_backward_driving) {
-        succs.push_back(candidate);
-      }
-    }
-  }
-
   return succs;
+
+  //  auto const& last_element = sr->nodes().back()->element_;
+  //  auto const section_ids =
+  //      network.element_id_to_section_ids_[last_element->id()];
+  //
+  //  utl::verify(section_ids.size() == 1,
+  //              "There should only be a single section id associated with the
+  //              " "last element!");
+  //
+  //  auto const section = network.sections_[section_ids.front()];
+  //
+  //  for (auto const& element_ptr : section.elements_) {
+  //    if (!element_ptr->is(type::HALT)) {
+  //      continue;
+  //    }
+  //
+  //    auto it = sr->station_->element_to_routes_.find(element_ptr->id());
+  //    if (it == std::cend(sr->station_->element_to_routes_)) {
+  //      continue;
+  //    }
+  //
+  //    for (auto candidate : it->second) {
+  //      // only add the candidate as a successor if:
+  //      // it has the same orientation as the station route
+  //      bool const same_orientation =
+  //          candidate->nodes().front()->element_->rising() ==
+  //          sr->nodes().back()->element_->rising();
+  //
+  //      // and there is no backward driving, like in this example
+  //      // the last of the station route to exclude the following case:
+  //      // O - - HLT - - MS - - HLT - - O
+  //      // 1 ------------------->
+  //      // 2      ---------------------->
+  //      // chaining of 1 -> 2, which would yield a signal station route which
+  //      // starts and ends at the same MS
+  //      auto const distance =
+  //          sr->nodes().back()->element_->as<track_element>().km_ -
+  //          candidate->nodes().front()->element_->as<track_element>().km_;
+  //
+  //      bool const no_backward_driving =
+  //      sr->nodes().back()->element_->rising()
+  //                                           ? distance <=
+  //                                           si::ZERO<kilometrage> : distance
+  //                                           >= si::ZERO<kilometrage>;
+  //
+  //      if (same_orientation && no_backward_driving) {
+  //        succs.push_back(candidate);
+  //      }
+  //    }
+  //  }
+  //
+  //  return succs;
 }
 
 auto get_successors_from_out_route(station_route::ptr sr) {

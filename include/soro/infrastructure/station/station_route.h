@@ -18,8 +18,6 @@ struct station_route_graph;
 
 enum class course_decision : bool { STEM, BRANCH };
 
-enum class skip_omitted : bool { OFF, ON };
-
 struct route_node {
   node::idx node_idx_{node::INVALID_IDX};
   node::ptr node_{nullptr};
@@ -56,7 +54,9 @@ struct station_route {
 
   bool electrified() const;
 
-  // TODO(julian) these could be transformed into enum
+  // TODO(julian) these could be transformed into enum to make code depending
+  // on these more safe
+  // enum class route_type : uint8_t { THROUGH, IN, OUT, CONTAINED };
   bool is_through_route() const;
   bool is_in_route() const;
   bool is_out_route() const;
@@ -65,13 +65,11 @@ struct station_route {
   bool can_start_an_interlocking(station_route_graph const& srg) const;
   bool can_end_an_interlocking(station_route_graph const&) const;
 
-  utls::recursive_generator<route_node> iterate(skip_omitted skip) const;
-  utls::recursive_generator<route_node> from_to(node::idx from, node::idx to,
-                                                skip_omitted skip) const;
-  utls::recursive_generator<route_node> from(node::idx from,
-                                             skip_omitted skip) const;
-  utls::recursive_generator<route_node> to(node::idx to,
-                                           skip_omitted skip) const;
+  utls::recursive_generator<route_node> iterate() const;
+  utls::recursive_generator<route_node> from(node::idx from) const;
+  utls::recursive_generator<route_node> to(node::idx to) const;
+  utls::recursive_generator<route_node> from_to(node::idx from,
+                                                node::idx to) const;
 
   utls::optional<node::idx> get_halt_idx(rs::FreightTrain freight) const;
   utls::optional<node::ptr> get_halt_node(rs::FreightTrain freight) const;

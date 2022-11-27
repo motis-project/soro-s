@@ -12,6 +12,7 @@ node::idx station_route::size() const noexcept {
   utls::sassert(
       this->path_->nodes_.size() < node::INVALID_IDX,
       "More nodes in a station route than node::idx is capable to hold.");
+
   return static_cast<node::idx>(nodes().size());
 }
 
@@ -114,13 +115,15 @@ std::pair<node::idx, node::idx> fast_forward_indices(station_route const& r,
   return indices;
 }
 
-utls::recursive_generator<route_node> station_route::iterate(
-    skip_omitted const skip) const {
-  return from_to(0, size(), skip);
+utls::recursive_generator<route_node> station_route::iterate() const {
+  return from_to(0, size());
 }
 
 utls::recursive_generator<route_node> station_route::from_to(
-    node::idx const from, node::idx const to, skip_omitted const skip) const {
+    node::idx const from, node::idx const to) const {
+  utls::sassert(from < size());
+  utls::sassert(from <= to);
+
   route_node result;
   result.node_idx_ = from;
 
@@ -143,20 +146,17 @@ utls::recursive_generator<route_node> station_route::from_to(
                                     : std::optional<speed_limit::ptr>{};
     }
 
-    if (!result.omitted_ || static_cast<bool>(skip)) {
-      co_yield result;
-    }
+    co_yield result;
   }
 }
 
 utls::recursive_generator<route_node> station_route::from(
-    node::idx from, skip_omitted skip) const {
-  return from_to(from, size(), skip);
+    node::idx from) const {
+  co_yield from_to(from, size());
 }
 
-utls::recursive_generator<route_node> station_route::to(
-    node::idx to, skip_omitted skip) const {
-  return from_to(0, to, skip);
+utls::recursive_generator<route_node> station_route::to(node::idx to) const {
+  co_yield from_to(0, to);
 }
 
 }  // namespace soro::infra

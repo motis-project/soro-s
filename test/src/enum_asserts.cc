@@ -14,13 +14,6 @@ using namespace soro::infra;
 
 TEST_SUITE("static asserts") {
 
-  TEST_CASE("skip_omitted") {
-    static_assert(!static_cast<bool>(skip_omitted::OFF));
-    static_assert(static_cast<bool>(skip_omitted::ON));
-    static_assert(static_cast<skip_omitted>(false) == skip_omitted::OFF);
-    static_assert(static_cast<skip_omitted>(true) == skip_omitted::ON);
-  }
-
   TEST_CASE("ctc") {
     static_assert(!static_cast<bool>(CTC::NO));
     static_assert(static_cast<bool>(CTC::YES));

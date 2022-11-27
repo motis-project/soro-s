@@ -218,7 +218,7 @@ void check_way_duplicates(pugi::xml_node parent_node) {
 }
 
 TEST_CASE("osm_check") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
+  infrastructure const infra(soro::test::SMALL_OPTS);
   pugi::xml_document const osm_file = export_to_osm(*infra);
 
   auto osm_node = osm_file.document_element();
@@ -231,7 +231,7 @@ TEST_CASE("osm_check") {  // NOLINT
 }
 
 TEST_CASE("check_osm_station_generation") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
+  infrastructure const infra(soro::test::SMALL_OPTS);
   auto station = infra->stations_[1];
 
   pugi::xml_document testfile;
@@ -268,7 +268,7 @@ TEST_CASE("check_osm_station_generation") {  // NOLINT
 }
 
 TEST_CASE("check_osm_element_generation") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
+  infrastructure const infra(soro::test::SMALL_OPTS);
   auto station = infra->stations_.front();
   auto element = station->elements_.front();
   pugi::xml_document testfile;
