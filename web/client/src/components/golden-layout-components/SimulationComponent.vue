@@ -19,8 +19,8 @@
 <script>
 import { d3Graph } from './simulation/d3Graph.js';
 import { mapState } from 'vuex';
-import {InfrastructureNameSpace} from "../../stores/infrastructure-store.js";
-import {TimetableNamespace} from "../../stores/timetable-store.js";
+import {InfrastructureNamespace} from "../../stores/infrastructure-store";
+import {TimetableNamespace} from "../../stores/timetable-store";
 import {ClickTooltip} from "../../util/Tooltip.js";
 import {ComponentContainer} from "golden-layout";
 
@@ -56,7 +56,7 @@ export default {
   },
 
   computed: {
-    ...mapState(InfrastructureNameSpace, ['currentInfrastructure']),
+    ...mapState(InfrastructureNamespace, ['currentInfrastructure']),
     ...mapState(TimetableNamespace, ['currentTimetable']),
   },
 

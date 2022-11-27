@@ -1,13 +1,13 @@
 import { createApp } from 'vue'
 import './style.ts'
 import App from './App.vue'
-import { InfrastructureStore, InfrastructureNameSpace } from './stores/infrastructure-store.js'
-import { TimetableStore, TimetableNamespace } from './stores/timetable-store.js'
+import { InfrastructureStore, InfrastructureNamespace } from './stores/infrastructure-store'
+import { TimetableStore, TimetableNamespace } from './stores/timetable-store'
 import { createStore } from "vuex";
 
 const store = createStore({
     modules: {
-        [InfrastructureNameSpace]: InfrastructureStore,
+        [InfrastructureNamespace]: InfrastructureStore,
         [TimetableNamespace]: TimetableStore,
     }
 })

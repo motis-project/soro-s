@@ -4,7 +4,9 @@
 //   saveFileToIDBFS,
 //   timetableFileExists
 // } from "../utl/IDBFSHelper.js";
-import {InfrastructureNameSpace} from "./infrastructure-store.js";
+import {InfrastructureNamespace} from "./infrastructure-store"
+import type {Module} from "vuex";
+import {TimetableState} from "./stores";
 
 // import { Module } from "../soro-client.js";
 
@@ -36,15 +38,20 @@ function loadTimetableFromIDBFS(filePath, currentInfrastructure) {
      */
 }
 
+type TimetableState = {
+    timetables: string[],
+    currentTimetable?: string,
+}
+
 export const TimetableNamespace = 'timetable';
 
-export const TimetableStore = {
+export const TimetableStore: Module<TimetableState, undefined> = {
     namespaced: true,
 
     state() {
         return {
             timetables: [],
-            currentTimetable: null,
+            currentTimetable: undefined,
         }
     },
 
@@ -68,7 +75,7 @@ export const TimetableStore = {
         },
 
         load({ commit, rootState }, timetableFilename) {
-            const currentInfrastructure = rootState[`${InfrastructureNameSpace}/currentInfrastructure`];
+            const currentInfrastructure = rootState[`${InfrastructureNamespace}/currentInfrastructure`];
             if (!currentInfrastructure) {
                 console.error("Tried loading a timetable with the currentInfrastructure undefined!");
                 return;

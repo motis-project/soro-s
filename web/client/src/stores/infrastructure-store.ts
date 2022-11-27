@@ -1,14 +1,23 @@
-export const InfrastructureNameSpace = 'infrastructure';
+import { Module } from 'vuex';
 
-export const InfrastructureStore = {
+type InfrastructureState = {
+    infrastructures: string[],
+    currentInfrastructure?: string,
+    highlightedSignalStationRouteID?: string,
+    highlightedStationRouteID?: string,
+}
+
+export const InfrastructureNamespace: string = 'infrastructure';
+
+export const InfrastructureStore: Module<InfrastructureState, undefined> = {
     namespaced: true,
 
     state() {
         return {
             infrastructures: [],
-            currentInfrastructure: null,
-            highlightedSignalStationRouteID: null,
-            highlightedStationRouteID: null,
+            currentInfrastructure: undefined,
+            highlightedSignalStationRouteID: undefined,
+            highlightedStationRouteID: undefined,
         }
     },
 

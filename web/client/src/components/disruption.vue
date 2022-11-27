@@ -11,7 +11,7 @@
 <script>
 import { iterate } from "../util/iterate.js";
 import { mapState } from 'vuex';
-import { TimetableNamespace } from "../stores/timetable-store.js";
+import { TimetableNamespace } from "../stores/timetable-store";
 
 const disruptionMap = new Map();
 disruptionMap.set('1', 80);

@@ -108,8 +108,8 @@
 
 <script>
 import { mapActions, mapState } from 'vuex';
-import {InfrastructureNameSpace} from "./stores/infrastructure-store.js";
-import {TimetableNamespace} from "./stores/timetable-store.js";
+import {InfrastructureNamespace} from "./stores/infrastructure-store";
+import {TimetableNamespace} from "./stores/timetable-store";
 
 const initLayout = {
   root: {
@@ -166,7 +166,7 @@ export default {
       return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`
     },
 
-    ...mapState(InfrastructureNameSpace, [
+    ...mapState(InfrastructureNamespace, [
         'currentInfrastructure',
         'infrastructures',
     ]),
@@ -233,7 +233,7 @@ export default {
       // TODO trigger simulation in store (has to move first)
     },
 
-    ...mapActions(InfrastructureNameSpace, {
+    ...mapActions(InfrastructureNamespace, {
       loadInfrastructures: 'initialLoad',
       loadInfrastructure: 'load',
     }),

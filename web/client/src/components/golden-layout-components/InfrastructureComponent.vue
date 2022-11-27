@@ -22,7 +22,7 @@ import {
   highlightStationRoute
 } from "./infrastructure/map/infrastructureMap.js";
 import { mapState } from 'vuex';
-import { InfrastructureNameSpace } from "../../stores/infrastructure-store.js"; // TODO rewrite with global namespace
+import { InfrastructureNamespace } from "../../stores/infrastructure-store"; // TODO rewrite with global namespace
 import { defineComponent } from "vue";
 import { ComponentContainer } from "golden-layout";
 
@@ -44,7 +44,7 @@ export default defineComponent({
     }
   },
 
-  computed: mapState(InfrastructureNameSpace, [
+  computed: mapState(InfrastructureNamespace, [
       'currentInfrastructure',
       'highlightedSignalStationRouteID',
       'highlightedStationRouteID',
