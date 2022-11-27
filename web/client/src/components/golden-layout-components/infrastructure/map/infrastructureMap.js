@@ -117,9 +117,9 @@ function createLegend(map, rootElement) {
   }
 }
 
-export function createMap(rootElement, infrastructureName, tooltip) {
+export function createMap(mapContainer, infrastructureName, tooltip) {
   let map = new maplibregl.Map({
-    container: rootElement.querySelector('#map'),
+    container: mapContainer.querySelector('#map'),
     style: infrastructureMapStyle,
     attributionControl: false,
     zoom: 14,
@@ -137,7 +137,7 @@ export function createMap(rootElement, infrastructureName, tooltip) {
 
   map.on('load', () => {
     addIcons(map);
-    createLegend(map, rootElement);
+    createLegend(map, mapContainer);
   });
 
   map.dragPan.enable({

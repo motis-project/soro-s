@@ -2,13 +2,13 @@
   <div class="material-select data-select">
     <select
         class="material-select-text"
-        @change="(event) => $emit('change', event)"
+        @change="emitChange"
     >
       <option
         v-for="option in extendedOptions"
         :key="option"
         :value="option"
-        :selected="option === selectedOption"
+        :selected="option === value"
         :label="option ?? ''"
       >
         {{ option }}
@@ -25,6 +25,11 @@ export default {
   name: "soro-select",
 
   props: {
+    value: {
+      type: String,
+      required: false,
+      default: null,
+    },
     options: {
       type: Array,
       required: false,
@@ -37,10 +42,7 @@ export default {
   },
 
   data() {
-    return {
-      extendedOptions: [],
-      selectedOption: null,
-    }
+    return { extendedOptions: [] }
   },
 
   watch: {
@@ -49,5 +51,12 @@ export default {
       this.extendedOptions.push(null);
     }
   },
+
+  methods: {
+    emitChange(event) {
+      event.preventDefault();
+      this.$emit('select', event.target.value);
+    }
+  }
 }
 </script>

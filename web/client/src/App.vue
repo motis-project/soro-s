@@ -17,13 +17,15 @@
           <div class="data-selects">
             <soro-select
                 label="Select Infrastructure"
+                :value="currentInfrastructure"
                 :options="infrastructures"
-                @change="loadInfrastructure"
+                @select="loadInfrastructure"
             />
             <soro-select
                 label="Select Timetable"
+                :value="currentTimetable"
                 :options="timetables"
-                @change="loadTimetable"
+                @select="loadTimetable"
             />
           </div>
           <div class="dev-tools">
@@ -164,8 +166,14 @@ export default {
       return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`
     },
 
-    ...mapState(InfrastructureNameSpace, ['infrastructures']),
-    ...mapState(TimetableNamespace, ['timetables']),
+    ...mapState(InfrastructureNameSpace, [
+        'currentInfrastructure',
+        'infrastructures',
+    ]),
+    ...mapState(TimetableNamespace, [
+        'currentTimetable',
+        'timetables',
+    ]),
   },
 
   methods: {

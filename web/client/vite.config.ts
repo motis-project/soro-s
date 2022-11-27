@@ -17,6 +17,10 @@ export default defineConfig({
                 target: 'http://0.0.0.0:8080',
                 changeOrigin: true,
             },
+            '/icons': {
+                target: 'http://0.0.0.0:8080',
+                changeOrigin: true,
+            },
         },
     },
 })

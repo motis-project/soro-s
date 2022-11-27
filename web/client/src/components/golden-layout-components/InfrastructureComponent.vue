@@ -1,13 +1,12 @@
 <template>
-  <div>
-    <div class="map" id="map"></div>
-    <div class="map-overlay" id="mapLegend">
-    </div>
+  <div ref="mapContainer">
+    <div class="map" id="map" />
+    <div class="map-overlay" id="mapLegend" />
 
     <div class="infrastructureTooltip" id="infrastructureTooltip">
       <ul id="infrastructureTooltipList">
-        <li id="kilometerPoint"></li>
-        <li id="risingOrFalling"></li>
+        <li id="kilometerPoint" />
+        <li id="risingOrFalling" />
       </ul>
     </div>
   </div>
@@ -56,7 +55,7 @@ export default defineComponent({
   watch: {
     currentInfrastructure(newInfrastructure) {
       this._libreGLMap = newInfrastructure
-          ? createMap(this.container.element, newInfrastructure, this._tooltip)
+          ? createMap(this.$refs.mapContainer, newInfrastructure, this._tooltip)
           : undefined;
     },
 
@@ -89,7 +88,7 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
+<style>
 #map {
   padding: 0;
   margin: 0;
