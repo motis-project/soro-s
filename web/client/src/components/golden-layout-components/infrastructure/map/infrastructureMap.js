@@ -1,11 +1,11 @@
 import { infrastructureMapStyle, mapLayers } from './mapStyle.js'
-import * as maplibre from "../deps/maplibre-gl.js";
 import { addIcons } from "./addIcons.js";
 import { iconUrl } from "./addIcons.js";
 import { iconExtension } from "./addIcons.js";
 import { iterate } from "../../../../util/iterate.js";
 import { elementTypes } from "./elementTypes.js";
 import { elementTypesReadable } from "./elementTypes.js";
+import * as maplibregl from 'maplibre-gl';
 
 function getMaxBounds(infrastructure) {
   // lon_max, lon_min, lat_max, lat_min,
@@ -42,6 +42,8 @@ function createLegend(map, rootElement) {
   const initially_checked = new Set(['station', 'ms', 'as', 'eotd']);
 
   const legend = rootElement.querySelector('#mapLegend');
+  // This currently causes all the icons to be fetched again. Must be refactored later.
+  legend.replaceChildren();
   for (const elementType of elementTypes) {
     const input = document.createElement('input');
     input.id = elementType;

@@ -1,26 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+const relayServer = 'http://0.0.0.0:8080';
+const relayLocations = [
+    '/infrastructure',
+    '/timetable',
+    '/font',
+    '/icons',
+    '/interlocking_route_simple',
+    '/small',
+];
+
+const proxy = {};
+relayLocations.forEach((location) => proxy[location] = {
+    target: relayServer,
+    changeOrigin: true,
+});
 export default defineConfig({
     plugins: [vue()],
-    server: {
-        proxy: {
-            '/infrastructure': {
-                target: 'http://0.0.0.0:8080',
-                changeOrigin: true,
-            },
-            '/timetable': {
-                target: 'http://0.0.0.0:8080',
-                changeOrigin: true,
-            },
-            '/font': {
-                target: 'http://0.0.0.0:8080',
-                changeOrigin: true,
-            },
-            '/icons': {
-                target: 'http://0.0.0.0:8080',
-                changeOrigin: true,
-            },
-        },
-    },
+    server: { proxy },
 })

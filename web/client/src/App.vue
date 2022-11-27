@@ -68,7 +68,7 @@
   // import { Module, FS, IDBFS } from "./soro-client.js";
   import Glayout from './golden-layout/Glayout.vue';
   import Disruption from "./components/disruption.vue";
-  import SoroSelect from "./components/select/soro-select.vue";
+  import SoroSelect from "./components/soro-select.vue";
 
   // import {
   //   saveToPersistent,
