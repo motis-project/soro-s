@@ -21,9 +21,7 @@ import {
   ref,
   markRaw,
   readonly,
-  defineExpose,
   defineAsyncComponent,
-  defineProps,
   nextTick,
   getCurrentInstance,
 } from "vue";
@@ -42,24 +40,13 @@ import {
 import GlComponent from "./GlComponent.vue";
 
 /*******************
- * Prop
- *******************/
-const props = defineProps({
-  glcPath: String,
-});
-
-/*******************
  * Data
  *******************/
 const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
-const MapComponents = new Map<
-    ComponentContainer,
-    { refId: number; glc: GlComponent }
-    >();
-
+const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
 const AllComponents = ref(new Map<number, any>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
@@ -73,9 +60,7 @@ const instance = getCurrentInstance();
 /** @internal */
 const addComponent = (componentType: string, title: string) => {
   const glc = markRaw(
-      defineAsyncComponent(
-          () => import(`../components/golden-layout-components/${componentType}.vue`)
-      )
+      defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
   );
 
   let index = CurIndex;
@@ -147,9 +132,7 @@ const loadGLLayout = async (
   GLayout.loadLayout(config);
 };
 
-const getLayoutConfig = () => {
-  return GLayout.saveLayout();
-};
+const getLayoutConfig = () => {return GLayout.saveLayout();};
 
 /*******************
  * Mount
@@ -168,9 +151,7 @@ onMounted(() => {
   window.addEventListener("resize", onResize, { passive: true });
 
   const handleBeforeVirtualRectingEvent = (count: number) => {
-    GlBoundingClientRect = (
-        GLRoot.value as HTMLElement
-    ).getBoundingClientRect();
+    GlBoundingClientRect = (GLRoot.value as HTMLElement).getBoundingClientRect();
   };
 
   const handleContainerVirtualRectingRequiredEvent = (
@@ -180,9 +161,7 @@ onMounted(() => {
   ): void => {
     const component = MapComponents.get(container);
     if (!component || !component?.glc) {
-      throw new Error(
-          "handleContainerVirtualRectingRequiredEvent: Component not found"
-      );
+      throw new Error("handleContainerVirtualRectingRequiredEvent: Component not found");
     }
 
     const containerBoundingClientRect =
@@ -199,9 +178,7 @@ onMounted(() => {
   ): void => {
     const component = MapComponents.get(container);
     if (!component || !component?.glc) {
-      throw new Error(
-          "handleContainerVirtualVisibilityChangeRequiredEvent: Component not found"
-      );
+      throw new Error("handleContainerVirtualVisibilityChangeRequiredEvent: Component not found");
     }
 
     component.glc.setVisibility(visible);
@@ -214,9 +191,7 @@ onMounted(() => {
   ): void => {
     const component = MapComponents.get(container);
     if (!component || !component?.glc) {
-      throw new Error(
-          "handleContainerVirtualZIndexChangeRequiredEvent: Component not found"
-      );
+      throw new Error("handleContainerVirtualZIndexChangeRequiredEvent: Component not found");
     }
 
     component.glc.setZIndex(defaultZIndex);
@@ -230,39 +205,17 @@ onMounted(() => {
     if (itemConfig && itemConfig.componentState) {
       refId = (itemConfig.componentState as Json).refId as number;
     } else {
-      throw new Error(
-          "bindComponentEventListener: component's ref id is required"
-      );
+      throw new Error("bindComponentEventListener: component's ref id is required");
     }
 
     const ref = GlcKeyPrefix.value + refId;
-    const component = instance?.refs[ref][0] as GlComponent;
+    const component = instance?.refs[ref][0] as typeof GlComponent;
 
     MapComponents.set(container, { refId: refId, glc: component });
 
-    container.virtualRectingRequiredEvent = (container, width, height) =>
-        handleContainerVirtualRectingRequiredEvent(
-            container,
-            width,
-            height
-        );
-
-    container.virtualVisibilityChangeRequiredEvent = (container, visible) =>
-        handleContainerVirtualVisibilityChangeRequiredEvent(
-            container,
-            visible
-        );
-
-    container.virtualZIndexChangeRequiredEvent = (
-        container,
-        logicalZIndex,
-        defaultZIndex
-    ) =>
-        handleContainerVirtualZIndexChangeRequiredEvent(
-            container,
-            logicalZIndex,
-            defaultZIndex
-        );
+    container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent.bind(this);
+    container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent.bind(this);
+    container.virtualZIndexChangeRequiredEvent = handleContainerVirtualZIndexChangeRequiredEvent.bind(this);
 
     return {
       component,
