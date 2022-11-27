@@ -118,11 +118,6 @@ const initLayout = {
             type: 'component',
             componentType: 'SimulationComponent',
           },
-          {
-            title: 'Timetable',
-            type: 'component',
-            componentType: 'TimetableComponent',
-          },
         ]
       }
     ]
