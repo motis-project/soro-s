@@ -6,7 +6,6 @@
 // } from "../utl/IDBFSHelper.js";
 import {InfrastructureNamespace} from "./infrastructure-store"
 import type {Module} from "vuex";
-import {TimetableState} from "./stores";
 
 // import { Module } from "../soro-client.js";
 
@@ -43,7 +42,7 @@ type TimetableState = {
     currentTimetable?: string,
 }
 
-export const TimetableNamespace = 'timetable';
+export const TimetableNamespace: string = 'timetable';
 
 export const TimetableStore: Module<TimetableState, undefined> = {
     namespaced: true,

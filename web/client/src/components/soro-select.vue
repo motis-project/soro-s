@@ -22,41 +22,41 @@
 
 <script>
 export default {
-  name: "soro-select",
+	name: 'soro-select',
 
-  props: {
-    value: {
-      type: String,
-      required: false,
-      default: null,
-    },
-    options: {
-      type: Array,
-      required: false,
-      default: []
-    },
-    label: {
-      type: String,
-      required: true,
-    },
-  },
+	props: {
+		value: {
+			type: String,
+			required: false,
+			default: null,
+		},
+		options: {
+			type: Array,
+			required: false,
+			default: () => [],
+		},
+		label: {
+			type: String,
+			required: true,
+		},
+	},
 
-  data() {
-    return { extendedOptions: [] }
-  },
+	data() {
+		return { extendedOptions: [] };
+	},
 
-  watch: {
-    options() {
-      this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..');
-      this.extendedOptions.push(null);
-    }
-  },
+	watch: {
+		options() {
+			this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..');
+			this.extendedOptions.push(null);
+		},
+	},
 
-  methods: {
-    emitChange(event) {
-      event.preventDefault();
-      this.$emit('select', event.target.value);
-    }
-  }
-}
+	methods: {
+		emitChange(event) {
+			event.preventDefault();
+			this.$emit('select', event.target.value);
+		},
+	},
+};
 </script>

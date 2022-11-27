@@ -35,7 +35,7 @@
         </div>
         <div :class="subOverlayClasses" ref="subOverlay">
           <div class="sub-overlay-content" id="subOverlayContent">
-            <disruption ref="disruption" />
+            <disruption-detail ref="disruption" />
           </div>
           <div class="sub-overlay-close" ref="subOverlayClose" @click="onSubOverlayCloseClicked">
             <i class="material-icons">close</i>
@@ -64,75 +64,75 @@
 </template>
 
 <script setup>
-  // TODO make this TS
-  // import { Module, FS, IDBFS } from "./soro-client.js";
-  import Glayout from './golden-layout/Glayout.vue';
-  import Disruption from "./components/disruption.vue";
-  import SoroSelect from "./components/soro-select.vue";
+// TODO make this TS
+// import { Module, FS, IDBFS } from "./soro-client.js";
+import Glayout from './golden-layout/Glayout.vue';
+import DisruptionDetail from './components/disruption-detail.vue';
+import SoroSelect from './components/soro-select.vue';
 
-  // import {
-  //   saveToPersistent,
-  //   loadFromPersistent,
-  //   exists,
-  //   saveFileToIDBFS,
-  //   createFolders,
-  //   deleteAllFiles,
-  //   getStationCoordPath
-  // } from "./utl/IDBFSHelper.js";
+// import {
+//   saveToPersistent,
+//   loadFromPersistent,
+//   exists,
+//   saveFileToIDBFS,
+//   createFolders,
+//   deleteAllFiles,
+//   getStationCoordPath
+// } from "./utl/IDBFSHelper.js";
 
-  // function mountIDBFS(callback) {
-  //   FS.mkdir('/idbfs');
-  //   FS.mount(IDBFS, {}, '/idbfs');
-  //
-  //   loadFromPersistent(function () {
-  //     createFolders();
-  //     callback();
-  //     saveToPersistent();
-  //   });
-  // }
+// function mountIDBFS(callback) {
+//   FS.mkdir('/idbfs');
+//   FS.mount(IDBFS, {}, '/idbfs');
+//
+//   loadFromPersistent(function () {
+//     createFolders();
+//     callback();
+//     saveToPersistent();
+//   });
+// }
 
-  /*
+/*
     Run the setup routines after emscripten has done all of its own initialization
    */
-  // Module.onRuntimeInitialized = async function () {
-  //   mountIDBFS(() => {
-  //
-  //     fetch(window.origin + '/misc/btrs_geo.csv')
-  //       .then(response => response.arrayBuffer())
-  //       .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
-  //       .catch(e => console.error(e));
-  //   })
-  //
-  // }
+// Module.onRuntimeInitialized = async function () {
+//   mountIDBFS(() => {
+//
+//     fetch(window.origin + '/misc/btrs_geo.csv')
+//       .then(response => response.arrayBuffer())
+//       .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
+//       .catch(e => console.error(e));
+//   })
+//
+// }
 </script>
 
 <script>
 import { mapActions, mapState } from 'vuex';
-import {InfrastructureNamespace} from "./stores/infrastructure-store";
-import {TimetableNamespace} from "./stores/timetable-store";
+import { InfrastructureNamespace } from './stores/infrastructure-store';
+import { TimetableNamespace } from './stores/timetable-store';
 
 const initLayout = {
-  root: {
-    type: 'row',
-    content: [
-      {
-        type: 'column',
-        content: [
-          {
-            title: 'Infrastructure',
-            type: 'component',
-            componentType: 'InfrastructureComponent',
-          },
-          {
-            title: 'Simulation',
-            type: 'component',
-            componentType: 'SimulationComponent',
-          },
-        ]
-      }
-    ]
-  }
-  /* If these are not shown it is not possible to rearrange GoldenLayout windows.
+	root: {
+		type: 'row',
+		content: [
+			{
+				type: 'column',
+				content: [
+					{
+						title: 'Infrastructure',
+						type: 'component',
+						componentType: 'InfrastructureComponent',
+					},
+					{
+						title: 'Simulation',
+						type: 'component',
+						componentType: 'SimulationComponent',
+					},
+				]
+			}
+		]
+	}
+	/* If these are not shown it is not possible to rearrange GoldenLayout windows.
      Instead of disabling them the images in goldenlayout-mdl-theme.css are removed
      and all click events disabled ..
   settings: {
@@ -144,106 +144,106 @@ const initLayout = {
 };
 
 export default {
-  data() {
-    return {
-      overlay: false,
-      subOverlay: false,
-    }
-  },
+	data() {
+		return {
+			overlay: false,
+			subOverlay: false,
+		};
+	},
 
-  mounted() {
-    this.loadInfrastructures();
-    this.loadTimetables();
-    this.$refs.GLayoutRoot.loadGLLayout(initLayout);
-  },
+	mounted() {
+		this.loadInfrastructures();
+		this.loadTimetables();
+		this.$refs.GLayoutRoot.loadGLLayout(initLayout);
+	},
 
-  computed: {
-    overlayContainerClasses() {
-      return `overlay-container ${this.overlay ? '' : 'hidden'}`
-    },
+	computed: {
+		overlayContainerClasses() {
+			return `overlay-container ${this.overlay ? '' : 'hidden'}`;
+		},
 
-    subOverlayClasses() {
-      return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`
-    },
+		subOverlayClasses() {
+			return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`;
+		},
 
-    ...mapState(InfrastructureNamespace, [
-        'currentInfrastructure',
-        'infrastructures',
-    ]),
-    ...mapState(TimetableNamespace, [
-        'currentTimetable',
-        'timetables',
-    ]),
-  },
+		...mapState(InfrastructureNamespace, [
+			'currentInfrastructure',
+			'infrastructures',
+		]),
+		...mapState(TimetableNamespace, [
+			'currentTimetable',
+			'timetables',
+		]),
+	},
 
-  methods: {
-    toggleOverlay() {
-      this.overlay = !this.overlay;
-    },
+	methods: {
+		toggleOverlay() {
+			this.overlay = !this.overlay;
+		},
 
-    showSubOverlay() {
-      this.overlay = true;
-      this.subOverlay = true;
-    },
+		showSubOverlay() {
+			this.overlay = true;
+			this.subOverlay = true;
+		},
 
-    hideSubOverlay() {
-      this.subOverlay = false;
-    },
+		hideSubOverlay() {
+			this.subOverlay = false;
+		},
 
-    toggleSubOverlay() {
-      if (!this.subOverlay) {
-        this.showSubOverlay();
-      } else {
-        this.hideSubOverlay();
-      }
-    },
+		toggleSubOverlay() {
+			if (!this.subOverlay) {
+				this.showSubOverlay();
+			} else {
+				this.hideSubOverlay();
+			}
+		},
 
-    onStationDetailClicked() {
-      this.$refs.stationDetailButton.classList.toggle('enabled');
-      this.showSubOverlay();
-    },
+		onStationDetailClicked() {
+			this.$refs.stationDetailButton.classList.toggle('enabled');
+			this.showSubOverlay();
+		},
 
-    onDisruptionDetailClicked() {
-      this.$refs.disruptionDetailButton.classList.add('enabled');
-      this.$refs.disruption.showDetail();
-      this.showSubOverlay();
-    },
+		onDisruptionDetailClicked() {
+			this.$refs.disruptionDetailButton.classList.add('enabled');
+			this.$refs.disruption.showDetail();
+			this.showSubOverlay();
+		},
 
-    onSubOverlayCloseClicked() {
-      this.hideSubOverlay();
+		onSubOverlayCloseClicked() {
+			this.hideSubOverlay();
 
-      for (let overlayTab of this.$refs.subOverlayTabs.children) {
-        overlayTab.classList.remove('enabled');
-      }
-    },
+			for (let overlayTab of this.$refs.subOverlayTabs.children) {
+				overlayTab.classList.remove('enabled');
+			}
+		},
 
-    addInfrastructureTab() {
-      this.$refs.GLayoutRoot.addGLComponent('InfrastructureComponent', 'Infra');
-    },
+		addInfrastructureTab() {
+			this.$refs.GLayoutRoot.addGLComponent('InfrastructureComponent', 'Infra');
+		},
 
-    addSimulationTab() {
-      this.$refs.GLayoutRoot.addGLComponent('SimulationComponent', 'Simulation');
-    },
+		addSimulationTab() {
+			this.$refs.GLayoutRoot.addGLComponent('SimulationComponent', 'Simulation');
+		},
 
-    addTimetableTab() {
-      this.$refs.GLayoutRoot.addGLComponent('TimetableComponent', 'Timetable');
-    },
+		addTimetableTab() {
+			this.$refs.GLayoutRoot.addGLComponent('TimetableComponent', 'Timetable');
+		},
 
-    triggerSimulation() {
-      // TODO trigger simulation in store (has to move first)
-    },
+		triggerSimulation() {
+			// TODO trigger simulation in store (has to move first)
+		},
 
-    ...mapActions(InfrastructureNamespace, {
-      loadInfrastructures: 'initialLoad',
-      loadInfrastructure: 'load',
-    }),
+		...mapActions(InfrastructureNamespace, {
+			loadInfrastructures: 'initialLoad',
+			loadInfrastructure: 'load',
+		}),
 
-    ...mapActions(TimetableNamespace, {
-      loadTimetables: 'initialLoad',
-      loadTimetable: 'load',
-    }),
-  },
-}
+		...mapActions(TimetableNamespace, {
+			loadTimetables: 'initialLoad',
+			loadTimetable: 'load',
+		}),
+	},
+};
 </script>
 
 <style>

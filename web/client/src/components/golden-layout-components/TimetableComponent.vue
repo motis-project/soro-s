@@ -5,5 +5,5 @@
 </template>
 
 <script>
-export default { name: "TimetableComponent" }
+export default { name: 'TimetableComponent' };
 </script>

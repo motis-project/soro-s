@@ -13,79 +13,79 @@
 </template>
 
 <script>
-import { ClickTooltip } from "../../util/Tooltip.js";
+import { ClickTooltip } from '../../util/Tooltip.js';
 import {
-  createMap,
-  deHighlightSignalStationRoute,
-  deHighlightStationRoute,
-  highlightSignalStationRoute,
-  highlightStationRoute
-} from "./infrastructure/map/infrastructureMap.js";
+	createMap,
+	deHighlightSignalStationRoute,
+	deHighlightStationRoute,
+	highlightSignalStationRoute,
+	highlightStationRoute
+} from './infrastructure/map/infrastructureMap.js';
 import { mapState } from 'vuex';
-import { InfrastructureNamespace } from "../../stores/infrastructure-store"; // TODO rewrite with global namespace
-import { defineComponent } from "vue";
-import { ComponentContainer } from "golden-layout";
+import { InfrastructureNamespace } from '../../stores/infrastructure-store'; // TODO rewrite with global namespace
+import { defineComponent } from 'vue';
+import { ComponentContainer } from 'golden-layout';
 
 export default defineComponent({
-  name: "InfrastructureComponent",
+	name: 'InfrastructureComponent',
 
-  props: {
-    container: {
-      type: ComponentContainer,
-      required: false,
-      default: undefined,
-    },
-  },
+	props: {
+		container: {
+			type: ComponentContainer,
+			required: false,
+			default: undefined,
+		},
+	},
 
-  data() {
-    return {
-      _libreGLMap: undefined,
-      _tooltip: undefined,
-    }
-  },
+	data() {
+		return {
+			libreGLMap: undefined,
+			tooltip: undefined,
+		};
+	},
 
-  computed: mapState(InfrastructureNamespace, [
-      'currentInfrastructure',
-      'highlightedSignalStationRouteID',
-      'highlightedStationRouteID',
-  ]),
+	computed: mapState(InfrastructureNamespace, [
+		'currentInfrastructure',
+		'highlightedSignalStationRouteID',
+		'highlightedStationRouteID',
+	]),
 
-  created() { this.configureContainer() },
+	created() { this.configureContainer(); },
 
-  watch: {
-    currentInfrastructure(newInfrastructure) {
-      this._libreGLMap = newInfrastructure
-          ? createMap(this.$refs.mapContainer, newInfrastructure, this._tooltip)
-          : undefined;
-    },
+	watch: {
+		currentInfrastructure(newInfrastructure) {
+			this.libreGLMap = newInfrastructure
+				? createMap(this.$refs.mapContainer, newInfrastructure, this.tooltip)
+				: undefined;
+		},
 
-    highlightedSignalStationRouteID(newID, oldID) {
-      if (newID) {
-        highlightSignalStationRoute(this._libreGLMap, this.currentInfrastructure, newID);
-      } else {
-        deHighlightSignalStationRoute(this._libreGLMap, this.currentInfrastructure, oldID);
-      }
-    },
+		highlightedSignalStationRouteID(newID, oldID) {
+			if (newID) {
+				highlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
+			} else {
+				deHighlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, oldID);
+			}
+		},
 
-    highlightedStationRouteID(newID, oldID) {
-      if (newID) {
-        highlightStationRoute(this._libreGLMap, this.currentInfrastructure, newID);
-      } else {
-        deHighlightStationRoute(this._libreGLMap, oldID);
-      }
-    },
-  },
+		highlightedStationRouteID(newID, oldID) {
+			if (newID) {
+				highlightStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
+			} else {
+				deHighlightStationRoute(this.libreGLMap, oldID);
+			}
+		},
+	},
 
-  methods: {
-    configureContainer() {
-      if (!this.container)
-        return
+	methods: {
+		configureContainer() {
+			if (!this.container)
+				return;
 
-      this.container.on('resize', () => this._libreGLMap?.resize());
-      this._tooltip = new ClickTooltip(this.container.element, 'infrastructureTooltip');
-    }
-  }
-})
+			this.container.on('resize', () => this.libreGLMap?.resize());
+			this.tooltip = new ClickTooltip(this.container.element, 'infrastructureTooltip');
+		}
+	}
+});
 </script>
 
 <style>
