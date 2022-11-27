@@ -5,24 +5,5 @@
 </template>
 
 <script>
-export default {
-  name: "TimetableComponent",
-
-  data() {
-    return {
-      container: undefined,
-      componentState: undefined,
-    }
-  },
-
-  methods: {
-    setContainer(container) {
-      this.container = container;
-    },
-
-    setComponentState(componentState) {
-      this.componentState = componentState;
-    },
-  }
-}
+export default { name: "TimetableComponent" }
 </script>

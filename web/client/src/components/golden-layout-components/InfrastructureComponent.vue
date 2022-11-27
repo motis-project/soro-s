@@ -24,14 +24,22 @@ import {
 } from "./infrastructure/map/infrastructureMap.js";
 import { mapState } from 'vuex';
 import { InfrastructureNameSpace } from "../../stores/infrastructure-store.js"; // TODO rewrite with global namespace
+import { defineComponent } from "vue";
+import { ComponentContainer } from "golden-layout";
 
-export default {
+export default defineComponent({
   name: "InfrastructureComponent",
+
+  props: {
+    container: {
+      type: ComponentContainer,
+      required: false,
+      default: undefined,
+    },
+  },
 
   data() {
     return {
-      container: undefined,
-      componentState: undefined,
       _libreGLMap: undefined,
       _tooltip: undefined,
     }
@@ -43,6 +51,8 @@ export default {
       'highlightedStationRouteID',
   ]),
 
+  created() { this.configureContainer() },
+
   watch: {
     currentInfrastructure(newInfrastructure) {
       this._libreGLMap = newInfrastructure
@@ -52,15 +62,15 @@ export default {
 
     highlightedSignalStationRouteID(newID, oldID) {
       if (newID) {
-        highlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), newID);
+        highlightSignalStationRoute(this._libreGLMap, this.currentInfrastructure, newID);
       } else {
-        deHighlightSignalStationRoute(this._libreGLMap, window.infrastructureManager.get(), oldID);
+        deHighlightSignalStationRoute(this._libreGLMap, this.currentInfrastructure, oldID);
       }
     },
 
     highlightedStationRouteID(newID, oldID) {
       if (newID) {
-        highlightStationRoute(this._libreGLMap, window.infrastructureManager.get(), newID);
+        highlightStationRoute(this._libreGLMap, this.currentInfrastructure, newID);
       } else {
         deHighlightStationRoute(this._libreGLMap, oldID);
       }
@@ -68,17 +78,15 @@ export default {
   },
 
   methods: {
-    setContainer(container) {
-      this.container = container;
-      this.container.on('resize', () => this._libreGLMap?.resize());
-      this._tooltip = new ClickTooltip(container.element, 'infrastructureTooltip');
-    },
+    configureContainer() {
+      if (!this.container)
+        return
 
-    setComponentState(componentState) {
-      this.componentState = componentState;
-    },
+      this.container.on('resize', () => this._libreGLMap?.resize());
+      this._tooltip = new ClickTooltip(this.container.element, 'infrastructureTooltip');
+    }
   }
-}
+})
 </script>
 
 <style scoped>

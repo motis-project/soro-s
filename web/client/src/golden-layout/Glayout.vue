@@ -9,7 +9,10 @@
           :key="pair[0]"
           :ref="GlcKeyPrefix + pair[0]"
       >
-        <component :is="pair[1]"></component>
+        <component
+            :is="pair[1].glc"
+            :container="pair[1].container"
+        />
       </gl-component>
     </div>
   </div>
@@ -47,7 +50,7 @@ let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref("glc_"));
 
 const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
-const AllComponents = ref(new Map<number, any>());
+const AllComponents = ref(new Map<number, { glc: any; container?: ComponentContainer }>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
 let GlBoundingClientRect: DOMRect;
@@ -67,7 +70,7 @@ const addComponent = (componentType: string, title: string) => {
   if (UnusedIndexes.length > 0) index = UnusedIndexes.pop() as number;
   else CurIndex++;
 
-  AllComponents.value.set(index, glc);
+  AllComponents.value.set(index, { glc });
 
   return index;
 };
@@ -212,6 +215,7 @@ onMounted(() => {
     const component = instance?.refs[ref][0] as typeof GlComponent;
 
     MapComponents.set(container, { refId: refId, glc: component });
+    AllComponents.value.get(refId).container = container;
 
     container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent.bind(this);
     container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent.bind(this);

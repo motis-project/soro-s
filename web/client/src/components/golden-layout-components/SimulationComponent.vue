@@ -21,6 +21,8 @@ import { d3Graph } from './simulation/d3Graph.js';
 import { mapState } from 'vuex';
 import {InfrastructureNameSpace} from "../../stores/infrastructure-store.js";
 import {TimetableNamespace} from "../../stores/timetable-store.js";
+import {ClickTooltip} from "../../util/Tooltip.js";
+import {ComponentContainer} from "golden-layout";
 
 const nodeWidth = 100;
 const nodeHeight = 80;
@@ -41,12 +43,16 @@ const innerHeightPadding = innerNodeHeight * 0.1;
 export default {
   name: "SimulationComponent",
 
+  props: {
+    container: {
+      type: ComponentContainer,
+      required: false,
+      default: undefined,
+    },
+  },
+
   data() {
-    return {
-      container: undefined,
-      componentState: undefined,
-      _d3Graph: undefined,
-    }
+    return { _d3Graph: undefined }
   },
 
   computed: {
@@ -54,19 +60,16 @@ export default {
     ...mapState(TimetableNamespace, ['currentTimetable']),
   },
 
+  created() { this.configureContainer() },
+
   watch: {
     currentInfrastructure: { handler() { this.reloadGraph() }  },
     currentTimetable: { handler() { this.reloadGraph() } },
   },
 
   methods: {
-    setContainer(container) {
-      this.container = container;
-      this._d3Graph = new d3Graph(container.element, container.width, container.height);
-    },
-
-    setComponentState(componentState) {
-      this.componentState = componentState;
+    configureContainer() {
+      this._d3Graph = new d3Graph(this.container.element, this.container.width, this.container.height);
     },
 
     reloadGraph() {
