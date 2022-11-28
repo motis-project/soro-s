@@ -111,6 +111,7 @@ int main(int argc, char const** argv) {
       infra_todo.emplace_back(dir_entry.path());
     }
   }
+  s.regenerate_ = true;
 
   if (s.regenerate_) {
     infra_todo.clear();
@@ -133,7 +134,75 @@ int main(int argc, char const** argv) {
 
     auto const osm_file =
         infra_res_dir / infra_file.filename().replace_extension(".osm");
-    soro::server::osm_export::export_and_write(*infra, osm_file);
+       soro::server::osm_export::export_and_write(*infra, osm_file);
+
+
+    
+    pugi::xml_document osmData;
+    pugi::xml_document stationData;
+    pugi::xml_document combinedMapData;
+    
+    pugi::xml_parse_result Oms = osmData.load_file("../../resources/OpenStreetMap/germany_filtered.osm");
+    //buffer = 0x000000f7ce10f530 "C:\\Uni\\5\\Bp\\Vs19\\OurBranch\\build\\msvc-debug\\soro-server.exe"
+    TCHAR buffer[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, buffer, MAX_PATH);
+
+    pugi::xml_parse_result Oms2 = stationData.load_file(osm_file.c_str());
+    
+
+        std::stringstream osmDataStream;
+        std::stringstream stationDataStream;
+        std::stringstream combinedMapDataStream;
+       
+       
+        osmData.save(osmDataStream, " ");
+        stationData.save(stationDataStream, " ");
+        //osmData.save(std::cout);
+        //stationData.save(std::cout);
+
+        auto dataWithHeaderInfo = osmDataStream.str();
+        size_t posOfDataStart = dataWithHeaderInfo.find("<node");
+        dataWithHeaderInfo.erase(0, posOfDataStart);
+        osmDataStream.str(dataWithHeaderInfo);
+
+        
+        auto dataWithEndInfo = stationDataStream.str();
+        size_t posOfDataend = dataWithEndInfo.find("</osm>");
+        dataWithEndInfo.erase(posOfDataend, dataWithEndInfo.size()-1);
+        stationDataStream.str(dataWithEndInfo);
+        
+        //std::cout << stationDataStream.str();
+        //std::cout << osmDataStream.str();
+
+        
+   
+        
+        /*
+        pugi::xml_document debug1;
+        pugi::xml_document debug2;
+        pugi::xml_parse_result Oms3a = debug1.load(stationDataStream);
+        pugi::xml_parse_result Oms3s= debug2.load(osmDataStream);
+        debug1.save_file("germany_filtered1.osm");
+        debug2.save_file("germany_filtered2.osm");
+        */
+        combinedMapDataStream.str(stationDataStream.str() + osmDataStream.str());
+        //stationDataStream << osmDataStream.str();
+
+        //osmData.save(std::cout);
+        //stationData.save(std::cout);
+       
+ 
+
+        pugi::xml_parse_result Oms3 = combinedMapData.load(combinedMapDataStream);
+        
+        //combinedMapData.save(std::cout);
+
+        combinedMapData.save_file(osm_file.c_str());
+    
+        
+
+   
+
 
     auto const tiles_dir = infra_res_dir / "tiles";
     exists_or_create_dir(tiles_dir);
