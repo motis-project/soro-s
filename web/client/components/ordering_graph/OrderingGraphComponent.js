@@ -42,6 +42,7 @@ class d3Graph {
     }
 
     createGraph() {
+        // create nodes
         let self = this;
         d3.json("../../components/ordering_graph/test2.json").then(function (data) {
             for (var i = 0; i < data.length; i++) {
@@ -52,12 +53,16 @@ class d3Graph {
                         .attr("cy", self.getNodeYValue(j))
                         .attr("r", nodeRadius)
                         .attr("id", "ID" + data[i].trains[j].id)
-                        .style("fill", "green");
+                        .style("fill", "black");
                 }
 
             }
+            // create paths
             for (var i = 0; i < data.length; i++) {
                 for (var j = 0; j < data[i].trains.length; j++) {
+                    if (data[i].trains[j].out == null) {
+                        break;
+                    }
                     for (var k = 0; k < data[i].trains[j].out.length; k++) {
                         var x = d3.select("#ID" + data[i].trains[j].out[k])
                             .attr("cx");
@@ -66,7 +71,7 @@ class d3Graph {
 
                         d3.select("g")
                             .append("line")
-                            .style("stroke", "lightgreen")
+                            .style("stroke", "black")
                             .style("stroke-width", 10)
                             .attr("x1", self.getNodeXValue(i))
                             .attr("y1", self.getNodeYValue(j))
