@@ -45,15 +45,17 @@ void print_ir_generating_failures() {
 }
 
 auto get_prefix_length(interlocking_route const& interlocking_route,
-                       soro::vector<station_route::ptr> const& sr_run,
+                       stop_sequence const& stop_sequence,
                        std::size_t const sr_offset) {
   auto sr1 = interlocking_route.station_routes_.begin();
-  auto sr2 = std::begin(sr_run) + static_cast<ssize_t>(sr_offset);
+  auto sr2 =
+      std::begin(stop_sequence.points_) + static_cast<ssize_t>(sr_offset);
 
   std::size_t prefix_length = 0;
 
-  for (; sr1 != std::end(interlocking_route.station_routes_) &&
-         sr2 != std::end(sr_run) && *sr1 == (*sr2)->id_;
+  for (;
+       sr1 != std::end(interlocking_route.station_routes_) &&
+       sr2 != std::end(stop_sequence.points_) && *sr1 == (*sr2).station_route_;
        ++sr1, ++sr2) {
     ++prefix_length;
   }
@@ -63,8 +65,7 @@ auto get_prefix_length(interlocking_route const& interlocking_route,
 
 auto get_longest_prefix_interlocking_routes(
     std::vector<interlocking_route::id> const& candidates,
-    interlocking_subsystem const& irs,
-    soro::vector<station_route::ptr> const& sr_run,
+    interlocking_subsystem const& irs, stop_sequence const& stop_sequence,
     std::size_t const sr_offset) {
 
   std::size_t current_longset_prefix = 0;
@@ -73,7 +74,7 @@ auto get_longest_prefix_interlocking_routes(
   for (auto const candidate : candidates) {
     auto const& candidate_route = irs.interlocking_routes_[candidate];
     auto const prefix_length =
-        get_prefix_length(candidate_route, sr_run, sr_offset);
+        get_prefix_length(candidate_route, stop_sequence, sr_offset);
 
     if (prefix_length > current_longset_prefix) {
       longest_prefixes.clear();
@@ -89,49 +90,50 @@ auto get_longest_prefix_interlocking_routes(
 }
 
 // TODO(julian) move to utls and write test || remove this
-template <class ForwardIterable, class GetKey>
-constexpr auto max_element(ForwardIterable&& fw_iterable, GetKey&& get_key)
-    -> std::pair<
-        decltype(std::begin(fw_iterable)),
-        std::invoke_result_t<GetKey, decltype(*std::begin(fw_iterable))>> {
-  auto first = std::begin(fw_iterable);
-  auto last = std::end(fw_iterable);
-
-  if (first == last) {
-    return {last, {}};
-  }
-
-  auto largest_element = first;
-  auto largest_key = get_key(*first);
-
-  ++first;
-  for (; first != last; ++first) {
-    auto const key_largest = get_key(*largest_element);
-    auto const key_first = get_key(*first);
-
-    if (key_largest < key_first) {
-      largest_element = first;
-      largest_key = key_largest;
-    }
-  }
-
-  return {largest_element, largest_key};
-}
+// template <class ForwardIterable, class GetKey>
+// constexpr auto max_element(ForwardIterable&& fw_iterable, GetKey&& get_key)
+//    -> std::pair<
+//        decltype(std::begin(fw_iterable)),
+//        std::invoke_result_t<GetKey, decltype(*std::begin(fw_iterable))>> {
+//  auto first = std::begin(fw_iterable);
+//  auto last = std::end(fw_iterable);
+//
+//  if (first == last) {
+//    return {last, {}};
+//  }
+//
+//  auto largest_element = first;
+//  auto largest_key = get_key(*first);
+//
+//  ++first;
+//  for (; first != last; ++first) {
+//    auto const key_largest = get_key(*largest_element);
+//    auto const key_first = get_key(*first);
+//
+//    if (key_largest < key_first) {
+//      largest_element = first;
+//      largest_key = key_largest;
+//    }
+//  }
+//
+//  return {largest_element, largest_key};
+//}
 
 std::pair<interlocking_route::id, std::size_t> get_first_ir(
-    soro::vector<station_route::ptr> const& sr_run,
-    soro::vector<stop> const& stops, FreightTrain const freight,
-    interlocking_subsystem const& irs, station_route_graph const&, bool const) {
+    stop_sequence const& stop_sequence, FreightTrain const freight,
+    infrastructure const& infra) {
+  auto const& irs = infra->interlocking_;
 
   interlocking_route::id ir_result = interlocking_route::INVALID;
   std::size_t run_offset_result = std::numeric_limits<std::size_t>::max();
 
-  auto const first_sr = sr_run.front();
+  auto const first_sr =
+      infra->station_routes_[stop_sequence.points_.front().station_route_];
 
   // make a copy, we will modify the contents
   auto candidates = irs.sr_to_participating_irs_[first_sr->id_];
 
-  if (stops.front().is_halt()) {
+  if (stop_sequence.points_.front().is_halt()) {
     auto const halt = first_sr->get_halt_node(freight);
 
     if (!halt.has_value()) {
@@ -142,12 +144,12 @@ std::pair<interlocking_route::id, std::size_t> get_first_ir(
     utl::concat(candidates, irs.halting_at_.at(halt.value()->id_));
   }
 
-  if (stops.front().is_halt()) {
+  if (stop_sequence.points_.front().is_halt()) {
     utl::erase_duplicates(candidates);
   }
 
   auto const [longest_prefix_routes, current_longest_prefix] =
-      get_longest_prefix_interlocking_routes(candidates, irs, sr_run, 0);
+      get_longest_prefix_interlocking_routes(candidates, irs, stop_sequence, 0);
 
   if (longest_prefix_routes.size() == 1) {
     return {longest_prefix_routes.front(), current_longest_prefix - 1};
@@ -164,77 +166,114 @@ std::pair<interlocking_route::id, std::size_t> get_first_ir(
   return {interlocking_route::INVALID, 1000};
 }
 
-// auto get_first_ssr2(soro::vector<station_route::ptr> const& sr_run,
-//                     FreightTrain const freight,
-//                     interlocking_subsystem const& ssr_man,
-//                     station_route_graph const& srg, bool const,
-//                     infrastructure const& infra) {
-//   auto const& first_sr = sr_run.front();
+// void take(stop_sequence const& stop_sequence, std::size_t const from,
+// std::size_t const to,
+//           interlocking_route::id const ir_id) {
 //
-//   auto parti_candidates = ssr_man.sr_to_participating_irs_[first_sr->id_];
-//   auto stop_candidates =
-//       ssr_man.halting_at_.at(sr_run.front()->get_halt_node(freight)->id_);
-//
-//   auto const& candidates =
-//       utls::sort_and_intersect(parti_candidates, stop_candidates);
-//
-//   if (srg.predeccesors_[first_sr->id_].empty()) {
-//     return get_best_fitting_ssr2(candidates, sr_run, 0, infra);
-//   }
-//
-//   ir_ptr chosen_ssr = nullptr;
-//
-//   soro::size_type prefix_length = 0;
-//
-//   for (auto const& candidate : candidates) {
-//     soro::size_type sr_offset = 0;
-//
-//     auto parti_it = utls::find(candidate->station_routes_, first_sr);
-//
-//     while (parti_it != std::end(candidate->station_routes_) &&
-//            (sr_run[0 + sr_offset]->id_ == (*parti_it)->id_)) {
-//
-//       ++sr_offset;
-//       std::advance(parti_it, 1);
-//     }
-//
-//     if (sr_offset > prefix_length) {
-//       chosen_ssr = candidate;
-//       prefix_length = sr_offset;
-//     }
-//   }
-//
-//   return std::pair(prefix_length - 1, chosen_ssr);
 // }
 
-soro::vector<interlocking_route::id> get_interlocking_route_path(
-    raw_train::run const& run, FreightTrain const freight,
-    infrastructure const& infra) {
+utls::optional<infra::node::idx> get_node_idx(
+    sequence_point const& sp, rs::FreightTrain const freight,
+    infra::infrastructure const& infra) {
+  auto const sr = infra->station_routes_[sp.station_route_];
+
+  if (sp.has_transit_time()) {
+    return sr->runtime_checkpoint_;
+  }
+
+  if (sp.is_halt()) {
+    return sr->get_halt_idx(freight);
+  }
+
+  return {};
+}
+
+soro::vector<sequence_point> get_sequence_points(interlocking_route const& ir,
+                                                 stop_sequence const& ss,
+                                                 rs::FreightTrain const freight,
+                                                 std::size_t const last_prefix,
+                                                 std::size_t const new_prefix,
+                                                 infrastructure const& infra) {
+  soro::vector<sequence_point> result;
+
+  for (auto sp_idx = last_prefix; sp_idx < new_prefix; ++sp_idx) {
+    auto const sequence_point = ss.points_[sp_idx];
+
+    auto const sr_node_idx = get_node_idx(sequence_point, freight, infra);
+
+    if (sr_node_idx.has_value() &&
+        ir.contains(sequence_point.station_route_, *sr_node_idx)) {
+      result.emplace_back(sequence_point);
+    }
+  }
+
+  return result;
+}
+
+struct cover {
+
+  bool covers(struct stop_sequence const& ss, rs::FreightTrain const freight,
+              infrastructure const& infra) const {
+    if (stop_sequence_offset_ < ss.points_.size() - 1) {
+      return false;
+    }
+
+    auto const last_sr =
+        infra->station_routes_[ss.points_.back().station_route_];
+
+    node::idx last_stop_sequence_node = node::INVALID_IDX;
+
+    if (ss.points_.back().is_halt()) {
+      last_stop_sequence_node = last_sr->get_halt_idx(freight).value() + 1;
+    } else if (ss.break_out_) {
+      last_stop_sequence_node = last_sr->size();
+    }
+
+    return node_idx_ > last_stop_sequence_node;
+  }
+
+  std::size_t stop_sequence_offset_{0};
+  std::size_t node_idx_{0};
+};
+
+train::path get_interlocking_route_path(stop_sequence const& stop_sequence,
+                                        FreightTrain const freight,
+                                        infrastructure const& infra) {
   auto const& irs = infra->interlocking_;
-  auto const& srg = infra->station_route_graph_;
 
-  auto [first_ir, current_sr_offset] =
-      get_first_ir(run.routes_, run.stops_, freight, irs, srg, run.break_in_);
+  std::cout << "Train\n";
 
-  if (!interlocking_route::valid(first_ir)) {
+  auto [first_ir_id, initial_sr_offset] =
+      get_first_ir(stop_sequence, freight, infra);
+
+  if (!interlocking_route::valid(first_ir_id)) {
     return {};
   }
 
-  soro::vector<interlocking_route::id> ir_path = {first_ir};
+  train::path train_path;
+  train_path.break_in_ = stop_sequence.break_in_;
+  train_path.break_out_ = stop_sequence.break_out_;
 
-  interlocking_route::ptr current_ir = &irs.interlocking_routes_[first_ir];
+  interlocking_route::ptr current_ir = &irs.interlocking_routes_[first_ir_id];
 
-  while (current_sr_offset < run.routes_.size() - 1) {
+  cover ss_cover{.stop_sequence_offset_ = initial_sr_offset,
+                 .node_idx_ = current_ir->end_offset_};
+
+  train::path::entry first_tpe;
+  first_tpe.interlocking_id_ = first_ir_id;
+  first_tpe.sequence_points_ =
+      get_sequence_points(*current_ir, stop_sequence, freight, 0,
+                          ss_cover.stop_sequence_offset_ + 1, infra);
+  train_path.entries_.emplace_back(first_tpe);
+
+  while (!ss_cover.covers(stop_sequence, freight, infra)) {
+    //  while (current_sr_offset < stop_sequence.points_.size() - 1) {
     auto const& candidates =
         irs.starting_at_[current_ir->last_node(infra)->id_];
 
     auto const [longest_prefix_routes, prefix_length] =
-        get_longest_prefix_interlocking_routes(candidates, irs, run.routes_,
-                                               current_sr_offset);
-
-    if (longest_prefix_routes.size() == 1) {
-      ir_path.emplace_back(longest_prefix_routes.front());
-    }
+        get_longest_prefix_interlocking_routes(candidates, irs, stop_sequence,
+                                               ss_cover.stop_sequence_offset_);
 
     if (longest_prefix_routes.size() > 1) {
       ++failures[failure_reason::could_not_find_unique_ir];
@@ -246,81 +285,70 @@ soro::vector<interlocking_route::id> get_interlocking_route_path(
       return {};
     }
 
-    current_ir = &irs.interlocking_routes_[ir_path.back()];
+    current_ir = &irs.interlocking_routes_[longest_prefix_routes.front()];
+
+    train::path::entry tpe;
+    tpe.interlocking_id_ = current_ir->id_;
+    tpe.sequence_points_ = get_sequence_points(
+        *current_ir, stop_sequence, freight, ss_cover.stop_sequence_offset_,
+        ss_cover.stop_sequence_offset_ + prefix_length, infra);
+    train_path.entries_.emplace_back(tpe);
+
+    std::cout << "current sr offset: " << ss_cover.stop_sequence_offset_
+              << std::endl;
+    std::cout << "prefix length: " << prefix_length << std::endl;
 
     // true when the current interlocking route and the currently worked on
     // station route end on the same node
+    auto const last_sr_id =
+        stop_sequence.points_[ss_cover.stop_sequence_offset_].station_route_;
     auto const ends_align = current_ir->last_node(infra) ==
-                            run.routes_[current_sr_offset]->nodes().back();
+                            infra->station_routes_[last_sr_id]->nodes().back();
 
     // when the ends align we have completely inserted the current station route
     // into the interlocking path, so we can move on to the next station route
-    current_sr_offset += ends_align ? prefix_length : prefix_length - 1;
+    ss_cover.stop_sequence_offset_ +=
+        ends_align ? prefix_length : prefix_length - 1;
+    ss_cover.node_idx_ = current_ir->end_offset_;
   }
 
-  return ir_path;
-}
+  //  node::idx last_sr_node_offset = node::INVALID_IDX;
+  //
+  //  auto const completely_covered = [](struct stop_sequence const& ss) {
+  //    return ss.points_.size()
+  //  };
+  //
+  //  if (stop_sequence.break_out_) {
+  //    last_sr_node_offset =
+  //        infra->station_routes_[stop_sequence.points_.back().station_route_]
+  //            ->size();
+  //  } else {
+  //    last_sr_node_offset =
+  //        infra->station_routes_[stop_sequence.points_.back().station_route_]
+  //            ->get_halt_idx(freight)
+  //            .value();
+  //  }
 
-//  auto [current_sr_idx, chosen_ssr] =
-//      get_first_ssr2(run.routes_, freight, ssr_man, srg, run.break_in_);
-//  ssr_path.emplace_back(chosen_ssr);
-//  node_ptr current_node = ssr_path.back()->nodes().back();
-//
-//  while (current_sr_idx != run.routes_.size() - 1) {
-//
-//    // TODO(julian) this should become unnecessary when all train paths
-//    // contained in a timetable are parsed correctly
-//    auto const can_it = ssr_man.starting_at_.find(current_node->id_);
-//    if (can_it == std::end(ssr_man.starting_at_)) {
-//      ssr_path.clear();
-//      return ssr_path;
-//    }
-//
-//    auto const& candidates = can_it->second;
-//
-//    std::tie(current_sr_idx, chosen_ssr) =
-//        get_best_fitting_ssr2(candidates, run.routes_, current_sr_idx);
-//
-//    // TODO(julian) this should become unnecessary when all train paths
-//    // contained in a timetable are parsed correctly
-//    if (chosen_ssr == nullptr) {
-//      ssr_path.clear();
-//      return ssr_path;
-//    }
-//
-//    ssr_path.emplace_back(chosen_ssr);
-//    current_node = ssr_path.back()->nodes().back();
-//  }
-//
-//  auto const& last_sr = run.routes_[current_sr_idx];
-//
-//  while (true) {
-//    auto const& candidate_it = ssr_man.starting_at_.find(current_node->id_);
-//
-//    if (candidate_it == std::cend(ssr_man.starting_at_)) {
-//      break;
-//    }
-//
-//    auto chosen_it = utls::find_if(candidate_it->second, [&](ir_ptr can) {
-//      return can->station_routes_.front()->id_ == last_sr->id_;
-//    });
-//
-//    if (chosen_it == std::end(candidate_it->second)) {
-//      break;
-//    }
-//
-//    chosen_ssr = *chosen_it;
-//
-//    bool const found_internal = chosen_ssr->station_routes_.size() == 1;
-//    ssr_path.emplace_back(chosen_ssr);
-//
-//    if (!found_internal) {
-//      break;
-//    }
-//
-//    current_node = ssr_path.back()->nodes().back();
-//  }
-//
-//  return ssr_path;
+  //  // we have to
+  //  if (last_sr_node_offset != current_ir->end_offset_) {
+  //
+  //    auto const& candidates =
+  //        irs.starting_at_[current_ir->last_node(infra)->id_];
+  //  }
+
+  utls::sasserts([&]() {
+    auto const measurable_points = utls::count_if(
+        stop_sequence.points_, [](auto&& sp) { return sp.is_measurable(); });
+
+    auto const path_points = utls::accumulate(
+        train_path.entries_, std::size_t{0}, [](auto&& acc, auto&& tpe) {
+          return acc + tpe.sequence_points_.size();
+        });
+
+    utls::sassert(measurable_points == path_points);
+  });
+
+  return train_path;
+}
 
 }  // namespace soro::tt

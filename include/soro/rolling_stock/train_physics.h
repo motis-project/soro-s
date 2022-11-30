@@ -1,5 +1,7 @@
 #pragma once
 
+#include "soro/rolling_stock/ctc.h"
+#include "soro/rolling_stock/freight.h"
 #include "soro/rolling_stock/train_series.h"
 
 namespace soro::rs {
@@ -10,7 +12,8 @@ struct train_physics {
   // if we don't serialize we need a constructor since the members are private
   train_physics(soro::vector<traction_vehicle> tvs,
                 si::weight const carriage_weight, si::length const length,
-                si::speed const max_speed);
+                si::speed const max_speed, CTC const ctc,
+                FreightTrain const freight);
 #endif
 
   si::length length() const;
@@ -25,6 +28,10 @@ struct train_physics {
 
   si::acceleration deacceleration() const;
 
+  rs::CTC ctc() const;
+
+  rs::FreightTrain freight() const;
+
 #if !defined(SERIALIZE)
   // if we don't need to serialize these members are private
   // since we do not want users to access them directly,
@@ -36,6 +43,8 @@ private:
   si::weight carriage_weight_{si::ZERO<si::weight>};
   si::length length_{si::ZERO<si::length>};
   si::speed max_speed_{si::ZERO<si::speed>};
+  rs::CTC ctc_{rs::CTC::NO};
+  rs::FreightTrain freight_{rs::FreightTrain::NO};
 };
 
 }  // namespace soro::rs

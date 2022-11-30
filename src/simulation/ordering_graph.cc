@@ -88,22 +88,25 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   for (auto const& train : tt) {
     auto const stamps = runtime_calculation(*train, infra, {type::MAIN_SIGNAL});
 
-    utl::verify(train->path_.size() == stamps.times_.size() + 1,
+    utl::verify(train->path_.entries_.size() == stamps.times_.size() + 1,
                 "Differing amounts of signal station routes in train path and "
                 "main signals in running time calculation timestamps");
 
-    for (auto const [idx, ir_id] : utl::enumerate(train->path_)) {
+    for (auto const [idx, entry] : utl::enumerate(train->path_.entries_)) {
       auto const id = static_cast<ordering_node::id>(nodes_.size());
 
-      nodes_.emplace_back(id, ir_id, train->id_);
+      nodes_.emplace_back(id, entry.interlocking_id_, train->id_);
 
-      auto const from = idx == 0 ? train->first_departure()
-                                 : stamps.times_[idx - 1].departure_;
-      auto const to = idx == train->path_.size() - 1
-                          ? train->last_arrival()
-                          : stamps.times_[idx].arrival_;
+      utls::sassert(false, "Not implemented");
+      utls::unixtime from;
+      utls::unixtime to;
+      //      auto const from = idx == 0 ? train->first_departure()
+      //                                 : stamps.times_[idx - 1].departure_;
+      //      auto const to = idx == train->path_.entries_.size() - 1
+      //                          ? train->last_arrival()
+      //                          : stamps.times_[idx].arrival_;
 
-      route_orderings[ir_id].push_back(
+      route_orderings[entry.interlocking_id_].push_back(
           {.from_ = from, .to_ = to, .node_id_ = id});
     }
   }

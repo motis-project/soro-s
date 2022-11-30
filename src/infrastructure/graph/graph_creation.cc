@@ -45,7 +45,7 @@ element* get_or_create_element(graph& network, station& station,
   } else {
     return network.element_store_[element_it->second].get();
   }
-};
+}
 
 void set_km_point_and_line(end_element& e, std::string const&,
                            kilometrage const km_point, line_id const line) {
@@ -209,14 +209,37 @@ void set_neighbour(track_element& e, std::string const&, element* neigh,
 }
 
 void set_neighbour(undirected_track_element& e, std::string const&,
-                   element* neigh, bool rising) {
-  if (rising) {
-    e.end_rising_neighbour() == nullptr ? e.end_rising_neighbour() = neigh
-                                        : e.start_rising_neighbour() = neigh;
-  } else {
-    e.end_falling_neighbour() == nullptr ? e.end_falling_neighbour() = neigh
-                                         : e.start_falling_neighbour() = neigh;
+                   element* neigh, bool) {
+  if (e.end_rising_neighbour() == nullptr) {
+    e.end_rising_neighbour() = neigh;
+    return;
   }
+
+  if (e.start_rising_neighbour() == nullptr) {
+    e.start_rising_neighbour() = neigh;
+    return;
+  }
+
+  if (e.start_falling_neighbour() == nullptr) {
+    e.start_falling_neighbour() = neigh;
+    return;
+  }
+
+  if (e.end_falling_neighbour() == nullptr) {
+    e.end_falling_neighbour() = neigh;
+    return;
+  }
+
+  //  if (rising) {
+  //    e.start_rising_neighbour() == nullptr ? e.start_rising_neighbour() =
+  //    neigh
+  //                                          : e.end_falling_neighbour() =
+  //                                          neigh;
+  //  } else {
+  //    e.end_rising_neighbour() == nullptr ? e.end_rising_neighbour() = neigh
+  //                                        : e.start_falling_neighbour() =
+  //                                        neigh;
+  //  }
 }
 
 void set_neighbour(cross& e, std::string const& name, element* neigh,

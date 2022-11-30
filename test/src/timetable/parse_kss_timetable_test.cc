@@ -184,7 +184,6 @@ auto get_station_to_sub_routes(std::vector<sub_station_route> const& ssrs,
 }
 
 auto get_sub_route_exclusions(infrastructure const& infra) {
-
   auto const ssrs = get_sub_station_routes(infra->station_routes_);
   auto const station_to_sub_routes = get_station_to_sub_routes(ssrs, infra);
 
@@ -196,37 +195,6 @@ auto get_sub_route_exclusions(infrastructure const& infra) {
   }
 
   return exclusions;
-}
-
-template <typename VecVec>
-void print_vecvec_stats(VecVec const& vecvec) {
-  std::size_t avg = 0;
-  std::size_t max = 0;
-  std::size_t min = 9999;
-
-  std::vector<std::size_t> sizes;
-
-  for (auto const& vec : vecvec) {
-    avg += vec.size();
-    min = std::min(min, vec.size());
-    max = std::max(max, vec.size());
-    sizes.emplace_back(vec.size());
-  }
-
-  utls::sort(sizes);
-
-  std::cout << "Min: " << min << " Max: " << max
-            << " Avg: " << avg / vecvec.size() << std::endl;
-
-  auto const get_quantile = [](double const q,
-                               std::vector<std::size_t> const& v) {
-    return v[static_cast<std::size_t>((static_cast<double>(v.size()) * q))];
-  };
-
-  std::cout << "99%: " << get_quantile(0.99, sizes) << '\n';
-  std::cout << "95%: " << get_quantile(0.95, sizes) << '\n';
-  std::cout << "90%: " << get_quantile(0.90, sizes) << '\n';
-  std::cout << "50%: " << get_quantile(0.50, sizes) << '\n';
 }
 
 bool same_path(station_route::ptr const sr1, station_route::ptr const sr2) {
@@ -267,52 +235,11 @@ void same_path_station_routes(infrastructure const& infra) {
   std::cout << "same paths: " << (same_path_count / 2) << std::endl;
 }
 
-TEST_SUITE("parse de_kss" * doctest::skip()) {
+TEST_SUITE("parse de_kss") {
 
   TEST_CASE("parse de_kss") {
     auto opts = soro::test::DE_ISS_OPTS;
-    opts.determine_interlocking_ = false;
-    opts.determine_conflicts_ = false;
     infrastructure const infra(opts);
-
-    auto const exclusion_path_exclusions = get_exclusion_path_exclusions(infra);
-    print_vecvec_stats(exclusion_path_exclusions);
-
-    //    same_path_station_routes(infra);
-    //
-    //    auto const ssrs_exclusion = get_sub_route_exclusions(infra);
-    //
-    //    std::size_t id = 0;
-    //    for (auto const& ssr_exclusions : ssrs_exclusion) {
-    //
-    //      if (ssr_exclusions.size() == 1850) {
-    //        std::set<sub_station_route::id> s;
-    //        std::set<std::pair<sub_station_route::id, sub_station_route::id>>
-    //        e;
-    //        //
-    //        for (auto const& other_ss : ssr_exclusions) {
-    //          e.insert({id, other_ss});
-    //
-    //          for (auto const& other_ex : ssrs_exclusion[other_ss]) {
-    //            e.insert({other_ss, other_ex});
-    //            s.insert(other_ex);
-    //          }
-    //        }
-    //        //
-    //        std::cout << "set size: " << s.size() << '\n';
-    //        std::cout << "edges: " << e.size() << '\n';
-    //        std::cout << "ID: " << id << '\n';
-    //      }
-    //
-    //      ++id;
-    //    }
-    //
-    //    print_vecvec_stats(ssrs_exclusion);
-
-    //    infra.save("infra.raw");
-    //    timetable const tt(DE_KSS_OPTS, infra);
-
-    //    std::cout << "Got " << tt->train_store_.size() << " trains" <<
-    //    std::endl; tt.save("tt.raw");
+    timetable const tt(soro::test::DE_KSS_OPTS, infra);
   }
 }

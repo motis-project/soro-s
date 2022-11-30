@@ -23,7 +23,7 @@ struct optional {
   static constexpr const auto INVALID_VALUE = INVALID;
 
   constexpr optional() noexcept = default;
-  constexpr explicit optional(T const val) noexcept : val_{val} {}
+  constexpr optional(T const val) noexcept : val_{val} {}
 
   constexpr optional(optional const& other) = default;
   constexpr optional& operator=(optional const&) = default;
@@ -56,8 +56,8 @@ struct optional {
 
   constexpr T& value() & { return val_; }
   constexpr T const& value() const& { return val_; }
-  constexpr T&& value() && { return val_; }
-  constexpr T const&& value() const&& { return val_; }
+  constexpr T& value() && { return val_; }
+  constexpr T const& value() const&& { return val_; }
 
   template <typename U>
   constexpr T value_or(U&& default_value) const& noexcept {

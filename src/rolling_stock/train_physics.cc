@@ -9,11 +9,14 @@ using namespace soro::utls;
 #if !defined(SERIALIZE)
 train_physics::train_physics(soro::vector<traction_vehicle> tvs,
                              si::weight const carriage_weight,
-                             si::length const length, si::speed const max_speed)
+                             si::length const length, si::speed const max_speed,
+                             CTC const ctc, FreightTrain const freight)
     : vehicles_{std::move(tvs)},
       carriage_weight_{carriage_weight},
       length_{length},
-      max_speed_{max_speed} {}
+      max_speed_{max_speed},
+      ctc_(ctc),
+      freight_(freight) {}
 #endif
 
 si::length train_physics::length() const { return length_; }
@@ -48,5 +51,9 @@ si::force train_physics::resistive_force(si::speed const v) const {
 si::acceleration train_physics::deacceleration() const {
   return vehicles_.front().deacceleration_;
 }
+
+CTC train_physics::ctc() const { return this->ctc_; }
+
+FreightTrain train_physics::freight() const { return this->freight_; }
 
 }  // namespace soro::rs

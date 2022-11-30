@@ -41,6 +41,10 @@ bool element::is_track_element() const {
 
 bool element::is_section_element() const { return !is_track_element(); }
 
+bool element::is_directed_track_element() const {
+  return infra::is_directed_track_element(type());
+}
+
 bool element::is_undirected_track_element() const {
   return infra::is_undirected_track_element(type());
 }

@@ -48,7 +48,9 @@ rs::train_physics generate_frictionless_test_train_2() {
                             .resistance_curve_ = resistance_poly}},
           si::from_kg(0.0),
           si::from_m(0.0),
-          si::from_km_h(400.0)};
+          si::from_km_h(400.0),
+          rs::CTC::NO,
+          rs::FreightTrain::NO};
 }
 
 rs::train_physics generate_test_train_2() {
@@ -81,31 +83,33 @@ rs::train_physics generate_test_train_2() {
                             .resistance_curve_ = resistance_poly}},
           si::from_kg(0.0),
           si::from_m(0.0),
-          si::from_km_h(400.0)};
+          si::from_km_h(400.0),
+          rs::CTC::NO,
+          rs::FreightTrain::NO};
 }
 
 void check_speed_intervals(speed_intervals is_speed_intervals,
                            speed_intervals shall_speed_intervals) {
-  CHECK(is_speed_intervals.size() == shall_speed_intervals.size());
+  CHECK_EQ(is_speed_intervals.size(), shall_speed_intervals.size());
 
   for (std::size_t i = 0UL; i < is_speed_intervals.size(); ++i) {
-    CHECK(is_speed_intervals[i].speed_limit_ ==
-          shall_speed_intervals[i].speed_limit_);
-    CHECK(is_speed_intervals[i].length() == shall_speed_intervals[i].length());
-    CHECK(is_speed_intervals[i].start_ == shall_speed_intervals[i].start_);
-    CHECK(is_speed_intervals[i].end_ == shall_speed_intervals[i].end_);
-    CHECK(is_speed_intervals[i].halt_ == shall_speed_intervals[i].halt_);
+    CHECK_EQ(is_speed_intervals[i].speed_limit_,
+             shall_speed_intervals[i].speed_limit_);
+    CHECK_EQ(is_speed_intervals[i].length(), shall_speed_intervals[i].length());
+    CHECK_EQ(is_speed_intervals[i].start_, shall_speed_intervals[i].start_);
+    CHECK_EQ(is_speed_intervals[i].end_, shall_speed_intervals[i].end_);
+    CHECK_EQ(is_speed_intervals[i].halt_, shall_speed_intervals[i].halt_);
 
-    CHECK(is_speed_intervals[i].intervals_.size() ==
-          shall_speed_intervals[i].intervals_.size());
+    CHECK_EQ(is_speed_intervals[i].intervals_.size(),
+             shall_speed_intervals[i].intervals_.size());
     for (std::size_t j = 0UL; j < is_speed_intervals[i].intervals_.size();
          ++j) {
-      CHECK(is_speed_intervals[i].intervals_[j].speed_limit_ ==
-            shall_speed_intervals[i].intervals_[j].speed_limit_);
-      CHECK(is_speed_intervals[i].intervals_[j].distance_ ==
-            shall_speed_intervals[i].intervals_[j].distance_);
-      CHECK(is_speed_intervals[i].intervals_[j].halt_ ==
-            shall_speed_intervals[i].intervals_[j].halt_);
+      CHECK_EQ(is_speed_intervals[i].intervals_[j].speed_limit_,
+               shall_speed_intervals[i].intervals_[j].speed_limit_);
+      CHECK_EQ(is_speed_intervals[i].intervals_[j].distance_,
+               shall_speed_intervals[i].intervals_[j].distance_);
+      CHECK_EQ(is_speed_intervals[i].intervals_[j].halt_,
+               shall_speed_intervals[i].intervals_[j].halt_);
     }
   }
 }
@@ -315,8 +319,8 @@ TEST_CASE("get_cruising_speed_range::base_case") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::scaleddown_base_case") {
@@ -352,8 +356,8 @@ TEST_CASE("get_cruising_speed_range::scaleddown_base_case") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::lower_final_speed") {
@@ -389,8 +393,8 @@ TEST_CASE("get_cruising_speed_range::lower_final_speed") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::no_braking") {
@@ -420,8 +424,8 @@ TEST_CASE("get_cruising_speed_range::no_braking") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::higher_final_speed_full_range") {
@@ -457,8 +461,8 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_full_range") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range(false);
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::higher_final_speed_safe_range") {
@@ -494,8 +498,8 @@ TEST_CASE("get_cruising_speed_range::higher_final_speed_safe_range") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::edge_case_constant_speed") {
@@ -523,8 +527,8 @@ TEST_CASE("get_cruising_speed_range::edge_case_constant_speed") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_speed_range::edge_case_only_branking_changes_speed") {
@@ -559,8 +563,8 @@ TEST_CASE("get_cruising_speed_range::edge_case_only_branking_changes_speed") {
 
   auto is_speed_range = speed_int.get_cruising_speed_range();
 
-  CHECK(std::get<0>(is_speed_range) == std::get<0>(shall_speed_range));
-  CHECK(std::get<1>(is_speed_range) == std::get<1>(shall_speed_range));
+  CHECK_EQ(std::get<0>(is_speed_range), std::get<0>(shall_speed_range));
+  CHECK_EQ(std::get<1>(is_speed_range), std::get<1>(shall_speed_range));
 }
 
 TEST_CASE("get_cruising_interval::no_braking") {  // NOLINT
@@ -616,14 +620,14 @@ TEST_CASE("get_cruising_interval::candidate_out_of_range") {  // NOLINT
   // TEST: CRUISING CANDIDATE TOO HIGH
   auto too_high_interval = speed_int.get_cruising_interval(si::speed{4.0F});
 
-  CHECK(std::get<0>(too_high_interval) == si::length{-1.0F});
-  CHECK(std::get<1>(too_high_interval) == si::length{-1.0F});
+  CHECK_EQ(std::get<0>(too_high_interval), si::length{-1.0F});
+  CHECK_EQ(std::get<1>(too_high_interval), si::length{-1.0F});
 
   // TEST: CRUISING CANDIDATE TOO LOW
   auto too_low_interval = speed_int.get_cruising_interval(si::speed{0.0F});
 
-  CHECK(std::get<0>(too_low_interval) == si::length{-1.0F});
-  CHECK(std::get<1>(too_low_interval) == si::length{-1.0F});
+  CHECK_EQ(std::get<0>(too_low_interval), si::length{-1.0F});
+  CHECK_EQ(std::get<1>(too_low_interval), si::length{-1.0F});
 }
 
 TEST_CASE(
@@ -671,14 +675,14 @@ TEST_CASE(
   // TEST: CRUISING CANDIDATE TOO LOW: NO INTERSECTION POINT
   auto too_low_interval = speed_int.get_cruising_interval(si::speed{1.0F});
 
-  CHECK(std::get<0>(too_low_interval) == si::length{-1.0F});
-  CHECK(std::get<1>(too_low_interval) == si::length{-1.0F});
+  CHECK_EQ(std::get<0>(too_low_interval), si::length{-1.0F});
+  CHECK_EQ(std::get<1>(too_low_interval), si::length{-1.0F});
 
   // TEST: CRUISING CANDIDATE HAS VALID INTERVAL: INTERSECTION POINT
   auto valid_interval = speed_int.get_cruising_interval(si::speed{2.0F});
 
-  CHECK(std::get<0>(valid_interval) == si::length{3.0F});
-  CHECK(std::get<1>(valid_interval) == si::length{9.0F});
+  CHECK_EQ(std::get<0>(valid_interval), si::length{3.0F});
+  CHECK_EQ(std::get<1>(valid_interval), si::length{9.0F});
 }
 
 TEST_CASE("get_cruising_interval::braking_isp") {  // NOLINT
@@ -718,8 +722,8 @@ TEST_CASE("get_cruising_interval::braking_isp") {  // NOLINT
   // TEST: CRUISING CANDIDATE HAS VALID INTERVAL: INTERSECTION POINT
   auto valid_interval = speed_int.get_cruising_interval(si::speed{2.0F});
 
-  CHECK(std::get<0>(valid_interval) == si::length{3.0F});
-  CHECK(std::get<1>(valid_interval) == si::length{7.0F});
+  CHECK_EQ(std::get<0>(valid_interval), si::length{3.0F});
+  CHECK_EQ(std::get<1>(valid_interval), si::length{7.0F});
 }
 
 TEST_CASE("get_cruising_interval::first_and_last_isp_test") {
@@ -758,8 +762,8 @@ TEST_CASE("get_cruising_interval::first_and_last_isp_test") {
   // TESTS: FIRST ISP IN ACCELERATION && LAST ISP IN BRAKING/COASTING
   auto valid_interval = speed_int.get_cruising_interval(si::speed{1.0F});
 
-  CHECK(std::get<0>(valid_interval) == si::length{2.0F});
-  CHECK(std::get<1>(valid_interval) == si::length{6.0F});
+  CHECK_EQ(std::get<0>(valid_interval), si::length{2.0F});
+  CHECK_EQ(std::get<1>(valid_interval), si::length{6.0F});
 }
 
 TEST_CASE("get_time_at_position::pos_not_in_speed_interval") {
@@ -778,7 +782,7 @@ TEST_CASE("get_time_at_position::pos_not_found") {
   auto shall_position = si::time{-1.0F};
   auto is_position = speed_int.get_time_at_position(si::length{2.0F});
 
-  CHECK(is_position == shall_position);
+  CHECK_EQ(is_position, shall_position);
 }
 
 TEST_CASE("get_time_at_position::combined_valid_test_cases") {
@@ -820,16 +824,16 @@ TEST_CASE("get_time_at_position::combined_valid_test_cases") {
   speed_int.driving_regimes_ = {acc, cruising, braking};
 
   // TEST POSITION IN FIRST REGIME
-  CHECK(speed_int.get_time_at_position(si::length{0.0F}) == si::time{0.0F});
-  CHECK(speed_int.get_time_at_position(si::length{2.0F}) == si::time{2.0F});
-  CHECK(speed_int.get_time_at_position(si::length{4.0F}) == si::time{4.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{0.0F}), si::time{0.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{2.0F}), si::time{2.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{4.0F}), si::time{4.0F});
 
   // TEST POSITION IN SECOND AND THIRD REGIME
-  CHECK(speed_int.get_time_at_position(si::length{6.0F}) == si::time{6.0F});
-  CHECK(speed_int.get_time_at_position(si::length{8.0F}) == si::time{8.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{6.0F}), si::time{6.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{8.0F}), si::time{8.0F});
 
-  CHECK(speed_int.get_time_at_position(si::length{9.0F}) == si::time{9.0F});
-  CHECK(speed_int.get_time_at_position(si::length{10.0F}) == si::time{10.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{9.0F}), si::time{9.0F});
+  CHECK_EQ(speed_int.get_time_at_position(si::length{10.0F}), si::time{10.0F});
 }
 
 TEST_CASE("get_transit_time_difference_cruising::base_case_tests") {
@@ -864,12 +868,12 @@ TEST_CASE("get_transit_time_difference_cruising::base_case_tests") {
   speed_int.driving_regimes_ = {acc, braking};
 
   // TEST: NO CHANGE - Cruising Speed too high
-  CHECK(speed_int.get_transit_time_difference_cruising(si::speed{2.5F}) ==
-        si::time{0.0F});
+  CHECK_EQ(speed_int.get_transit_time_difference_cruising(si::speed{2.5F}),
+           si::time{0.0F});
 
   // TEST: NO CHANGE - Cruising Speed at max
-  CHECK(speed_int.get_transit_time_difference_cruising(si::speed{2.0F}) ==
-        si::time{0.0F});
+  CHECK_EQ(speed_int.get_transit_time_difference_cruising(si::speed{2.0F}),
+           si::time{0.0F});
 }
 
 TEST_CASE("get_transit_time_difference_cruising::change_in_speed_test") {
@@ -904,12 +908,12 @@ TEST_CASE("get_transit_time_difference_cruising::change_in_speed_test") {
   speed_int.driving_regimes_ = {acc, braking};
 
   // TEST: NO CHANGE - Cruising Speed too high; BASE CASE
-  CHECK(speed_int.get_transit_time_difference_cruising(si::speed{2.5F}) ==
-        si::time{0.0F});
+  CHECK_EQ(speed_int.get_transit_time_difference_cruising(si::speed{2.5F}),
+           si::time{0.0F});
 
   // TEST: NO CHANGE - Cruising Speed at max; BASE CASE
-  CHECK(speed_int.get_transit_time_difference_cruising(si::speed{2.0F}) ==
-        si::time{0.0F});
+  CHECK_EQ(speed_int.get_transit_time_difference_cruising(si::speed{2.0F}),
+           si::time{0.0F});
 
   // TEST: CHANGE - Cruising Speed at center
   // Calculations:
@@ -919,8 +923,8 @@ TEST_CASE("get_transit_time_difference_cruising::change_in_speed_test") {
   //  NEW TRANSIT TIME = 1.4s + 4s + 1.4s = 6.8s
   //  CURRENT TRANSIT TIME = 4s
   //  DIFFERENCE = 2.8s
-  CHECK(speed_int.get_transit_time_difference_cruising(si::speed{1.0F}) ==
-        si::time{2.8F});
+  CHECK_EQ(speed_int.get_transit_time_difference_cruising(si::speed{1.0F}),
+           si::time{2.8F});
 }
 
 TEST_SUITE_END();  // NOLINT
@@ -939,12 +943,12 @@ TEST_CASE("sheepmaker_initialzation::double") {  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.rr_.begin()->speed_ == si::speed{0.0F});
-  CHECK(data.rr_.back().speed_ == si::speed{0.0F});
+  CHECK_EQ(data.rr_.begin()->speed_, si::speed{0.0F});
+  CHECK_EQ(data.rr_.back().speed_, si::speed{0.0F});
 
-  CHECK(data.init_driving_regimes_.size() == 2);
-  CHECK(data.init_driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.init_driving_regimes_[1].type_ == MAX_BRAKING);
+  CHECK_EQ(data.init_driving_regimes_.size(), 2);
+  CHECK_EQ(data.init_driving_regimes_[0].type_, MAX_ACCELERATION);
+  CHECK_EQ(data.init_driving_regimes_[1].type_, MAX_BRAKING);
 }
 
 TEST_CASE("sheepmaker_initialization::halt_at_end") {  // NOLINT
@@ -959,15 +963,15 @@ TEST_CASE("sheepmaker_initialization::halt_at_end") {  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.rr_.begin()->speed_ == si::speed{0.0F});
-  CHECK(data.rr_.back().speed_ == si::speed{0.0F});
-  CHECK(data.rr_[15].speed_ == si::speed{2.5F});
+  CHECK_EQ(data.rr_.begin()->speed_, si::speed{0.0F});
+  CHECK_EQ(data.rr_.back().speed_, si::speed{0.0F});
+  CHECK_EQ(data.rr_[15].speed_, si::speed{2.5F});
 
-  CHECK(data.init_driving_regimes_.size() == 4);
-  CHECK(data.init_driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.init_driving_regimes_[1].type_ == MAX_BRAKING);
-  CHECK(data.init_driving_regimes_[2].type_ == MAX_ACCELERATION);
-  CHECK(data.init_driving_regimes_[3].type_ == MAX_BRAKING);
+  CHECK_EQ(data.init_driving_regimes_.size(), 4);
+  CHECK_EQ(data.init_driving_regimes_[0].type_, MAX_ACCELERATION);
+  CHECK_EQ(data.init_driving_regimes_[1].type_, MAX_BRAKING);
+  CHECK_EQ(data.init_driving_regimes_[2].type_, MAX_ACCELERATION);
+  CHECK_EQ(data.init_driving_regimes_[3].type_, MAX_BRAKING);
 }
 
 TEST_CASE(  // NOLINT
@@ -984,29 +988,34 @@ TEST_CASE(  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_.size() == 2);
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_.size(), 2);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].type_, MAX_BRAKING);
 
   auto cp_cand = coasting_candidates(data, data.speed_intervals_[0]);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_.size() == 3);
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].type_ == COASTING);
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_.size(), 3);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].type_, COASTING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].type_, MAX_BRAKING);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 11);
-  CHECK(cp_cand.step_size_ == 2);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 11);
+  CHECK_EQ(cp_cand.step_size_, 2);
 }
 
 TEST_CASE("sheepmaker::coasting_candidates::interval_has_cruising") {  // NOLINT
@@ -1038,34 +1047,39 @@ TEST_CASE("sheepmaker::coasting_candidates::interval_has_cruising") {  // NOLINT
 
   data.rr_ = run_complete(data.tp_, data.speed_intervals_, data.step_size_);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_.size() == 3);
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].type_ == CRUISING);
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_.size(), 3);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].type_, CRUISING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].type_, MAX_BRAKING);
 
   auto cp_cand = coasting_candidates(data, data.speed_intervals_[0]);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_.size() == 4);
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].type_ == CRUISING);
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].type_ == COASTING);
-  CHECK(data.speed_intervals_[0].driving_regimes_[3].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_.size(), 4);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].type_, CRUISING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].type_, COASTING);
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[3].type_, MAX_BRAKING);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{6.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{6.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[3].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[3].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_, si::length{6.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{6.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[3].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[3].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 11);
-  CHECK(cp_cand.step_size_ == 2);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 11);
+  CHECK_EQ(cp_cand.step_size_, 2);
 }
 
 TEST_CASE(  // NOLINT
@@ -1082,31 +1096,36 @@ TEST_CASE(  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.speed_intervals_[1].driving_regimes_.size() == 2);
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_.size(), 2);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].type_, MAX_BRAKING);
 
   auto cp_cand = coasting_candidates(data, data.speed_intervals_[1]);
 
-  CHECK(data.speed_intervals_[1].driving_regimes_.size() == 3);
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].type_ == MAX_ACCELERATION);
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].type_ == COASTING);
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].type_ == MAX_BRAKING);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_.size(), 3);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].type_,
+           MAX_ACCELERATION);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].type_, COASTING);
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].type_, MAX_BRAKING);
 
   // NOTE: speed limit is 2.5 m/s, starting velocity is 2.5 m/s
 
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].start_ ==
-        si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].end_ == si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].start_ ==
-        si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].end_ == si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].start_ ==
-        si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].end_ == si::length{25.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].start_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].end_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].start_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].end_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].start_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].end_,
+           si::length{25.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 20);
-  CHECK(cp_cand.step_size_ == 2);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 20);
+  CHECK_EQ(cp_cand.step_size_, 2);
 }
 
 TEST_CASE(  // NOLINT
@@ -1125,34 +1144,40 @@ TEST_CASE(  // NOLINT
 
   auto cp_cand = coasting_candidates(data, data.speed_intervals_[0]);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 11);
-  CHECK(cp_cand.step_size_ == 2);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 11);
+  CHECK_EQ(cp_cand.step_size_, 2);
 
   cp_cand.set_next_cp_candidate(data, data.speed_intervals_[0], si::time{5.0F},
                                 si::time{0.0F});
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{13.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{13.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{13.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{13.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 13);
-  CHECK(cp_cand.step_size_ == 1);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 13);
+  CHECK_EQ(cp_cand.step_size_, 1);
 }
 
 TEST_CASE(  // NOLINT
@@ -1171,34 +1196,40 @@ TEST_CASE(  // NOLINT
 
   auto cp_cand = coasting_candidates(data, data.speed_intervals_[0]);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 11);
-  CHECK(cp_cand.step_size_ == 2);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 11);
+  CHECK_EQ(cp_cand.step_size_, 2);
 
   cp_cand.set_next_cp_candidate(data, data.speed_intervals_[0], si::time{5.0F},
                                 si::time{10.0F});
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
-  CHECK(cp_cand.coasting_point_idx_ == 11);
-  CHECK(cp_cand.step_size_ == 1);
+  CHECK_EQ(cp_cand.coasting_point_idx_, 11);
+  CHECK_EQ(cp_cand.step_size_, 1);
 }
 
 TEST_CASE(  // NOLINT
@@ -1218,45 +1249,55 @@ TEST_CASE(  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].start_ ==
-        si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].end_ == si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].start_ ==
-        si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].end_ == si::length{25.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].start_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].end_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].start_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].end_,
+           si::length{25.0F});
 
   sheepmaker_update_coasting_point(data, data.speed_intervals_[0], 0.00F);
   sheepmaker_update_coasting_point(data, data.speed_intervals_[1], 0.1F);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{13.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{13.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{13.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{13.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
   // friction less -> coasting is like cruising -> no change in speed
   // no change in speed -> no change in travel time -> set coasting point
   // (needed) and stop
 
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].start_ ==
-        si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].end_ == si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].start_ ==
-        si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].end_ == si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].start_ ==
-        si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].end_ == si::length{25.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].start_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].end_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].start_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].end_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].start_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].end_,
+           si::length{25.0F});
 }
 
 TEST_CASE("sheepmaker::sheepmaker_per_halt" * doctest::skip(true)) {  // NOLINT
@@ -1273,47 +1314,57 @@ TEST_CASE("sheepmaker::sheepmaker_per_halt" * doctest::skip(true)) {  // NOLINT
 
   sheepmaker_initialization(data);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].start_ ==
-        si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].end_ == si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].start_ ==
-        si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].end_ == si::length{25.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].start_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].end_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].start_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].end_,
+           si::length{25.0F});
 
   CHECK(!data.speed_intervals_[0].halt_);
   CHECK(data.speed_intervals_[1].halt_);
 
   sheepmaker_per_halt(data);
 
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].start_ ==
-        si::length{0.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[0].end_ == si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].start_ ==
-        si::length{11.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[1].end_ == si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].start_ ==
-        si::length{14.0F});
-  CHECK(data.speed_intervals_[0].driving_regimes_[2].end_ == si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].start_,
+           si::length{0.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[0].end_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].start_,
+           si::length{11.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[1].end_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].start_,
+           si::length{14.0F});
+  CHECK_EQ(data.speed_intervals_[0].driving_regimes_[2].end_,
+           si::length{15.0F});
 
   // frictionless -> coasting is like cruising -> no change in speed
   // no change in speed -> no change in travel time -> set coasting point
   // (needed) and stop
 
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].start_ ==
-        si::length{15.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[0].end_ == si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].start_ ==
-        si::length{20.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[1].end_ == si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].start_ ==
-        si::length{22.0F});
-  CHECK(data.speed_intervals_[1].driving_regimes_[2].end_ == si::length{25.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].start_,
+           si::length{15.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[0].end_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].start_,
+           si::length{20.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[1].end_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].start_,
+           si::length{22.0F});
+  CHECK_EQ(data.speed_intervals_[1].driving_regimes_[2].end_,
+           si::length{25.0F});
 }
 
 TEST_CASE("sheepmaker::complete" * doctest::skip(true)) {  // NOLINT

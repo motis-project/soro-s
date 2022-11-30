@@ -19,7 +19,6 @@ struct station_route_graph;
 enum class course_decision : bool { STEM, BRANCH };
 
 struct route_node {
-  node::idx node_idx_{node::INVALID_IDX};
   node::ptr node_{nullptr};
   std::optional<speed_limit::ptr> extra_spl_{std::nullopt};
   bool omitted_{false};
@@ -74,12 +73,15 @@ struct station_route {
   utls::optional<node::idx> get_halt_idx(rs::FreightTrain freight) const;
   utls::optional<node::ptr> get_halt_node(rs::FreightTrain freight) const;
 
+  utls::optional<node::ptr> get_runtime_checkpoint_node() const;
+
   id id_{INVALID};
   soro::string name_{"INVALID"};
 
   path::ptr path_;
   soro::vector<node::idx> omitted_nodes_;
   soro::vector<speed_limit> extra_speed_limits_;
+  utls::optional<node::idx> runtime_checkpoint_{};
 
   soro::ptr<station> station_{nullptr};
   utls::optional<soro::ptr<station>> from_station_{};

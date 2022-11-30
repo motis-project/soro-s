@@ -82,14 +82,6 @@ struct route_graph {
   route_node_id create_new_route_node(tt::train const* train) {
     route_node_id const id = nodes_.size();
     nodes_.emplace_back(id, train);
-
-    auto it = train_name_to_nodes_.find(train->name_);
-    if (it != std::end(train_name_to_nodes_)) {
-      it->second.push_back(id);
-    } else {
-      train_name_to_nodes_[train->name_] = {id};
-    }
-
     return id;
   }
 

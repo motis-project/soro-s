@@ -42,6 +42,20 @@ TEST_SUITE("static asserts") {
     static_assert(static_cast<replace_comma>(true) == replace_comma::ON);
   }
 
+  TEST_CASE("skip") {
+    static_assert(!static_cast<bool>(skip::No));
+    static_assert(static_cast<bool>(skip::Yes));
+    static_assert(static_cast<skip>(false) == skip::No);
+    static_assert(static_cast<skip>(true) == skip::Yes);
+  }
+
+  TEST_CASE("direction") {
+    static_assert(!static_cast<bool>(direction::Falling));
+    static_assert(static_cast<bool>(direction::Rising));
+    static_assert(static_cast<direction>(false) == direction::Falling);
+    static_assert(static_cast<direction>(true) == direction::Rising);
+  }
+
   constexpr bool true_exactly_once(type const t) {
     auto const trues = static_cast<uint32_t>(is_end_element(t)) +
                        static_cast<uint32_t>(is_simple_element(t)) +

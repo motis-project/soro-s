@@ -17,7 +17,7 @@ struct raw_train {
     soro::vector<utls::unixtime> arrivals_;
     soro::vector<utls::unixtime> departures_;
     soro::vector<utls::duration> min_stop_times_;
-    soro::vector<stop> stops_;
+    //    soro::vector<stop> stops_;
     bool break_in_;
     bool break_out_;
   };
@@ -34,6 +34,7 @@ struct raw_train {
     si::speed max_speed_{si::ZERO<si::speed>};
     si::weight carriage_weight_{si::ZERO<si::weight>};
     rs::FreightTrain freight_{rs::FreightTrain::NO};
+    rs::CTC ctc_{rs::CTC::NO};
   };
 
   std::size_t id_{std::numeric_limits<std::size_t>::max()};

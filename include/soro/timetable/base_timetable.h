@@ -17,7 +17,7 @@ struct base_timetable {
   utls::unixtime end_;
 
   soro::vector<train::ptr> trains_;
-  soro::map<soro::string, train::ptr> name_to_train_;
+  soro::map<train::number, train::ptr> number_to_train_;
 
   soro::vector<soro::unique_ptr<train>> train_store_;
 };

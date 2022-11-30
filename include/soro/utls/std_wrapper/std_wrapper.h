@@ -118,7 +118,7 @@ inline auto sort(Container& c) {
 }
 
 template <typename Container, typename Pred>
-inline auto sort(Container& c, Pred const&& pred) {
+inline auto sort(Container& c, Pred&& pred) {
   return std::sort(std::begin(c), std::end(c), pred);
 }
 
@@ -173,7 +173,7 @@ constexpr auto accumulate(Iterable&& i, T init, Fn&& fn) {
 }
 
 template <typename Iterable, typename Pred>
-constexpr std::size_t count_if(Iterable const& i, Pred&& p) {
+constexpr std::size_t count_if(Iterable&& i, Pred&& p) {
   return static_cast<std::size_t>(
       std::count_if(std::cbegin(i), std::cend(i), p));
 }
@@ -181,6 +181,16 @@ constexpr std::size_t count_if(Iterable const& i, Pred&& p) {
 template <typename Iterable, typename T>
 constexpr std::size_t count(Iterable const& i, T const& v) {
   return static_cast<std::size_t>(std::count(std::cbegin(i), std::cend(i), v));
+}
+
+template <typename Iterable>
+constexpr bool is_sorted(Iterable const& i) {
+  return std::is_sorted(std::begin(i), std::end(i));
+}
+
+template <typename Iterable, typename Comp>
+constexpr bool is_sorted(Iterable const& i, Comp&& cmp) {
+  return std::is_sorted(std::begin(i), std::end(i), cmp);
 }
 
 }  // namespace soro::utls

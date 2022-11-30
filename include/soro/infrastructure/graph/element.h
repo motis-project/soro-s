@@ -14,6 +14,8 @@ namespace soro::infra {
 
 enum class rising : bool { NO, YES };
 
+enum class direction : bool { Falling, Rising };
+
 struct node;
 using node_ptr = soro::ptr<node>;
 
@@ -369,6 +371,8 @@ struct element {
   bool is_section_element() const;
 
   bool is_undirected_track_element() const;
+
+  bool is_directed_track_element() const;
 
   bool is_cross_switch() const;
 

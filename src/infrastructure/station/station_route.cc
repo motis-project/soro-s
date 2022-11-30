@@ -77,6 +77,11 @@ utls::optional<infra::node_ptr> station_route::get_halt_node(
       [&](node::idx const i) { return utls::optional<node::ptr>(nodes(i)); });
 }
 
+utls::optional<node::ptr> station_route::get_runtime_checkpoint_node() const {
+  return runtime_checkpoint_.transform(
+      [&](node::idx const idx) { return nodes(idx); });
+}
+
 std::pair<node::idx, node::idx> fast_forward_indices(station_route const& r,
                                                      node::idx const ff_to) {
   std::pair<node::idx, node::idx> indices{
@@ -125,15 +130,15 @@ utls::recursive_generator<route_node> station_route::from_to(
   utls::sassert(from <= to);
 
   route_node result;
-  result.node_idx_ = from;
+  node::idx node_idx = from;
 
   auto [omit_idx, spl_idx] = fast_forward_indices(*this, from);
 
-  for (; result.node_idx_ < to; ++result.node_idx_) {
-    result.node_ = nodes(result.node_idx_);
+  for (; node_idx < to; ++node_idx) {
+    result.node_ = nodes(node_idx);
 
     result.omitted_ = omit_idx < omitted_nodes_.size() &&
-                      omitted_nodes_[omit_idx] == result.node_idx_;
+                      omitted_nodes_[omit_idx] == node_idx;
 
     if (result.omitted_) {
       ++omit_idx;

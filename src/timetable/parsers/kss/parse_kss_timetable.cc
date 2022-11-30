@@ -38,11 +38,6 @@ bool is_kss_timetable(timetable_options const& opts) {
                       });
 }
 
-struct train_number {
-  uint32_t main_;
-  uint32_t sub_;
-};
-
 bitfield parse_services(xml_node const services_xml) {
   std::size_t total_service_days = 0;
 
@@ -127,19 +122,17 @@ relative_time parse_time_offset(xml_node const time_xml) {
 
   utls::sassert(strlen(time_str) == strlen("HH:MM:SS.SS"));
 
-  std::integral auto const hours = parse_int<uint64_t>(time_str, time_str + 2);
-  std::integral auto const minutes =
-      parse_int<uint64_t>(time_str + 3, time_str + 5);
-  std::integral auto const seconds =
-      parse_int<uint64_t>(time_str + 6, time_str + 8);
+  hours h{parse_int<uint64_t>(time_str, time_str + 2)};
+  minutes m{parse_int<uint64_t>(time_str + 3, time_str + 5)};
+  seconds s{parse_int<uint64_t>(time_str + 6, time_str + 8)};
 
-  uint64_t result = (hours * 60 * 60) + (minutes * 60) + seconds;
+  seconds result = h + m + s;
 
   if (static_cast<bool>(time_xml.child("nightLeap"))) {
-    result += 24 * 60 * 60;
+    result += seconds_in_a_day;
   }
 
-  return relative_time{result};
+  return std::chrono::duration_cast<relative_time>(result);
 }
 
 duration2 parse_duration(char const* const dur_str) {
@@ -159,7 +152,7 @@ duration2 parse_duration(char const* const dur_str) {
 
   auto letter_it = dur_str + 2;
 
-  uint64_t dur = 0UL;
+  seconds result = seconds::zero();
 
   while (letter_it != str_end) {
     auto next_cap = std::find_if(letter_it, str_end, [](char const c) {
@@ -168,18 +161,16 @@ duration2 parse_duration(char const* const dur_str) {
 
     switch (*next_cap) {
       case 'H': {
-        std::integral auto const val = parse_int<uint64_t>(letter_it, next_cap);
-        dur += val * 60 * 60;
+        result += hours{parse_int<hours::rep>(letter_it, next_cap)};
         break;
       }
       case 'M': {
-        std::integral auto const val = parse_int<uint64_t>(letter_it, next_cap);
-        dur += val * 60;
+        result += minutes{parse_int<minutes::rep>(letter_it, next_cap)};
         break;
       }
       case 'S': {
-        auto val = utls::parse_fp<double>(letter_it, next_cap);
-        dur += static_cast<uint64_t>(std::round(val));
+        result += seconds{static_cast<seconds::rep>(
+            std::round(utls::parse_fp<double>(letter_it, next_cap)))};
         break;
       }
     }
@@ -187,15 +178,17 @@ duration2 parse_duration(char const* const dur_str) {
     letter_it = next_cap + 1;
   }
 
-  return duration2{dur};
+  return std::chrono::duration_cast<duration2>(result);
 }
 
-raw_train::run parse_sequence(xml_node const sequence_xml,
-                              infrastructure const& infra) {
-  raw_train::run run;
+stop_sequence parse_sequence(xml_node const sequence_xml,
+                             infrastructure const& infra) {
+  stop_sequence sequence;
 
   auto const sequence_points_xml = sequence_xml.child("sequenceServicePoints");
   for (auto const point_xml : sequence_points_xml.children()) {
+    sequence_point st;
+
     std::string_view const ds100{point_xml.child_value("servicePoint")};
     std::string_view const route_name{point_xml.child_value("trackSystem")};
 
@@ -207,15 +200,10 @@ raw_train::run parse_sequence(xml_node const sequence_xml,
 
     auto route_it = station_it->second->station_routes_.find(route_name);
     if (route_it != std::end(station_it->second->station_routes_)) {
-      run.routes_.push_back(route_it->second);
+      st.station_route_ = route_it->second->id_;
     } else {
-      //      uLOG(utl::warn) << "Could not find station route " << route_name
-      //      << " in "
-      //                      << ds100 << ".";
       return {};
     }
-
-    stop st;
 
     if (auto arr = point_xml.child("arrival"); arr) {
       st.arrival_ = parse_time_offset(arr);
@@ -236,43 +224,56 @@ raw_train::run parse_sequence(xml_node const sequence_xml,
       st.min_stop_time_ = parse_duration(min_stop_time_xml.child_value());
     }
 
-    run.stops_.push_back(st);
+    if (st.is_transit() && valid(st.departure_)) {
+      utls::sassert(route_it->second->runtime_checkpoint_.has_value(),
+                    "Found departure time value, but not valid runtime "
+                    "checkpoint in station route");
+    }
+
+    sequence.points_.emplace_back(st);
   }
 
-  run.break_in_ = equal(sequence_xml.child_value("breakin"), "true");
-  run.break_out_ = equal(sequence_xml.child_value("breakout"), "true");
+  sequence.break_in_ = equal(sequence_xml.child_value("breakin"), "true");
+  sequence.break_out_ = equal(sequence_xml.child_value("breakout"), "true");
 
-  return run;
+  return sequence;
 }
 
-raw_train::characteristic parse_characteristic(xml_node const charac_xml) {
-  raw_train::characteristic c;
-
+rs::train_physics parse_characteristic(xml_node const charac_xml,
+                                       rs::rolling_stock const& rolling_stock) {
   auto const traction_units_xml = charac_xml.child("tractionUnits");
+
+  soro::vector<rs::traction_vehicle> tvs;
 
   for (auto const traction_unit_xml : traction_units_xml.children()) {
     auto const series_xml = traction_unit_xml.child("tractionUnitDesignSeries");
 
-    c.traction_units_.push_back(
-        {.series_ = series_xml.child_value("designSeries"),
-         .owner_ = series_xml.attribute("Nr").value(),
-         .variant_ = utls::parse_int<rs::variant_id>(
-             series_xml.child_value("variante"))});
+    std::string_view const series = series_xml.child_value("designSeries");
+    std::string_view const owner =
+        series_xml.child("designSeries").attribute("Nr").value();
+    std::integral auto const variant =
+        utls::parse_int<rs::variant_id>(series_xml.child_value("variante"));
+
+    tvs.emplace_back(
+        rolling_stock.get_traction_vehicle(series, owner, variant));
   }
 
-  c.length_ = si::from_m(
+  auto const length = si::from_m(
       utls::parse_fp<si::precision>(charac_xml.child_value("totalLength")));
 
-  c.carriage_weight_ = si::from_ton(
+  auto const carriage_weight = si::from_ton(
       utls::parse_fp<si::precision>(charac_xml.child_value("totalWeight")));
 
-  c.max_speed_ = si::from_km_h(
+  auto const max_speed = si::from_km_h(
       utls::parse_fp<si::precision>(charac_xml.child_value("maxVelocity")));
 
-  c.freight_ = static_cast<rs::FreightTrain>(
+  auto const freight = static_cast<rs::FreightTrain>(
       utls::equal(charac_xml.child_value("relevantStopPositionMode"), "G"));
 
-  return c;
+  auto const ctc = static_cast<rs::CTC>(
+      utls::equal(charac_xml.child_value("trainProtection"), "true"));
+
+  return {tvs, carriage_weight, length, max_speed, ctc, freight};
 }
 
 enum class failure_reason : uint8_t {
@@ -280,7 +281,11 @@ enum class failure_reason : uint8_t {
   failed_getting_station_route_path,
   failed_getting_interlocking_route_path,
   first_stop_is_no_halt_and_train_is_not_breaking_in,
-  first_stop_is_halt_and_first_sr_has_no_halt
+  last_stop_is_no_halt_and_train_is_not_breaking_out,
+  stop_is_marked_halt_but_station_route_has_no_halt,
+  transit_time_but_station_route_has_no_runtime_checkpoint,
+  train_has_lzb,
+  double_train_number
 };
 
 static std::map<failure_reason, std::size_t> failures = {  // NOLINT
@@ -288,9 +293,12 @@ static std::map<failure_reason, std::size_t> failures = {  // NOLINT
     {failure_reason::failed_getting_station_route_path, 0},
     {failure_reason::failed_getting_interlocking_route_path, 0},
     {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in, 0},
-    {failure_reason::first_stop_is_halt_and_first_sr_has_no_halt, 0}
-
-};
+    {failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out, 0},
+    {failure_reason::stop_is_marked_halt_but_station_route_has_no_halt, 0},
+    {failure_reason::transit_time_but_station_route_has_no_runtime_checkpoint,
+     0},
+    {failure_reason::train_has_lzb, 0},
+    {failure_reason::double_train_number, 0}};
 
 static std::map<failure_reason, std::string> failure_text = {  // NOLINT
     {failure_reason::worked_on_train, "Skipped worked on trains: "},
@@ -300,10 +308,14 @@ static std::map<failure_reason, std::string> failure_text = {  // NOLINT
      "Failed generating interlocking route path: "},
     {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in,
      "First stop is not a halt, but train is not breaking in: "},
-    {failure_reason::first_stop_is_halt_and_first_sr_has_no_halt,
-     "First stop is halt, but first station route has no halt: "}
-
-};
+    {failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out,
+     "Last stop is not a halt, but train is not breaking out: "},
+    {failure_reason::stop_is_marked_halt_but_station_route_has_no_halt,
+     "Stop is marked halt, but  station route has no halt: "},
+    {failure_reason::transit_time_but_station_route_has_no_runtime_checkpoint,
+     "Transit time in timetable, but no runtime checkpoint in station route"},
+    {failure_reason::train_has_lzb, "Train has LZB: "},
+    {failure_reason::double_train_number, "Double train number: "}};
 
 void print_failures() {
   for (auto const& [reason, count] : failures) {
@@ -311,22 +323,75 @@ void print_failures() {
   }
 }
 
-bool ignore_for_now(train::ptr const train, infrastructure const& infra) {
+bool ignore_for_now(stop_sequence const& stop_sequence,
+                    infrastructure const& infra,
+                    rs::FreightTrain const freight) {
 
-  if (!train->stops.front().is_halt() && !train->break_in_) {
+  if (!stop_sequence.points_.front().is_halt() && !stop_sequence.break_in_) {
     ++failures
         [failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in];
     return true;
   }
 
-  auto const first_halt =
-      train->first_station_route(infra)->get_halt_node(train->freight_);
-  if (train->stops.front().is_halt() && !first_halt.has_value()) {
-    ++failures[failure_reason::first_stop_is_halt_and_first_sr_has_no_halt];
+  if (!stop_sequence.points_.back().is_halt() && !stop_sequence.break_out_) {
+    ++failures
+        [failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out];
     return true;
   }
 
+  for (auto const& sequence_point : stop_sequence.points_) {
+    auto const sr = infra->station_routes_[sequence_point.station_route_];
+
+    if (sequence_point.is_halt() && !sr->get_halt_idx(freight).has_value()) {
+      ++failures
+          [failure_reason::stop_is_marked_halt_but_station_route_has_no_halt];
+      return true;
+    }
+
+    if (sequence_point.has_transit_time() &&
+        !sr->get_runtime_checkpoint_node().has_value()) {
+      ++failures[failure_reason::
+                     transit_time_but_station_route_has_no_runtime_checkpoint];
+      return true;
+    }
+  }
+
   return false;
+}
+
+bool ignore_for_now(train::ptr const train, infrastructure const&) {
+  if (train->has_ctc()) {
+    ++failures[failure_reason::train_has_lzb];
+    return true;
+  }
+
+  //  if (!train->path_.entries_.front().sequence_points_.front().is_halt() &&
+  //      !train->path_.break_in_) {
+  //    ++failures
+  //        [failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in];
+  //    return true;
+  //  }
+
+  //  auto const first_halt =
+  //      train->first_station_route(infra)->get_halt_node(train->freight());
+  //  if (train->path_.entries_.front().sequence_points_.front().is_halt() &&
+  //      !first_halt.has_value()) {
+  //    ++failures[failure_reason::first_stop_is_halt_and_first_sr_has_no_halt];
+  //    return true;
+  //  }
+
+  return false;
+}
+
+train::number parse_train_number(xml_node const train_number_xml) {
+  train::number tn{};
+
+  tn.main_ = utls::parse_int<train::number::main_t>(
+      train_number_xml.child_value("mainNumber"));
+  tn.sub_ = utls::parse_int<train::number::sub_t>(
+      train_number_xml.child_value("subNumber"));
+
+  return tn;
 }
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
@@ -337,6 +402,8 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
   std::size_t total_trains = 0;
   std::size_t total_train_runs = 0;
+
+  std::set<train::number> train_numbers;
 
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
     auto const loaded_file = utls::load_file(dir_entry.path());
@@ -369,24 +436,40 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
         auto t = soro::make_unique<train>();
 
-        auto const sequence_xml = construction_train_xml.child("sequence");
-        auto const run = parse_sequence(sequence_xml, infra);
+        t->number_ =
+            parse_train_number(construction_train_xml.child("trainNumber"));
 
-        if (run.routes_.empty()) {
+        if (train_numbers.contains(t->number_)) {
+          ++failures[failure_reason::double_train_number];
+          continue;
+        } else {
+          train_numbers.insert(t->number_);
+        }
+
+        auto const sequence_xml = construction_train_xml.child("sequence");
+        auto const train_sequence = parse_sequence(sequence_xml, infra);
+
+        if (train_sequence.points_.empty()) {
           ++failures[failure_reason::failed_getting_station_route_path];
           continue;
         }
 
         auto const services_xml = construction_train_xml.child("services");
-        t->bitfield_ = parse_services(services_xml);
+        t->service_days_ = parse_services(services_xml);
 
         auto const characteristic_xml =
             construction_train_xml.child("characteristic");
-        auto const charac = parse_characteristic(characteristic_xml);
+        t->physics_ =
+            parse_characteristic(characteristic_xml, infra->rolling_stock_);
 
-        t->path_ = get_interlocking_route_path(run, charac.freight_, infra);
+        if (ignore_for_now(train_sequence, infra, t->freight())) {
+          continue;
+        }
 
-        if (t->path_.empty()) {
+        t->path_ = get_interlocking_route_path(train_sequence,
+                                               t->physics_.freight(), infra);
+
+        if (t->path_.entries_.empty()) {
           ++failures[failure_reason::failed_getting_interlocking_route_path];
           continue;
         }
@@ -395,10 +478,16 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
           continue;
         }
 
+        t->id_ = bt.train_store_.size();
         bt.train_store_.emplace_back();
         bt.train_store_.back() = std::move(t);
       }
     }
+  }
+
+  bt.trains_.reserve(bt.train_store_.size());
+  for (auto const& unique_train : bt.train_store_) {
+    bt.trains_.emplace_back(unique_train.get());
   }
 
   uLOG(utl::info) << "Total trains in data: " << total_trains;

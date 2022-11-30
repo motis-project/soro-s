@@ -25,6 +25,11 @@ intermediate_station_route parse_station_route(
   i_station_route.end_ =
       std::stoul(xml_station_route.child(END).attribute(ID).value());
 
+  if (auto const rtc = xml_station_route.child(RUNTIME_CHECKPOINT); rtc) {
+    i_station_route.rp_runtime_checkpoint_ =
+        std::stoul(rtc.attribute(ID).value());
+  }
+
   auto const passenger_halt = xml_station_route.child(PASSENGER_STOP);
   if (static_cast<bool>(passenger_halt)) {
     i_station_route.rp_passenger_halt_ =

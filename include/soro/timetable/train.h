@@ -24,34 +24,47 @@ struct stop_time {
   utls::duration min_stop_time_;
 };
 
-struct stop {
-  enum class type : uint8_t { NO, OPERATIONS, PASSENGER, REQUEST };
+struct sequence_point {
+  enum class type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
 
-  bool is_halt() const noexcept { return type_ != type::NO; }
-  bool is_halt(type const t) const noexcept { return t == type_; }
+  bool is_halt() const noexcept;
+  bool is_halt(type const t) const noexcept;
+
+  relative_time transit_time() const noexcept;
+  bool is_transit() const noexcept;
+  bool has_transit_time() const noexcept;
+
+  bool is_measurable() const noexcept { return has_transit_time() || is_halt(); }
 
   absolute_time absolute_arrival(
-      date::year_month_day const departure_day) const noexcept {
-    return relative_to_absolute(departure_day, this->arrival_);
-  }
+      date::year_month_day departure_day) const noexcept;
 
   absolute_time absolute_departure(
-      date::year_month_day const departure_day) const noexcept {
-    return relative_to_absolute(departure_day, this->departure_);
-  }
+      date::year_month_day departure_day) const noexcept;
 
-  type type_{type::NO};
+  utls::optional<infra::node::ptr> get_node(
+      rs::FreightTrain freight, infra::infrastructure const& infra) const;
+
+  type type_{type::TRANSIT};
 
   // relative to departure day of the train at 00:00
-  relative_time arrival_{};
-  relative_time departure_{};
-  duration2 min_stop_time_{};
+  relative_time arrival_{INVALID_RELATIVE_TIME};
+  relative_time departure_{INVALID_RELATIVE_TIME};
+  duration2 min_stop_time_{INVALID_DURATION};
+
+  infra::station_route::id station_route_{infra::station_route::INVALID};
 };
 
-static const std::map<char, stop::type> KEY_TO_STOP_TYPE = {
-    {'2', stop::type::OPERATIONS},
-    {'3', stop::type::REQUEST},
-    {'4', stop::type::PASSENGER}};
+struct stop_sequence {
+  std::vector<sequence_point> points_;
+  bool break_in_;
+  bool break_out_;
+};
+
+static const std::map<char, sequence_point::type> KEY_TO_STOP_TYPE = {
+    {'2', sequence_point::type::OPERATIONS},
+    {'3', sequence_point::type::REQUEST},
+    {'4', sequence_point::type::PASSENGER}};
 
 struct train {
   using id = soro::size_type;
@@ -59,18 +72,43 @@ struct train {
 
   static constexpr id INVALID = std::numeric_limits<id>::max();
 
-  bool freight() const;
-  bool ctc() const;
+  struct number {
+    CISTA_COMPARABLE()
+
+    using main_t = uint32_t;
+    using sub_t = uint16_t;
+
+    main_t main_{std::numeric_limits<main_t>::max()};
+    sub_t sub_{std::numeric_limits<sub_t>::max()};
+  };
+
+  struct path {
+    struct entry {
+      soro::vector<sequence_point> sequence_points_;
+      infra::interlocking_route::id interlocking_id_;
+    };
+
+    bool break_in_{false};
+    bool break_out_{false};
+    soro::vector<entry> entries_;
+
+    si::length length_{si::INVALID<si::length>};
+  };
+
+  rs::FreightTrain freight() const;
+  bool is_freight() const;
+
+  rs::CTC ctc() const;
+  bool has_ctc() const;
 
   si::length path_length(infra::infrastructure const& infra) const;
 
-  utls::unixtime first_departure() const;
-  utls::unixtime last_arrival() const;
+  relative_time first_departure() const;
+  //  relative_time last_arrival() const;
 
   std::size_t total_halts() const;
 
-  infra::node::ptr get_start_node() const;
-  infra::node::ptr get_end_node() const;
+  infra::node::ptr get_start_node(infra::infrastructure const& infra) const;
 
   infra::station_route::ptr first_station_route(
       infra::infrastructure const&) const;
@@ -80,25 +118,18 @@ struct train {
   utls::recursive_generator<infra::route_node> iterate(
       infra::infrastructure const& infra) const;
 
-  bool has_event_in_interval(utls::unixtime start, utls::unixtime end) const;
+  //  bool has_event_in_interval(utls::unixtime start, utls::unixtime end)
+  //  const;
 
   id id_{INVALID};
-  soro::string name_;
+  number number_{};
 
+  path path_;
+  bitfield service_days_;
   rs::train_physics physics_;
-  soro::vector<infra::interlocking_route::id> path_;
 
-  rs::FreightTrain freight_{rs::FreightTrain::NO};
-  rs::CTC ctc_{rs::CTC::NO};
-
-  bitfield bitfield_;
-  soro::vector<stop> stops;
+  // deprecated
   soro::vector<stop_time> stop_times_;
-
-  si::length length_{si::INVALID<si::length>};
-
-  bool break_in_;
-  bool break_out_;
 };
 
 }  // namespace soro::tt

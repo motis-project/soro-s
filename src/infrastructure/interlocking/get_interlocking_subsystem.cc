@@ -213,7 +213,7 @@ soro::vector<interlocking_route> get_internal_interlocking_route(
     interlocking_routes.emplace_back(
         interlocking_route{.id_ = interlocking_route::INVALID,
                            .start_offset_ = from,
-                           .end_offset_ = to,
+                           .end_offset_ = static_cast<node::idx>(to + 1),
                            .station_routes_ = {sr->id_},
                            .length_ = si::INVALID<si::length>});
   }
@@ -265,8 +265,8 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
 
     if (route->can_end_an_interlocking(srg)) {
       ir.end_offset_ = route->path_->main_signals_.empty()
-                           ? route->size() - 1
-                           : route->path_->main_signals_.back();
+                           ? route->size()
+                           : route->path_->main_signals_.front() + 1;
       routes.push_back(std::move(ir));
       return;
     }
@@ -292,29 +292,30 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
   return routes;
 }
 
-si::length get_length(interlocking_route const& ir,
-                      infrastructure_t const& infra) {
-  if (ir.station_routes_.size() == 1) {
-    return get_path_length_from_elements(utls::coro_map(
-        infra.station_routes_[ir.station_routes_.front()]->from_to(
-            ir.start_offset_, ir.end_offset_),
-        [](auto&& rn) { return rn.node_->element_; }));
-  }
-
-  si::length length = si::ZERO<si::length>;
-  length += get_path_length_from_elements(utls::coro_map(
-      infra.station_routes_[ir.station_routes_.front()]->from(ir.start_offset_),
-      [](auto&& rn) { return rn.node_->element_; }));
-
-  for (auto i = 1UL; i < ir.station_routes_.size() - 1; ++i) {
-    length += infra.station_routes_[ir.station_routes_[i]]->length_;
-  }
-
-  length += get_path_length_from_elements(utls::coro_map(
-      infra.station_routes_[ir.station_routes_.back()]->to(ir.end_offset_),
-      [](auto&& rn) { return rn.node_->element_; }));
-
-  return length;
+si::length get_length(interlocking_route const&, infrastructure_t const&) {
+  return si::INVALID<si::length>;
+  // TODO(julian) reenable this
+  //  if (ir.station_routes_.size() == 1) {
+  //    return get_path_length_from_elements(utls::coro_map(
+  //        infra.station_routes_[ir.station_routes_.front()]->from_to(
+  //            ir.start_offset_, ir.end_offset_),
+  //        [](auto&& rn) { return rn.node_->element_; }));
+  //  }
+  //
+  //  si::length length = si::ZERO<si::length>;
+  //  length += get_path_length_from_elements(utls::coro_map(
+  //      infra.station_routes_[ir.station_routes_.front()]->from(ir.start_offset_),
+  //      [](auto&& rn) { return rn.node_->element_; }));
+  //
+  //  for (auto i = 1UL; i < ir.station_routes_.size() - 1; ++i) {
+  //    length += infra.station_routes_[ir.station_routes_[i]]->length_;
+  //  }
+  //
+  //  length += get_path_length_from_elements(utls::coro_map(
+  //      infra.station_routes_[ir.station_routes_.back()]->to(ir.end_offset_),
+  //      [](auto&& rn) { return rn.node_->element_; }));
+  //
+  //  return length;
 }
 
 soro::vector<interlocking_route> get_interlocking_routes(

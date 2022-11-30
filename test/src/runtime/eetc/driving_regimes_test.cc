@@ -52,7 +52,9 @@ train_physics generate_test_train() {
                             .resistance_curve_ = resistance_poly}},
           si::from_kg(0.0),
           si::from_m(0.0),
-          si::from_km_h(400.0)};
+          si::from_km_h(400.0),
+          rs::CTC::NO,
+          rs::FreightTrain::NO};
 }
 
 train_physics generate_frictionless_test_train() {
@@ -82,7 +84,9 @@ train_physics generate_frictionless_test_train() {
                             .resistance_curve_ = resistance_poly}},
           si::from_kg(0.0),
           si::from_m(0.0),
-          si::from_km_h(400.0)};
+          si::from_km_h(400.0),
+          rs::CTC::NO,
+          rs::FreightTrain::NO};
 }
 
 TEST_CASE("runtime_results::no_intersection_point") {  // NOLINT
@@ -96,8 +100,8 @@ TEST_CASE("runtime_results::no_intersection_point") {  // NOLINT
   rr_b.emplace_back(si::time{1.0F}, si::length{1.0F}, si::speed{1.0F});
   rr_b.emplace_back(si::time{2.0F}, si::length{2.0F}, si::speed{2.0F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{-1.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{-1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -112,8 +116,8 @@ TEST_CASE(  // NOLINT
   rr_b.emplace_back(si::time{0.0F}, si::length{1.0F}, si::speed{2.0F});
   rr_b.emplace_back(si::time{0.0F}, si::length{2.0F}, si::speed{2.0F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{1.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -128,8 +132,8 @@ TEST_CASE(  // NOLINT
   rr_b.emplace_back(si::time{0.0F}, si::length{1.0F}, si::speed{2.0F});
   rr_b.emplace_back(si::time{0.0F}, si::length{2.0F}, si::speed{1.0F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{2.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{2.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -144,8 +148,8 @@ TEST_CASE(  // NOLINT
   rr_b.emplace_back(si::time{0.0F}, si::length{1.0F}, si::speed{1.5F});
   rr_b.emplace_back(si::time{0.0F}, si::length{2.0F}, si::speed{1.5F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{0.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{0.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -161,8 +165,8 @@ TEST_CASE(  // NOLINT
   rr_b.emplace_back(si::time{0.0F}, si::length{1.0F}, si::speed{1.25F});
   rr_b.emplace_back(si::time{0.0F}, si::length{2.0F}, si::speed{1.25F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{0.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{0.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -177,8 +181,8 @@ TEST_CASE(  // NOLINT
   rr_b.emplace_back(si::time{0.0F}, si::length{1.0F}, si::speed{0.5F});
   rr_b.emplace_back(si::time{0.0F}, si::length{2.0F}, si::speed{0.5F});
 
-  CHECK(driving_regime::intersection_point(rr_a, rr_b, false) ==
-        si::length{-1.0F});
+  CHECK_EQ(driving_regime::intersection_point(rr_a, rr_b, false),
+           si::length{-1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -191,8 +195,8 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(rr_a, speed_const) ==
-        si::length{0.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const),
+           si::length{0.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -205,8 +209,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{2.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{2.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -219,8 +224,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{-1.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{-1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -233,8 +239,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {5.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{-1.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{-1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -247,8 +254,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{1.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -261,8 +269,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{0.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{0.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -275,8 +284,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{1.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{1.0F});
 }
 
 TEST_CASE(  // NOLINT
@@ -289,8 +299,9 @@ TEST_CASE(  // NOLINT
 
   si::speed const speed_const = {1.0F};
 
-  CHECK(driving_regime::intersection_point_with_constant(
-            rr_a, speed_const, false) == si::length{1.0F});
+  CHECK_EQ(driving_regime::intersection_point_with_constant(rr_a, speed_const,
+                                                            false),
+           si::length{1.0F});
 }
 
 // PHYSICS
@@ -298,8 +309,8 @@ TEST_CASE("physics::accelerate::zero") {  // NOLINT
   auto const acc_results = accelerate(si::acceleration{0.0F}, si::speed{1.0F},
                                       si::length{0.0F}, si::length{1.0F});
 
-  CHECK(std::get<0>(acc_results).val_ == 1);
-  CHECK(std::get<1>(acc_results).val_ == 1);
+  CHECK_EQ(std::get<0>(acc_results).val_, 1);
+  CHECK_EQ(std::get<1>(acc_results).val_, 1);
 }
 
 TEST_CASE("physics::accelerate::pos") {  // NOLINT
@@ -308,20 +319,20 @@ TEST_CASE("physics::accelerate::pos") {  // NOLINT
 
   // ceil(x*pow(10,x))/pow(10,x)
 
-  CHECK(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        0.732);
-  CHECK(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        1.732);
+  CHECK_EQ(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           0.732);
+  CHECK_EQ(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           1.732);
 }
 
 TEST_CASE("physics::accelerate::neg") {  // NOLINT
   auto const acc_results = accelerate(si::acceleration{-0.5F}, si::speed{2.0F},
                                       si::length{0.0F}, si::length{1.0F});
 
-  CHECK(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        0.536);
-  CHECK(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        1.732);
+  CHECK_EQ(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           0.536);
+  CHECK_EQ(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           1.732);
 }
 
 TEST_CASE("physics::accelerate_reverse::neg") {  // NOLINT
@@ -334,10 +345,10 @@ TEST_CASE("physics::accelerate_reverse::neg") {  // NOLINT
   // calculate acceleration_reverse
   auto const acc_rev_results = accelerate_reverse(acc, vel1, start, end);
 
-  CHECK(round(std::get<0>(acc_rev_results).val_ * pow(10, 7)) / pow(10, 7) ==
-        1.4142136);
-  CHECK(round(std::get<1>(acc_rev_results).val_ * pow(10, 7)) / pow(10, 7) ==
-        1.4142136);
+  CHECK_EQ(round(std::get<0>(acc_rev_results).val_ * pow(10, 7)) / pow(10, 7),
+           1.4142136);
+  CHECK_EQ(round(std::get<1>(acc_rev_results).val_ * pow(10, 7)) / pow(10, 7),
+           1.4142136);
 
   si::speed const vel0 = {static_cast<float>(
       ceil(std::get<1>(acc_rev_results).val_ * pow(10, 7)) / pow(10, 7))};
@@ -346,11 +357,11 @@ TEST_CASE("physics::accelerate_reverse::neg") {  // NOLINT
   // acceleration_reverse input data
   auto const acc_results = accelerate(acc, vel0, start, end);
 
-  CHECK(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        1.414);
+  CHECK_EQ(round(std::get<0>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           1.414);
   // ignored: precision; should be zero, but is 0.001
-  CHECK(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3) ==
-        0.001);
+  CHECK_EQ(round(std::get<1>(acc_results).val_ * pow(10, 3)) / pow(10, 3),
+           0.001);
 }
 
 TEST_CASE("driving_regime::math::test") {  // NOLINT
@@ -358,13 +369,13 @@ TEST_CASE("driving_regime::math::test") {  // NOLINT
   // remark: tests have no physical relevance
   auto acc_dur_sol = general_driving::get_acceleration_duration(
       si::acceleration{1.0F}, si::speed{0.0F}, si::length{0.0F});
-  CHECK(std::get<0>(acc_dur_sol).val_ == 0.0);
-  CHECK(std::get<1>(acc_dur_sol).val_ == -0.0);
+  CHECK_EQ(std::get<0>(acc_dur_sol).val_, 0.0);
+  CHECK_EQ(std::get<1>(acc_dur_sol).val_, -0.0);
 
   acc_dur_sol = general_driving::get_acceleration_duration(
       si::acceleration{1.0F}, si::speed{0.5F}, si::length{0.0F});
-  CHECK(std::get<0>(acc_dur_sol).val_ == 0.0);
-  CHECK(std::get<1>(acc_dur_sol).val_ == -1.0);
+  CHECK_EQ(std::get<0>(acc_dur_sol).val_, 0.0);
+  CHECK_EQ(std::get<1>(acc_dur_sol).val_, -1.0);
 
   acc_dur_sol = general_driving::get_acceleration_duration(
       si::acceleration{1.0F}, si::speed{0.0F}, si::length{-0.5F});
@@ -373,8 +384,8 @@ TEST_CASE("driving_regime::math::test") {  // NOLINT
 
   acc_dur_sol = general_driving::get_acceleration_duration(
       si::acceleration{1.0F}, si::speed{-4.0F}, si::length{-8.0F});
-  CHECK(std::get<0>(acc_dur_sol).val_ == 4.0);
-  CHECK(std::get<1>(acc_dur_sol).val_ == 4.0);
+  CHECK_EQ(std::get<0>(acc_dur_sol).val_, 4.0);
+  CHECK_EQ(std::get<1>(acc_dur_sol).val_, 4.0);
 }
 
 TEST_CASE("general_driving:get_acceleration::cruising") {  // NOLINT
@@ -383,8 +394,8 @@ TEST_CASE("general_driving:get_acceleration::cruising") {  // NOLINT
   general_driving const general_dr =
       general_driving({0.0F}, {1.0F}, {1.0F}, {0.0F}, CRUISING);
 
-  CHECK(general_dr.get_acceleration(tv, general_dr.vel0_) ==
-        si::acceleration{0.0F});
+  CHECK_EQ(general_dr.get_acceleration(tv, general_dr.vel0_),
+           si::acceleration{0.0F});
 }
 
 TEST_CASE("general_driving:get_acceleration::coasting") {  // NOLINT
@@ -394,8 +405,8 @@ TEST_CASE("general_driving:get_acceleration::coasting") {  // NOLINT
       general_driving(si::length{0.0F}, si::length{1.0F}, si::speed{1.0F},
                       si::time{0.0F}, COASTING);
 
-  CHECK(general_dr.get_acceleration(tv, general_dr.vel0_) ==
-        si::acceleration{-45.126});
+  CHECK_EQ(general_dr.get_acceleration(tv, general_dr.vel0_),
+           si::acceleration{-45.126});
 }
 
 TEST_CASE("general_driving::get_acceleration::max_braking") {  // NOLINT
@@ -405,8 +416,8 @@ TEST_CASE("general_driving::get_acceleration::max_braking") {  // NOLINT
       general_driving(si::length{0.0F}, si::length{1.0F}, si::speed{1.0F},
                       si::time{0.0F}, MAX_BRAKING);
 
-  CHECK(general_dr.get_acceleration(tv, general_dr.vel0_) ==
-        si::acceleration{-46.626F});
+  CHECK_EQ(general_dr.get_acceleration(tv, general_dr.vel0_),
+           si::acceleration{-46.626F});
 }
 
 TEST_CASE("general_driving::get_acceleration::max_acceleration") {  // NOLINT
@@ -416,8 +427,8 @@ TEST_CASE("general_driving::get_acceleration::max_acceleration") {  // NOLINT
       general_driving(si::length{0.0F}, si::length{1.0F}, si::speed{1.0F},
                       si::time{0.0F}, MAX_ACCELERATION);
 
-  CHECK(general_dr.get_acceleration(tv, general_dr.vel0_) ==
-        si::acceleration{-44.826F});
+  CHECK_EQ(general_dr.get_acceleration(tv, general_dr.vel0_),
+           si::acceleration{-44.826F});
 }
 
 TEST_CASE(  // NOLINT
@@ -429,8 +440,8 @@ TEST_CASE(  // NOLINT
       general_driving(si::length{0.0F}, si::length{1.0F}, si::speed{16.0F},
                       si::time{0.0F}, MAX_ACCELERATION);
 
-  CHECK(general_dr.get_acceleration(tv, general_dr.vel0_) ==
-        si::acceleration{0.0F});
+  CHECK_EQ(general_dr.get_acceleration(tv, general_dr.vel0_),
+           si::acceleration{0.0F});
 }
 
 // TEST SIMULATE_ON (cruising, acceleration)
@@ -452,12 +463,12 @@ TEST_CASE("general_driving::simulate::cruising::normal") {  // NOLINT
   auto is_rr = general_dr.simulate(tv, intervals, {0.0F}, {3.0F}, {1.0F},
                                    {0.0F}, {0.0F}, {1.0F}, false);
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -479,12 +490,12 @@ TEST_CASE("general_driving::simulate::accelerate::normal") {  // NOLINT
   auto is_rr = general_dr.simulate(tv, intervals, {0.0F}, {3.0F}, {1.0F},
                                    {0.0F}, {0.0F}, {1.0F}, false);
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -507,12 +518,12 @@ TEST_CASE(  // NOLINT
   auto is_rr = general_dr.simulate(tv, intervals, {0.0F}, {3.0F}, {1.0F},
                                    {0.0F}, {5.0F}, {1.0F}, false);
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -537,12 +548,12 @@ TEST_CASE("general_driving::simulate::deceleration::reverse") {  // NOLINT
   auto is_rr = general_dr.simulate(tv, intervals, {0.0F}, {3.0F}, {0.0F},
                                    {0.0F}, {0.0F}, {1.0F}, true);
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -566,12 +577,12 @@ TEST_CASE(  // NOLINT
   auto is_rr = general_dr.simulate(tv, intervals, {0.0F}, {3.0F}, {0.0F},
                                    {0.0F}, {5.0F}, {1.0F}, true);
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -593,12 +604,12 @@ TEST_CASE("general_driving::run::cruising::normal") {  // NOLINT
 
   auto is_rr = general_dr.run(tv, intervals, {1.0F}, {0.0F}, {0.0F}, {1.0F});
 
-  CHECK(is_rr.size() == shall_rr.size());
+  CHECK_EQ(is_rr.size(), shall_rr.size());
 
   for (std::size_t i = 0UL; i < is_rr.size(); ++i) {
-    CHECK(is_rr[i].time_ == shall_rr[i].time_);
-    CHECK(is_rr[i].distance_ == shall_rr[i].distance_);
-    CHECK(is_rr[i].speed_ == shall_rr[i].speed_);
+    CHECK_EQ(is_rr[i].time_, shall_rr[i].time_);
+    CHECK_EQ(is_rr[i].distance_, shall_rr[i].distance_);
+    CHECK_EQ(is_rr[i].speed_, shall_rr[i].speed_);
   }
 }
 
@@ -613,8 +624,8 @@ TEST_CASE("general_driving::get_speed_range::empty") {  // NOLINT
 
   auto speed_range = general_dr.get_speed_range();
 
-  CHECK(std::get<0>(speed_range).val_ == INT_MAX);
-  CHECK(std::get<1>(speed_range).val_ == INT_MIN);
+  CHECK_EQ(std::get<0>(speed_range).val_, INT_MAX);
+  CHECK_EQ(std::get<1>(speed_range).val_, INT_MIN);
 }
 
 TEST_CASE("general_driving::get_speed_range::constant") {  // NOLINT
@@ -633,8 +644,8 @@ TEST_CASE("general_driving::get_speed_range::constant") {  // NOLINT
 
   auto speed_range = general_dr.get_speed_range();
 
-  CHECK(std::get<0>(speed_range).val_ == 0.0F);
-  CHECK(std::get<1>(speed_range).val_ == 0.0F);
+  CHECK_EQ(std::get<0>(speed_range).val_, 0.0F);
+  CHECK_EQ(std::get<1>(speed_range).val_, 0.0F);
 }
 
 TEST_CASE("general_driving::get_speed_range::pseudorandom") {  // NOLINT
@@ -657,8 +668,8 @@ TEST_CASE("general_driving::get_speed_range::pseudorandom") {  // NOLINT
 
   auto speed_range = general_dr.get_speed_range();
 
-  CHECK(std::get<0>(speed_range).val_ == -5.0F);
-  CHECK(std::get<1>(speed_range).val_ == 12.0F);
+  CHECK_EQ(std::get<0>(speed_range).val_, -5.0F);
+  CHECK_EQ(std::get<1>(speed_range).val_, 12.0F);
 }
 
 TEST_SUITE_END();  // NOLINT

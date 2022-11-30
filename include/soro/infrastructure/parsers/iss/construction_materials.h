@@ -22,6 +22,7 @@ struct intermediate_station_route {
   rail_plan_node_id end_{INVALID_RP_NODE_ID};
   rail_plan_node_id rp_passenger_halt_{INVALID_RP_NODE_ID};
   rail_plan_node_id rp_freight_halt_{INVALID_RP_NODE_ID};
+  rail_plan_node_id rp_runtime_checkpoint_{INVALID_RP_NODE_ID};
 
   soro::vector<omitted_rp_node> omitted_rp_nodes_;
 

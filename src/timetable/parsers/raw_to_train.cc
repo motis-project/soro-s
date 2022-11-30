@@ -149,15 +149,6 @@ using namespace infra;
 //   return ssr_path;
 // }
 //
-// train_physics get_train_physics(raw_train::characteristic const& rc,
-//                                 rolling_stock const& rolling_stock) {
-//   auto tvs = soro::to_vec(rc.traction_units_, [&](auto&& tv) {
-//     return rolling_stock.get_traction_vehicle(tv.series_, tv.owner_,
-//                                               tv.variant_);
-//   });
-//
-//   return {tvs, rc.carriage_weight_, rc.length_, rc.max_speed_};
-// }
 
 soro::vector<soro::unique_ptr<train>> raw_trains_to_trains(
     std::vector<raw_train> const&, infra::interlocking_subsystem const&,

@@ -11,6 +11,8 @@
 #include "soro/simulation/disruption.h"
 #include "soro/simulation/ordering_graph.h"
 
+#include "soro/utls/sassert.h"
+
 namespace soro::simulation {
 
 using namespace soro::tt;
@@ -74,16 +76,17 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
     //    init_sn.exit_dpd_ = get_init_dpd(tr->first_departure());
     nodes_.push_back(init_sn);
 
-    for (auto const& ir_id : tr->path_) {
-      sim_node sn;
-      sn.id_ = nodes_.size();
-      sn.train_id_ = tr->id_;
-      sn.ir_id_ = ir_id;
-
-      nodes_.push_back(sn);
-
-      ssr_to_node_[tr->id_][ir_id] = sn.id_;
-    }
+    utls::sassert(false, "Not implemented");
+    //    for (auto const& ir_id : tr->path_) {
+    //      sim_node sn;
+    //      sn.id_ = nodes_.size();
+    //      sn.train_id_ = tr->id_;
+    //      sn.ir_id_ = ir_id;
+    //
+    //      nodes_.push_back(sn);
+    //
+    //      ssr_to_node_[tr->id_][ir_id] = sn.id_;
+    //    }
 
     // create two sentinel node at the end of the simulation train run
     nodes_.push_back({
@@ -314,13 +317,15 @@ void simulation_result::compute_dists(const sim_node::id sn_id,
 simulation_result::simulation_result(sim_graph const& sg) {
   results_.resize(sg.nodes_.size());
 
-  for (auto const& [first, _] : sg.train_to_sim_nodes_) {
-    auto const& train_id = sg.nodes_[first].train_id_;
-    auto const& train_run = sg.timetable_[train_id];
+  utls::sassert(false, "Not implemented");
+  //  for (auto const& [first, _] : sg.train_to_sim_nodes_) {
+  //    auto const& train_id = sg.nodes_[first].train_id_;
+  //    auto const& train_run = sg.timetable_[train_id];
 
-    results_[first].exit_dpd_.insert(train_run.first_departure(), ZERO_KMH,
-                                     HUNDRED_PERCENT);
-  }
+  //    results_[first].exit_dpd_.insert(train_run.first_departure(),
+  //    ZERO_KMH,
+  //                                     HUNDRED_PERCENT);
+  //  }
 }
 
 TimeSpeedDPD get_init_dpd(utls::unixtime const& departure) {

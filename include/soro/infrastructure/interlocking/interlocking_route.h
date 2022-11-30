@@ -28,6 +28,8 @@ struct interlocking_route {
 
   node::idx size(infrastructure const& infra) const;
 
+  bool contains(station_route::id, node::idx) const;
+
   station_route::id first_sr_id() const;
   station_route::id sr_id(sr_offset) const;
   station_route::id last_sr_id() const;
@@ -42,18 +44,7 @@ struct interlocking_route {
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
 
-  utls::recursive_generator<node::id const> first_sr_nodes(
-      infrastructure_t const&) const;
-  utls::recursive_generator<node::id const> last_sr_nodes(
-      infrastructure_t const&) const;
-
   utls::recursive_generator<route_node> iterate(infrastructure const&) const;
-  utls::recursive_generator<route_node> from_to(node::idx, node::idx,
-                                                infrastructure const&) const;
-  utls::recursive_generator<route_node> to(node::idx,
-                                           infrastructure const&) const;
-  utls::recursive_generator<route_node> from(node::idx,
-                                             infrastructure const&) const;
 
   node::ptr signal_eotd(infrastructure const& infra) const;
   soro::vector<node::ptr> route_eotds(infrastructure const& infra) const;
@@ -66,7 +57,7 @@ struct interlocking_route {
   // defines the path of the interlocking route
   // from station_routes_.front()[start_offset_]
   // via station_routes[1:-2]
-  // to station_routes_.back()[end_offset_]
+  // to station_routes_.back()[end_offset_ - 1]
   node::idx start_offset_{node::INVALID_IDX};
   node::idx end_offset_{node::INVALID_IDX};
   soro::vector<station_route::id> station_routes_{};

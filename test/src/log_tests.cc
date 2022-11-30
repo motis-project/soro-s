@@ -92,26 +92,6 @@ void log_signal_station_route_halt_counts(infrastructure const&) {
   }
 }
 
-void print_first_departure_buckets(timetable const& tt) {
-  std::map<unixtime, size_t> buckets;
-
-  for (auto const& train_run : tt->train_store_) {
-    auto const one_hour = unixtime{3600};
-    auto const remainder = train_run->first_departure() % one_hour;
-    auto const bucket_time = train_run->first_departure() - remainder;
-
-    if (auto it = buckets.find(bucket_time); it != std::end(buckets)) {
-      ++(it->second);
-    } else {
-      buckets[bucket_time] = 1;
-    }
-  }
-
-  for (auto const& [bucket_time, size] : buckets) {
-    uLOG(utl::info) << "Bucket Time: " << bucket_time << " Size: " << size;
-  }
-}
-
 void logs(infrastructure const& infra) {
   log_main_signal_in_station_routes_stats(infra);
   log_possible_speed_limit_values(infra);

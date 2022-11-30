@@ -23,4 +23,9 @@ constexpr auto make_range(Iterator begin, Iterator end) noexcept {
   return iterator_range<Iterator>(begin, end);
 }
 
+template <typename Container>
+constexpr auto make_range(Container const& c) {
+  return iterator_range(std::begin(c), std::end(c));
+}
+
 }  // namespace soro::utls

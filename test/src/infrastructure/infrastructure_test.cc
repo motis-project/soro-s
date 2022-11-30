@@ -40,7 +40,7 @@ void check_speed_limit_values(infrastructure const& infra) {
   for (auto const& data : infra->graph_.element_data_) {
     execute_if<speed_limit>(data, [](auto&& spl) {
       if (spl.type_ != speed_limit::type::END_SPECIAL) {
-        CHECK(valid(spl.limit_));
+        CHECK(si::valid(spl.limit_));
       }
     });
   }
@@ -139,7 +139,7 @@ void check_infra(infrastructure const& infra) {
 
 TEST_CASE("parse infrastructure") {
   for (auto const& not_serialized :
-       soro::test::get_infrastructure_scenarios()) {
+       soro::test::get_infrastructure_scenarios(soro::test::DE_ISS_OPTS)) {
 #if defined(SERIALIZE)
     not_serialized.save("test.raw");
     infrastructure const infra("test.raw");

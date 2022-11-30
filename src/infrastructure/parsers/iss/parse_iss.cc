@@ -8,6 +8,7 @@
 
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
+#include "utl/get_or_create.h"
 #include "utl/logging.h"
 #include "utl/pipes.h"
 #include "utl/timer.h"
@@ -62,11 +63,127 @@ border parse_border(xml_node const& xml_rp_border, element* border_element,
 
   return b;
 }
+using type_order_key = int16_t;
+
+constexpr type_order_key get_type_order_key(type const t, bool const rising) {
+  switch (t) {
+      // section elements
+    case type::LINE_SWITCH:
+    case type::KM_JUMP:
+    case type::BORDER:
+    case type::BUMPER:
+    case type::SIMPLE_SWITCH:
+    case type::CROSS:
+    case type::TRACK_END:
+      return std::numeric_limits<type_order_key>::max();
+
+      // undirected track elements part 1
+    case type::TUNNEL: return 0;
+    case type::SLOPE: return 10;
+    case type::ENTRY: return 20;
+    case type::RUNTIME_CHECKPOINT_UNDIRECTED:
+      return 100;
+
+      // directed track elements
+    case type::RUNTIME_CHECKPOINT: return rising ? 101 : 102;
+    case type::HALT: return rising ? 110 : 111;
+    case type::MAIN_SIGNAL: return rising ? 120 : 121;
+    case type::APPROACH_SIGNAL: return rising ? 130 : 131;
+    case type::PROTECTION_SIGNAL: return rising ? 140 : 141;
+    case type::EOTD: return rising ? 150 : 151;
+    case type::CTC: return rising ? 160 : 161;
+    case type::SPEED_LIMIT: return rising ? 170 : 171;
+    case type::FORCED_HALT: return rising ? 180 : 181;
+    case type::POINT_SPEED: return rising ? 190 : 191;
+    case type::BRAKE_PATH:
+      return rising ? 200 : 201;
+
+      // undirected track elements part 2
+    case type::TRACK_NAME: return 300;
+    case type::LEVEL_CROSSING:
+      return 310;
+
+      // invalid
+    case type::INVALID: return std::numeric_limits<type_order_key>::max();
+  }
+
+  throw utl::fail("Could not find type {} in get_type_order_key",
+                  get_type_str(t));
+}
+
+std::vector<xml_node> get_sorted_track_elements(xml_node const xml_rp_section) {
+  std::vector<xml_node> result;
+
+  for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
+    auto const type = get_type(node.name());
+
+    if (is_directed_track_element(type) || is_undirected_track_element(type)) {
+      result.emplace_back(node);
+    }
+  }
+
+  return result;
+}
+
+template <typename Comparator>
+bool order_impl(kilometrage const km1, type const t1, bool const r1,
+                element_id const id1, kilometrage const km2, type const t2,
+                bool const r2, element_id const id2) {
+  if (km1 != km2) {
+    return Comparator{}(km1, km2);
+  }
+
+  auto const tok1 = get_type_order_key(t1, r1);
+  auto const tok2 = get_type_order_key(t2, r2);
+
+  if (tok1 != tok2) {
+    return tok1 < tok2;
+  }
+
+  return id1 < id2;
+}
+
+template <typename Comparator>
+bool element_order_from_nodes(xml_node const n1, xml_node const n2) {
+  auto const km1 = parse_kilometrage(n1);
+  auto const km2 = parse_kilometrage(n2);
+
+  auto const r1 = has_rising_name(n1);
+  auto const r2 = has_rising_name(n2);
+
+  auto const t1 = get_type(n1.name());
+  auto const t2 = get_type(n2.name());
+
+  return order_impl<Comparator>(km1, t1, r1, parse_rp_node_id(n1), km2, t2, r2,
+                                parse_rp_node_id(n2));
+}
+
+template <typename Comparator>
+bool element_order(element::ptr e1, element::ptr e2) {
+  auto const km1 = e1->is_directed_track_element()
+                       ? e1->as<track_element>().km_
+                       : e1->as<undirected_track_element>().km_;
+  auto const km2 = e2->is_directed_track_element()
+                       ? e2->as<track_element>().km_
+                       : e2->as<undirected_track_element>().km_;
+
+  auto const r1 = e1->is_directed_track_element()
+                      ? e1->as<track_element>().rising_
+                      : e1->as<undirected_track_element>().rising_;
+  auto const r2 = e2->is_directed_track_element()
+                      ? e2->as<track_element>().rising_
+                      : e2->as<undirected_track_element>().rising_;
+
+  auto const t1 = e1->type();
+  auto const t2 = e2->type();
+
+  return order_impl<Comparator>(km1, t1, r1, e1->id(), km2, t2, r2, e2->id());
+}
 
 section::id parse_section_into_network(xml_node const& xml_rp_section,
                                        station& station, graph& network,
                                        construction_materials& mats) {
-  line_id line =
+  line_id const line =
       static_cast<uint32_t>(std::stoul(xml_rp_section.child_value(LINE)));
   auto const& section_start =
       xml_rp_section.child(RAIL_PLAN_NODE).children().begin();
@@ -181,76 +298,162 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   };
 
   auto start_element = emplace_into_network(*section_start, true);
-  auto end_element = emplace_into_network(*section_end, false);
-
   set_km_point_and_line(*start_element, section_start->name(),
                         parse_kilometrage(*section_start), line);
-  set_km_point_and_line(*end_element, section_end->name(),
-                        parse_kilometrage(*section_end), line);
-
-  sec.elements_.emplace_back(start_element);
   network.element_id_to_section_ids_[start_element->id()].push_back(section_id);
 
-  auto prev_rising_element = start_element;
-  auto prev_falling_element = start_element;
+  auto end_element = emplace_into_network(*section_end, false);
+  set_km_point_and_line(*end_element, section_end->name(),
+                        parse_kilometrage(*section_end), line);
+  network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
 
-  auto prev_rising_rp_node = *section_start;
-  auto prev_falling_rp_node = *section_start;
+  std::map<xml_node, element*> undirected_track_elements;
 
-  for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
+  auto const create_directed_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+
+        auto const rising_element = has_rising_name(node);
+
+        auto const track_element = parse_track_element(
+            node, type, rising_element, line, network, station, mats);
+
+        if (dir || prev_element->is_track_element()) {
+          set_neighbour(*prev_element, prev_node.name(), track_element, true);
+          set_neighbour(*track_element, node.name(), prev_element, false);
+        } else {
+          set_neighbour(*prev_element, prev_node.name(), track_element, false);
+          set_neighbour(*track_element, node.name(), prev_element, false);
+        }
+
+        network.element_id_to_section_ids_[track_element->id()].push_back(
+            section_id);
+
+        prev_element = track_element;
+        prev_node = node;
+
+        return track_element;
+      };
+
+  auto const create_undirected_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+
+        auto const track_element =
+            utl::get_or_create(undirected_track_elements, node, [&]() {
+              return parse_track_element(node, type, false, line, network,
+                                         station, mats);
+            });
+
+        if (prev_element->is_section_element()) {
+          set_neighbour(*prev_element, prev_node.name(), track_element, dir);
+        } else {
+          set_neighbour(*prev_element, prev_node.name(), track_element, true);
+        }
+
+        set_neighbour(*track_element, node.name(), prev_element, !dir);
+
+        network.element_id_to_section_ids_[track_element->id()].push_back(
+            section_id);
+
+        prev_element = track_element;
+        prev_node = node;
+
+        return track_element;
+      };
+
+  auto const create_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+        return is_directed_track_element(type)
+                   ? create_directed_track_element(node, prev_node,
+                                                   prev_element, dir)
+                   : create_undirected_track_element(node, prev_node,
+                                                     prev_element, dir);
+      };
+
+  std::set<element::ptr> all_track_elements;
+
+  auto const insert_in_direction =
+      [&](std::vector<xml_node> const& track_elements, xml_node& prev_node,
+          element*& prev_element, bool const direction) {
+        for (auto const& node : track_elements) {
+
+          if (is_directed_track_element(get_type(node.name())) &&
+              has_rising_name(node) != direction) {
+            continue;
+          }
+
+          auto const track_element =
+              create_track_element(node, prev_node, prev_element, direction);
+          all_track_elements.insert(track_element);
+        }
+      };
+
+  // gather all track elements in one vector, we need to sort them in two
+  // different orders later
+  std::vector<xml_node> sorted_track_nodes;
+  for (auto const node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
     auto const type = get_type(node.name());
-
-    if (is_directed_track_element(type)) {
-      auto const rising = has_rising_name(node);
-
-      auto& prev_element = rising ? prev_rising_element : prev_falling_element;
-      auto& prev_node = rising ? prev_rising_rp_node : prev_falling_rp_node;
-
-      auto const track_element =
-          parse_track_element(node, type, rising, line, network, station, mats);
-
-      set_neighbour(*prev_element, prev_node.name(), track_element, rising);
-      set_neighbour(*track_element, node.name(), prev_element, !rising);
-
-      sec.elements_.emplace_back(track_element);
-      network.element_id_to_section_ids_[track_element->id()].push_back(
-          section_id);
-
-      prev_element = track_element;
-      prev_node = node;
-    } else if (is_undirected_track_element(type)) {
-      auto const track_element =
-          parse_track_element(node, type, true, line, network, station, mats);
-
-      set_neighbour(*prev_rising_element, prev_rising_rp_node.name(),
-                    track_element, true);
-      set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
-                    track_element, false);
-
-      set_neighbour(*track_element, node.name(), prev_rising_element, true);
-      set_neighbour(*track_element, node.name(), prev_falling_element, false);
-
-      sec.elements_.emplace_back(track_element);
-      network.element_id_to_section_ids_[track_element->id()].push_back(
-          section_id);
-
-      prev_rising_element = track_element;
-      prev_falling_element = track_element;
-
-      prev_rising_rp_node = node;
-      prev_falling_rp_node = node;
+    if (type == type::INVALID || !is_track_element(type)) {
+      continue;
     }
+
+    sorted_track_nodes.emplace_back(node);
   }
 
+  // scan the section in rising direction and add all rising and undirected
+  // elements
+  auto prev_rising_element = start_element;
+  auto prev_rising_rp_node = *section_start;
+
+  utls::sort(sorted_track_nodes, element_order_from_nodes<std::less<>>);
+  insert_in_direction(sorted_track_nodes, prev_rising_rp_node,
+                      prev_rising_element, true);
   set_neighbour(*prev_rising_element, prev_rising_rp_node.name(), end_element,
                 true);
-  set_neighbour(*prev_falling_element, prev_falling_rp_node.name(), end_element,
-                false);
   set_neighbour(*end_element, section_end->name(), prev_rising_element, true);
-  set_neighbour(*end_element, section_end->name(), prev_falling_element, false);
 
-  sec.elements_.emplace_back(end_element);
-  network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
+  // scan the section in falling direction and add all falling and undirected
+  // elements
+  auto prev_falling_element = end_element;
+  auto prev_falling_rp_node = *section_end;
+
+  utls::sort(sorted_track_nodes, element_order_from_nodes<std::greater<>>);
+  insert_in_direction(sorted_track_nodes, prev_falling_rp_node,
+                      prev_falling_element, false);
+  set_neighbour(*start_element, section_start->name(), prev_falling_element,
+                false);
+
+  if (prev_falling_element->is_track_element()) {
+    set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
+                  start_element, true);
+  } else {
+    set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
+                  start_element, false);
+  }
+
+  // don't sort the first section element, since when a section has length 0
+  // we don't want the order to be
+  // [section element, section element, track element, ...]
+  sec.rising_order_.emplace_back(start_element);
+  sec.rising_order_.insert(std::end(sec.rising_order_),
+                           std::begin(all_track_elements),
+                           std::end(all_track_elements));
+  std::sort(std::begin(sec.rising_order_) + 1, std::end(sec.rising_order_),
+            element_order<std::less<>>);
+  sec.rising_order_.emplace_back(end_element);
+
+  sec.falling_order_.emplace_back(end_element);
+  sec.falling_order_.insert(std::end(sec.falling_order_),
+                            std::begin(all_track_elements),
+                            std::end(all_track_elements));
+  std::sort(std::begin(sec.falling_order_) + 1, std::end(sec.falling_order_),
+            element_order<std::greater<>>);
+  sec.falling_order_.emplace_back(start_element);
 
   return section_id;
 }
@@ -470,17 +673,15 @@ void calculate_station_routes(infrastructure_t& infra,
       sr->from_station_ = prev_station != sr->station_ ? prev_station : nullptr;
     }
 
-    auto const get_halt_node = [&](auto&& rp_id) -> node::ptr {
-      if (rp_id == INVALID_RP_NODE_ID) {
-        return nullptr;
-      }
-
-      auto const e = graph.elements_[mats.rp_id_to_element_id_.at(rp_id)];
-      return e->template as<track_element>().get_node();
+    auto const rp_id_to_element = [&](auto&& rp_id) -> element::ptr {
+      return rp_id == INVALID_RP_NODE_ID
+                 ? nullptr
+                 : graph.elements_[mats.rp_id_to_element_id_.at(rp_id)];
     };
 
-    auto const passenger_node = get_halt_node(i_sr.rp_passenger_halt_);
-    auto const freight_node = get_halt_node(i_sr.rp_freight_halt_);
+    auto const passenger_element = rp_id_to_element(i_sr.rp_passenger_halt_);
+    auto const freight_element = rp_id_to_element(i_sr.rp_freight_halt_);
+    auto const runtime_check_e = rp_id_to_element(i_sr.rp_runtime_checkpoint_);
 
     std::set<node::ptr> omitted_nodes_set;
     for (auto const& omitted_rp_node : i_sr.omitted_rp_nodes_) {
@@ -500,11 +701,15 @@ void calculate_station_routes(infrastructure_t& infra,
         continue;
       }
 
-      if (node == passenger_node) {
+      if (node->element_ == runtime_check_e) {
+        sr->runtime_checkpoint_ = idx;
+      }
+
+      if (node->element_ == passenger_element) {
         sr->passenger_halt_ = idx;
       }
 
-      if (node == freight_node) {
+      if (node->element_ == freight_element) {
         sr->freight_halt_ = idx;
       }
 
@@ -672,9 +877,11 @@ void complete_borders(infrastructure_t& iss) {
       new_sec.line_id_ = border.line_;
 
       if (border.low_border_) {
-        new_sec.elements_ = {border.neighbour_element_, border.element_};
+        new_sec.rising_order_ = {border.neighbour_element_, border.element_};
+        new_sec.falling_order_ = {border.element_, border.neighbour_element_};
       } else {
-        new_sec.elements_ = {border.element_, border.neighbour_element_};
+        new_sec.rising_order_ = {border.element_, border.neighbour_element_};
+        new_sec.falling_order_ = {border.neighbour_element_, border.element_};
       }
 
       iss.graph_.element_id_to_section_ids_[border.element_->id()].push_back(
@@ -771,6 +978,15 @@ void log_stats(infrastructure_t const& iss) {
   uLOG(info) << "Got " << total_crosses << " crosses.";
   uLOG(info) << "Got " << total_cross_switches << " cross switches.";
   uLOG(info) << "Got " << switchables << " total switchables.";
+
+  std::size_t total_variants = 0;
+  for (auto const& ts : iss.rolling_stock_.train_series_) {
+    total_variants += ts.second.variants_.size();
+  }
+
+  uLOG(info) << "Got " << iss.rolling_stock_.train_series_.size()
+             << " train series.";
+  uLOG(info) << "Got " << total_variants << " train series variants.";
 }
 
 default_values parse_default_values(xml_node const& default_values_xml) {
