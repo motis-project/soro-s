@@ -7,6 +7,10 @@
 
 namespace soro::utls {
 
+// Container needs to provide:
+// operator[]
+// .size() (only for asserts)
+
 template <typename IdIt, typename Container>
 struct id_iterator {
   static_assert(std::contiguous_iterator<IdIt>);
