@@ -11,7 +11,7 @@ using namespace soro::tt;
 using namespace soro::utls;
 using namespace soro::infra;
 
-// TODO(julian) pass train here for checking etcs capabilities and so forth
+// TODO(julian) pass train here for checking ETCS capabilities and so forth
 bool applies(speed_limit const& spl /*, tt::train const& */) {
   return spl.type_ == speed_limit::type::GENERAL_ALLOWED &&
          (spl.effects_ == speed_limit::effects::ALL ||
@@ -138,7 +138,7 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
                                 type_set const& border_types,
                                 infrastructure const& infra) {
   interval_list list;
-  list.emplace_back(INVALID<length>, INVALID<speed>);
+  list.emplace_back(si::INVALID<length>, si::INVALID<speed>);
 
   length current_distance = ZERO<length>;
 
@@ -172,7 +172,7 @@ interval_list get_interval_list(train const& tr, type_set const& event_types,
         list[interval_idx].elements_.emplace_back(type::SPEED_LIMIT);
       }
 
-      list.emplace_back(INVALID<length>, INVALID<speed>);
+      list.emplace_back(si::INVALID<length>, si::INVALID<speed>);
     }
   }
 

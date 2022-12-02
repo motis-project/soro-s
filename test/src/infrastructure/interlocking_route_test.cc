@@ -55,9 +55,9 @@ void check_interlocking_route_count(infrastructure const& infra) {
   auto const ssr_count = inner_sr_count + path_sr_count;
 
   CHECK_MESSAGE(
-      (ssr_count <= infra->interlocking_.interlocking_routes_.size()),
+      (ssr_count <= infra->interlocking_.routes_.size()),
       fmt::format("Exptected at least {} signal station routes, but got {}",
-                  ssr_count, infra->interlocking_.interlocking_routes_.size()));
+                  ssr_count, infra->interlocking_.routes_.size()));
 }
 
 void check_station_route_exclusions(infrastructure const& infra) {
@@ -112,13 +112,13 @@ void check_interlocking_route(interlocking_route const& ir,
 }
 
 void check_interlocking_routes(infrastructure const& infra) {
-  for (auto const& ir : infra->interlocking_.interlocking_routes_) {
+  for (auto const& ir : infra->interlocking_.routes_) {
     check_interlocking_route(ir, infra);
   }
 }
 
 void check_interlocking_route_lengths(infrastructure const& infra) {
-  for (auto const& ir : infra->interlocking_.interlocking_routes_) {
+  for (auto const& ir : infra->interlocking_.routes_) {
     auto const e1 = get_path_length_from_elements(
         utls::coro_map(ir.iterate(infra), [](auto&& rn) { return rn.node_; }));
 
@@ -131,6 +131,29 @@ void check_interlocking_route_lengths(infrastructure const& infra) {
   }
 }
 
+void check_halting_at(infrastructure const& infra) {
+  for (node::id node_id = 0; node_id < infra->interlocking_.halting_at_.size();
+       ++node_id) {
+    for (auto const ir_id : infra->interlocking_.halting_at_[node_id]) {
+      auto const& ir = infra->interlocking_.routes_[ir_id];
+
+      CHECK(utls::contains_if(ir.iterate(infra), [&](auto&& rn) {
+        return rn.node_->id_ == node_id;
+      }));
+    }
+  }
+}
+
+void check_starting_at(infrastructure const& infra) {
+  for (auto const [node_id, irs] :
+       utl::enumerate(infra->interlocking_.starting_at_)) {
+    for (auto const ir_id : irs) {
+      auto const& ir = infra->interlocking_.routes_[ir_id];
+      CHECK_EQ(ir.first_node(infra)->id_, node_id);
+    }
+  }
+}
+
 void do_interlocking_route_tests(infrastructure const& infra) {
   check_interlocking_route_count(infra);
   check_interlocking_routes(infra);
@@ -138,6 +161,9 @@ void do_interlocking_route_tests(infrastructure const& infra) {
   check_interlocking_route_exclusions(infra->interlocking_);
   check_station_route_exclusions(infra);
   check_interlocking_route_lengths(infra);
+
+  check_halting_at(infra);
+  check_starting_at(infra);
 }
 
 }  // namespace soro::infra::test

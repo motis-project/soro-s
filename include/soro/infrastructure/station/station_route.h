@@ -39,6 +39,8 @@ struct station_route {
     static constexpr id INVALID = std::numeric_limits<id>::max();
     static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
+    node::idx size() const { return static_cast<node::idx>(nodes_.size()); }
+
     element_ptr start_{nullptr};
     element_ptr end_{nullptr};
     soro::vector<course_decision> course_;

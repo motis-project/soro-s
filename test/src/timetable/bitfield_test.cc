@@ -366,7 +366,7 @@ TEST_SUITE("bitfield") {
     year_month_day const s = 2022_y / February / 22;
 
     year_month_day const t = {static_cast<sys_days>(s) +
-                              days{bitfield::BITSIZE + 1}};
+                              soro::days{bitfield::BITSIZE + 1}};
 
     std::string const bits(bitfield::BITSIZE + 1, '0');
 

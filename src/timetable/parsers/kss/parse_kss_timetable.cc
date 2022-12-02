@@ -3,16 +3,17 @@
 #include <charconv>
 #include <set>
 
+#include "utl/concat.h"
 #include "utl/logging.h"
 #include "utl/timer.h"
 
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/statistics.h"
 #include "soro/utls/string.h"
 
 #include "soro/timetable/bitfield.h"
-#include "soro/timetable/parsers/raw_to_trains.h"
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
 
 #include "pugixml.hpp"
@@ -25,17 +26,52 @@ using namespace soro::infra;
 
 namespace fs = std::filesystem;
 
+enum class kss : uint8_t {
+  total_trains,
+  total_train_runs,
+  worked_on_train,
+  failed_getting_station_route_path,
+  failed_getting_interlocking_route_path,
+  first_stop_is_no_halt_and_train_is_not_breaking_in,
+  last_stop_is_no_halt_and_train_is_not_breaking_out,
+  stop_is_marked_halt_but_station_route_has_no_halt,
+  transit_time_but_station_route_has_no_runtime_checkpoint,
+  train_has_lzb,
+  double_train_number,
+  count
+};
+
+statistics<kss>::stat_texts const kss_stat_texts = {
+    {kss::total_trains, "Total trains: "},
+    {kss::total_train_runs, "Total train runs: "},
+    {kss::worked_on_train, "Skipped worked on trains: "},
+    {kss::failed_getting_station_route_path,
+     "Failed getting station route path for trains: "},
+    {kss::failed_getting_interlocking_route_path,
+     "Failed generating interlocking route path: "},
+    {kss::first_stop_is_no_halt_and_train_is_not_breaking_in,
+     "First stop is not a halt, but train is not breaking in: "},
+    {kss::last_stop_is_no_halt_and_train_is_not_breaking_out,
+     "Last stop is not a halt, but train is not breaking out: "},
+    {kss::stop_is_marked_halt_but_station_route_has_no_halt,
+     "Stop is marked halt, but  station route has no halt: "},
+    {kss::transit_time_but_station_route_has_no_runtime_checkpoint,
+     "Transit time in timetable, but no runtime checkpoint in station route"},
+    {kss::train_has_lzb, "Train has LZB: "},
+    {kss::double_train_number, "Double train number: "}};
+
+static statistics<kss> kss_stats(kss_stat_texts);  // NOLINT
+
 bool is_kss_timetable(timetable_options const& opts) {
   if (!std::filesystem::is_directory(opts.timetable_path_)) {
     return false;
   }
 
-  return utls::all_of(fs::directory_iterator{opts.timetable_path_},
-                      [](auto&& dir_entry) {
-                        auto const& fname = dir_entry.path().filename();
-                        return fname.extension() == ".xml" &&
-                               fname.string().starts_with("KSS-");
-                      });
+  return utls::all_of(
+      fs::directory_iterator{opts.timetable_path_}, [](auto&& dir_entry) {
+        auto const& fn = dir_entry.path().filename();
+        return fn.extension() == ".xml" && fn.string().starts_with("KSS-");
+      });
 }
 
 bitfield parse_services(xml_node const services_xml) {
@@ -93,8 +129,8 @@ bitfield parse_services(xml_node const services_xml) {
                       "Bitmask has not the same size as distance between start "
                       "and end date!");
 
-        total_service_days +=
-            std::count(bitmask, bitmask + bitmask_length, '1');
+        total_service_days += static_cast<std::size_t>(
+            std::count(bitmask, bitmask + bitmask_length, '1'));
       });
 
       auto const bf = make_bitfield(start_date, end_date, bitmask);
@@ -122,14 +158,14 @@ relative_time parse_time_offset(xml_node const time_xml) {
 
   utls::sassert(strlen(time_str) == strlen("HH:MM:SS.SS"));
 
-  hours h{parse_int<uint64_t>(time_str, time_str + 2)};
-  minutes m{parse_int<uint64_t>(time_str + 3, time_str + 5)};
-  seconds s{parse_int<uint64_t>(time_str + 6, time_str + 8)};
+  hours const h{parse_int<uint64_t>(time_str, time_str + 2)};
+  minutes const m{parse_int<uint64_t>(time_str + 3, time_str + 5)};
+  seconds const s{parse_int<uint64_t>(time_str + 6, time_str + 8)};
 
   seconds result = h + m + s;
 
   if (static_cast<bool>(time_xml.child("nightLeap"))) {
-    result += seconds_in_a_day;
+    result += sc::duration_cast<seconds>(days{1});
   }
 
   return std::chrono::duration_cast<relative_time>(result);
@@ -181,8 +217,8 @@ duration2 parse_duration(char const* const dur_str) {
   return std::chrono::duration_cast<duration2>(result);
 }
 
-stop_sequence parse_sequence(xml_node const sequence_xml,
-                             infrastructure const& infra) {
+std::optional<stop_sequence> parse_sequence(xml_node const sequence_xml,
+                                            infrastructure const& infra) {
   stop_sequence sequence;
 
   auto const sequence_points_xml = sequence_xml.child("sequenceServicePoints");
@@ -276,66 +312,17 @@ rs::train_physics parse_characteristic(xml_node const charac_xml,
   return {tvs, carriage_weight, length, max_speed, ctc, freight};
 }
 
-enum class failure_reason : uint8_t {
-  worked_on_train,
-  failed_getting_station_route_path,
-  failed_getting_interlocking_route_path,
-  first_stop_is_no_halt_and_train_is_not_breaking_in,
-  last_stop_is_no_halt_and_train_is_not_breaking_out,
-  stop_is_marked_halt_but_station_route_has_no_halt,
-  transit_time_but_station_route_has_no_runtime_checkpoint,
-  train_has_lzb,
-  double_train_number
-};
-
-static std::map<failure_reason, std::size_t> failures = {  // NOLINT
-    {failure_reason::worked_on_train, 0},
-    {failure_reason::failed_getting_station_route_path, 0},
-    {failure_reason::failed_getting_interlocking_route_path, 0},
-    {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in, 0},
-    {failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out, 0},
-    {failure_reason::stop_is_marked_halt_but_station_route_has_no_halt, 0},
-    {failure_reason::transit_time_but_station_route_has_no_runtime_checkpoint,
-     0},
-    {failure_reason::train_has_lzb, 0},
-    {failure_reason::double_train_number, 0}};
-
-static std::map<failure_reason, std::string> failure_text = {  // NOLINT
-    {failure_reason::worked_on_train, "Skipped worked on trains: "},
-    {failure_reason::failed_getting_station_route_path,
-     "Failed getting station route path for trains: "},
-    {failure_reason::failed_getting_interlocking_route_path,
-     "Failed generating interlocking route path: "},
-    {failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in,
-     "First stop is not a halt, but train is not breaking in: "},
-    {failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out,
-     "Last stop is not a halt, but train is not breaking out: "},
-    {failure_reason::stop_is_marked_halt_but_station_route_has_no_halt,
-     "Stop is marked halt, but  station route has no halt: "},
-    {failure_reason::transit_time_but_station_route_has_no_runtime_checkpoint,
-     "Transit time in timetable, but no runtime checkpoint in station route"},
-    {failure_reason::train_has_lzb, "Train has LZB: "},
-    {failure_reason::double_train_number, "Double train number: "}};
-
-void print_failures() {
-  for (auto const& [reason, count] : failures) {
-    uLOG(utl::warn) << failure_text[reason] << count;
-  }
-}
-
 bool ignore_for_now(stop_sequence const& stop_sequence,
                     infrastructure const& infra,
                     rs::FreightTrain const freight) {
 
   if (!stop_sequence.points_.front().is_halt() && !stop_sequence.break_in_) {
-    ++failures
-        [failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in];
+    kss_stats.inc(kss::first_stop_is_no_halt_and_train_is_not_breaking_in);
     return true;
   }
 
   if (!stop_sequence.points_.back().is_halt() && !stop_sequence.break_out_) {
-    ++failures
-        [failure_reason::last_stop_is_no_halt_and_train_is_not_breaking_out];
+    kss_stats.inc(kss::last_stop_is_no_halt_and_train_is_not_breaking_out);
     return true;
   }
 
@@ -343,42 +330,17 @@ bool ignore_for_now(stop_sequence const& stop_sequence,
     auto const sr = infra->station_routes_[sequence_point.station_route_];
 
     if (sequence_point.is_halt() && !sr->get_halt_idx(freight).has_value()) {
-      ++failures
-          [failure_reason::stop_is_marked_halt_but_station_route_has_no_halt];
+      kss_stats.inc(kss::stop_is_marked_halt_but_station_route_has_no_halt);
       return true;
     }
 
     if (sequence_point.has_transit_time() &&
         !sr->get_runtime_checkpoint_node().has_value()) {
-      ++failures[failure_reason::
-                     transit_time_but_station_route_has_no_runtime_checkpoint];
+      kss_stats.inc(
+          kss::transit_time_but_station_route_has_no_runtime_checkpoint);
       return true;
     }
   }
-
-  return false;
-}
-
-bool ignore_for_now(train::ptr const train, infrastructure const&) {
-  if (train->has_ctc()) {
-    ++failures[failure_reason::train_has_lzb];
-    return true;
-  }
-
-  //  if (!train->path_.entries_.front().sequence_points_.front().is_halt() &&
-  //      !train->path_.break_in_) {
-  //    ++failures
-  //        [failure_reason::first_stop_is_no_halt_and_train_is_not_breaking_in];
-  //    return true;
-  //  }
-
-  //  auto const first_halt =
-  //      train->first_station_route(infra)->get_halt_node(train->freight());
-  //  if (train->path_.entries_.front().sequence_points_.front().is_halt() &&
-  //      !first_halt.has_value()) {
-  //    ++failures[failure_reason::first_stop_is_halt_and_first_sr_has_no_halt];
-  //    return true;
-  //  }
 
   return false;
 }
@@ -394,108 +356,119 @@ train::number parse_train_number(xml_node const train_number_xml) {
   return tn;
 }
 
+std::optional<train> parse_construction_train(
+    xml_node const construction_train_xml, infrastructure const& infra) {
+  train t;
+
+  t.number_ = parse_train_number(construction_train_xml.child("trainNumber"));
+
+  auto const services_xml = construction_train_xml.child("services");
+  t.service_days_ = parse_services(services_xml);
+
+  auto const characteristic_xml =
+      construction_train_xml.child("characteristic");
+  t.physics_ = parse_characteristic(characteristic_xml, infra->rolling_stock_);
+
+  auto const sequence_xml = construction_train_xml.child("sequence");
+  auto const train_sequence = parse_sequence(sequence_xml, infra);
+
+  if (!train_sequence.has_value()) {
+    kss_stats.inc(kss::failed_getting_station_route_path);
+    return {};
+  }
+
+  if (ignore_for_now(*train_sequence, infra, t.freight()) || t.has_ctc()) {
+    return {};
+  }
+
+  t.break_in_ = train_sequence.value().break_in_;
+  t.break_out_ = train_sequence.value().break_out_;
+
+  auto train_path =
+      get_interlocking_route_path(*train_sequence, t.physics_.freight(), infra);
+  if (!train_path.has_value()) {
+    kss_stats.inc(kss::failed_getting_interlocking_route_path);
+    return {};
+  }
+
+  std::tie(t.path_, t.sequence_points_) = std::move(train_path.value());
+
+  return t;
+}
+
+soro::vector<train> parse_kss_train(xml_node const train_xml,
+                                    infrastructure const& infra) {
+  soro::vector<train> result;
+
+  kss_stats.inc(kss::total_trains);
+
+  // don't parse worked on trains
+  auto const train_status = train_xml.attribute("trainStatus").value();
+  if (!utls::equal(train_status, "freig")) {
+    kss_stats.inc(kss::worked_on_train);
+    return {};
+  }
+
+  for (auto const construction_train_xml :
+       train_xml.child("fineConstruction").children("constructionTrain")) {
+    kss_stats.inc(kss::total_train_runs);
+
+    auto train = parse_construction_train(construction_train_xml, infra);
+
+    if (!train.has_value()) {
+      continue;
+    }
+
+    result.emplace_back(train.value());
+  }
+
+  return result;
+}
+
+soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
+                                         infrastructure const& infra) {
+  soro::vector<train> result;
+
+  auto const loaded_file = utls::load_file(fp);
+
+  xml_document file_xml;
+  auto success = file_xml.load_buffer(
+      reinterpret_cast<void const*>(loaded_file.contents_.data()),
+      loaded_file.contents_.size());
+
+  utl::verify(success,
+              "PugiXML error '{}' while parsing {} from KSS timetable {}!",
+              success.description(), fp);
+
+  auto const timetable_xml =
+      file_xml.child("KSS").child("railml").child("timetable");
+
+  for (auto const train_xml : timetable_xml.children("train")) {
+    utl::concat(result, parse_kss_train(train_xml, infra));
+  }
+
+  return result;
+}
+
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
   utl::scoped_timer const timetable_timer("Parsing Timetable");
 
   base_timetable bt;
 
-  std::size_t total_trains = 0;
-  std::size_t total_train_runs = 0;
-
-  std::set<train::number> train_numbers;
-
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
-    auto const loaded_file = utls::load_file(dir_entry.path());
-
-    xml_document file_xml;
-    auto success = file_xml.load_buffer(
-        reinterpret_cast<void const*>(loaded_file.contents_.data()),
-        loaded_file.contents_.size());
-
-    utl::verify(success,
-                "PugiXML error '{}' while parsing {} from KSS timetable {}!",
-                success.description(), loaded_file.path_, opts.timetable_path_);
-
-    auto const railml_xml = file_xml.child("KSS").child("railml");
-    auto const timetable_xml = railml_xml.child("timetable");
-
-    for (auto const train_xml : timetable_xml.children("train")) {
-      ++total_trains;
-
-      // don't parse worked on trains
-      auto const train_status = train_xml.attribute("trainStatus").value();
-      if (!utls::equal(train_status, "freig")) {
-        ++failures[failure_reason::worked_on_train];
-        continue;
-      }
-
-      for (auto const construction_train_xml :
-           train_xml.child("fineConstruction").children("constructionTrain")) {
-        ++total_train_runs;
-
-        auto t = soro::make_unique<train>();
-
-        t->number_ =
-            parse_train_number(construction_train_xml.child("trainNumber"));
-
-        if (train_numbers.contains(t->number_)) {
-          ++failures[failure_reason::double_train_number];
-          continue;
-        } else {
-          train_numbers.insert(t->number_);
-        }
-
-        auto const sequence_xml = construction_train_xml.child("sequence");
-        auto const train_sequence = parse_sequence(sequence_xml, infra);
-
-        if (train_sequence.points_.empty()) {
-          ++failures[failure_reason::failed_getting_station_route_path];
-          continue;
-        }
-
-        auto const services_xml = construction_train_xml.child("services");
-        t->service_days_ = parse_services(services_xml);
-
-        auto const characteristic_xml =
-            construction_train_xml.child("characteristic");
-        t->physics_ =
-            parse_characteristic(characteristic_xml, infra->rolling_stock_);
-
-        if (ignore_for_now(train_sequence, infra, t->freight())) {
-          continue;
-        }
-
-        t->path_ = get_interlocking_route_path(train_sequence,
-                                               t->physics_.freight(), infra);
-
-        if (t->path_.entries_.empty()) {
-          ++failures[failure_reason::failed_getting_interlocking_route_path];
-          continue;
-        }
-
-        if (ignore_for_now(t.get(), infra)) {
-          continue;
-        }
-
-        t->id_ = bt.train_store_.size();
-        bt.train_store_.emplace_back();
-        bt.train_store_.back() = std::move(t);
-      }
-    }
+    utl::concat(bt.trains_, parse_timetable_file(dir_entry.path(), infra));
   }
 
-  bt.trains_.reserve(bt.train_store_.size());
-  for (auto const& unique_train : bt.train_store_) {
-    bt.trains_.emplace_back(unique_train.get());
+  train::id current_id = 0;
+  for (auto& t : bt.trains_) {
+    t.id_ = current_id++;
   }
 
-  uLOG(utl::info) << "Total trains in data: " << total_trains;
-  uLOG(utl::info) << "Total train runs in data: " << total_train_runs;
   uLOG(utl::info) << "Total trains runs successfully parsed: "
-                  << bt.train_store_.size();
+                  << bt.trains_.size();
+  kss_stats.print();
 
-  print_failures();
   print_ir_generating_failures();
 
   return bt;

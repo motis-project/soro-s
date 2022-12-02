@@ -12,7 +12,7 @@ using namespace soro::infra;
 
 route_ordering get_route_ordering(infra::infrastructure const& infra,
                                   timetable const&) {
-  route_ordering ordering(infra->interlocking_.interlocking_routes_.size());
+  route_ordering ordering(infra->interlocking_.routes_.size());
 
   //  for (auto const& tr : tt->trains_) {
   //    auto const stamps = runtime_calculation(*tr, *infra,

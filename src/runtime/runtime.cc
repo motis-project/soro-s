@@ -204,12 +204,12 @@ void runtime_calculation(train const& tr, infrastructure const& infra,
   for (auto const& event : il.front().events_) {
     //    auto const dep = tr.first_departure();
     utls::sassert(false, "Not implemented");
-    utls::unixtime dep;
+    utls::unixtime const dep;
     event_reached(INVALID_TIME, dep, event.node_->element_);
   }
 
-//  auto const start_ts = tr.first_departure();
-  utls::unixtime start_ts;
+  //  auto const start_ts = tr.first_departure();
+  utls::unixtime const start_ts;
   utls::sassert(false, "Not implemented");
 
   //  auto next_halt_idx = get_next_halt_idx(train_run, 0);

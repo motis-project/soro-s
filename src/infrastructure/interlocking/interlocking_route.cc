@@ -45,12 +45,12 @@ node::idx interlocking_route::size(infrastructure const& infra) const {
 bool interlocking_route::contains(station_route::id const needle_sr,
                                   node::idx const needle_idx) const {
 
-  if (station_routes_.size() == 1 && station_routes_.front() == needle_sr &&
-      start_offset_ < needle_idx && needle_idx < end_offset_) {
-    return true;
+  if (station_routes_.size() == 1) {
+    return station_routes_.front() == needle_sr &&
+           start_offset_ <= needle_idx && needle_idx < end_offset_;
   }
 
-  if (station_routes_.front() == needle_sr && needle_idx > start_offset_) {
+  if (station_routes_.front() == needle_sr && start_offset_ <= needle_idx) {
     return true;
   }
 
@@ -134,61 +134,127 @@ bool interlocking_route::operator==(interlocking_route const& o) const {
   return this->id_ == o.id_;
 }
 
+namespace detail {
+
+utls::recursive_generator<route_node> from_to_single(
+    interlocking_route::ptr const ir, node::idx const from, node::idx const to,
+    infrastructure const& infra) {
+  utls::sassert(ir->station_routes_.size() == 1);
+  co_yield ir->first_sr(infra)->from_to(from, to);
+}
+
+utls::recursive_generator<route_node> from_to(
+    interlocking_route::ptr const ir,
+    decltype(ir->station_routes_)::const_iterator from_it, node::idx const from,
+    decltype(ir->station_routes_)::const_iterator to_it, node::idx const to,
+    infrastructure const& infra) {
+
+  utls::sassert(ir->station_routes_.size() > 1,
+                "Called from_to_impl with a single station route in IR {}, "
+                "call from_to_single_imple instead",
+                ir->id_);
+  utls::sassert(from_it != std::end(ir->station_routes_),
+                "Station route {} is not part of interlocking route {}, but "
+                "got it for iteration.",
+                *from_it, ir->id_);
+  utls::sassert(to_it != std::end(ir->station_routes_),
+                "Station route {} is not part of interlocking route {}, but "
+                "got it for iteration.",
+                *to_it, ir->id_);
+  utls::sassert(std::distance(from_it, to_it) >= 0,
+                "To station route is located before from station route in "
+                "interlocking route iterator.");
+
+  co_yield infra->station_routes_[*from_it]->from(from);
+  ++from_it;
+
+  for (; from_it != to_it; ++from_it) {
+    co_yield infra->station_routes_[*from_it]->iterate();
+  }
+
+  co_yield infra->station_routes_[*to_it]->to(to);
+}
+
+}  // namespace detail
+
+utls::recursive_generator<route_node> interlocking_route::from_to(
+    station_route::id const from_sr, node::idx const from,
+    station_route::id const to_sr, node::idx const to,
+    infrastructure const& infra) const {
+
+  if (this->station_routes_.size() == 1) {
+    utls::sassert(
+        from_sr == to_sr,
+        "Only one station route in interlocking route {}, but while iterating "
+        "got from {} and to {}.",
+        this->id_, from_sr, to_sr);
+
+    return detail::from_to_single(this, from, to, infra);
+  } else {
+    auto from_it = utls::find(this->station_routes_, from_sr);
+    auto to_it = utls::find(this->station_routes_, to_sr);
+
+    utls::sassert(from_it != std::end(this->station_routes_),
+                  "Station route {} is not part of interlocking route {}, but "
+                  "got it for iteration.",
+                  from_sr, this->id_);
+    utls::sassert(to_it != std::end(this->station_routes_),
+                  "Station route {} is not part of interlocking route {}, but "
+                  "got it for iteration.",
+                  to_sr, this->id_);
+    utls::sassert(std::distance(from_it, to_it) >= 0,
+                  "To station route is located before from station route in "
+                  "interlocking route iterator.");
+
+    return detail::from_to(this, from_it, from, to_it, to, infra);
+  }
+}
+
+utls::recursive_generator<route_node> interlocking_route::to(
+    station_route::id const sr_id, node::idx const to,
+    infrastructure const& infra) const {
+  return this->from_to(this->station_routes_.front(), start_offset_, sr_id, to,
+                       infra);
+}
+
+utls::recursive_generator<route_node> interlocking_route::from(
+    station_route::id const sr_id, node::idx const from,
+    infrastructure const& infra) const {
+  return this->from_to(sr_id, from, station_routes_.back(), end_offset_, infra);
+}
+
 utls::recursive_generator<route_node> interlocking_route::iterate(
     infrastructure const& infra) const {
-  if (this->station_routes_.size() == 1) {
-    co_yield first_sr(infra)->from_to(start_offset_, end_offset_);
-
+  if (station_routes_.size() == 1) {
+    return detail::from_to_single(this, start_offset_, end_offset_, infra);
   } else {
-    co_yield first_sr(infra)->from(start_offset_);
-
-    for (auto i = 1U; i < station_routes_.size() - 1; ++i) {
-      co_yield this->sr(static_cast<sr_offset>(i), infra)->iterate();
-    }
-
-    co_yield last_sr(infra)->to(end_offset_);
+    return detail::from_to(this, std::cbegin(station_routes_), start_offset_,
+                           std::cend(station_routes_) - 1, end_offset_, infra);
   }
 }
 
-node::ptr interlocking_route::signal_eotd(infrastructure const& infra) const {
-  utls::sassert(false, "Not implemented");
+utls::generator<sub_path> interlocking_route::iterate_station_routes(
+    infrastructure_t const& infra) const {
+  if (station_routes_.size() == 1) {
+    auto const sr = infra.station_routes_[station_routes_.front()];
+    co_yield sub_path{
+        .station_route_ = sr, .from_ = start_offset_, .to_ = end_offset_};
+  } else {
+    auto const first_sr = infra.station_routes_[station_routes_.front()];
+    co_yield sub_path{.station_route_ = first_sr,
+                      .from_ = start_offset_,
+                      .to_ = first_sr->size()};
 
-  for (auto const rn : this->iterate(infra)) {
-    if (rn.node_->is(type::EOTD) &&
-        infra->graph_.element_data_[rn.node_->id_].as<eotd>().signal_) {
-      return rn.node_;
+    for (auto i = 1UL; i < station_routes_.size() - 1; ++i) {
+      auto const sr = infra.station_routes_[station_routes_[i]];
+      co_yield sub_path{.station_route_ = sr, .from_ = 0, .to_ = sr->size()};
     }
+
+    auto const last_sr = infra.station_routes_[station_routes_.back()];
+    co_yield sub_path{.station_route_ = last_sr,
+                      .from_ = start_offset_,
+                      .to_ = last_sr->size()};
   }
-
-  utls::sassert(false, "No signal eotd in interlocking route {}.", id_);
-  throw std::runtime_error("No signal eotd in interlocking route");
-}
-
-soro::vector<node::ptr> interlocking_route::route_eotds(
-    infrastructure const&) const {
-  utls::sassert(false, "Not implemented");
-  std::vector<node::ptr> result;
-
-  //  for (auto const rn : this->iterate(skip_omitted::ON, infra)) {
-  //    if (rn.node_->is(type::EOTD)) {
-  //      result.emplace_back(rn.node_);
-  //    }
-  //  }
-
-  return result;
-}
-
-soro::vector<node::ptr> interlocking_route::passenger_halts(
-    infrastructure const&) const {
-  std::vector<node::ptr> result;
-  utls::sassert(false, "Not implemented");
-  return result;
-}
-soro::vector<node::ptr> interlocking_route::freight_halts(
-    infrastructure const&) const {
-  std::vector<node::ptr> result;
-  utls::sassert(false, "Not implemented");
-  return result;
 }
 
 }  // namespace soro::infra

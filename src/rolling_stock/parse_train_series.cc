@@ -173,7 +173,7 @@ soro::vector<train_series> parse_train_series(
                          .attribute("Nr")
                          .value();
 
-    bool success;
+    bool success = false;
     std::tie(success, ts.variants_) = parse_variants(
         xml_train_model_range.child("Triebfahrzeugbaureihenvarianten"));
 

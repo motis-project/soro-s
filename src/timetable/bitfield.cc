@@ -6,6 +6,17 @@
 
 namespace soro::tt {
 
+std::size_t distance(anchor_time const from, anchor_time const to) {
+  utls::sassert(valid(from), "Date from {} is not ok.", from);
+  utls::sassert(valid(to), "Date to {} is not ok.", to);
+  utls::sassert(from <= to,
+                "Call distance for year_month_date with ascending dates, "
+                "got called with {} and {}",
+                from, to);
+
+  return static_cast<std::size_t>((to - from).count());
+}
+
 std::size_t distance(date::year_month_day const from,
                      date::year_month_day const to) {
   utls::sassert(from.ok(), "Date from {} is not ok.", from);
@@ -15,14 +26,11 @@ std::size_t distance(date::year_month_day const from,
                 "got called with {} and {}",
                 from, to);
 
-  return static_cast<std::size_t>(
-      (static_cast<date::sys_days>(to) - static_cast<date::sys_days>(from))
-          .count());
+  return distance(anchor_time{from}, anchor_time{to});
 }
 
-std::size_t get_idx(date::year_month_day const first_date,
-                    date::year_month_day const last_date,
-                    date::year_month_day const ymd) {
+std::size_t get_idx(anchor_time const first_date, anchor_time const last_date,
+                    anchor_time const ymd) {
   utls::sassert(
       first_date <= ymd && ymd <= last_date,
       "Trying to update bitfield with date {} that is not in range [{}, {}].",
@@ -31,17 +39,14 @@ std::size_t get_idx(date::year_month_day const first_date,
   return distance(first_date, ymd);
 }
 
-date::year_month_day idx_to_date(date::year_month_day first_date,
+date::year_month_day idx_to_date(anchor_time const first_date,
                                  std::size_t const idx) {
-  utls::sassert(first_date.ok(), "First date {} is not ok.", first_date);
-
-  auto const first_days = static_cast<date::sys_days>(first_date);
-  auto const new_days = first_days + date::days(idx);
-  return {new_days};
+  utls::sassert(valid(first_date), "First date {} is not ok.", first_date);
+  return {first_date + days(idx)};
 }
 
 bool bitfield::ok() const noexcept {
-  return this->first_date_.ok() && this->last_date_.ok();
+  return valid(this->first_date_) && valid(this->last_date_);
 }
 
 std::vector<date::year_month_day> bitfield::get_set_days() const {
@@ -56,7 +61,7 @@ std::vector<date::year_month_day> bitfield::get_set_days() const {
   return result;
 }
 
-bool bitfield::at(date::year_month_day const ymd) const {
+bool bitfield::at(anchor_time const ymd) const {
   if (first_date_ <= ymd && ymd <= last_date_) {
     return bitset_[get_idx(first_date_, last_date_, ymd)];
   }
@@ -67,7 +72,7 @@ bool bitfield::at(date::year_month_day const ymd) const {
       ymd, first_date_, last_date_);
 }
 
-bool bitfield::operator[](date::year_month_day const ymd) const {
+bool bitfield::operator[](anchor_time const ymd) const {
   return bitset_[get_idx(first_date_, last_date_, ymd)];
 }
 
@@ -75,9 +80,8 @@ bool bitfield::operator[](date::year_month_day const ymd) const {
 // ymd < first: -1
 // ymd in [first, last]: 0
 // ymd > last: 1
-int8_t in_range(date::year_month_day const ymd,
-                date::year_month_day const first,
-                date::year_month_day const last) {
+int8_t in_range(anchor_time const ymd, anchor_time const first,
+                anchor_time const last) {
   if (ymd < first) {
     return -1;
   }
@@ -90,11 +94,12 @@ int8_t in_range(date::year_month_day const ymd,
 }
 
 void bitfield::set(date::year_month_day const ymd, bool const new_value) {
-
   auto const pos = in_range(ymd, this->first_date_, this->last_date_);
 
+  anchor_time const ymd_anchor{ymd};
+
   if (pos < 0) {
-    this->bitset_ <<= distance(ymd, this->first_date_);
+    this->bitset_ <<= distance(ymd_anchor, this->first_date_);
     this->first_date_ = ymd;
   } else if (pos > 0) {
     this->last_date_ = ymd;
@@ -149,7 +154,7 @@ bitfield bitfield::operator|=(bitfield const& o) noexcept {
   return *this;
 }
 
-date::year_month_day bitfield::end() const noexcept {
+anchor_time bitfield::end() const noexcept {
   return {static_cast<date::sys_days>(this->first_date_) + date::days{BITSIZE}};
 }
 
@@ -172,15 +177,15 @@ bitfield make_bitfield(date::year_month_day const first_date,
                   strlen_length);
   });
 
-  std::array<char, bitfield::BITSIZE> buf;
+  std::array<char, bitfield::BITSIZE> buf{};
   std::fill(std::begin(buf), std::end(buf), '0');
 
-  std::copy(bitmask, bitmask + bitmask_length + 1,
+  std::copy(bitmask, bitmask + bitmask_length,
             std::end(buf) - static_cast<ssize_t>(bitmask_length));
   std::reverse(std::end(buf) - static_cast<ssize_t>(bitmask_length),
                std::end(buf));
 
-  std::string_view bits_view{std::begin(buf), std::end(buf)};
+  std::string_view const bits_view{std::begin(buf), std::end(buf)};
 
   return {.first_date_ = first_date,
           .last_date_ = last_date,

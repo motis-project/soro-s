@@ -10,12 +10,18 @@ template <
     typename Container, typename ValueType,
     std::enable_if_t<!std::is_same_v<Container, std::string>, bool> = true>
 inline bool contains(Container const& c, ValueType const& e) {
-  return std::find(std::cbegin(c), std::cend(c), e) != std::cend(c);
+  using std::begin;
+  using std::end;
+
+  return std::find(std::begin(c), std::end(c), e) != std::end(c);
 }
 
 template <typename Container, typename Pred>
-inline bool contains_if(Container const& c, Pred const& pred) {
-  return std::find_if(std::cbegin(c), std::cend(c), pred) != std::cend(c);
+inline bool contains_if(Container&& c, Pred const& pred) {
+  using std::begin;
+  using std::end;
+
+  return std::find_if(begin(c), end(c), pred) != end(c);
 }
 
 template <typename ValueType>

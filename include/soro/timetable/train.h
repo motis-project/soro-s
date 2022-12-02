@@ -1,8 +1,9 @@
 #pragma once
 
-#include <map>
 #include <utility>
 
+#include "soro/utls/container/id_iterator.h"
+#include "soro/utls/coroutine/iterator.h"
 #include "soro/utls/unixtime.h"
 
 #include "soro/base/time.h"
@@ -11,6 +12,7 @@
 #include "soro/rolling_stock/freight.h"
 #include "soro/rolling_stock/train_physics.h"
 #include "soro/timetable/bitfield.h"
+#include "soro/timetable/sequence_point.h"
 
 namespace soro::tt {
 
@@ -24,47 +26,12 @@ struct stop_time {
   utls::duration min_stop_time_;
 };
 
-struct sequence_point {
-  enum class type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
+struct train_node : infra::route_node {
+  train_node(route_node const& rn, sequence_point const* spp)
+      : infra::route_node(rn), sequence_point_{spp} {}
 
-  bool is_halt() const noexcept;
-  bool is_halt(type const t) const noexcept;
-
-  relative_time transit_time() const noexcept;
-  bool is_transit() const noexcept;
-  bool has_transit_time() const noexcept;
-
-  bool is_measurable() const noexcept { return has_transit_time() || is_halt(); }
-
-  absolute_time absolute_arrival(
-      date::year_month_day departure_day) const noexcept;
-
-  absolute_time absolute_departure(
-      date::year_month_day departure_day) const noexcept;
-
-  utls::optional<infra::node::ptr> get_node(
-      rs::FreightTrain freight, infra::infrastructure const& infra) const;
-
-  type type_{type::TRANSIT};
-
-  // relative to departure day of the train at 00:00
-  relative_time arrival_{INVALID_RELATIVE_TIME};
-  relative_time departure_{INVALID_RELATIVE_TIME};
-  duration2 min_stop_time_{INVALID_DURATION};
-
-  infra::station_route::id station_route_{infra::station_route::INVALID};
+  utls::optional<sequence_point::ptr> sequence_point_;
 };
-
-struct stop_sequence {
-  std::vector<sequence_point> points_;
-  bool break_in_;
-  bool break_out_;
-};
-
-static const std::map<char, sequence_point::type> KEY_TO_STOP_TYPE = {
-    {'2', sequence_point::type::OPERATIONS},
-    {'3', sequence_point::type::REQUEST},
-    {'4', sequence_point::type::PASSENGER}};
 
 struct train {
   using id = soro::size_type;
@@ -82,18 +49,7 @@ struct train {
     sub_t sub_{std::numeric_limits<sub_t>::max()};
   };
 
-  struct path {
-    struct entry {
-      soro::vector<sequence_point> sequence_points_;
-      infra::interlocking_route::id interlocking_id_;
-    };
-
-    bool break_in_{false};
-    bool break_out_{false};
-    soro::vector<entry> entries_;
-
-    si::length length_{si::INVALID<si::length>};
-  };
+  train() = default;
 
   rs::FreightTrain freight() const;
   bool is_freight() const;
@@ -112,19 +68,31 @@ struct train {
 
   infra::station_route::ptr first_station_route(
       infra::infrastructure const&) const;
+
   infra::interlocking_route const& first_interlocking_route(
       infra::infrastructure const&) const;
+  infra::interlocking_route const& last_interlocking_route(
+      infra::infrastructure const&) const;
 
-  utls::recursive_generator<infra::route_node> iterate(
+  utls::recursive_generator<train_node> iterate(
       infra::infrastructure const& infra) const;
 
-  //  bool has_event_in_interval(utls::unixtime start, utls::unixtime end)
-  //  const;
+  auto path(infra::infrastructure const& infra) const {
+    return utls::make_range(
+        utls::id_iterator(std::begin(path_), &infra->interlocking_.routes_),
+        utls::id_iterator(std::end(path_), &infra->interlocking_.routes_));
+  }
 
   id id_{INVALID};
   number number_{};
 
-  path path_;
+  bool break_in_{false};
+  bool break_out_{false};
+  soro::vector<infra::interlocking_route::id> path_;
+  soro::vector<sequence_point> sequence_points_;
+
+  si::length length_;
+
   bitfield service_days_;
   rs::train_physics physics_;
 

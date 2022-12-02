@@ -1,7 +1,8 @@
 #pragma once
 
 #include "cista/containers/bitset.h"
-#include "date/date.h"
+
+#include "soro/base/time.h"
 
 namespace soro::tt {
 
@@ -14,9 +15,9 @@ struct bitfield {
 
   bool ok() const noexcept;
 
-  bool at(date::year_month_day const ymd) const;
+  bool at(anchor_time const ymd) const;
 
-  bool operator[](date::year_month_day const ymd) const;
+  bool operator[](anchor_time const ymd) const;
 
   void set(date::year_month_day const ymd, bool const new_value);
 
@@ -28,12 +29,12 @@ struct bitfield {
   friend bitfield operator|(bitfield const& lhs, bitfield const& rhs) noexcept;
 
   // with BITSIZE the bitfield can cover a range of [first_date_, end())
-  date::year_month_day end() const noexcept;
+  anchor_time end() const noexcept;
 
   std::size_t count() const noexcept;
 
-  date::year_month_day first_date_{};
-  date::year_month_day last_date_{};
+  anchor_time first_date_{INVALID<anchor_time>};
+  anchor_time last_date_{INVALID<anchor_time>};
   bitset bitset_{};
 };
 

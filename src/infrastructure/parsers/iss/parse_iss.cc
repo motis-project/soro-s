@@ -154,8 +154,9 @@ bool element_order_from_nodes(xml_node const n1, xml_node const n2) {
   auto const t1 = get_type(n1.name());
   auto const t2 = get_type(n2.name());
 
-  return order_impl<Comparator>(km1, t1, r1, parse_rp_node_id(n1), km2, t2, r2,
-                                parse_rp_node_id(n2));
+  return order_impl<Comparator>(
+      km1, t1, r1, static_cast<element_id>(parse_rp_node_id(n1)), km2, t2, r2,
+      static_cast<element_id>(parse_rp_node_id(n2)));
 }
 
 template <typename Comparator>
@@ -493,7 +494,7 @@ struct deduplicated_paths {
 
 deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
                                            construction_materials const& mats) {
-  utl::scoped_timer timer("Deduplicating Paths");
+  utl::scoped_timer const timer("Deduplicating Paths");
 
   auto const get_path = [&](intermediate_station_route const& sr,
                             node::ptr next_node, auto const last_node_id) {

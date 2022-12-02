@@ -17,9 +17,8 @@ using namespace soro::infra;
 using namespace soro::runtime;
 
 void check_halt_count(train const& train, timestamps const& ts) {
-  std::size_t const halt_count = std::count_if(
-      std::cbegin(ts.times_), std::cend(ts.times_),
-      [](auto&& stamp) { return stamp.element_->is(type::HALT); });
+  auto const halt_count = utls::count_if(
+      ts.times_, [](auto&& stamp) { return stamp.element_->is(type::HALT); });
 
   CHECK_MESSAGE((train.total_halts() == halt_count),
                 "There should be as many halt events in the timestamps as "
@@ -60,11 +59,11 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
   duration max_delay = duration{0};
   duration max_too_early = duration{0};
 
-  for (auto const& train : tt) {
-    auto const timestamps = runtime_calculation(*train, infra, {type::HALT});
+  for (auto const& train : tt->trains_) {
+    auto const timestamps = runtime_calculation(train, infra, {type::HALT});
 
     size_t halt_id = 0;
-    for (auto const& stop_time : train->stop_times_) {
+    for (auto const& stop_time : train.stop_times_) {
       if (!stop_time.is_halt()) {
         continue;
       }
@@ -131,16 +130,16 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts,
 
 void check_runtime_with_events(infrastructure const& infra, timetable const& tt,
                                type_set const& record_events) {
-  for (auto const& train : tt) {
-    auto const timestamps = runtime_calculation(*train, infra, record_events);
+  for (auto const& train : tt->trains_) {
+    auto const timestamps = runtime_calculation(train, infra, record_events);
 
     if (record_events.contains(type::HALT)) {
-      check_halt_count(*train, timestamps);
+      check_halt_count(train, timestamps);
     }
 
     check_ascending_timestamps(timestamps);
 
-    test_event_existance_in_timestamps(*train, timestamps, infra);
+    test_event_existance_in_timestamps(train, timestamps, infra);
   }
 }
 

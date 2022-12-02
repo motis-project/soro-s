@@ -110,7 +110,7 @@ exclusion_path get_exclusion_path(station_route::path::ptr const path,
 
 std::vector<exclusion_path> get_exclusion_paths_no_main_signals(
     station_route::path::ptr const path, infrastructure const& infra) {
-  return {get_exclusion_path(path, 0, path->nodes_.size(), infra)};
+  return {get_exclusion_path(path, 0, path->size(), infra)};
 }
 
 exclusion_path get_first_exclusion_path(station_route::path::ptr const path,
@@ -120,8 +120,8 @@ exclusion_path get_first_exclusion_path(station_route::path::ptr const path,
 
 exclusion_path get_last_exclusion_path(station_route::path::ptr const path,
                                        infrastructure const& infra) {
-  return get_exclusion_path(path, path->main_signals_.front(),
-                            path->nodes_.size(), infra);
+  return get_exclusion_path(path, path->main_signals_.front(), path->size(),
+                            infra);
 }
 
 std::vector<exclusion_path> get_exclusion_paths_one_main_signal(

@@ -17,7 +17,7 @@ namespace soro::tt {
 // will be indexed and put into train_runs_ in the resulting timetable
 
 struct timetable_options {
-  CISTA_COMPARABLE();
+  CISTA_COMPARABLE()
 
   std::filesystem::path timetable_path_{""};
   utls::unixtime start_{utls::EPOCH};

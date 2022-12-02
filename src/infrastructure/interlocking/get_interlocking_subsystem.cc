@@ -10,7 +10,6 @@
 #include "soro/utls/map/insert_or.h"
 
 #include "soro/infrastructure/interlocking/exclusion.h"
-#include "soro/infrastructure/path/length.h"
 
 #if defined(SORO_CUDA)
 #include "soro/infrastructure/gpu/exclusion.h"
@@ -28,18 +27,25 @@ auto get_halting_at(soro::vector<interlocking_route> const& interlocking_routes,
       infra.graph_.nodes_.size());
 
   for (auto const& interlocking_route : interlocking_routes) {
-    auto const handle_halt_node = [&](auto&& halt_node) {
-      halting_at[halt_node->id_].emplace_back(interlocking_route.id_);
-    };
+    for (auto const& sub_path :
+         interlocking_route.iterate_station_routes(infra)) {
 
-    for (auto const station_route_id : interlocking_route.station_routes_) {
-      auto const station_route = infra.station_routes_[station_route_id];
+      auto const handle_halt_node = [&](auto&& halt_idx) {
+        if (sub_path.contains(halt_idx)) {
+          halting_at[sub_path.station_route_->nodes(halt_idx)->id_]
+              .emplace_back(interlocking_route.id_);
+        }
+      };
 
-      station_route->get_halt_node(rs::FreightTrain::NO)
+      sub_path.station_route_->get_halt_idx(rs::FreightTrain::NO)
           .execute_if(handle_halt_node);
-      station_route->get_halt_node(rs::FreightTrain::YES)
+      sub_path.station_route_->get_halt_idx(rs::FreightTrain::YES)
           .execute_if(handle_halt_node);
     }
+  }
+
+  for (auto& v : halting_at) {
+    utls::sort(v);
   }
 
   return halting_at;
@@ -62,6 +68,10 @@ auto get_starting_at(
     starting_at[first_node->id_].emplace_back(interlocking_route.id_);
   }
 
+  for (auto& v : starting_at) {
+    utls::sort(v);
+  }
+
   return starting_at;
 }
 
@@ -79,6 +89,10 @@ soro::vector<soro::vector<interlocking_route::id>> get_sr_to_participating_irs(
       sr_to_participating_irs[station_route_id].emplace_back(
           interlocking_route.id_);
     }
+  }
+
+  for (auto& v : sr_to_participating_irs) {
+    utls::sort(v);
   }
 
   return sr_to_participating_irs;
@@ -219,6 +233,24 @@ soro::vector<interlocking_route> get_internal_interlocking_route(
   }
 
   return interlocking_routes;
+}
+
+interlocking_route get_leading_interlocking_route(station_route::ptr const sr) {
+  return {.id_ = interlocking_route::INVALID,
+          .start_offset_ = 0,
+          .end_offset_ =
+              static_cast<node::idx>(sr->path_->main_signals_.front() + 1),
+          .station_routes_ = {sr->id_},
+          .length_ = si::INVALID<si::length>};
+}
+
+interlocking_route get_trailing_interlocking_route(
+    station_route::ptr const sr) {
+  return {.id_ = interlocking_route::INVALID,
+          .start_offset_ = sr->path_->main_signals_.back(),
+          .end_offset_ = sr->size(),
+          .station_routes_ = {sr->id_},
+          .length_ = si::INVALID<si::length>};
 }
 
 std::string generate_dot_tree(station_route::ptr const route,
@@ -372,6 +404,16 @@ soro::vector<interlocking_route> get_interlocking_routes(
       utl::concat(interlocking_routes, get_internal_interlocking_route(sr));
     }
 
+    if (!sr->path_->main_signals_.empty() &&
+        infra.station_route_graph_.predeccesors_[sr->id_].empty()) {
+      interlocking_routes.emplace_back(get_leading_interlocking_route(sr));
+    }
+
+    if (!sr->path_->main_signals_.empty() &&
+        infra.station_route_graph_.successors_[sr->id_].empty()) {
+      interlocking_routes.emplace_back(get_trailing_interlocking_route(sr));
+    }
+
     //    if (srg.successors_[sr->id_].empty()) {
     //      add_trailing_intermediate_ssr(sr);
     //    }
@@ -425,6 +467,7 @@ auto get_station_to_interlocking_routes(
 
   for (auto& station_irs : station_to_irs) {
     utl::erase_duplicates(station_irs);
+    utls::sort(station_irs);
   }
 
   return station_to_irs;
@@ -436,20 +479,19 @@ interlocking_subsystem get_interlocking_subsystem(
 
   interlocking_subsystem irs;
 
-  irs.interlocking_routes_ = get_interlocking_routes(infra);
+  irs.routes_ = get_interlocking_routes(infra);
 
-  irs.halting_at_ = get_halting_at(irs.interlocking_routes_, infra);
-  irs.starting_at_ = get_starting_at(irs.interlocking_routes_, infra);
+  irs.halting_at_ = get_halting_at(irs.routes_, infra);
+  irs.starting_at_ = get_starting_at(irs.routes_, infra);
   irs.sr_to_participating_irs_ =
-      get_sr_to_participating_irs(irs.interlocking_routes_, infra);
-  irs.station_to_irs_ =
-      get_station_to_interlocking_routes(irs.interlocking_routes_, infra);
+      get_sr_to_participating_irs(irs.routes_, infra);
+  irs.station_to_irs_ = get_station_to_interlocking_routes(irs.routes_, infra);
 
   if (determine_exclusions) {
     irs.exclusions_ = get_interlocking_route_exclusions(irs, infra);
   }
 
-  print_interlocking_stats(irs.interlocking_routes_);
+  print_interlocking_stats(irs.routes_);
 
   return irs;
 }

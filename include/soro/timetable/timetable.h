@@ -18,22 +18,7 @@ struct timetable : utls::serializable<base_timetable> {
 
   timetable(timetable_options const& opts, infra::infrastructure const& infra);
 
-  auto begin() { return access_->begin(); }
-  auto end() { return access_->end(); }
-
-  auto begin() const { return access_->begin(); }
-  auto end() const { return access_->end(); }
-
-  auto size() const { return access_->size(); }
-
-  auto const& operator[](std::size_t const idx) const {
-    return (*access_)[idx];
-  }
-
   TimetableSource source_type_{TimetableSource::NOT_FOUND};
 };
-
-inline auto begin(timetable const& tt) { return tt.begin(); }
-inline auto end(timetable const& tt) { return tt.end(); }
 
 }  // namespace soro::tt

@@ -1378,13 +1378,13 @@ TEST_CASE("sheepmaker::complete" * doctest::skip(true)) {  // NOLINT
                                type::APPROACH_SIGNAL, type::MAIN_SIGNAL});
 
   auto const intervals =
-      get_interval_list(*train, record_events, border_types, infra);
+      get_interval_list(train, record_events, border_types, infra);
 
   auto const tp = generate_test_train_2();
 
   auto start = high_resolution_clock::now();
   auto halt_to_halt_containers =
-      sheepmaker(tp, intervals, *train, si::length{1.0F});
+      sheepmaker(tp, intervals, train, si::length{1.0F});
   auto stop = high_resolution_clock::now();
 
   auto duration = duration_cast<milliseconds>(stop - start);

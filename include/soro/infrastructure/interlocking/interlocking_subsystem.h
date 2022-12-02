@@ -5,7 +5,7 @@
 namespace soro::infra {
 
 struct interlocking_subsystem {
-  soro::vector<interlocking_route> interlocking_routes_;
+  soro::vector<interlocking_route> routes_;
 
   soro::vector<soro::vector<interlocking_route::id>> starting_at_;
   soro::vector<soro::vector<interlocking_route::id>> halting_at_;

@@ -11,8 +11,6 @@
 #include "soro/simulation/disruption.h"
 #include "soro/simulation/ordering_graph.h"
 
-#include "soro/utls/sassert.h"
-
 namespace soro::simulation {
 
 using namespace soro::tt;
@@ -71,7 +69,7 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
 
     sim_node init_sn;
     init_sn.id_ = nodes_.size();
-    init_sn.train_id_ = tr->id_;
+    init_sn.train_id_ = tr.id_;
     init_sn.ir_id_ = interlocking_route::INVALID;
     //    init_sn.exit_dpd_ = get_init_dpd(tr->first_departure());
     nodes_.push_back(init_sn);
@@ -91,17 +89,17 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
     // create two sentinel node at the end of the simulation train run
     nodes_.push_back({
         .id_ = nodes_.size(),
-        .train_id_ = tr->id_,
+        .train_id_ = tr.id_,
         .ir_id_ = interlocking_route::INVALID,
     });
 
     nodes_.push_back({
         .id_ = nodes_.size(),
-        .train_id_ = tr->id_,
+        .train_id_ = tr.id_,
         .ir_id_ = interlocking_route::INVALID,
     });
 
-    train_to_sim_nodes_[tr->id_] = {first_node, nodes_.size()};
+    train_to_sim_nodes_[tr.id_] = {first_node, nodes_.size()};
   }
 
   // --- Create simulation graph edges --- //
@@ -271,7 +269,7 @@ void simulation_result::compute_dists(const sim_node::id sn_id,
 
   auto const& sn = sg.nodes_[sn_id];
 
-  auto const& train = sg.timetable_[sn.train_id_];
+  auto const& train = sg.timetable_->trains_[sn.train_id_];
 
   results_[sn_id].entry_dpd_ = results_[sn.train_pred()].exit_dpd_;
 

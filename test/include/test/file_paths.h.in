@@ -38,15 +38,11 @@ infra::infrastructure_options const DE_ISS_OPTS = {
     .infrastructure_path_ = DE_ISS_FOLDER,
 };
 
-// struct infrastructure_scenario {
-//   infra::infrastructure infra_;
-// };
-
 std::vector<infra::infrastructure_options> const ALL_INFRA_OPTS = {SMALL_OPTS,
                                                                    DE_ISS_OPTS};
 
-static std::vector<infra::infrastructure> INFRASTRUCTURE_SCENARIOS;  // NOLINT
-static std::map<infra::infrastructure_options, std::size_t>
+inline std::vector<infra::infrastructure> INFRASTRUCTURE_SCENARIOS;  // NOLINT
+inline std::map<infra::infrastructure_options, std::size_t>
     INFRASTRUCTURE_SCENARIOS_MAP;  // NOLINT
 
 inline infra::infrastructure const& get_infrastructure_scenario(
@@ -116,6 +112,8 @@ tt::timetable_options const DE_KSS_OPTS = {.timetable_path_ = DE_KSS_FOLDER};
 // --- Test Scenarios ---
 
 struct timetable_scenario_opts {
+  CISTA_COMPARABLE()
+
   bool exists() const {
     return std::filesystem::exists(infra_opts_.infrastructure_path_) &&
            std::filesystem::exists(timetable_opts_.timetable_path_);
@@ -147,8 +145,8 @@ struct timetable_scenario {
   tt::timetable timetable_;
 };
 
-static std::vector<timetable_scenario> TIMETABLE_SCENARIOS;  // NOLINT
-static std::map<tt::timetable_options, std::size_t>
+inline std::vector<timetable_scenario> TIMETABLE_SCENARIOS;  // NOLINT
+inline std::map<tt::timetable_options, std::size_t>
     TIMETABLE_SCENARIOS_MAP;  // NOLINT
 
 inline timetable_scenario const& get_timetable_scenario(
@@ -171,10 +169,24 @@ inline timetable_scenario const& get_timetable_scenario(
 inline std::vector<timetable_scenario> const& get_timetable_scenarios() {
   auto scenario_opts = ALL_TIMETABLE_SCENARIO_OPTS;
 
-  utl::erase_if(scenario_opts,
-                [](auto&& scenario_opts) { return !scenario_opts.exists(); });
+  utl::erase_if(scenario_opts, [](auto&& opts) { return !opts.exists(); });
 
   for (auto const& scenario_opt : scenario_opts) {
+    get_timetable_scenario(scenario_opt);
+  }
+
+  return TIMETABLE_SCENARIOS;
+}
+
+inline std::vector<timetable_scenario> const& get_timetable_scenarios(
+    timetable_scenario_opts const& scenario_opts) {
+  auto all_scenario_opts = ALL_TIMETABLE_SCENARIO_OPTS;
+
+  utl::erase_if(all_scenario_opts, [&](auto&& opts) {
+    return !opts.exists() || opts != scenario_opts;
+  });
+
+  for (auto const& scenario_opt : all_scenario_opts) {
     get_timetable_scenario(scenario_opt);
   }
 

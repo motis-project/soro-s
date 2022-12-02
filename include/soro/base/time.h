@@ -3,44 +3,68 @@
 #include <chrono>
 
 #include "date/date.h"
+#include "fmt/format.h"
+
+#include "soro/utls/concepts/is_any_of.h"
 
 namespace soro {
 
 namespace sc = std::chrono;
 
-using duration_t = uint32_t;
-
-using seconds = std::chrono::duration<duration_t, std::chrono::seconds::period>;
-using minutes = std::chrono::duration<duration_t, std::chrono::minutes::period>;
-using hours = std::chrono::duration<duration_t, std::chrono::hours::period>;
-using days = sc::duration<duration_t, sc::days::period>;
+using i32_seconds = sc::duration<uint32_t, sc::seconds::period>;
+using i64_seconds = sc::duration<uint64_t, sc::seconds::period>;
+using seconds = i32_seconds;
+using minutes = sc::duration<uint32_t, sc::minutes::period>;
+using hours = sc::duration<uint32_t, sc::hours::period>;
+using days = sc::duration<uint32_t, sc::days::period>;
 
 // an absolute point in time, given as a count of non-leap seconds
 // since unix epoch (1970/01/01/ 00:00:00)
 // same as sc::time_point<sc::system_clock, sc::seconds>
-using absolute_time = date::sys_seconds;
+using absolute_time = date::sys_time<i32_seconds>;
 
-static constexpr auto const INVALID_ABSOLUTE_TIME = absolute_time::max();
+// number of days since 1970/01/01
+using anchor_time = date::sys_days;
 
-// relative point in time wrt an arbitrary point in time (the anchor point),
-// given as a count of non-leap seconds since the anchor point
-using relative_time = seconds;
-static constexpr auto const INVALID_RELATIVE_TIME = relative_time::max();
+// relative point in time wrt to an anchor point
+// given as a count of non-leap seconds since the anchor point (00:00)
+using relative_time = sc::duration<uint32_t, sc::seconds::period>;
 
-constexpr auto valid(relative_time const rt) {
-  return rt != INVALID_RELATIVE_TIME;
-}
+using duration2 = i32_seconds;
 
-using duration2 = seconds;
-static constexpr auto const INVALID_DURATION = duration2::max();
-
-constexpr absolute_time relative_to_absolute(date::year_month_day const anchor,
+constexpr absolute_time relative_to_absolute(anchor_time const anchor,
                                              relative_time const relative) {
-  return sc::time_point_cast<sc::seconds>(static_cast<date::sys_days>(anchor)) +
-         relative;
+  return sc::time_point_cast<absolute_time::duration>(anchor) + relative;
 }
 
-static constexpr auto const seconds_in_a_day =
-    sc::duration_cast<seconds>(days{1});
+template <typename T>
+concept soro_time =
+    utls::is_any_of<T, absolute_time, anchor_time, relative_time, duration2>;
+
+template <soro_time T>
+constexpr T const INVALID = T::max();
+
+template <soro_time T>
+constexpr bool valid(T const t) {
+  return t != INVALID<T>;
+}
 
 }  // namespace soro
+
+template <>
+struct fmt::formatter<soro::anchor_time> {
+  constexpr auto parse(format_parse_context& ctx)  // NOLINT
+      -> decltype(ctx.begin()) {
+    if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
+      throw format_error("invalid format for anchor time");
+    }
+
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(soro::anchor_time const at, FormatContext& ctx) const
+      -> decltype(ctx.out()) {
+    return fmt::format_to(ctx.out(), "{}", date::year_month_day{at});
+  }
+};

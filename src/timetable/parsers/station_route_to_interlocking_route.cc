@@ -1,5 +1,7 @@
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
 
+#include "soro/utls/algo/sort_and_intersect.h"
+
 #include "utl/concat.h"
 #include "utl/erase_duplicates.h"
 #include "utl/logging.h"
@@ -72,7 +74,7 @@ auto get_longest_prefix_interlocking_routes(
   std::vector<interlocking_route::id> longest_prefixes;
 
   for (auto const candidate : candidates) {
-    auto const& candidate_route = irs.interlocking_routes_[candidate];
+    auto const& candidate_route = irs.routes_[candidate];
     auto const prefix_length =
         get_prefix_length(candidate_route, stop_sequence, sr_offset);
 
@@ -89,103 +91,105 @@ auto get_longest_prefix_interlocking_routes(
   return std::pair{longest_prefixes, current_longset_prefix};
 }
 
-// TODO(julian) move to utls and write test || remove this
-// template <class ForwardIterable, class GetKey>
-// constexpr auto max_element(ForwardIterable&& fw_iterable, GetKey&& get_key)
-//    -> std::pair<
-//        decltype(std::begin(fw_iterable)),
-//        std::invoke_result_t<GetKey, decltype(*std::begin(fw_iterable))>> {
-//  auto first = std::begin(fw_iterable);
-//  auto last = std::end(fw_iterable);
-//
-//  if (first == last) {
-//    return {last, {}};
-//  }
-//
-//  auto largest_element = first;
-//  auto largest_key = get_key(*first);
-//
-//  ++first;
-//  for (; first != last; ++first) {
-//    auto const key_largest = get_key(*largest_element);
-//    auto const key_first = get_key(*first);
-//
-//    if (key_largest < key_first) {
-//      largest_element = first;
-//      largest_key = key_largest;
-//    }
-//  }
-//
-//  return {largest_element, largest_key};
-//}
+struct cover {
+  bool covers(struct stop_sequence const& ss, rs::FreightTrain const freight,
+              infrastructure const& infra) const {
+    if (stop_sequence_offset_ < ss.points_.size() - 1) {
+      return false;
+    }
 
-std::pair<interlocking_route::id, std::size_t> get_first_ir(
+    auto const last_sr =
+        infra->station_routes_[ss.points_.back().station_route_];
+
+    node::idx last_stop_sequence_node = node::INVALID_IDX;
+
+    if (ss.points_.back().is_halt()) {
+      last_stop_sequence_node = last_sr->get_halt_idx(freight).value();
+    } else if (ss.break_out_) {
+      last_stop_sequence_node = last_sr->size() - 1;
+    }
+
+    return node_idx_ > last_stop_sequence_node;
+  }
+
+  std::size_t stop_sequence_offset_{0};
+  std::size_t node_idx_{0};
+};
+
+auto get_candidates(stop_sequence const& ss, cover const& current_cover,
+                    utls::optional<node::ptr> const& last_node,
+                    rs::FreightTrain const freight,
+                    infrastructure const& infra) {
+  auto const& sp = ss.points_[current_cover.stop_sequence_offset_];
+  auto candidates =
+      infra->interlocking_.sr_to_participating_irs_[sp.station_route_];
+
+  soro::vector<interlocking_route::id> const* starting_candidates = nullptr;
+  if (last_node.has_value()) {
+    starting_candidates = &infra->interlocking_.starting_at_[(*last_node)->id_];
+    candidates = utls::intersect(candidates, *starting_candidates);
+  }
+
+  if (candidates.size() == 1) {
+    return candidates;
+  }
+
+  soro::vector<interlocking_route::id> const* halt_candidates = nullptr;
+  if (sp.is_halt() &&
+      current_cover.node_idx_ <= *sp.get_node_idx(freight, infra)) {
+    auto halt_node = *(sp.get_node(freight, infra));
+    halt_candidates = &infra->interlocking_.halting_at_[halt_node->id_];
+    candidates = utls::intersect(candidates, *halt_candidates);
+  }
+
+  return candidates;
+}
+
+std::pair<interlocking_route::id, cover> get_first_ir(
     stop_sequence const& stop_sequence, FreightTrain const freight,
     infrastructure const& infra) {
   auto const& irs = infra->interlocking_;
 
-  interlocking_route::id ir_result = interlocking_route::INVALID;
-  std::size_t run_offset_result = std::numeric_limits<std::size_t>::max();
+  cover ss_cover{.stop_sequence_offset_ = 0, .node_idx_ = 0};
 
   auto const first_sr =
       infra->station_routes_[stop_sequence.points_.front().station_route_];
 
-  // make a copy, we will modify the contents
-  auto candidates = irs.sr_to_participating_irs_[first_sr->id_];
+  utls::optional<node::ptr> const first_node{
+      stop_sequence.break_in_ ? first_sr->nodes().front() : nullptr};
 
-  if (stop_sequence.points_.front().is_halt()) {
-    auto const halt = first_sr->get_halt_node(freight);
-
-    if (!halt.has_value()) {
-      ++failures[failure_reason::halt_in_stop_but_none_in_station_route];
-      return {ir_result, run_offset_result};
-    }
-
-    utl::concat(candidates, irs.halting_at_.at(halt.value()->id_));
-  }
-
-  if (stop_sequence.points_.front().is_halt()) {
-    utl::erase_duplicates(candidates);
-  }
+  auto const candidates =
+      get_candidates(stop_sequence, ss_cover, first_node, freight, infra);
 
   auto const [longest_prefix_routes, current_longest_prefix] =
       get_longest_prefix_interlocking_routes(candidates, irs, stop_sequence, 0);
 
-  if (longest_prefix_routes.size() == 1) {
-    return {longest_prefix_routes.front(), current_longest_prefix - 1};
+  if (longest_prefix_routes.empty()) {
+    ++failures[failure_reason::could_not_find_first_ir];
+    return {interlocking_route::INVALID, ss_cover};
   }
 
   if (longest_prefix_routes.size() > 1) {
     ++failures[failure_reason::could_not_find_unique_first_ir];
+    return {interlocking_route::INVALID, ss_cover};
   }
 
-  if (longest_prefix_routes.empty()) {
-    ++failures[failure_reason::could_not_find_first_ir];
+  auto const& first_ir = irs.routes_[longest_prefix_routes.front()];
+
+  ss_cover.node_idx_ = first_ir.end_offset_;
+  if (current_longest_prefix == 0) {
+    ss_cover.stop_sequence_offset_ =
+        first_ir.station_routes_.size() -
+        utls::find_position(first_ir.station_routes_, first_sr->id_) - 1;
+  } else {
+    ss_cover.stop_sequence_offset_ = current_longest_prefix - 1;
   }
 
-  return {interlocking_route::INVALID, 1000};
-}
-
-// void take(stop_sequence const& stop_sequence, std::size_t const from,
-// std::size_t const to,
-//           interlocking_route::id const ir_id) {
-//
-// }
-
-utls::optional<infra::node::idx> get_node_idx(
-    sequence_point const& sp, rs::FreightTrain const freight,
-    infra::infrastructure const& infra) {
-  auto const sr = infra->station_routes_[sp.station_route_];
-
-  if (sp.has_transit_time()) {
-    return sr->runtime_checkpoint_;
+  if (longest_prefix_routes.size() == 1) {
+    return {longest_prefix_routes.front(), ss_cover};
   }
 
-  if (sp.is_halt()) {
-    return sr->get_halt_idx(freight);
-  }
-
-  return {};
+  return {interlocking_route::INVALID, ss_cover};
 }
 
 soro::vector<sequence_point> get_sequence_points(interlocking_route const& ir,
@@ -199,7 +203,7 @@ soro::vector<sequence_point> get_sequence_points(interlocking_route const& ir,
   for (auto sp_idx = last_prefix; sp_idx < new_prefix; ++sp_idx) {
     auto const sequence_point = ss.points_[sp_idx];
 
-    auto const sr_node_idx = get_node_idx(sequence_point, freight, infra);
+    auto const sr_node_idx = sequence_point.get_node_idx(freight, infra);
 
     if (sr_node_idx.has_value() &&
         ir.contains(sequence_point.station_route_, *sr_node_idx)) {
@@ -210,66 +214,36 @@ soro::vector<sequence_point> get_sequence_points(interlocking_route const& ir,
   return result;
 }
 
-struct cover {
+std::optional<std::pair<soro::vector<infra::interlocking_route::id>,
+                        soro::vector<sequence_point>>>
+get_interlocking_route_path(stop_sequence const& stop_sequence,
+                            FreightTrain const freight,
+                            infrastructure const& infra) {
+  std::optional<std::pair<soro::vector<infra::interlocking_route::id>,
+                          soro::vector<sequence_point>>>
+      result{{{}, {}}};
 
-  bool covers(struct stop_sequence const& ss, rs::FreightTrain const freight,
-              infrastructure const& infra) const {
-    if (stop_sequence_offset_ < ss.points_.size() - 1) {
-      return false;
-    }
+  auto& path = result.value().first;
+  auto& sequence_points = result.value().second;
 
-    auto const last_sr =
-        infra->station_routes_[ss.points_.back().station_route_];
-
-    node::idx last_stop_sequence_node = node::INVALID_IDX;
-
-    if (ss.points_.back().is_halt()) {
-      last_stop_sequence_node = last_sr->get_halt_idx(freight).value() + 1;
-    } else if (ss.break_out_) {
-      last_stop_sequence_node = last_sr->size();
-    }
-
-    return node_idx_ > last_stop_sequence_node;
-  }
-
-  std::size_t stop_sequence_offset_{0};
-  std::size_t node_idx_{0};
-};
-
-train::path get_interlocking_route_path(stop_sequence const& stop_sequence,
-                                        FreightTrain const freight,
-                                        infrastructure const& infra) {
   auto const& irs = infra->interlocking_;
 
-  std::cout << "Train\n";
-
-  auto [first_ir_id, initial_sr_offset] =
-      get_first_ir(stop_sequence, freight, infra);
+  auto [first_ir_id, ss_cover] = get_first_ir(stop_sequence, freight, infra);
 
   if (!interlocking_route::valid(first_ir_id)) {
     return {};
   }
 
-  train::path train_path;
-  train_path.break_in_ = stop_sequence.break_in_;
-  train_path.break_out_ = stop_sequence.break_out_;
+  interlocking_route::ptr current_ir = &irs.routes_[first_ir_id];
 
-  interlocking_route::ptr current_ir = &irs.interlocking_routes_[first_ir_id];
-
-  cover ss_cover{.stop_sequence_offset_ = initial_sr_offset,
-                 .node_idx_ = current_ir->end_offset_};
-
-  train::path::entry first_tpe;
-  first_tpe.interlocking_id_ = first_ir_id;
-  first_tpe.sequence_points_ =
-      get_sequence_points(*current_ir, stop_sequence, freight, 0,
-                          ss_cover.stop_sequence_offset_ + 1, infra);
-  train_path.entries_.emplace_back(first_tpe);
+  path.emplace_back(first_ir_id);
+  utl::concat(sequence_points,
+              get_sequence_points(*current_ir, stop_sequence, freight, 0,
+                                  ss_cover.stop_sequence_offset_ + 1, infra));
 
   while (!ss_cover.covers(stop_sequence, freight, infra)) {
-    //  while (current_sr_offset < stop_sequence.points_.size() - 1) {
-    auto const& candidates =
-        irs.starting_at_[current_ir->last_node(infra)->id_];
+    auto const candidates = get_candidates(
+        stop_sequence, ss_cover, current_ir->last_node(infra), freight, infra);
 
     auto const [longest_prefix_routes, prefix_length] =
         get_longest_prefix_interlocking_routes(candidates, irs, stop_sequence,
@@ -285,18 +259,22 @@ train::path get_interlocking_route_path(stop_sequence const& stop_sequence,
       return {};
     }
 
-    current_ir = &irs.interlocking_routes_[longest_prefix_routes.front()];
+    current_ir = &irs.routes_[longest_prefix_routes.front()];
 
-    train::path::entry tpe;
-    tpe.interlocking_id_ = current_ir->id_;
-    tpe.sequence_points_ = get_sequence_points(
-        *current_ir, stop_sequence, freight, ss_cover.stop_sequence_offset_,
-        ss_cover.stop_sequence_offset_ + prefix_length, infra);
-    train_path.entries_.emplace_back(tpe);
+    path.emplace_back(current_ir->id_);
+    utl::concat(
+        sequence_points,
+        get_sequence_points(
+            *current_ir, stop_sequence, freight, ss_cover.stop_sequence_offset_,
+            ss_cover.stop_sequence_offset_ + prefix_length, infra));
 
-    std::cout << "current sr offset: " << ss_cover.stop_sequence_offset_
-              << std::endl;
-    std::cout << "prefix length: " << prefix_length << std::endl;
+    // the current cover + the current interlocking route cover more
+    // than the given stop sequence.
+    // thus, it is fully covered
+    if (ss_cover.stop_sequence_offset_ + current_ir->station_routes_.size() >
+        stop_sequence.points_.size()) {
+      break;
+    }
 
     // true when the current interlocking route and the currently worked on
     // station route end on the same node
@@ -312,43 +290,14 @@ train::path get_interlocking_route_path(stop_sequence const& stop_sequence,
     ss_cover.node_idx_ = current_ir->end_offset_;
   }
 
-  //  node::idx last_sr_node_offset = node::INVALID_IDX;
-  //
-  //  auto const completely_covered = [](struct stop_sequence const& ss) {
-  //    return ss.points_.size()
-  //  };
-  //
-  //  if (stop_sequence.break_out_) {
-  //    last_sr_node_offset =
-  //        infra->station_routes_[stop_sequence.points_.back().station_route_]
-  //            ->size();
-  //  } else {
-  //    last_sr_node_offset =
-  //        infra->station_routes_[stop_sequence.points_.back().station_route_]
-  //            ->get_halt_idx(freight)
-  //            .value();
-  //  }
-
-  //  // we have to
-  //  if (last_sr_node_offset != current_ir->end_offset_) {
-  //
-  //    auto const& candidates =
-  //        irs.starting_at_[current_ir->last_node(infra)->id_];
-  //  }
-
   utls::sasserts([&]() {
     auto const measurable_points = utls::count_if(
         stop_sequence.points_, [](auto&& sp) { return sp.is_measurable(); });
 
-    auto const path_points = utls::accumulate(
-        train_path.entries_, std::size_t{0}, [](auto&& acc, auto&& tpe) {
-          return acc + tpe.sequence_points_.size();
-        });
-
-    utls::sassert(measurable_points == path_points);
+    utls::sassert(measurable_points == sequence_points.size());
   });
 
-  return train_path;
+  return result;
 }
 
 }  // namespace soro::tt

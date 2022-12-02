@@ -19,12 +19,12 @@ void check_continuous_ascending_ids(Container const& c) {
   }
 
   if constexpr (soro::is_pointer<
-                    std::remove_reference_t<decltype(*std::begin(c))>>()) {
+                    std::remove_reference_t<decltype((*std::begin(c)))>>()) {
     CHECK_EQ((*std::begin(c))->id_, 0);
     CHECK_EQ((*(std::end(c) - 1))->id_, c.size() - 1);
   } else {
-    CHECK_EQ(*std::begin(c).id_, 0);
-    CHECK_EQ(*(std::end(c) - 1).id_, c.size() - 1);
+    CHECK_EQ((*std::begin(c)).id_, 0);
+    CHECK_EQ((*(std::end(c) - 1)).id_, c.size() - 1);
   }
 }
 

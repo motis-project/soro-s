@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <limits>
 #include <utility>
 
@@ -38,9 +39,15 @@ struct optional {
     return *this;
   }
 
-  constexpr T const* operator->() const noexcept { return &val_; }
+  constexpr T const* operator->() const noexcept {
+    assert(has_value());
+    return &val_;
+  }
 
-  constexpr T* operator->() noexcept { return &val_; }
+  constexpr T* operator->() noexcept {
+    assert(has_value());
+    return &val_;
+  }
 
   constexpr T const& operator*() const& noexcept { return value(); }
 
@@ -48,16 +55,31 @@ struct optional {
 
   constexpr T const&& operator*() const&& noexcept { return value(); }
 
-  constexpr T&& operator*() && noexcept { return value(); }
+  constexpr T& operator*() && noexcept { return value(); }
 
   constexpr explicit operator bool() const noexcept { return has_value(); }
 
   constexpr bool has_value() const noexcept { return val_ != INVALID; }
 
-  constexpr T& value() & { return val_; }
-  constexpr T const& value() const& { return val_; }
-  constexpr T& value() && { return val_; }
-  constexpr T const& value() const&& { return val_; }
+  constexpr T& value() & {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T const& value() const& {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T& value() && {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T const& value() const&& {
+    assert(has_value());
+    return val_;
+  }
 
   template <typename U>
   constexpr T value_or(U&& default_value) const& noexcept {
@@ -127,7 +149,9 @@ struct optional {
     }
   }
 
+#if !defined(SERIALIZE)
 private:
+#endif
   T val_{INVALID_VALUE};
 };
 

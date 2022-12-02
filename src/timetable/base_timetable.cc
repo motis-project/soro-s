@@ -4,16 +4,6 @@
 
 namespace soro::tt {
 
-size_t base_timetable::size() const { return trains_.size(); }
-
-train const& base_timetable::operator[](train::id const id) const {
-  return *trains_[id];
-}
-
-// train const& base_timetable::operator[](std::string const& name) const {
-//   return *name_to_train_.at(name);
-// }
-
 auto get_filtered_train_runs(soro::vector<soro::unique_ptr<train>>&,
                              utls::unixtime const, utls::unixtime const) {
   //  train::id current_id = 0;
@@ -37,14 +27,14 @@ auto get_filtered_train_runs(soro::vector<soro::unique_ptr<train>>&,
 //          utl::insert<soro::map<soro::string, train::ptr>>();
 // }
 
-base_timetable make_base_timetable(soro::vector<soro::unique_ptr<train>> trains,
+base_timetable make_base_timetable(soro::vector<soro::unique_ptr<train>> const&,
                                    timetable_options const& opts) {
   base_timetable bt;
 
   bt.start_ = opts.start_;
   bt.end_ = opts.end_;
 
-  bt.train_store_ = std::move(trains);
+  //  bt.train_store_ = std::move(trains);
   //  bt.trains_ = get_filtered_train_runs(bt.train_store_, opts.start_,
   //  opts.end_); bt.name_to_train_ = get_name_to_train(bt.trains_);
 

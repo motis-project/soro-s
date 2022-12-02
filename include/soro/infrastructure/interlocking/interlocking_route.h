@@ -9,6 +9,14 @@ namespace soro::infra {
 struct infrastructure_t;
 struct infrastructure;
 
+struct sub_path {
+  bool contains(node::idx const idx) const { return from_ <= idx && idx < to_; }
+
+  station_route::ptr station_route_;
+  node::idx from_;
+  node::idx to_;
+};
+
 struct interlocking_route {
   using id = uint32_t;
   using ptr = soro::ptr<interlocking_route>;
@@ -44,13 +52,18 @@ struct interlocking_route {
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
 
+  utls::recursive_generator<route_node> from_to(station_route::id, node::idx,
+                                                station_route::id, node::idx,
+                                                infrastructure const&) const;
+
+  utls::recursive_generator<route_node> from(station_route::id, node::idx,
+                                             infrastructure const&) const;
+  utls::recursive_generator<route_node> to(station_route::id, node::idx,
+                                           infrastructure const&) const;
+
   utls::recursive_generator<route_node> iterate(infrastructure const&) const;
-
-  node::ptr signal_eotd(infrastructure const& infra) const;
-  soro::vector<node::ptr> route_eotds(infrastructure const& infra) const;
-
-  soro::vector<node::ptr> passenger_halts(infrastructure const& infra) const;
-  soro::vector<node::ptr> freight_halts(infrastructure const& infra) const;
+  utls::generator<sub_path> iterate_station_routes(
+      infrastructure_t const&) const;
 
   id id_{INVALID};
 

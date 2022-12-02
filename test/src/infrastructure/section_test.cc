@@ -144,14 +144,14 @@ void check_section_iteration_direction(section const& sec) {
   auto const rising_elements = utls::collect<std::vector<element::ptr>>(
       sec.iterate<direction::Rising>());
 
-  for (auto const& [from, to] : utl::pairwise(rising_elements)) {
+  for (auto const [from, to] : utl::pairwise(rising_elements)) {
     CHECK_LE(from->get_km(to), to->get_km(from));
     CHECK_GE(to->get_km(from), from->get_km(to));
   }
 
   auto const falling_elements = utls::collect<std::vector<element::ptr>>(
       sec.iterate<direction::Falling>());
-  for (auto const& [from, to] : utl::pairwise(falling_elements)) {
+  for (auto const [from, to] : utl::pairwise(falling_elements)) {
     CHECK_GE(from->get_km(to), to->get_km(from));
     CHECK_LE(to->get_km(from), from->get_km(to));
   }

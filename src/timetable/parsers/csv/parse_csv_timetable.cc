@@ -206,7 +206,7 @@ base_timetable parse_csv_timetable(timetable_options const& opts,
       raw_trains_to_trains(raw_trains, infra->interlocking_,
                            infra->station_route_graph_, infra->rolling_stock_);
 
-  return make_base_timetable(std::move(uniques), opts);
+  return make_base_timetable(uniques, opts);
 }
 
 }  // namespace soro::tt
