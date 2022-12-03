@@ -40,9 +40,8 @@ function makeIntoPermanent(mouseTooltip) {
 }
 
 class Tooltip {
-	constructor(rootElement, tooltipDiv) {
-		this._mouse_tooltip = select(rootElement.querySelector('#' + tooltipDiv))
-			.style('position', 'absolute');
+	constructor(tooltipDiv) {
+		this._mouse_tooltip = select(tooltipDiv).style('position', 'absolute');
 	}
 
 	setHTMLContent(content) {
@@ -67,8 +66,8 @@ class Tooltip {
 }
 
 export class ClickTooltip extends Tooltip {
-	constructor(rootElement, tooltipDiv) {
-		super(rootElement, tooltipDiv);
+	constructor(tooltipDiv) {
+		super(tooltipDiv);
 	}
 
 	click(event, getX, getY) {
@@ -81,8 +80,8 @@ export class ClickTooltip extends Tooltip {
 }
 
 export class HoverTooltip extends Tooltip {
-	constructor(rootElement, tooltipDiv) {
-		super(rootElement, tooltipDiv);
+	constructor(tooltipDiv) {
+		super(tooltipDiv);
 	}
 
 	mouseover(X, Y) {

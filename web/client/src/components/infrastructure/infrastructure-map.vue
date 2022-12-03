@@ -30,7 +30,7 @@
       </template>
     </div>
 
-    <div class="infrastructureTooltip" id="infrastructureTooltip">
+    <div class="infrastructureTooltip infrastructure-tooltip" ref="infrastructureTooltip">
       <ul id="infrastructureTooltipList">
         <li id="kilometerPoint" />
         <li id="risingOrFalling" />
@@ -52,8 +52,9 @@ import { Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle.js';
 import { addIcons, iconExtension, iconUrl } from './addIcons.js';
 import { elementTypes, elementTypesReadable } from './elementTypes.js';
+import { ClickTooltip } from '../../util/Tooltip.js';
 
-const specialLayoutControls = ['Rising', 'Falling']; // TODO figure out what these do
+const specialLayoutControls = ['Rising', 'Falling']; // question figure out what these do
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
 const legendControlTypes = [
 	...elementTypes,
@@ -109,8 +110,7 @@ export default {
 
 	methods: {
 		componentCreated() {
-			// TODO container is undefined here
-			//this.tooltip = new ClickTooltip(this.container.element, 'infrastructureTooltip');
+			this.tooltip = new ClickTooltip(this.$refs.infrastructureTooltip); // question what does he do
 		},
 
 		hasImage(elementType) {
@@ -203,7 +203,7 @@ export default {
   width: 100%;
 }
 
-#infrastructureTooltip {
+.infrastructure-tooltip {
   display: none;
   left: 0;
   top: 0;
