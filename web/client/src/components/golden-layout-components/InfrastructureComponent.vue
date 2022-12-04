@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <infrastructure-map />
-  </div>
+	<div>
+		<infrastructure-map />
+	</div>
 </template>
 
 <script>

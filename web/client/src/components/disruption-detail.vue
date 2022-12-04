@@ -1,11 +1,17 @@
 <template>
-  <div id="disruptionDetail" class="disruption-detail hidden">
-    Disruption:
-    <div id="trainMaxSpeeds" ref="trainMaxSpeeds">
-      Maximum Speeds [km/h]
-      <br>
-    </div>
-  </div>
+	<div
+		id="disruptionDetail"
+		class="disruption-detail hidden"
+	>
+		Disruption:
+		<div
+			id="trainMaxSpeeds"
+			ref="trainMaxSpeeds"
+		>
+			Maximum Speeds [km/h]
+			<br>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -66,7 +72,7 @@ function fillDisruptionDetail(currentTimetable, maxSpeedsDiv) {
 }
 
 export default {
-	name: 'disruption-detail',
+	name: 'DisruptionDetail',
 
 	computed: mapState(TimetableNamespace, ['currentTimetable']),
 

@@ -1,42 +1,51 @@
 <template>
-  <div ref="container">
-    <div class="map infrastructure-map" ref="map" />
-    <div class="map-overlay infrastructure-map-legend" ref="mapLegend">
-      <template
-        v-for="(elementType, index) in legendControlTypes"
-        :key="index"
-      >
-        <input
-            :id="elementType"
-            :ref="elementType"
-            :value="elementType"
-            :checked="initiallyCheckedControls.includes(elementType)"
-            type="checkbox"
-            @input="onLegendControlClicked"
-        >
-        <label
-            class="legend-key"
-          :for="elementType"
-        >
-          <img
-              v-if="hasImage(elementType)"
-              class="legend-key-icon"
-              :src="iconUrl + elementType + iconExtension"
-              alt=""
-          >
-          {{ elementTypesReadable[elementType] ?? elementType }}
-        </label>
-        <br>
-      </template>
-    </div>
+	<div ref="container">
+		<div
+			ref="map"
+			class="map infrastructure-map"
+		/>
+		<div
+			ref="mapLegend"
+			class="map-overlay infrastructure-map-legend"
+		>
+			<template
+				v-for="(elementType, index) in legendControlTypes"
+				:key="index"
+			>
+				<input
+					:id="elementType"
+					:ref="elementType"
+					:value="elementType"
+					:checked="initiallyCheckedControls.includes(elementType)"
+					type="checkbox"
+					@input="onLegendControlClicked"
+				>
+				<label
+					class="legend-key"
+					:for="elementType"
+				>
+					<img
+						v-if="hasImage(elementType)"
+						class="legend-key-icon"
+						:src="iconUrl + elementType + iconExtension"
+						alt=""
+					>
+					{{ elementTypesReadable[elementType] ?? elementType }}
+				</label>
+				<br>
+			</template>
+		</div>
 
-    <div class="infrastructureTooltip infrastructure-tooltip" ref="infrastructureTooltip">
-      <ul id="infrastructureTooltipList">
-        <li id="kilometerPoint" />
-        <li id="risingOrFalling" />
-      </ul>
-    </div>
-  </div>
+		<div
+			ref="infrastructureTooltip"
+			class="infrastructureTooltip infrastructure-tooltip"
+		>
+			<ul id="infrastructureTooltipList">
+				<li id="kilometerPoint" />
+				<li id="risingOrFalling" />
+			</ul>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -62,7 +71,7 @@ const legendControlTypes = [
 ];
 
 export default {
-	name: 'infrastructure-map',
+	name: 'InfrastructureMap',
 
 	data() {
 		return {
@@ -83,8 +92,6 @@ export default {
 			'highlightedStationRouteID',
 		]),
 	},
-
-	created() { this.componentCreated(); },
 
 	watch: {
 		currentInfrastructure(newInfrastructure) {
@@ -107,6 +114,8 @@ export default {
 			}
 		},
 	},
+
+	created() { this.componentCreated(); },
 
 	methods: {
 		componentCreated() {
@@ -171,7 +180,7 @@ export default {
 				transformRequest: (relative_url) => {
 					if (relative_url.startsWith('/')) {
 						const url = window.origin + '/' + infrastructure + relative_url;
-						return { url: url }; // TODO add eslint rule for abbreviations
+						return { url };
 					}
 				}
 			});
@@ -246,5 +255,5 @@ export default {
 }
 </style>
 
-<style href="..e-gl.css" rel="stylesheet"/>
-<style href="..re.css" rel="stylesheet"/>
+<style href="..e-gl.css" rel="stylesheet" />
+<style href="..re.css" rel="stylesheet" />

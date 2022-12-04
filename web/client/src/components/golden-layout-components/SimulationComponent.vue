@@ -1,19 +1,22 @@
 <template>
-  <div>
-    <div id="simWrapper">
-      <div id="simDivider">
-        <div id="simGraph"></div>
-      </div>
-      <div id="distGraph"></div>
-    </div>
+	<div>
+		<div id="simWrapper">
+			<div id="simDivider">
+				<div id="simGraph" />
+			</div>
+			<div id="distGraph" />
+		</div>
 
-    <div id="toolTip" class="toolTip">
-      <ul id="tooltipList">
-        <li id="tooltipID"></li>
-        <li id="tooltipSSRID"></li>
-      </ul>
-    </div>
-  </div>
+		<div
+			id="toolTip"
+			class="toolTip"
+		>
+			<ul id="tooltipList">
+				<li id="tooltipID" />
+				<li id="tooltipSSRID" />
+			</ul>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -59,12 +62,12 @@ export default {
 		...mapState(TimetableNamespace, ['currentTimetable']),
 	},
 
-	created() { this.configureContainer(); },
-
 	watch: {
 		currentInfrastructure: { handler() { this.reloadGraph(); }  },
 		currentTimetable: { handler() { this.reloadGraph(); } },
 	},
+
+	created() { this.configureContainer(); },
 
 	methods: {
 		configureContainer() {

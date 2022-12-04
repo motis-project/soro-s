@@ -1,66 +1,115 @@
 <template>
-  <div class="full-height">
-    <div :class="overlayContainerClasses" ref="overlayContainer">
-      <div class="overlay">
-        <div class="overlay-content">
-          <div class="window-controls">
-            <button class="matter-button-contained window-button" @click="addInfrastructureTab">
-              Infrastructure
-            </button>
-            <button class="matter-button-contained window-button" @click="addSimulationTab">
-              Simulation
-            </button>
-            <button class="matter-button-contained window-button" @click="addTimetableTab">
-              Timetable
-            </button>
-          </div>
-          <div class="data-selects">
-            <soro-select
-                label="Select Infrastructure"
-                :value="currentInfrastructure"
-                :options="infrastructures"
-                @select="loadInfrastructure"
-            />
-            <soro-select
-                label="Select Timetable"
-                :value="currentTimetable"
-                :options="timetables"
-                @select="loadTimetable"
-            />
-          </div>
-          <div class="dev-tools">
-            <button class="matter-button-contained window-button" @click="deleteAllFiles">Clear Cache</button>
-            <button class="matter-button-contained window-button" @click="triggerSimulation">Simulate</button>
-          </div>
-        </div>
-        <div :class="subOverlayClasses" ref="subOverlay">
-          <div class="sub-overlay-content" id="subOverlayContent">
-            <disruption-detail ref="disruption" />
-          </div>
-          <div class="sub-overlay-close" ref="subOverlayClose" @click="onSubOverlayCloseClicked">
-            <i class="material-icons">close</i>
-          </div>
-        </div>
-      </div>
-      <div class="overlay-tabs" ref="subOverlayTabs">
-        <div class="overlay-toggle">
-          <button class="matter-button-contained overlay-toggle-button" @click="toggleOverlay">
-            <i class="material-icons" style="display: flex; justify-content:center;">menu</i>
-          </button>
-        </div>
-        <div class="sub-overlay-tab-button" ref="stationDetailButton" @click="onStationDetailClicked">
-          <i class="material-icons">home</i>
-        </div>
-        <div class="sub-overlay-tab-button" ref="disruptionDetailButton" @click="onDisruptionDetailClicked">
-          <i class="material-icons">train</i>
-        </div>
-      </div>
-    </div>
-    <glayout
-        ref="GLayoutRoot"
-        style="width: 100%; height: calc(100% - 90px)"
-    ></glayout>
-  </div>
+	<div class="full-height">
+		<div
+			ref="overlayContainer"
+			:class="overlayContainerClasses"
+		>
+			<div class="overlay">
+				<div class="overlay-content">
+					<div class="window-controls">
+						<button
+							class="matter-button-contained window-button"
+							@click="addInfrastructureTab"
+						>
+							Infrastructure
+						</button>
+						<button
+							class="matter-button-contained window-button"
+							@click="addSimulationTab"
+						>
+							Simulation
+						</button>
+						<button
+							class="matter-button-contained window-button"
+							@click="addTimetableTab"
+						>
+							Timetable
+						</button>
+					</div>
+					<div class="data-selects">
+						<soro-select
+							label="Select Infrastructure"
+							:value="currentInfrastructure"
+							:options="infrastructures"
+							@select="loadInfrastructure"
+						/>
+						<soro-select
+							label="Select Timetable"
+							:value="currentTimetable"
+							:options="timetables"
+							@select="loadTimetable"
+						/>
+					</div>
+					<div class="dev-tools">
+						<button
+							class="matter-button-contained window-button"
+							@click="deleteAllFiles"
+						>
+							Clear Cache
+						</button>
+						<button
+							class="matter-button-contained window-button"
+							@click="triggerSimulation"
+						>
+							Simulate
+						</button>
+					</div>
+				</div>
+				<div
+					ref="subOverlay"
+					:class="subOverlayClasses"
+				>
+					<div
+						id="subOverlayContent"
+						class="sub-overlay-content"
+					>
+						<disruption-detail ref="disruption" />
+					</div>
+					<div
+						ref="subOverlayClose"
+						class="sub-overlay-close"
+						@click="onSubOverlayCloseClicked"
+					>
+						<i class="material-icons">close</i>
+					</div>
+				</div>
+			</div>
+			<div
+				ref="subOverlayTabs"
+				class="overlay-tabs"
+			>
+				<div class="overlay-toggle">
+					<button
+						class="matter-button-contained overlay-toggle-button"
+						@click="toggleOverlay"
+					>
+						<i
+							class="material-icons"
+							style="display: flex; justify-content:center;"
+						>menu</i>
+					</button>
+				</div>
+				<div
+					ref="stationDetailButton"
+					class="sub-overlay-tab-button"
+					@click="onStationDetailClicked"
+				>
+					<i class="material-icons">home</i>
+				</div>
+				<div
+					ref="disruptionDetailButton"
+					class="sub-overlay-tab-button"
+					@click="onDisruptionDetailClicked"
+				>
+					<i class="material-icons">train</i>
+				</div>
+			</div>
+		</div>
+		<glayout
+			ref="GLayoutRoot"
+			style="width: 100%; height: calc(100% - 90px)"
+		/>
+	</div>
 </template>
 
 <script setup>
@@ -146,12 +195,6 @@ export default {
 		};
 	},
 
-	mounted() {
-		this.loadInfrastructures();
-		this.loadTimetables();
-		this.$refs.GLayoutRoot.loadGLLayout(initLayout);
-	},
-
 	computed: {
 		overlayContainerClasses() {
 			return `overlay-container ${this.overlay ? '' : 'hidden'}`;
@@ -169,6 +212,12 @@ export default {
 			'currentTimetable',
 			'timetables',
 		]),
+	},
+
+	mounted() {
+		this.loadInfrastructures();
+		this.loadTimetables();
+		this.$refs.GLayoutRoot.loadGLLayout(initLayout);
 	},
 
 	methods: {

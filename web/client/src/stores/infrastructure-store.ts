@@ -9,7 +9,7 @@ type InfrastructureState = {
 
 export const InfrastructureNamespace: string = 'infrastructure';
 
-export const InfrastructureStore: Module<InfrastructureState, undefined> = {
+export const InfrastructureStore: Module<InfrastructureState, undefined> = { // TODO rewrite with global namespace
     namespaced: true,
 
     state() {

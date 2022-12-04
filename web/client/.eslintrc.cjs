@@ -1,11 +1,12 @@
-module.exports = {
+module.exports = { // TODO add TS support in ESLint
 	'env': {
 		'browser': true,
 		'es2021': true
 	},
 	'extends': [
 		'eslint:recommended',
-		'plugin:vue/vue3-essential'
+		'plugin:vue/vue3-essential',
+		'plugin:vue/vue3-recommended',
 	],
 	'overrides': [
 	],
@@ -40,6 +41,15 @@ module.exports = {
 		'object-curly-spacing': [
 			'error',
 			'always',
+		],
+		'object-shorthand': [
+			'error',
+			'properties',
+			{ "avoidQuotes": true }
+		],
+		'vue/html-indent': [
+			'error',
+			'tab',
 		],
 	}
 };

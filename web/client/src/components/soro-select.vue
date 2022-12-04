@@ -1,28 +1,28 @@
 <template>
-  <div class="material-select data-select">
-    <select
-        class="material-select-text"
-        @change="emitChange"
-    >
-      <option
-        v-for="option in extendedOptions"
-        :key="option"
-        :value="option"
-        :selected="option === value"
-        :label="option ?? ''"
-      >
-        {{ option }}
-      </option>
-    </select>
-    <span class="material-select-highlight"></span>
-    <span class="material-select-bar"></span>
-    <label class="material-select-label">{{ label }}</label>
-  </div>
+	<div class="material-select data-select">
+		<select
+			class="material-select-text"
+			@change="emitChange"
+		>
+			<option
+				v-for="option in extendedOptions"
+				:key="option"
+				:value="option"
+				:selected="option === value"
+				:label="option ?? ''"
+			>
+				{{ option }}
+			</option>
+		</select>
+		<span class="material-select-highlight" />
+		<span class="material-select-bar" />
+		<label class="material-select-label">{{ label }}</label>
+	</div>
 </template>
 
 <script>
 export default {
-	name: 'soro-select',
+	name: 'SoroSelect',
 
 	props: {
 		value: {
@@ -40,6 +40,8 @@ export default {
 			required: true,
 		},
 	},
+
+	emits: ['select'],
 
 	data() {
 		return { extendedOptions: [] };
