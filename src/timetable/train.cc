@@ -7,6 +7,14 @@ namespace soro::tt {
 using namespace soro::rs;
 using namespace soro::infra;
 
+train_node::train_node(soro::infra::route_node const& rn,
+                       sequence_point::optional_ptr sp)
+    : infra::route_node{rn}, sequence_point_{sp} {}
+
+bool train_node::omitted() const {
+  return omitted_ || (node_->is(type::HALT) && !sequence_point_.has_value());
+}
+
 bool is_halt(utls::unixtime arrival, utls::unixtime departure) {
   return arrival != departure &&
          (arrival != utls::INVALID_TIME || departure != utls::INVALID_TIME);
@@ -38,18 +46,34 @@ std::size_t train::total_halts() const {
                         [](auto&& sp) { return sp.is_halt(); });
 }
 
+bool train::effected_by(speed_limit const& spl) const {
+  return spl.type_ == speed_limit::type::GENERAL_ALLOWED &&
+         // ignore speed limits with limit == 0 for now.
+         !si::is_zero(spl.limit_) &&
+         (spl.effects_ == speed_limit::effects::ALL ||
+          spl.effects_ == speed_limit::effects::CONVENTIONAL);
+}
+
 node::ptr train::get_start_node(infrastructure const& infra) const {
   if (break_in_) {
     return this->first_interlocking_route(infra).first_node(infra);
   } else {
-    utls::sassert(false, "Not implemented");
-    return nullptr;
+    return *sequence_points_.front().get_node(freight(), infra);
   }
 }
 
 station_route::ptr train::first_station_route(
     infrastructure const& infra) const {
-  return this->first_interlocking_route(infra).first_sr(infra);
+  return break_in_
+             ? this->first_interlocking_route(infra).first_sr(infra)
+             : infra->station_routes_[sequence_points_.front().station_route_];
+}
+
+infra::station_route::ptr train::last_station_route(
+    infra::infrastructure const& infra) const {
+  return break_out_
+             ? this->last_interlocking_route(infra).last_sr(infra)
+             : infra->station_routes_[sequence_points_.back().station_route_];
 }
 
 interlocking_route const& train::first_interlocking_route(
@@ -64,6 +88,28 @@ infra::interlocking_route const& train::last_interlocking_route(
 
 utls::recursive_generator<route_node> iterate_train(
     train const& t, infrastructure const& infra) {
+
+  if (t.path_.size() == 1) {
+    auto const from_sr_id =
+        t.break_in_ ? t.first_interlocking_route(infra).station_routes_.front()
+                    : t.sequence_points_.front().station_route_;
+    auto const from_idx =
+        t.break_in_
+            ? t.first_interlocking_route(infra).start_offset_
+            : *t.sequence_points_.front().get_node_idx(t.freight(), infra);
+
+    auto const to_sr_id =
+        t.break_out_ ? t.last_interlocking_route(infra).station_routes_.back()
+                     : t.sequence_points_.back().station_route_;
+    node::idx const to_idx =
+        t.break_out_
+            ? t.first_interlocking_route(infra).end_offset_
+            : *t.sequence_points_.back().get_node_idx(t.freight(), infra) + 1;
+
+    co_yield t.first_interlocking_route(infra).from_to(from_sr_id, from_idx,
+                                                       to_sr_id, to_idx, infra);
+    co_return;
+  }
 
   if (t.break_in_) {
     co_yield t.first_interlocking_route(infra).iterate(infra);
@@ -84,7 +130,7 @@ utls::recursive_generator<route_node> iterate_train(
     co_yield t.first_interlocking_route(infra).from(sr_id, *node_idx, infra);
   }
 
-  for (auto i = 1UL; i < t.path_.size() - 1; ++i) {
+  for (auto i = 1U; i < t.path_.size() - 1; ++i) {
     auto const& ir = infra->interlocking_.routes_[t.path_[i]];
     // skip the first element, we already yielded it
     // two following interlocking routes share the first and last element
@@ -110,16 +156,18 @@ utls::recursive_generator<route_node> iterate_train(
                   t.id_);
 
     co_yield last_ir.from_to(last_ir.first_sr_id(), last_ir.start_offset_ + 1,
-                             sr_id, *node_idx, infra);
+                             sr_id, (*node_idx) + 1, infra);
   }
 }
 
 utls::recursive_generator<train_node> train::iterate(
     infrastructure const& infra) const {
-  std::size_t sp_idx = 0;
+  uint32_t sp_idx = 0;
   for (auto&& rn : iterate_train(*this, infra)) {
-    if (*sequence_points_[sp_idx].get_node(freight(), infra) == rn.node_) {
-      co_yield train_node(rn, &sequence_points_[sp_idx]);
+    if (sp_idx < sequence_points_.size() &&
+        *sequence_points_[sp_idx].get_node(freight(), infra) == rn.node_) {
+
+      co_yield train_node(rn, {&sequence_points_[sp_idx]});
       ++sp_idx;
     } else {
       co_yield train_node(rn, {});

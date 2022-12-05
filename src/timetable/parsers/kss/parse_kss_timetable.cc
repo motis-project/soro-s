@@ -4,7 +4,9 @@
 #include <set>
 
 #include "utl/concat.h"
+#include "utl/enumerate.h"
 #include "utl/logging.h"
+#include "utl/parallel_for.h"
 #include "utl/timer.h"
 
 #include "soro/utls/parse_fp.h"
@@ -70,7 +72,8 @@ bool is_kss_timetable(timetable_options const& opts) {
   return utls::all_of(
       fs::directory_iterator{opts.timetable_path_}, [](auto&& dir_entry) {
         auto const& fn = dir_entry.path().filename();
-        return fn.extension() == ".xml" && fn.string().starts_with("KSS-");
+        return !fs::is_directory(dir_entry) && fn.extension() == ".xml" &&
+               fn.string().starts_with("KSS-");
       });
 }
 
@@ -258,6 +261,8 @@ std::optional<stop_sequence> parse_sequence(xml_node const sequence_xml,
     auto const min_stop_time_xml = point_xml.child("minStopTime");
     if (static_cast<bool>(min_stop_time_xml)) {
       st.min_stop_time_ = parse_duration(min_stop_time_xml.child_value());
+    } else {
+      st.min_stop_time_ = duration2::zero();
     }
 
     if (st.is_transit() && valid(st.departure_)) {
@@ -315,6 +320,14 @@ rs::train_physics parse_characteristic(xml_node const charac_xml,
 bool ignore_for_now(stop_sequence const& stop_sequence,
                     infrastructure const& infra,
                     rs::FreightTrain const freight) {
+
+  if (stop_sequence.points_.size() < 2) {
+    return true;
+  }
+
+  if (stop_sequence.break_in_ || stop_sequence.break_out_) {
+    return true;
+  }
 
   if (!stop_sequence.points_.front().is_halt() && !stop_sequence.break_in_) {
     kss_stats.inc(kss::first_stop_is_no_halt_and_train_is_not_breaking_in);
@@ -433,8 +446,7 @@ soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
 
   xml_document file_xml;
   auto success = file_xml.load_buffer(
-      reinterpret_cast<void const*>(loaded_file.contents_.data()),
-      loaded_file.contents_.size());
+      reinterpret_cast<void const*>(loaded_file.data()), loaded_file.size());
 
   utl::verify(success,
               "PugiXML error '{}' while parsing {} from KSS timetable {}!",
@@ -450,20 +462,39 @@ soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
   return result;
 }
 
+void set_ids(soro::vector<train>& trains) {
+  for (auto [id, train] : utl::enumerate(trains)) {
+    train.id_ = static_cast<train::id>(id);
+  }
+}
+
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
   utl::scoped_timer const timetable_timer("Parsing Timetable");
 
   base_timetable bt;
 
+  struct work_item {
+    fs::path timetable_file_;
+    soro::vector<train> result_;
+  };
+
+  std::vector<work_item> work_todo;
+
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
-    utl::concat(bt.trains_, parse_timetable_file(dir_entry.path(), infra));
+    work_todo.emplace_back(work_item{dir_entry.path(), {}});
   }
 
-  train::id current_id = 0;
-  for (auto& t : bt.trains_) {
-    t.id_ = current_id++;
+  utl::parallel_for_run(work_todo.size(), [&](auto&& work_id) {
+    work_todo[work_id].result_ =
+        parse_timetable_file(work_todo[work_id].timetable_file_, infra);
+  });
+
+  for (auto const& work_item : work_todo) {
+    utl::concat(bt.trains_, work_item.result_);
   }
+
+  set_ids(bt.trains_);
 
   uLOG(utl::info) << "Total trains runs successfully parsed: "
                   << bt.trains_.size();

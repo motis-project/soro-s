@@ -3,6 +3,7 @@
 #include "soro/utls/coroutine/coro_map.h"
 
 #include "utl/pipes.h"
+#include "utl/timer.h"
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/path/length.h"
@@ -50,13 +51,13 @@ void check_train_path_sequence_points(train const& train,
   CHECK_EQ(sequence_point_nodes.size(), train.sequence_points_.size());
 
   std::size_t spn_idx = 0;
-  for (auto const ir_id : train.path_) {
-    auto const& ir = infra->interlocking_.routes_[ir_id];
-
-    for (auto const rn : ir.iterate(infra)) {
-      if (rn.node_ == sequence_point_nodes[spn_idx]) {
-        ++spn_idx;
-      }
+  for (auto&& tn : train.iterate(infra)) {
+    if (spn_idx < sequence_point_nodes.size() &&
+        tn.node_ == sequence_point_nodes[spn_idx]) {
+      CHECK(tn.sequence_point_.has_value());
+      CHECK_EQ(*(*tn.sequence_point_)->get_node(train.freight(), infra),
+               sequence_point_nodes[spn_idx]);
+      ++spn_idx;
     }
   }
 
@@ -64,7 +65,11 @@ void check_train_path_sequence_points(train const& train,
   CHECK_EQ(spn_idx, sequence_point_nodes.size());
 }
 
-void check_train_sequence_points(train const& train) {
+void check_train_sequence_points(train const& train,
+                                 infrastructure const& infra) {
+  CHECK_MESSAGE(!train.sequence_points_.empty(),
+                "Train sequence points can't be empty.");
+
   if (!train.break_in_) {
     CHECK_MESSAGE(
         train.sequence_points_.front().is_halt(),
@@ -84,17 +89,34 @@ void check_train_sequence_points(train const& train) {
     if (sp.is_halt()) {
       CHECK_MESSAGE(valid(sp.arrival_),
                     "Every halt sequence point needs a valid arrival");
+    }
+
+    if (sp.is_halt(sequence_point::type::PASSENGER)) {
       CHECK_MESSAGE(
           valid(sp.min_stop_time_),
-          "Every halt sequence point needs a valid minimum stop time");
+          "Passenger halt sequence point needs a valid minimum stop time");
     }
+
+    if (sp.is_halt(sequence_point::type::OPERATIONS)) {
+      CHECK_MESSAGE(
+          (sp.min_stop_time_ == duration2::zero()),
+          "Operations halt sequence point have only zero minimum stop time");
+    }
+
+    auto const sp_node = sp.get_node(train.freight(), infra);
+    CHECK_MESSAGE(sp_node.has_value(),
+                  "Every sequence point needs a valid node");
+    auto const sp_node_type = sp_node.value()->type();
+    CHECK_MESSAGE(
+        (is_runtime_checkpoint(sp_node_type) || is_halt(sp_node_type)),
+        "Sequence points are only allowed for halts and runtime checkpoints.");
   }
 }
 
 void check_train(train const& train, infrastructure const& infra) {
   check_no_invalids(train);
   //  check_train_path_length(train, infra);
-  check_train_sequence_points(train);
+  check_train_sequence_points(train, infra);
   check_train_path_sequence_points(train, infra);
 
   do_train_iterator_tests(train, infra);
@@ -111,10 +133,20 @@ void check_timetable(timetable const& tt, infrastructure const& infra) {
 TEST_CASE("timetable test") {
   for (auto const& scenario :
        soro::test::get_timetable_scenarios(soro::test::DE_SCENARIO)) {
-    std::cout << "scnearion\n";
-    check_timetable(scenario.timetable_, scenario.infra_);
+
+#if defined(SERIALIZE)
+    scenario.infra_.save("infra.raw");
+    scenario.timetable_.save("tt.raw");
+
+    infrastructure const infra("infra.raw");
+    timetable const tt("tt.raw");
+#else
+    auto const& infra = scenario.infra_;
+    auto const& tt = scenario.timetable_;
+#endif
+
+    check_timetable(tt, infra);
   }
-  std::cout << "Hi\n";
 }
 
 }  // namespace soro::tt::test

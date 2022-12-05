@@ -498,7 +498,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
 
   auto const get_path = [&](intermediate_station_route const& sr,
                             node::ptr next_node, auto const last_node_id) {
-    auto course_idx = 0UL;
+    uint32_t course_idx = 0;
     soro::vector<node::ptr> nodes;
     while (next_node != nullptr && next_node->id_ != last_node_id) {
       nodes.push_back(next_node);
@@ -542,7 +542,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
   };
 
   auto const get_main_signals = [&](intermediate_station_route const& isr,
-                                    std::vector<node::ptr> const& nodes) {
+                                    soro::vector<node::ptr> const& nodes) {
     std::set<node::ptr> omitted_main_signals;
 
     for (auto const& omitted : isr.omitted_rp_nodes_) {
@@ -555,8 +555,8 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     }
 
     soro::vector<node::idx> main_signals;
-    for (auto idx = 0UL; idx < nodes.size(); ++idx) {
-      auto const node = nodes[idx];
+    for (node::idx idx = 0UL; idx < nodes.size(); ++idx) {
+      auto const& node = nodes[idx];
       if (node->is(type::MAIN_SIGNAL) && !omitted_main_signals.contains(node)) {
         main_signals.emplace_back(static_cast<node::idx>(idx));
       }
@@ -573,7 +573,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
 
   // this is just a helper data structure to help finding identical paths
   // it maps the following: element::id -> [{sr_id, path::ptr}]
-  std::vector<std::vector<std::pair<std::size_t, station_route::path::ptr>>>
+  soro::vector<soro::vector<std::pair<element_id, station_route::path::ptr>>>
       start_elements_to_isr_paths(graph.elements_.size());
 
   for (auto const& i_sr : mats.intermediate_station_routes_) {
@@ -792,7 +792,8 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
 
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
-    auto const sr_id = mats.intermediate_station_routes_.size();
+    station_route::id const sr_id = static_cast<station_route::id>(
+        mats.intermediate_station_routes_.size());
 
     auto const publish_only = xml_sr.child(PUBLISH_ONLY);
     if (static_cast<bool>(publish_only)) {
@@ -1015,9 +1016,8 @@ std::pair<default_values, rs::rolling_stock> parse_core_data(
     uLOG(utl::info) << "Parsing core data file " << core_file.path_;
 
     xml_document d;
-    auto success =
-        d.load_buffer(reinterpret_cast<void const*>(core_file.contents_.data()),
-                      core_file.contents_.size());
+    auto success = d.load_buffer(
+        reinterpret_cast<void const*>(core_file.data()), core_file.size());
     utl::verify(success, "bad xml in parse_core_data: {}",
                 success.description());
 
@@ -1045,7 +1045,7 @@ std::pair<default_values, rs::rolling_stock> parse_core_data(
   return {dv, rs};
 }
 
-void parse_xml_into_iss(std::string const& iss_xml, infrastructure_t& iss,
+void parse_xml_into_iss(utls::loaded_file const& iss_xml, infrastructure_t& iss,
                         construction_materials& mats) {
   xml_document d;
   auto success = d.load_buffer(reinterpret_cast<void const*>(iss_xml.data()),
@@ -1073,7 +1073,7 @@ std::pair<infrastructure_t, construction_materials> parse_iss(
 
   for (auto const& file : rail_plan_files) {
     uLOG(info) << "Station file: " << file.path_;
-    parse_xml_into_iss(file.contents_, iss, mats);
+    parse_xml_into_iss(file, iss, mats);
   }
 
   return result;
@@ -1142,13 +1142,9 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
 
   log_stats(iss);
 
-  iss.source_ = options.infrastructure_path_.string();
+  iss.source_ = options.infrastructure_path_.filename().string();
 
   return std::move(iss);
 }
-
-// TODO(julian) print node types that can be omitted
-// TODO(julian) print cycle detection in stations
-// TODO(julian) print cycle detection in whole graph
 
 }  // namespace soro::infra

@@ -13,63 +13,6 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
 
-// route_ordering get_route_ordering(infra::infrastructure const& infra,
-//                                   tt::timetable const& tt) {
-//   route_ordering ordering(infra->ssr_manager_.signal_station_routes_.size());
-//
-//   for (auto const& tr : tt->train_runs_) {
-//     auto const stamps = runtime_calculation(*tr, *infra,
-//     {type::MAIN_SIGNAL});
-//
-//     utl::verify(tr->ssr_run_.path_.size() == stamps.times_.size() + 1,
-//                 "Differing amounts of signal station routes in train path and
-//                 " "main signals in running time calculation timestamps");
-//
-//     for (auto const [idx, ssr] : utl::enumerate(tr->ssr_run_.path_)) {
-//       auto const from =
-//           idx == 0 ? tr->first_departure() : stamps.times_[idx -
-//           1].departure_;
-//       auto const to = idx == tr->ssr_run_.path_.size() - 1
-//                           ? tr->last_arrival()
-//                           : stamps.times_[idx].arrival_;
-//
-//       // the train tr will actually use the signal station route ssr
-//       //  -> insert a usage for it
-//       //      ordering[ssr->id_].push_back(
-//       //          {.from_ = from, .to_ = to, .train_id_ = tr->id_});
-//
-//       // the train tr will block signal station routes in conflict with ssr
-//       //  -> insert a usage for all conflicting routes
-//       for (auto const& conflict : infra->ssr_manager_.conflicts_[ssr->id_]) {
-//         ordering[conflict->id_].push_back(
-//             {.from_ = from, .to_ = to, .train_id_ = tr->id_});
-//       }
-//     }
-//   }
-//
-//   for (auto& usage_order : ordering) {
-//     utls::sort(usage_order, [](auto&& usage1, auto&& usage2) {
-//       return usage1.from_ < usage2.from_;
-//     });
-//   }
-//
-//   return ordering;
-// }
-//
-// usage_index get_usage_index(route_ordering const& ordering,
-//                             tt::dispo_train_run_id const train,
-//                             signal_station_route::id const ssr) {
-//   for (auto const [idx, order] : utl::enumerate(ordering[ssr])) {
-//     if (order.train_id_ == train) {
-//       return idx;
-//     }
-//   }
-//
-//   throw utl::fail(
-//       "Could not find train with ID {} using signal station route with ID
-//       {}.", train, ssr);
-// }
-
 struct route_usage {
   utls::unixtime from_{utls::INVALID_TIME};
   utls::unixtime to_{utls::INVALID_TIME};
@@ -81,6 +24,7 @@ constexpr auto const INVALID_USAGE_IDX = std::numeric_limits<usage_idx>::max();
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
                                tt::timetable const& tt) {
+  utls::sassert(false, "Not implemented");
 
   std::vector<std::vector<route_usage>> route_orderings(
       infra->interlocking_.routes_.size());
@@ -97,14 +41,8 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
 
       nodes_.emplace_back(id, ir_id, train.id_);
 
-      utls::sassert(false, "Not implemented");
       utls::unixtime const from;
       utls::unixtime const to;
-      //      auto const from = idx == 0 ? train->first_departure()
-      //                                 : stamps.times_[idx - 1].departure_;
-      //      auto const to = idx == train->path_.entries_.size() - 1
-      //                          ? train->last_arrival()
-      //                          : stamps.times_[idx].arrival_;
 
       route_orderings[ir_id].push_back(
           {.from_ = from, .to_ = to, .node_id_ = id});

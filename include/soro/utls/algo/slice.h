@@ -2,7 +2,7 @@
 
 #include "soro/base/soro_types.h"
 
-#include "soro/utls/container/iterator_range.h"
+#include "soro/utls/container/it_range.h"
 
 namespace soro::utls {
 
@@ -23,7 +23,7 @@ template <typename T>
                                               std::size_t const from,
                                               std::size_t const to) {
   soro::vector<T> slice;
-  slice.reserve(to - from);
+  slice.reserve(static_cast<soro::size_t>(to - from));
 
   std::copy(std::cbegin(v) + static_cast<std::ptrdiff_t>(from),
             std::cbegin(v) + static_cast<std::ptrdiff_t>(to),

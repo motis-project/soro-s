@@ -27,14 +27,15 @@ struct stop_time {
 };
 
 struct train_node : infra::route_node {
-  train_node(route_node const& rn, sequence_point const* spp)
-      : infra::route_node(rn), sequence_point_{spp} {}
+  train_node(route_node const& rn, sequence_point::optional_ptr sp);
 
-  utls::optional<sequence_point::ptr> sequence_point_;
+  bool omitted() const;
+
+  sequence_point::optional_ptr sequence_point_;
 };
 
 struct train {
-  using id = soro::size_type;
+  using id = uint32_t;
   using ptr = soro::ptr<train>;
 
   static constexpr id INVALID = std::numeric_limits<id>::max();
@@ -49,8 +50,6 @@ struct train {
     sub_t sub_{std::numeric_limits<sub_t>::max()};
   };
 
-  train() = default;
-
   rs::FreightTrain freight() const;
   bool is_freight() const;
 
@@ -64,9 +63,13 @@ struct train {
 
   std::size_t total_halts() const;
 
+  bool effected_by(infra::speed_limit const& spl) const;
+
   infra::node::ptr get_start_node(infra::infrastructure const& infra) const;
 
   infra::station_route::ptr first_station_route(
+      infra::infrastructure const&) const;
+  infra::station_route::ptr last_station_route(
       infra::infrastructure const&) const;
 
   infra::interlocking_route const& first_interlocking_route(

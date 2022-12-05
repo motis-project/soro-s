@@ -66,7 +66,7 @@ auto get_prefix_length(interlocking_route const& interlocking_route,
 }
 
 auto get_longest_prefix_interlocking_routes(
-    std::vector<interlocking_route::id> const& candidates,
+    soro::vector<interlocking_route::id> const& candidates,
     interlocking_subsystem const& irs, stop_sequence const& stop_sequence,
     std::size_t const sr_offset) {
 
@@ -117,7 +117,7 @@ struct cover {
 };
 
 auto get_candidates(stop_sequence const& ss, cover const& current_cover,
-                    utls::optional<node::ptr> const& last_node,
+                    node::optional_ptr const& last_node,
                     rs::FreightTrain const freight,
                     infrastructure const& infra) {
   auto const& sp = ss.points_[current_cover.stop_sequence_offset_];
@@ -155,7 +155,7 @@ std::pair<interlocking_route::id, cover> get_first_ir(
   auto const first_sr =
       infra->station_routes_[stop_sequence.points_.front().station_route_];
 
-  utls::optional<node::ptr> const first_node{
+  node::optional_ptr const first_node{
       stop_sequence.break_in_ ? first_sr->nodes().front() : nullptr};
 
   auto const candidates =

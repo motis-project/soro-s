@@ -26,25 +26,26 @@ struct infrastructure_t {
   default_values defaults_;
   rs::rolling_stock rolling_stock_;
 
-  soro::vector<station::ptr> stations_;
-  soro::vector<station_route::ptr> station_routes_;
-  soro::vector<station_route::path::ptr> station_route_paths_;
+  soro::vector<station::ptr> stations_{};
+  soro::vector<station_route::ptr> station_routes_{};
+  soro::vector<station_route::path::ptr> station_route_paths_{};
 
-  soro::map<soro::string, station::ptr> ds100_to_station_;
-  soro::map<element_id, station::ptr> element_to_station_;
+  soro::map<soro::string, station::ptr> ds100_to_station_{};
+  soro::map<element_id, station::ptr> element_to_station_{};
 
-  station_route_graph station_route_graph_;
+  station_route_graph station_route_graph_{};
 
-  interlocking_subsystem interlocking_;
+  interlocking_subsystem interlocking_{};
 
-  soro::vector<soro::string> full_station_names_;
+  soro::vector<soro::string> full_station_names_{};
 
-  soro::vector<utls::gps> station_positions_;
-  soro::vector<utls::gps> element_positions_;
+  soro::vector<utls::gps> station_positions_{};
+  soro::vector<utls::gps> element_positions_{};
 
-  soro::vector<soro::unique_ptr<station>> station_store_;
-  soro::vector<soro::unique_ptr<station_route>> station_route_store_;
-  soro::vector<soro::unique_ptr<station_route::path>> station_route_path_store_;
+  soro::vector<soro::unique_ptr<station>> station_store_{};
+  soro::vector<soro::unique_ptr<station_route>> station_route_store_{};
+  soro::vector<soro::unique_ptr<station_route::path>>
+      station_route_path_store_{};
 
   soro::string source_{};
 };

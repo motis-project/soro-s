@@ -1,30 +1,24 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <limits>
 #include <utility>
 
+#include "cista/serialization.h"
+
+#include "soro/base/soro_types.h"
+
 namespace soro::utls {
 
-template <typename T>
-auto constexpr get_default_invalid() {
-  if constexpr (std::is_integral_v<T>) {
-    return std::numeric_limits<T>::max();
-  }
-
-  if constexpr (std::is_pointer_v<T>) {
-    return nullptr;
-  }
-}
-
-template <typename T, T INVALID = get_default_invalid<T>()>
-  requires std::is_integral_v<T> || std::is_pointer_v<T>
+template <typename T, T INVALID>
+  requires std::is_integral_v<T> || soro::is_pointer_v<T>
 struct optional {
   using value_type = T;
-  static constexpr const auto INVALID_VALUE = INVALID;
+  static const constexpr auto INVALID_VALUE = INVALID;
 
   constexpr optional() noexcept = default;
-  constexpr optional(T const val) noexcept : val_{val} {}
+  constexpr optional(T const val) noexcept : val_{val} {}  // NOLINT
 
   constexpr optional(optional const& other) = default;
   constexpr optional& operator=(optional const&) = default;
@@ -155,10 +149,29 @@ private:
   T val_{INVALID_VALUE};
 };
 
-template <typename T, T INVALID = get_default_invalid<T>()>
+template <typename T, T INVALID>
   requires std::is_integral_v<T> || std::is_pointer_v<T>
 optional<T, INVALID> make_optional(T&& value) {
   return optional<T, INVALID>(std::forward<T>(value));
+}
+
+template <typename Ctx, typename T, T INVALID>
+inline void serialize(Ctx& context, optional<T, INVALID> const* opt,
+                      cista::offset_t const offset) {
+  using cista::serialize;
+
+  // otherwise offsetof is not working
+  static_assert(std::is_standard_layout_v<optional<T, INVALID>>);
+
+  serialize(context, &opt->val_,
+            offset + static_cast<cista::offset_t>(
+                         offsetof(std::remove_pointer_t<decltype(opt)>, val_)));
+}
+
+template <typename Ctx, typename T, T INVALID>
+inline void deserialize(Ctx const& context, optional<T, INVALID>* opt) {
+  using cista::deserialize;
+  deserialize(context, &opt->val_);
 }
 
 }  // namespace soro::utls

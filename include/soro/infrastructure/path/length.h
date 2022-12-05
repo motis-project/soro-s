@@ -34,10 +34,11 @@ si::length get_path_length_from_elements(Iterable&& element_iter) {
 }
 
 template <typename Iterable>
-  requires utls::yields<node_ptr, Iterable> && utls::is_input_iterable<Iterable>
+  requires utls::yields<node::ptr, Iterable> &&
+           utls::is_input_iterable<Iterable>
 si::length get_path_length_from_elements(Iterable&& node_iter) {
   return get_path_length_from_elements(utls::coro_map(
-      node_iter, [](auto&& node_ptr) { return node_ptr->element_; }));
+      node_iter, [](node::ptr node_ptr) { return node_ptr->element_; }));
 }
 
 template <typename Iterable>

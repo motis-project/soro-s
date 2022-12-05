@@ -23,23 +23,19 @@ using days = sc::duration<uint32_t, sc::days::period>;
 // same as sc::time_point<sc::system_clock, sc::seconds>
 using absolute_time = date::sys_time<i32_seconds>;
 
-// number of days since 1970/01/01
-using anchor_time = date::sys_days;
-
 // relative point in time wrt to an anchor point
-// given as a count of non-leap seconds since the anchor point (00:00)
-using relative_time = sc::duration<uint32_t, sc::seconds::period>;
+// given as a count of non-leap seconds since an absolute time (the anchor)
+using relative_time = i32_seconds;
 
 using duration2 = i32_seconds;
 
-constexpr absolute_time relative_to_absolute(anchor_time const anchor,
+constexpr absolute_time relative_to_absolute(absolute_time const anchor,
                                              relative_time const relative) {
   return sc::time_point_cast<absolute_time::duration>(anchor) + relative;
 }
 
 template <typename T>
-concept soro_time =
-    utls::is_any_of<T, absolute_time, anchor_time, relative_time, duration2>;
+concept soro_time = utls::is_any_of<T, absolute_time, relative_time, duration2>;
 
 template <soro_time T>
 constexpr T const INVALID = T::max();
@@ -52,7 +48,7 @@ constexpr bool valid(T const t) {
 }  // namespace soro
 
 template <>
-struct fmt::formatter<soro::anchor_time> {
+struct fmt::formatter<soro::absolute_time> {
   constexpr auto parse(format_parse_context& ctx)  // NOLINT
       -> decltype(ctx.begin()) {
     if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
@@ -63,8 +59,8 @@ struct fmt::formatter<soro::anchor_time> {
   }
 
   template <typename FormatContext>
-  auto format(soro::anchor_time const at, FormatContext& ctx) const
+  auto format(soro::absolute_time const at, FormatContext& ctx) const
       -> decltype(ctx.out()) {
-    return fmt::format_to(ctx.out(), "{}", date::year_month_day{at});
+    return fmt::format_to(ctx.out(), "{}", at);
   }
 };

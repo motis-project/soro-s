@@ -12,7 +12,7 @@ namespace soro::infra {
 using namespace utl;
 
 intermediate_station_route parse_station_route(
-    std::size_t const id, pugi::xml_node const& xml_station_route,
+    station_route::id const id, pugi::xml_node const& xml_station_route,
     soro::ptr<station> station, graph const& network,
     construction_materials const& mats) {
   intermediate_station_route i_station_route;

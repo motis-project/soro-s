@@ -19,9 +19,8 @@ regulatory_station_data parse_regulatory_stations(
     uLOG(utl::info) << "Parsing " << reg_file.path_;
 
     pugi::xml_document d;
-    auto success =
-        d.load_buffer(reinterpret_cast<void const*>(reg_file.contents_.data()),
-                      reg_file.contents_.size());
+    auto success = d.load_buffer(reinterpret_cast<void const*>(reg_file.data()),
+                                 reg_file.size());
     utl::verify(success, "bad xml: {}", success.description());
 
     for (auto const& regulatory_station : d.child(XML_ISS_DATA)

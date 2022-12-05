@@ -62,7 +62,7 @@ using set = data::hash_set<T>;
 template <typename T>
 using vector = data::vector<T>;
 
-using size_type = uint32_t;
+using size_t = uint32_t;
 
 template <typename T, std::size_t Size>
 using array = data::array<T, Size>;
@@ -85,6 +85,12 @@ constexpr inline auto tuple_size_v = cista::tuple_size_v<Tuple>;
 
 template <std::size_t I, typename Tuple>
 using tuple_element_t = cista::tuple_element_t<I, Tuple>;
+
+template <typename T>
+static constexpr bool const is_pointer_v = cista::is_pointer_v<T>;
+
+template <typename T>
+using remove_pointer_t = cista::remove_pointer_t<T>;
 
 #else
 
@@ -112,7 +118,7 @@ using set = data::hash_set<T>;
 template <typename ValueType>
 using vector = std::vector<ValueType>;
 
-using size_type = size_t;
+using size_t = std::size_t;
 
 template <typename ValueType, std::size_t Size>
 using array = data::array<ValueType, Size>;
@@ -137,11 +143,12 @@ constexpr inline auto tuple_size_v = std::tuple_size_v<Tuple>;
 template <std::size_t I, typename Tuple>
 using tuple_element_t = std::tuple_element_t<I, Tuple>;
 
-#endif
+template <typename T>
+static constexpr bool const is_pointer_v = std::is_pointer_v<T>;
 
 template <typename T>
-constexpr bool is_pointer() {
-  return std::is_pointer_v<T> || cista::is_pointer_v<T>;
-}
+using remove_pointer_t = std::remove_pointer_t<T>;
+
+#endif
 
 }  // namespace soro

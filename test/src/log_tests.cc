@@ -18,7 +18,7 @@ using namespace soro::infra;
 using namespace utl;
 
 void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
-  soro::map<soro::size_type, soro::size_type> ms_count_to_sr_count;
+  soro::map<soro::size_t, soro::size_t> ms_count_to_sr_count;
 
   for (auto const& sr : infra->station_routes_) {
     auto const ms_it =
@@ -32,7 +32,7 @@ void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
 
   uLOG(info) << "Main signal in station route stats:";
 
-  soro::size_type check_count = 0;
+  soro::size_t check_count = 0;
   for (auto const& [ms_count, sr_count] : ms_count_to_sr_count) {
     uLOG(info) << "Station routes with " << ms_count
                << " main signals: " << sr_count;

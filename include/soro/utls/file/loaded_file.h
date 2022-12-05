@@ -4,16 +4,24 @@
 #include <string>
 
 #include "cista/hash.h"
+#include "cista/mmap.h"
 
 #include "utl/verify.h"
 
 namespace soro::utls {
 
 struct loaded_file {
-  auto hash() const { return cista::hash(contents_); }
+  explicit loaded_file(std::filesystem::path const& p) : path_{p} {
+    mmap_ = cista::mmap{p.string().data(), cista::mmap::protection::READ};
+  }
+
+  auto size() const { return mmap_.size(); }
+  auto begin() const { return mmap_.begin(); }
+  auto end() const { return mmap_.end(); }
+  auto data() const { return mmap_.data(); }
 
   std::filesystem::path path_;
-  std::string contents_;
+  cista::mmap mmap_;
 };
 
 inline std::string read_file_to_string(std::filesystem::path const& fp) {
@@ -39,7 +47,7 @@ inline std::string read_file_to_string(std::filesystem::path const& fp) {
 }
 
 inline loaded_file load_file(std::filesystem::path const& fp) {
-  return {.path_ = fp, .contents_ = read_file_to_string(fp)};
+  return loaded_file(fp);
 }
 
 }  // namespace soro::utls

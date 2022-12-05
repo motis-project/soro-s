@@ -2,6 +2,8 @@
 
 #include <limits>
 
+#include "soro/utls/container/optional.h"
+
 #include "soro/base/soro_types.h"
 
 #include "soro/infrastructure/graph/type.h"
@@ -22,6 +24,10 @@ struct node {
   static constexpr bool valid_idx(id const idx) noexcept {
     return idx != INVALID_IDX;
   }
+
+  using optional_id = utls::optional<id, INVALID>;
+  using optional_ptr = utls::optional<ptr, nullptr>;
+  using optional_idx = utls::optional<idx, INVALID_IDX>;
 
   bool is(type const t) const;
 

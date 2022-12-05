@@ -65,19 +65,26 @@ bool station_route::can_end_an_interlocking(
          srg.successors_[this->id_].empty();
 }
 
-utls::optional<node::idx> station_route::get_halt_idx(
+bool station_route::operator==(station_route const& o) const {
+  return this->id_ == o.id_;
+}
+
+bool station_route::operator!=(station_route const& o) const {
+  return !(*this == o);
+}
+
+node::optional_idx station_route::get_halt_idx(
     rs::FreightTrain const freight) const {
   return static_cast<bool>(freight) ? freight_halt_ : passenger_halt_;
 }
 
-utls::optional<infra::node_ptr> station_route::get_halt_node(
+node::optional_ptr station_route::get_halt_node(
     rs::FreightTrain const f) const {
-  auto const idx = get_halt_idx(f);
-  return idx.transform(
-      [&](node::idx const i) { return utls::optional<node::ptr>(nodes(i)); });
+  auto const opt_idx = get_halt_idx(f);
+  return opt_idx.transform([&](node::idx const idx) { return nodes(idx); });
 }
 
-utls::optional<node::ptr> station_route::get_runtime_checkpoint_node() const {
+node::optional_ptr station_route::get_runtime_checkpoint_node() const {
   return runtime_checkpoint_.transform(
       [&](node::idx const idx) { return nodes(idx); });
 }
@@ -126,8 +133,11 @@ utls::recursive_generator<route_node> station_route::iterate() const {
 
 utls::recursive_generator<route_node> station_route::from_to(
     node::idx const from, node::idx const to) const {
-  utls::sassert(from < size());
-  utls::sassert(from <= to);
+  utls::sassert(from <= to, "To: {} is smaller than from: {}.", to, from);
+
+  if (from >= size()) {
+    co_return;
+  }
 
   route_node result;
   node::idx node_idx = from;
@@ -147,8 +157,9 @@ utls::recursive_generator<route_node> station_route::from_to(
           spl_idx < extra_speed_limits_.size() &&
           extra_speed_limits_[spl_idx].node_->id_ == result.node_->id_;
 
-      result.extra_spl_ = extra_spl ? &extra_speed_limits_[spl_idx++]
-                                    : std::optional<speed_limit::ptr>{};
+      if (extra_spl) {
+        result.extra_spl_ = &extra_speed_limits_[spl_idx++];
+      }
     }
 
     co_yield result;

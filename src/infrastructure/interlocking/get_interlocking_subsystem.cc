@@ -30,6 +30,10 @@ auto get_halting_at(soro::vector<interlocking_route> const& interlocking_routes,
     for (auto const& sub_path :
          interlocking_route.iterate_station_routes(infra)) {
 
+      //      std::cout << "got syb path sr offset: " <<
+      //      sub_path.station_route_.offset_ << std::endl; std::cout << "got
+      //      syb path sr id: " << sub_path.station_route_->id_ << std::endl;
+
       auto const handle_halt_node = [&](auto&& halt_idx) {
         if (sub_path.contains(halt_idx)) {
           halting_at[sub_path.station_route_->nodes(halt_idx)->id_]

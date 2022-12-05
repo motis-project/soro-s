@@ -181,7 +181,7 @@ void check_track_elements_are_ordered_correctly(section const& section) {
   auto const check_order = [&]<direction Dir>(struct section const& sec) {
     std::map<kilometrage, std::vector<element::ptr>> same_kilometrages;
 
-    for (auto const element : sec.iterate<Dir>()) {
+    for (auto const& element : sec.iterate<Dir>()) {
       if (element->is_undirected_track_element()) {
         auto const km = element->template as<undirected_track_element>().km_;
         utl::get_or_create(same_kilometrages, km, [&]() {

@@ -182,6 +182,43 @@
       }
     },
     {
+      "name": "clang-cista-release",
+      "displayName": "Linux AMD64 Clang CISTA Release",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "clang-cista-debug",
+      "displayName": "Linux AMD64 Clang CISTA Debug",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "clang-cista-sanitizer",
+      "displayName": "Linux AMD64 Clang CISTA Sanitizer",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On",
+        "SORO_SAN": "On"
+      }
+    },
+    {
       "name": "gcc-cista-release",
       "displayName": "Linux AMD64 GCC CISTA Release",
       "inherits": [

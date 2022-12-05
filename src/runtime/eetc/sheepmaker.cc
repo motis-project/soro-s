@@ -16,8 +16,8 @@ std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
                                         interval_list const& intervals,
                                         tt::train const& dispo,
                                         si::length step_size) {
-  utl::verify(intervals[0].halt_, "First interval must be a halt.");
-  utl::verify(intervals.end()[-2].halt_,
+  utl::verify(intervals[0].is_halt(), "First interval must be a halt.");
+  utl::verify(intervals.end()[-2].is_halt(),
               "Second to last interval must be a halt.");
 
   utl::verify(dispo.stop_times_.front().is_halt(),
@@ -32,11 +32,11 @@ std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
 
   std::vector<sheepmaker_data> halt_to_halt_containers{};
 
-  auto intervals_current_start = 0UL;
-  auto intervals_current_end = 1UL;
+  auto intervals_current_start = 0U;
+  auto intervals_current_end = 1U;
 
-  auto dispo_current_start = 0UL;
-  auto dispo_current_end = 1UL;
+  auto dispo_current_start = 0U;
+  auto dispo_current_end = 1U;
 
   while (intervals_current_start < intervals.size() - 2 &&
          dispo_current_start < dispo.stop_times_.size() - 1) {
@@ -48,9 +48,8 @@ std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
         step_size * std::round((next_interval.distance_ / step_size).val_);
 
     halt_to_halt_intervals.emplace_back(next_interval);
-    for (std::size_t i = intervals_current_start + 1UL; i < intervals.size();
-         ++i) {
-      if (intervals[i].halt_) {
+    for (auto i = intervals_current_start + 1U; i < intervals.size(); ++i) {
+      if (intervals[i].is_halt()) {
         intervals_current_end = i;
 
         next_interval = intervals[i];
@@ -69,8 +68,7 @@ std::vector<sheepmaker_data> sheepmaker(rs::train_physics const& tp,
       halt_to_halt_intervals.emplace_back(next_interval);
     }
 
-    for (auto i = dispo_current_start + 1UL; i < dispo.stop_times_.size();
-         ++i) {
+    for (auto i = dispo_current_start + 1U; i < dispo.stop_times_.size(); ++i) {
       if (dispo.stop_times_[i].is_halt()) {
         dispo_current_end = i;
         break;

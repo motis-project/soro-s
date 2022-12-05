@@ -13,18 +13,23 @@ namespace fs = std::filesystem;
 
 namespace soro::infra {
 
-void add_iss_file(iss_files& iss_fs, std::filesystem::path const& fp,
-                  std::string&& contents) {
+void add_iss_file(iss_files& iss_fs, std::filesystem::path const& fp) {
   if (fp.filename().string().starts_with(RAIL_PLAN_STATIONS)) {
-    iss_fs.rail_plan_files_.push_back({.path_ = fp, .contents_ = contents});
+    iss_fs.rail_plan_files_.emplace_back(fp);
+    //    iss_fs.rail_plan_files_.push_back({.path_ = fp, .contents_ =
+    //    contents});
   } else if (fp.filename().string().starts_with("Stammdaten")) {
-    iss_fs.core_data_files_.push_back({.path_ = fp, .contents_ = contents});
+    iss_fs.core_data_files_.emplace_back(fp);
+    //    iss_fs.core_data_files_.push_back({.path_ = fp, .contents_ =
+    //    contents});
   } else if (fp.filename().string().starts_with("Ordnungsrahmen_ORBtrst")) {
-    iss_fs.regulatory_station_files_.push_back(
-        {.path_ = fp, .contents_ = contents});
+    iss_fs.regulatory_station_files_.emplace_back(fp);
+    //    iss_fs.regulatory_station_files_.push_back(
+    //        {.path_ = fp, .contents_ = contents});
   } else if (fp.filename().string().starts_with("Ordnungsrahmen_ORStr")) {
-    iss_fs.regulatory_line_files_.push_back(
-        {.path_ = fp, .contents_ = contents});
+    iss_fs.regulatory_line_files_.emplace_back(fp);
+    //    iss_fs.regulatory_line_files_.push_back(
+    //        {.path_ = fp, .contents_ = contents});
   } else if (fp.filename().string().starts_with("BaubetrieblicheMassnahmen")) {
   } else {
     uLOG(utl::warn)
@@ -33,17 +38,16 @@ void add_iss_file(iss_files& iss_fs, std::filesystem::path const& fp,
   }
 }
 
-iss_files iss_archive_to_iss_files(unsigned char const* data,
-                                   size_t const size) {
+iss_files iss_archive_to_iss_files(unsigned char const*, size_t const) {
   utl::scoped_timer const parse_timer("Unpacking ISS archive");
   iss_files files;
 
-  utls::tar_reader<zstd_file> r{zstd_file{data, size}};
+  //  utls::tar_reader<zstd_file> r{zstd_file{data, size}};
 
-  std::optional<std::string> s;
-  while ((s = r.read())) {
-    add_iss_file(files, r.current_file_name(), std::move(*s));
-  }
+  //  std::optional<std::string> s;
+  //  while ((s = r.read())) {
+  //    add_iss_file(files, r.current_file_name(), std::move(*s));
+  //  }
 
   return files;
 }
@@ -64,7 +68,7 @@ iss_files index_to_iss_files(fs::path const& fp) {
 
     utl::verify(exists(path), "File " + path.string() + " does not exist");
 
-    add_iss_file(files, path, utls::read_file_to_string(path));
+    add_iss_file(files, path);
   }
 
   return files;
@@ -74,7 +78,7 @@ iss_files directory_to_iss_files(std::filesystem::path const& fp) {
   iss_files files;
 
   for (auto const& f : std::filesystem::directory_iterator{fp}) {
-    add_iss_file(files, f.path(), utls::read_file_to_string(f));
+    add_iss_file(files, f.path());
   }
 
   return files;
@@ -85,13 +89,13 @@ iss_files get_iss_files(std::filesystem::path const& fp) {
 
   if (fp.extension() == ".iss") {
     auto const& buffer = utls::read_file_to_binary_buffer(fp);
-    return iss_archive_to_iss_files(&buffer.front(), buffer.size());
+    return iss_archive_to_iss_files(&buffer.front(),
+                                    static_cast<soro::size_t>(buffer.size()));
   } else if (fp.filename().string() == "Index.xml") {
     return index_to_iss_files(fp);
   } else if (fp.extension() == ".xml") {
     iss_files files;
-    files.rail_plan_files_ = {
-        {.path_ = fp, .contents_ = utls::read_file_to_string(fp)}};
+    files.rail_plan_files_.emplace_back(fp);
     return files;
   } else if (is_directory(fp) && exists(fp / "Index.xml")) {
     return index_to_iss_files(fp / "Index.xml");

@@ -106,24 +106,12 @@ bool interlocking_route::ends_on_ms(infrastructure const& infra) const {
   return last_node(infra)->is(type::MAIN_SIGNAL);
 }
 
-// node::idx interlocking_route::get_halt_idx(
-//     rs::FreightTrain const freight) const {
-//
-//   // TODO(julian) only a single halt per signal station route for now
-//   assert(this->freight_halts_.size() <= 1);
-//   assert(this->passenger_halts_.size() <= 1);
-//
-//   return static_cast<bool>(freight) ? this->freight_halts_.front()
-//                                     : this->passenger_halts_.front();
-// }
-//
-// node_ptr interlocking_route::get_halt(rs::FreightTrain freight) const {
-//   return nodes()[get_halt_idx(freight)];
-// }
-
-// si::length interlocking_route::length() const {
-//   return get_path_length_from_elements(nodes());
-// }
+utls::it_range<utls::id_it_ptr<station_route>>
+interlocking_route::station_routes(infrastructure const& infra) const {
+  return utls::make_range(
+      utls::id_iterator(std::begin(station_routes_), &infra->station_routes_),
+      utls::id_iterator(std::end(station_routes_), &infra->station_routes_));
+}
 
 bool interlocking_route::follows(interlocking_route const& other,
                                  infrastructure const& infra) const {
@@ -135,13 +123,6 @@ bool interlocking_route::operator==(interlocking_route const& o) const {
 }
 
 namespace detail {
-
-utls::recursive_generator<route_node> from_to_single(
-    interlocking_route::ptr const ir, node::idx const from, node::idx const to,
-    infrastructure const& infra) {
-  utls::sassert(ir->station_routes_.size() == 1);
-  co_yield ir->first_sr(infra)->from_to(from, to);
-}
 
 utls::recursive_generator<route_node> from_to(
     interlocking_route::ptr const ir,
@@ -164,6 +145,9 @@ utls::recursive_generator<route_node> from_to(
   utls::sassert(std::distance(from_it, to_it) >= 0,
                 "To station route is located before from station route in "
                 "interlocking route iterator.");
+  utls::sassert(*from_it != *to_it,
+                "Don't call this with from == to, "
+                "since it will yield the wrong nodes.");
 
   co_yield infra->station_routes_[*from_it]->from(from);
   ++from_it;
@@ -189,7 +173,7 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
         "got from {} and to {}.",
         this->id_, from_sr, to_sr);
 
-    return detail::from_to_single(this, from, to, infra);
+    return this->first_sr(infra)->from_to(from, to);
   } else {
     auto from_it = utls::find(this->station_routes_, from_sr);
     auto to_it = utls::find(this->station_routes_, to_sr);
@@ -206,7 +190,9 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
                   "To station route is located before from station route in "
                   "interlocking route iterator.");
 
-    return detail::from_to(this, from_it, from, to_it, to, infra);
+    return *from_it == *to_it
+               ? infra->station_routes_[*from_it]->from_to(from, to)
+               : detail::from_to(this, from_it, from, to_it, to, infra);
   }
 }
 
@@ -226,7 +212,7 @@ utls::recursive_generator<route_node> interlocking_route::from(
 utls::recursive_generator<route_node> interlocking_route::iterate(
     infrastructure const& infra) const {
   if (station_routes_.size() == 1) {
-    return detail::from_to_single(this, start_offset_, end_offset_, infra);
+    return this->first_sr(infra)->from_to(start_offset_, end_offset_);
   } else {
     return detail::from_to(this, std::cbegin(station_routes_), start_offset_,
                            std::cend(station_routes_) - 1, end_offset_, infra);
@@ -241,19 +227,21 @@ utls::generator<sub_path> interlocking_route::iterate_station_routes(
         .station_route_ = sr, .from_ = start_offset_, .to_ = end_offset_};
   } else {
     auto const first_sr = infra.station_routes_[station_routes_.front()];
+    //    std::cout << "yielding sr: " << station_routes_.front() << std::endl;
+    //    std::cout << "yielding sr with offset: " << first_sr.offset_ <<
+    //    std::endl;
     co_yield sub_path{.station_route_ = first_sr,
                       .from_ = start_offset_,
                       .to_ = first_sr->size()};
 
-    for (auto i = 1UL; i < station_routes_.size() - 1; ++i) {
+    for (sr_offset i = 1; i < station_routes_.size() - 1; ++i) {
       auto const sr = infra.station_routes_[station_routes_[i]];
       co_yield sub_path{.station_route_ = sr, .from_ = 0, .to_ = sr->size()};
     }
 
     auto const last_sr = infra.station_routes_[station_routes_.back()];
-    co_yield sub_path{.station_route_ = last_sr,
-                      .from_ = start_offset_,
-                      .to_ = last_sr->size()};
+    co_yield sub_path{
+        .station_route_ = last_sr, .from_ = 0, .to_ = end_offset_};
   }
 }
 

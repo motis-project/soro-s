@@ -42,7 +42,7 @@ void calculate_track_element_coords(layout& layout,
         static_cast<coordinates::precision>(section.size());
 
     std::size_t idx = 0;
-    for (auto const element : section.iterate<direction::Rising, skip::No>()) {
+    for (auto const& element : section.iterate<direction::Rising, skip::No>()) {
       if (!element->is_track_element()) {
         continue;
       }
@@ -151,7 +151,7 @@ layout get_layout(
     soro::vector<station::ptr> const& stations,
     soro::vector<section> const& sections,
     soro::map<rail_plan_node_id, element_id> const& rp_id_to_element_id,
-    std::size_t const element_count) {
+    soro::size_t const element_count) {
   uLOG(info) << "[ Layout ] Determining layout from ISS.";
 
   layout layout(element_count);
@@ -159,9 +159,9 @@ layout get_layout(
   // gather all coordinates from the railplan files
   for (auto const& rail_plan_file : rail_plan_files) {
     pugi::xml_document d;
-    auto success = d.load_buffer(
-        reinterpret_cast<void const*>(rail_plan_file.contents_.data()),
-        rail_plan_file.contents_.size());
+    auto success =
+        d.load_buffer(reinterpret_cast<void const*>(rail_plan_file.data()),
+                      rail_plan_file.size());
     utl::verify(success, "Bad xml in get_layout: {}", success.description());
 
     for (auto const& rp_station : d.child(XML_ISS_DATA)

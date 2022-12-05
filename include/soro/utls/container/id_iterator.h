@@ -2,7 +2,9 @@
 
 #include <concepts>
 #include <iterator>
+#include <vector>
 
+#include "soro/base/soro_types.h"
 #include "soro/utls/sassert.h"
 
 namespace soro::utls {
@@ -13,13 +15,17 @@ namespace soro::utls {
 
 template <typename IdIt, typename Container>
 struct id_iterator {
+#if defined(SERIALIZE)
+  using difference_type = std::ptrdiff_t;
+#else
   static_assert(std::contiguous_iterator<IdIt>);
   static_assert(std::contiguous_iterator<typename Container::iterator>);
 
   using iterator_concept = typename IdIt::iterator_concept;
   using iterator_category = typename IdIt::iterator_category;
   using difference_type = typename IdIt::difference_type;
-  using value_type = typename Container::value_type;
+#endif
+  using value_type = soro::remove_pointer_t<typename Container::value_type>;
   using pointer = value_type const*;
   using reference = value_type const&;
 
@@ -32,11 +38,23 @@ struct id_iterator {
   reference deref(difference_type const idx) const {
     utls::sassert(idx >= 0);
     utls::sassert(static_cast<typename Container::size_type>(idx) < c_->size());
-    return (*c_)[static_cast<typename Container::size_type>(idx)];
+
+    if constexpr (soro::is_pointer_v<typename Container::value_type>) {
+      return *((*c_)[static_cast<typename Container::size_type>(idx)]);
+    } else {
+      return (*c_)[static_cast<typename Container::size_type>(idx)];
+    }
   }
 
   reference operator*() const { return deref(*it_); }
-  pointer operator->() const { return &deref(*it_); }
+
+  auto operator->() const {
+    if constexpr (soro::is_pointer_v<typename Container::value_type>) {
+      return (*c_)[*it_];
+    } else {
+      return std::addressof((*c_)[*it_]);
+    }
+  }
 
   reference operator[](difference_type const idx) { return deref(it_[idx]); }
 
@@ -98,5 +116,14 @@ struct id_iterator {
 
 template <typename IdIt, typename Container>
 id_iterator(IdIt, Container const*) -> id_iterator<IdIt, Container>;
+
+template <typename T>
+using id_it = id_iterator<typename soro::vector<typename T::id>::const_iterator,
+                          soro::vector<T>>;
+
+template <typename T>
+using id_it_ptr =
+    id_iterator<typename soro::vector<typename T::id>::const_iterator,
+                soro::vector<typename T::ptr>>;
 
 }  // namespace soro::utls

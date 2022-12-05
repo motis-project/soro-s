@@ -1,5 +1,7 @@
 #include "soro/infrastructure/parsers/iss/parse_track_element.h"
 
+#include "utl/logging.h"
+
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/serror.h"
@@ -84,6 +86,10 @@ speed_limit get_speed_limit(xml_node const& speed_limit_xml,
   if (auto const s = speed_limit_xml.child("Geschw"); static_cast<bool>(s)) {
     spl.limit_ = si::from_km_h(parse_fp<si::precision, replace_comma::ON>(
         speed_limit_xml.child_value("Geschw")));
+  }
+
+  if (valid(spl.limit_) && spl.limit_ == si::ZERO<si::speed>) {
+    uLOG(utl::warn) << "Got speed limit with 0 km/h limit.";
   }
 
   spl.calculated_ = static_cast<bool>(speed_limit_xml.child("Berechnet"));

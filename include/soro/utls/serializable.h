@@ -55,10 +55,6 @@ struct serializable {
     return *this;
   }
 
-  ~serializable() {
-    std::cout << "Destructing\n";
-  }
-
   T const* operator->() const { return access_; }
   T const& operator*() const { return *access_; }
 

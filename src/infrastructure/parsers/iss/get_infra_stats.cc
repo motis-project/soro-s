@@ -38,9 +38,10 @@ void count_elements_in_station(pugi::xml_node xml_station, infra_stats& is) {
   }
 }
 
-void count_elements_in_file(std::string const& xml_file, infra_stats& is) {
+void count_elements_in_file(utls::loaded_file const& xml_file,
+                            infra_stats& is) {
   pugi::xml_document d;
-  auto success = d.load_buffer(reinterpret_cast<void const*>(xml_file.data()),
+  auto success = d.load_buffer(reinterpret_cast<void const*>(xml_file.begin()),
                                xml_file.size());
   utl::verify(success, "bad xml: {}", success.description());
 
@@ -55,7 +56,7 @@ infra_stats get_infra_stats(iss_files const& files) {
   infra_stats is;
 
   for (auto const& file : files.rail_plan_files_) {
-    count_elements_in_file(file.contents_, is);
+    count_elements_in_file(file, is);
   }
 
   // for every border pair there is an extra (empty) section

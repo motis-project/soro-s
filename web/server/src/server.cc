@@ -49,31 +49,6 @@ void exists_or_create_dir(fs::path const& dir_path) {
   }
 }
 
-auto set_up_infrastructure(fs::path const& from_dir, fs::path const& to_dir) {
-  std::vector<fs::path> new_infrastructure_files;
-
-  for (auto const& dir_entry : fs::directory_iterator{from_dir}) {
-    if (!is_infrastructure_file(dir_entry)) {
-      continue;
-    }
-
-    auto const& from_file = dir_entry.path();
-    auto const to_file = to_dir / from_file.filename();
-
-    bool const new_file =
-        !fs::exists(to_file) || soro::utls::load_file(from_file).hash() !=
-                                    soro::utls::load_file(to_file).hash();
-
-    if (new_file) {
-      fs::copy(from_file, to_file, fs::copy_options::overwrite_existing);
-
-      new_infrastructure_files.push_back(to_file);
-    }
-  }
-
-  return new_infrastructure_files;
-}
-
 int failed_startup() { return 1; }
 
 int main(int argc, char const** argv) {

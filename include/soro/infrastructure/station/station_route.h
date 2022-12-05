@@ -14,13 +14,16 @@
 namespace soro::infra {
 
 struct station;
+using station_ptr = soro::ptr<station>;
 struct station_route_graph;
 
 enum class course_decision : bool { STEM, BRANCH };
 
 struct route_node {
+  bool omitted() const { return omitted_; }
+
   node::ptr node_{nullptr};
-  std::optional<speed_limit::ptr> extra_spl_{std::nullopt};
+  speed_limit::optional_ptr extra_spl_{};
   bool omitted_{false};
 };
 
@@ -43,10 +46,10 @@ struct station_route {
 
     element_ptr start_{nullptr};
     element_ptr end_{nullptr};
-    soro::vector<course_decision> course_;
+    soro::vector<course_decision> course_{};
 
-    soro::vector<node::ptr> nodes_;
-    soro::vector<node::idx> main_signals_;
+    soro::vector<node::ptr> nodes_{};
+    soro::vector<node::idx> main_signals_{};
   };
 
   node::idx size() const noexcept;
@@ -66,33 +69,36 @@ struct station_route {
   bool can_start_an_interlocking(station_route_graph const& srg) const;
   bool can_end_an_interlocking(station_route_graph const&) const;
 
+  bool operator==(station_route const& o) const;
+  bool operator!=(station_route const& o) const;
+
   utls::recursive_generator<route_node> iterate() const;
   utls::recursive_generator<route_node> from(node::idx from) const;
   utls::recursive_generator<route_node> to(node::idx to) const;
   utls::recursive_generator<route_node> from_to(node::idx from,
                                                 node::idx to) const;
 
-  utls::optional<node::idx> get_halt_idx(rs::FreightTrain freight) const;
-  utls::optional<node::ptr> get_halt_node(rs::FreightTrain freight) const;
+  node::optional_idx get_halt_idx(rs::FreightTrain freight) const;
+  node::optional_ptr get_halt_node(rs::FreightTrain freight) const;
 
-  utls::optional<node::ptr> get_runtime_checkpoint_node() const;
+  node::optional_ptr get_runtime_checkpoint_node() const;
 
   id id_{INVALID};
   soro::string name_{"INVALID"};
 
-  path::ptr path_;
-  soro::vector<node::idx> omitted_nodes_;
-  soro::vector<speed_limit> extra_speed_limits_;
-  utls::optional<node::idx> runtime_checkpoint_{};
+  path::ptr path_{};
+  soro::vector<node::idx> omitted_nodes_{};
+  soro::vector<speed_limit> extra_speed_limits_{};
+  node::optional_idx runtime_checkpoint_{};
 
   soro::ptr<station> station_{nullptr};
-  utls::optional<soro::ptr<station>> from_station_{};
-  utls::optional<soro::ptr<station>> to_station_{};
+  utls::optional<station_ptr, nullptr> from_station_{};
+  utls::optional<station_ptr, nullptr> to_station_{};
 
   si::length length_{si::INVALID<si::length>};
 
-  utls::optional<node::idx> passenger_halt_{};
-  utls::optional<node::idx> freight_halt_{};
+  node::optional_idx passenger_halt_{};
+  node::optional_idx freight_halt_{};
 
   soro::array<bool, STATION_ROUTE_ATTRIBUTES.size()> attributes_{
       DEFAULT_ATTRIBUTE_ARRAY};

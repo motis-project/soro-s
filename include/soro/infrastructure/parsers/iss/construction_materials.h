@@ -33,7 +33,7 @@ struct intermediate_station_route {
 
   soro::vector<speed_limit> extra_speed_limits_;
 
-  std::size_t id_;
+  station_route::id id_;
   soro::string name_;
   soro::ptr<station> station_;
 };
@@ -43,7 +43,7 @@ struct construction_materials {
   infra_stats total_element_counts_{};
   soro::map<rail_plan_node_id, element_id> rp_id_to_element_id_{};
 
-  std::vector<intermediate_station_route> intermediate_station_routes_;
+  soro::vector<intermediate_station_route> intermediate_station_routes_;
 };
 
 }  // namespace soro::infra

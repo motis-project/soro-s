@@ -6,9 +6,10 @@
 
 namespace soro::tt {
 
-std::size_t distance(anchor_time const from, anchor_time const to) {
-  utls::sassert(valid(from), "Date from {} is not ok.", from);
-  utls::sassert(valid(to), "Date to {} is not ok.", to);
+std::size_t distance(bitfield::anchor_time const from,
+                     bitfield::anchor_time const to) {
+  utls::sassert(bitfield::valid(from), "Date from {} is not ok.", from);
+  utls::sassert(bitfield::valid(to), "Date to {} is not ok.", to);
   utls::sassert(from <= to,
                 "Call distance for year_month_date with ascending dates, "
                 "got called with {} and {}",
@@ -26,11 +27,12 @@ std::size_t distance(date::year_month_day const from,
                 "got called with {} and {}",
                 from, to);
 
-  return distance(anchor_time{from}, anchor_time{to});
+  return distance(bitfield::anchor_time{from}, bitfield::anchor_time{to});
 }
 
-std::size_t get_idx(anchor_time const first_date, anchor_time const last_date,
-                    anchor_time const ymd) {
+std::size_t get_idx(bitfield::anchor_time const first_date,
+                    bitfield::anchor_time const last_date,
+                    bitfield::anchor_time const ymd) {
   utls::sassert(
       first_date <= ymd && ymd <= last_date,
       "Trying to update bitfield with date {} that is not in range [{}, {}].",
@@ -39,9 +41,10 @@ std::size_t get_idx(anchor_time const first_date, anchor_time const last_date,
   return distance(first_date, ymd);
 }
 
-date::year_month_day idx_to_date(anchor_time const first_date,
+date::year_month_day idx_to_date(bitfield::anchor_time const first_date,
                                  std::size_t const idx) {
-  utls::sassert(valid(first_date), "First date {} is not ok.", first_date);
+  utls::sassert(bitfield::valid(first_date), "First date {} is not ok.",
+                first_date);
   return {first_date + days(idx)};
 }
 
@@ -80,8 +83,9 @@ bool bitfield::operator[](anchor_time const ymd) const {
 // ymd < first: -1
 // ymd in [first, last]: 0
 // ymd > last: 1
-int8_t in_range(anchor_time const ymd, anchor_time const first,
-                anchor_time const last) {
+int8_t in_range(bitfield::anchor_time const ymd,
+                bitfield::anchor_time const first,
+                bitfield::anchor_time const last) {
   if (ymd < first) {
     return -1;
   }
@@ -154,7 +158,7 @@ bitfield bitfield::operator|=(bitfield const& o) noexcept {
   return *this;
 }
 
-anchor_time bitfield::end() const noexcept {
+bitfield::anchor_time bitfield::end() const noexcept {
   return {static_cast<date::sys_days>(this->first_date_) + date::days{BITSIZE}};
 }
 

@@ -23,15 +23,15 @@ bool sequence_point::has_transit_time() const noexcept {
 
 absolute_time sequence_point::absolute_arrival(
     date::year_month_day const departure_day) const noexcept {
-  return relative_to_absolute(departure_day, this->arrival_);
+  return relative_to_absolute(date::sys_days{departure_day}, this->arrival_);
 }
 
 absolute_time sequence_point::absolute_departure(
     date::year_month_day const departure_day) const noexcept {
-  return relative_to_absolute(departure_day, this->departure_);
+  return relative_to_absolute(date::sys_days{departure_day}, this->departure_);
 }
 
-utls::optional<infra::node::idx> sequence_point::get_node_idx(
+node::optional_idx sequence_point::get_node_idx(
     rs::FreightTrain const freight, infra::infrastructure const& infra) const {
   auto const sr = infra->station_routes_[station_route_];
 
@@ -46,11 +46,11 @@ utls::optional<infra::node::idx> sequence_point::get_node_idx(
   return {};
 }
 
-utls::optional<node::ptr> sequence_point::get_node(
-    FreightTrain const freight, infrastructure const& infra) const {
+node::optional_ptr sequence_point::get_node(FreightTrain const freight,
+                                            infrastructure const& infra) const {
   auto const sr = infra->station_routes_[station_route_];
   return this->get_node_idx(freight, infra).transform([&](auto&& idx) {
-    return utls::optional<node::ptr>{sr->nodes(idx)};
+    return sr->nodes(idx);
   });
 }
 

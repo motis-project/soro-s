@@ -6,6 +6,7 @@
 #include "utl/logging.h"
 #include "utl/pipes.h"
 #include "utl/timer.h"
+#include "utl/to_vec.h"
 
 #include "soro/utls/algo/overlap.h"
 #include "soro/utls/coroutine/collect.h"
@@ -339,9 +340,10 @@ auto get_station_route_exclusions(
   return exclusions;
 }
 
-auto get_sorted_station_route_nodes(infrastructure_t const& infra) {
+std::vector<std::vector<node::id>> get_sorted_station_route_nodes(
+    infrastructure_t const& infra) {
   utl::scoped_timer const sorted_timer("Creating sorted station route nodes");
-  return soro::to_vec(infra.station_routes_, [](auto&& station_route) {
+  return utl::to_vec(infra.station_routes_, [](auto&& station_route) {
     std::vector<node::id> node_ids =
         utl::all(station_route->nodes()) |
         utl::transform([](auto&& n_ptr) { return n_ptr->id_; }) | utl::vec();
@@ -358,7 +360,7 @@ std::vector<std::vector<station_route::id>> get_station_route_exclusions(
       get_sorted_station_route_nodes(infra);
 
   auto station_route_exclusions =
-      soro::to_vec(infra.station_routes_, [&](auto&& station_route) {
+      utl::to_vec(infra.station_routes_, [&](auto&& station_route) {
         return get_station_route_exclusions(station_route,
                                             sorted_station_routes);
       });

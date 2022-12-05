@@ -96,4 +96,11 @@ constexpr bool is_section_element(type const type) {
 constexpr bool is_cross(type const type) { return type == type::CROSS; }
 constexpr bool is_border(type const type) { return type == type::BORDER; }
 
+constexpr bool is_runtime_checkpoint(type const type) {
+  return type == type::RUNTIME_CHECKPOINT ||
+         type == type::RUNTIME_CHECKPOINT_UNDIRECTED;
+}
+
+constexpr bool is_halt(type const type) { return type == type::HALT; }
+
 }  // namespace soro::infra

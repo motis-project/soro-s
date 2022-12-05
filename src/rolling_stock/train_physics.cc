@@ -21,19 +21,15 @@ train_physics::train_physics(soro::vector<traction_vehicle> tvs,
 
 si::length train_physics::length() const { return length_; }
 
-si::weight train_physics::weight() const {
-  return accumulate(vehicles_, si::ZERO<si::weight>,
-                    [](auto&& acc, auto&& v) { return acc + v.weight_; }) +
-         carriage_weight_;
-}
+si::weight train_physics::weight() const { return carriage_weight_; }
 
 si::speed train_physics::max_speed() const {
-  return std::min(std::min_element(std::cbegin(vehicles_), std::cend(vehicles_),
-                                   [](auto&& v1, auto&& v2) {
-                                     return v1.max_speed_ < v2.max_speed_;
-                                   })
-                      ->max_speed_,
-                  max_speed_);
+  auto const vehicle_max_speed =
+      std::min_element(
+          std::cbegin(vehicles_), std::cend(vehicles_),
+          [](auto&& v1, auto&& v2) { return v1.max_speed_ < v2.max_speed_; })
+          ->max_speed_;
+  return std::min(vehicle_max_speed, max_speed_);
 }
 
 si::force train_physics::tractive_force(si::speed const v) const {

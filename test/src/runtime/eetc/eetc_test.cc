@@ -92,7 +92,7 @@ void check_speed_intervals(speed_intervals is_speed_intervals,
                            speed_intervals shall_speed_intervals) {
   CHECK_EQ(is_speed_intervals.size(), shall_speed_intervals.size());
 
-  for (std::size_t i = 0UL; i < is_speed_intervals.size(); ++i) {
+  for (auto i = 0U; i < is_speed_intervals.size(); ++i) {
     CHECK_EQ(is_speed_intervals[i].speed_limit_,
              shall_speed_intervals[i].speed_limit_);
     CHECK_EQ(is_speed_intervals[i].length(), shall_speed_intervals[i].length());
@@ -102,14 +102,13 @@ void check_speed_intervals(speed_intervals is_speed_intervals,
 
     CHECK_EQ(is_speed_intervals[i].intervals_.size(),
              shall_speed_intervals[i].intervals_.size());
-    for (std::size_t j = 0UL; j < is_speed_intervals[i].intervals_.size();
-         ++j) {
+    for (auto j = 0U; j < is_speed_intervals[i].intervals_.size(); ++j) {
       CHECK_EQ(is_speed_intervals[i].intervals_[j].speed_limit_,
                shall_speed_intervals[i].intervals_[j].speed_limit_);
       CHECK_EQ(is_speed_intervals[i].intervals_[j].distance_,
                shall_speed_intervals[i].intervals_[j].distance_);
-      CHECK_EQ(is_speed_intervals[i].intervals_[j].halt_,
-               shall_speed_intervals[i].intervals_[j].halt_);
+      CHECK_EQ(is_speed_intervals[i].intervals_[j].is_halt(),
+               shall_speed_intervals[i].intervals_[j].is_halt());
     }
   }
 }
@@ -1374,11 +1373,8 @@ TEST_CASE("sheepmaker::complete" * doctest::skip(true)) {  // NOLINT
   auto train = tt->trains_.front();
 
   type_set const record_events({type::HALT});
-  type_set const border_types({type::SPEED_LIMIT, type::HALT,
-                               type::APPROACH_SIGNAL, type::MAIN_SIGNAL});
 
-  auto const intervals =
-      get_interval_list(train, record_events, border_types, infra);
+  auto const intervals = get_interval_list(train, record_events, infra);
 
   auto const tp = generate_test_train_2();
 

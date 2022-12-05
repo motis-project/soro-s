@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "soro/base/soro_types.h"
+
 #include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
@@ -34,7 +36,7 @@ inline auto intersect(C1&& c1, C2&& c2) {
   utls::sassert(utls::is_sorted(c2),
                 "Container c2 is not sorted before intersecting.");
 
-  std::vector<typename std::remove_reference_t<C1>::value_type> result;
+  soro::vector<typename std::remove_reference_t<C1>::value_type> result;
   result.reserve(c1.size());
 
   std::set_intersection(std::cbegin(c1), std::cend(c1), std::cbegin(c2),

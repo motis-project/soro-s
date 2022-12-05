@@ -1,5 +1,7 @@
 #pragma once
 
+#include "soro/utls/container/id_iterator.h"
+
 #include "soro/infrastructure/graph/type_set.h"
 #include "soro/infrastructure/station/station_route.h"
 #include "soro/rolling_stock/freight.h"
@@ -12,9 +14,9 @@ struct infrastructure;
 struct sub_path {
   bool contains(node::idx const idx) const { return from_ <= idx && idx < to_; }
 
-  station_route::ptr station_route_;
-  node::idx from_;
-  node::idx to_;
+  station_route::ptr station_route_{nullptr};
+  node::idx from_{node::INVALID_IDX};
+  node::idx to_{node::INVALID_IDX};
 };
 
 struct interlocking_route {
@@ -37,6 +39,9 @@ struct interlocking_route {
   node::idx size(infrastructure const& infra) const;
 
   bool contains(station_route::id, node::idx) const;
+
+  utls::it_range<utls::id_it_ptr<station_route>> station_routes(
+      infrastructure const&) const;
 
   station_route::id first_sr_id() const;
   station_route::id sr_id(sr_offset) const;

@@ -17,15 +17,15 @@
 namespace soro::infra::test {
 
 void check_interlocking_route_count(infrastructure const& infra) {
-  soro::size_type inner_sr_count = 0;
-  soro::size_type path_sr_count = 0;
+  soro::size_t inner_sr_count = 0;
+  soro::size_t path_sr_count = 0;
 
   for (auto const& sr : infra->station_routes_) {
     if (sr->path_->main_signals_.empty()) {
       continue;
     }
 
-    soro::size_type reachable_ms = 0;
+    soro::size_t reachable_ms = 0;
 
     auto const& handle_node = [&](auto&& sr_ptr, auto&&) {
       if (sr_ptr != sr && !sr_ptr->path_->main_signals_.empty()) {
@@ -99,7 +99,7 @@ void interlocking_route_path_is_valid(interlocking_route const& ir,
 
   std::vector<element::ptr> elements;
 
-  for (auto const rn : ir.iterate(infra)) {
+  for (auto const& rn : ir.iterate(infra)) {
     elements.emplace_back(rn.node_->element_);
   }
 

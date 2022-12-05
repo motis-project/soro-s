@@ -205,10 +205,10 @@ speed_intervals get_speed_intervals(soro::vector<interval> const& intervals) {
 
   // first and last interval have the halt tag enabled
   utl::verify(
-      intervals.begin()->halt_,
+      intervals.begin()->is_halt(),
       "speed_interval::get_speed_intervals: First interval must have a halt.");
   utl::verify(
-      intervals.back().halt_,
+      intervals.back().is_halt(),
       "speed_interval::get_speed_intervals: Last interval must have a halt.");
 
   // WHY size() - 1?
@@ -217,9 +217,9 @@ speed_intervals get_speed_intervals(soro::vector<interval> const& intervals) {
   // the second to last interval. This yields to an irrelevant interval: the
   // last one. However, not declaring it irrelevant results in an interval with
   // unknown length.
-  for (std::size_t i = 1UL; i < intervals.size() - 1; ++i) {
+  for (auto i = 1U; i < intervals.size() - 1; ++i) {
     // current interval is part of the current speed interval
-    utl::verify(!intervals[i].halt_,
+    utl::verify(!intervals[i].is_halt(),
                 "speed_interval::get_speed_intervals: No halt allowed between "
                 "first and last interval.");
     if (current_intervals[0].speed_limit_ == intervals[i].speed_limit_) {

@@ -8,9 +8,13 @@
 namespace soro::tt {
 
 struct sequence_point {
+  CISTA_COMPARABLE()
+
   using ptr = soro::ptr<sequence_point>;
 
-  enum class type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
+  using optional_ptr = utls::optional<ptr, nullptr>;
+
+  enum struct type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
 
   bool is_halt() const noexcept;
   bool is_halt(type const t) const noexcept;
@@ -29,10 +33,10 @@ struct sequence_point {
   absolute_time absolute_departure(
       date::year_month_day departure_day) const noexcept;
 
-  utls::optional<infra::node::idx> get_node_idx(
+  infra::node::optional_idx get_node_idx(
       rs::FreightTrain const freight, infra::infrastructure const& infra) const;
-  utls::optional<infra::node::ptr> get_node(
-      rs::FreightTrain freight, infra::infrastructure const& infra) const;
+  infra::node::optional_ptr get_node(rs::FreightTrain freight,
+                                     infra::infrastructure const& infra) const;
 
   type type_{type::TRANSIT};
 

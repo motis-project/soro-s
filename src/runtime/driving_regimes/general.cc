@@ -12,8 +12,7 @@ bool general_driving::check_simulate_on_params(
 
   utl::verify(!intervals.empty(),
               "general_driving::check_simulate_on_params: There must be at "
-              "least one interval in "
-              "intervals.");
+              "least one interval in intervals.");
   for (auto const& interval : intervals) {
     utl::verify(interval.speed_limit_ == intervals[0].speed_limit_,
                 "general_driving::check_simulate_on_params: All intervals "

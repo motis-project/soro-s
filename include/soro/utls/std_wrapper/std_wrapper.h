@@ -180,8 +180,10 @@ constexpr auto accumulate(Iterable&& i, T init, Fn&& fn) {
 
 template <typename Iterable, typename Pred>
 constexpr std::size_t count_if(Iterable&& i, Pred&& p) {
-  return static_cast<std::size_t>(
-      std::count_if(std::cbegin(i), std::cend(i), p));
+  using std::begin;
+  using std::end;
+
+  return static_cast<std::size_t>(std::count_if(begin(i), end(i), p));
 }
 
 template <typename Iterable, typename T>
