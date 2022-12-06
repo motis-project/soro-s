@@ -9,6 +9,7 @@
 /pkg
 .pkg.lock
 .pkg.mutex
+/web/client/node_modules
 /CMakeSettings.json
 resources/infrastructure/de_iss/
 resources/timetable/de_kss/
