@@ -168,7 +168,7 @@ export default {
 		},
 
 		createMap(infrastructure) {
-			let map = new Map({
+			const map = new Map({
 				container: this.$refs.map,
 				style: infrastructureMapStyle,
 				attributionControl: false,

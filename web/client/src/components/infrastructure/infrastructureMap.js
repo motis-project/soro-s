@@ -1,7 +1,7 @@
 import { iterate } from '../../util/iterate.js';
 
 function highlightPath(mapSource, infrastructure, nodeID, nodePath) {
-	let pathGeoJSON = {
+	const pathGeoJSON = {
 		type: 'Feature',
 		properties: { id: nodeID },
 		geometry: {
@@ -16,7 +16,7 @@ function highlightPath(mapSource, infrastructure, nodeID, nodePath) {
 	}
 
 	// this is probably illegal, but very convenient
-	let newData = mapSource._data;
+	const newData = mapSource._data;
 
 	newData.features.push(pathGeoJSON);
 	mapSource.setData(newData);
@@ -24,7 +24,7 @@ function highlightPath(mapSource, infrastructure, nodeID, nodePath) {
 
 function deHighlightPath(mapSource, pathID) {
 	// again: probably quite unethical
-	let newData = mapSource._data;
+	const newData = mapSource._data;
 	const idx = newData.features.findIndex(f => f.properties.id === pathID);
 	newData.features.splice(idx, 1);
 

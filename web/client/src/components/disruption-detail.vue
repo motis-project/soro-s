@@ -25,7 +25,7 @@ disruptionMap.set('2', 120);
 let disruptionDists = false;
 
 function createInputField(name, maxSpeedsDiv) {
-	let input = document.createElement('input');
+	const input = document.createElement('input');
 	input.type = 'text';
 	input.id = name + 'Input';
 	input.name = name;
@@ -34,11 +34,11 @@ function createInputField(name, maxSpeedsDiv) {
 	input.addEventListener('input',
 		e => disruptionMap.set(e.target.name, e.target.value));
 
-	let label = document.createElement('label');
+	const label = document.createElement('label');
 	label.htmlFor = input.id;
 	label.innerText = name + ' ';
 
-	let br = document.createElement('br');
+	const br = document.createElement('br');
 
 	maxSpeedsDiv.appendChild(label);
 	maxSpeedsDiv.appendChild(input);
@@ -52,18 +52,18 @@ function fillDisruptionDetail(currentTimetable, maxSpeedsDiv) {
 		createInputField(train_run.name, maxSpeedsDiv);
 	}
 
-	let br = document.createElement('br');
+	const br = document.createElement('br');
 
-	let distsLabel = document.createElement('label');
+	const distsLabel = document.createElement('label');
 	distsLabel.classList.add('matter-switch');
 
-	let distsInput = document.createElement('input');
+	const distsInput = document.createElement('input');
 	distsInput.type = 'checkbox';
 	distsInput.value = 'UseDists';
 	distsInput.checked = disruptionDists;
 	distsInput.addEventListener('input', e => disruptionDists = e.target.checked);
 
-	let span = document.createElement('span');
+	const span = document.createElement('span');
 	span.innerHTML = 'Use Distributions';
 
 	distsLabel.append(distsInput);

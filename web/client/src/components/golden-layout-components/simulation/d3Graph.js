@@ -8,7 +8,7 @@ export class d3Graph {
 		this._width = width;
 		this._height = height;
 
-		let selected = d3.select(rootElement.querySelector('#simGraph'));
+		const selected = d3.select(rootElement.querySelector('#simGraph'));
 
 		this._svg = selected
 			.append('svg')
@@ -23,7 +23,7 @@ export class d3Graph {
 		this._d3_graph = this._svg
 			.append('g');
 
-		let selectedDistGraph = d3.select(rootElement.querySelector('#distGraph'));
+		const selectedDistGraph = d3.select(rootElement.querySelector('#distGraph'));
 
 		this._dist_svg = selectedDistGraph.append('svg')
 			.attr('width', '100%')
@@ -74,14 +74,14 @@ export class d3Graph {
 	}
 
 	getTrainEdgeSourceCoords(sourceID) {
-		let sourceCoords = this.getCoords(sourceID);
+		const sourceCoords = this.getCoords(sourceID);
 		sourceCoords[0] += nodeWidth;
 		sourceCoords[1] += nodeHeight / 2;
 		return sourceCoords;
 	}
 
 	getTrainEdgeTargetCoords(targetID) {
-		let targetCoords = this.getCoords(targetID);
+		const targetCoords = this.getCoords(targetID);
 		targetCoords[1] += nodeHeight / 2;
 		return targetCoords;
 	}
@@ -106,7 +106,7 @@ export class d3Graph {
 	}
 
 	createNodes() {
-		let nodes = this._d3_graph
+		const nodes = this._d3_graph
 			.selectAll('node')
 			.data(iterate(this._sim_graph.nodes));
 
@@ -177,7 +177,7 @@ export class d3Graph {
 
 		console.log('inks', this._links);
 
-		let linkGen = d3.linkHorizontal()
+		const linkGen = d3.linkHorizontal()
 			.source(d => d.type === 'trainEdge' ?
 				this.getTrainEdgeSourceCoords(d.source) : this.getOrderEdgeCoords(d.target, d.source))
 			.target(d => d.type === 'trainEdge' ?
@@ -192,7 +192,7 @@ export class d3Graph {
 			}
 		};
 
-		var types = ['trainEdge', 'orderEdge'];
+		const types = ['trainEdge', 'orderEdge'];
 		this._svg.append('defs').selectAll('marker')
 			.data(types)
 			.join('marker')

@@ -73,7 +73,7 @@ export class ClickTooltip extends Tooltip {
 	click(event, getX, getY) {
 		super.show(getX(event), getY(event));
 
-		let permanentTooltip = this._mouse_tooltip.clone(true);
+		const permanentTooltip = this._mouse_tooltip.clone(true);
 		makeIntoPermanent(permanentTooltip);
 		super.hide();
 	}
@@ -108,7 +108,7 @@ export class HoverTooltip extends Tooltip {
 	}
 
 	click() {
-		let permanentTooltip = this._mouse_tooltip.clone(true);
+		const permanentTooltip = this._mouse_tooltip.clone(true);
 		makeIntoPermanent(permanentTooltip);
 	}
 }

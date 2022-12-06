@@ -3,7 +3,7 @@ import { elementTypes } from './elementTypes.js';
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
 export const infrastructureMapStyle = (() => {
-	let style = {
+	const style = {
 		'version': 8,
 		'sources': {
 			'osm': {

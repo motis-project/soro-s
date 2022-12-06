@@ -256,7 +256,7 @@ export default {
 		onSubOverlayCloseClicked() {
 			this.hideSubOverlay();
 
-			for (let overlayTab of this.$refs.subOverlayTabs.children) {
+			for (const overlayTab of this.$refs.subOverlayTabs.children) {
 				overlayTab.classList.remove('enabled');
 			}
 		},

@@ -1,53 +1,55 @@
 <template>
-  <div style="position: relative">
-    <div ref="GLRoot" style="position: absolute; width: 100%; height: 100%">
-      <!-- Root dom for Golden-Layout manager -->
-    </div>
-    <div style="position: absolute; width: 100%; height: 100%">
-      <gl-component
-          v-for="pair in AllComponents"
-          :key="pair[0]"
-          :ref="GlcKeyPrefix + pair[0]"
-      >
-        <component
-            :is="pair[1].glc"
-            :container="pair[1].container"
-        />
-      </gl-component>
-    </div>
-  </div>
+	<div style="position: relative">
+		<div
+			ref="GLRoot"
+			style="position: absolute; width: 100%; height: 100%"
+		/>
+		<!-- Root dom for Golden-Layout manager -->
+		<div style="position: absolute; width: 100%; height: 100%">
+			<gl-component
+				v-for="pair in AllComponents"
+				:key="pair[0]"
+				:ref="GlcKeyPrefix + pair[0]"
+			>
+				<component
+					:is="pair[1].glc"
+					:container="pair[1].container"
+				/>
+			</gl-component>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
 import {
-  onMounted,
-  ref,
-  markRaw,
-  readonly,
-  defineAsyncComponent,
-  nextTick,
-  getCurrentInstance,
-} from "vue";
+	onMounted,
+	ref,
+	markRaw,
+	readonly,
+	defineAsyncComponent,
+	nextTick,
+	getCurrentInstance,
+} from 'vue';
 import {
-  ComponentContainer,
-  Json,
-  LayoutConfig,
-  RowOrColumnItemConfig,
-  StackItemConfig,
-  ComponentItemConfig,
-  ResolvedComponentItemConfig,
-  LogicalZIndex,
-  VirtualLayout,
-  ResolvedLayoutConfig,
-} from "golden-layout";
-import GlComponent from "./GlComponent.vue";
+	ComponentContainer,
+	Json,
+	LayoutConfig,
+	RowOrColumnItemConfig,
+	StackItemConfig,
+	ComponentItemConfig,
+	ResolvedComponentItemConfig,
+	LogicalZIndex,
+	VirtualLayout,
+	ResolvedLayoutConfig,
+} from 'golden-layout';
+import GlComponent from './GlComponent.vue';
 
 /*******************
  * Data
  *******************/
 const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
-const GlcKeyPrefix = readonly(ref("glc_"));
+const GlcKeyPrefix = readonly(ref('glc_'));
 
 const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
 const AllComponents = ref(new Map<number, { glc: any; container?: ComponentContainer }>());
@@ -62,77 +64,78 @@ const instance = getCurrentInstance();
  *******************/
 /** @internal */
 const addComponent = (componentType: string, title: string) => {
-  const glc = markRaw(
-      defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
-  );
+	const glc = markRaw(
+		defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
+	);
 
-  let index = CurIndex;
-  if (UnusedIndexes.length > 0) index = UnusedIndexes.pop() as number;
-  else CurIndex++;
+	let index = CurIndex;
+	if (UnusedIndexes.length > 0) index = UnusedIndexes.pop() as number;
+	else CurIndex++;
 
-  AllComponents.value.set(index, { glc });
+	AllComponents.value.set(index, { glc });
 
-  return index;
+	return index;
 };
 
 const addGLComponent = async (componentType: string, title: string) => {
-  if (componentType.length == 0)
-    throw new Error("addGLComponent: Component's type is empty");
+	if (componentType.length == 0)
+		throw new Error('addGLComponent: Component\'s type is empty');
 
-  const index = addComponent(componentType, title);
+	const index = addComponent(componentType, title);
 
-  await nextTick(); // wait 1 tick for vue to add the dom
+	await nextTick(); // wait 1 tick for vue to add the dom
 
-  GLayout.addComponent(componentType, { refId: index }, title);
+	GLayout.addComponent(componentType, { refId: index }, title);
 };
 
 const loadGLLayout = async (
-    layoutConfig: LayoutConfig | ResolvedLayoutConfig
+	layoutConfig: LayoutConfig | ResolvedLayoutConfig
 ) => {
-  GLayout.clear();
-  AllComponents.value.clear();
+	GLayout.clear();
+	AllComponents.value.clear();
 
-  const config = (
-      layoutConfig.resolved
-          ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
-          : layoutConfig
+	const config = (
+      Object.hasOwn(layoutConfig, 'resolved') // TODO simplify
+      	? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
+      	: layoutConfig
   ) as LayoutConfig;
 
-  let contents: (
-      | RowOrColumnItemConfig[]
-      | StackItemConfig[]
-      | ComponentItemConfig[]
-      )[] = [config.root.content];
+	if (!config.root) {
+		throw new Error('GoldenLayout: Root element not found');
+	}
 
-  let index = 0;
-  while (contents.length > 0) {
-    const content = contents.shift() as
+	const contents = [config.root.content];
+
+	let index = 0;
+	while (contents.length > 0) {
+		const content = contents.shift() as
         | RowOrColumnItemConfig[]
         | StackItemConfig[]
         | ComponentItemConfig[];
-    for (let itemConfig of content) {
-      if (itemConfig.type == "component") {
-        index = addComponent(
+		for (const itemConfig of content) {
+			if (itemConfig.type == 'component') {
+				index = addComponent(
             itemConfig.componentType as string,
             itemConfig.title as string
-        );
-        if (typeof itemConfig.componentState == "object")
-          itemConfig.componentState["refId"] = index;
-        else itemConfig.componentState = { refId: index };
-      } else if (itemConfig.content.length > 0) {
-        contents.push(
+				);
+				if (typeof itemConfig.componentState === 'object' && itemConfig.componentState)
+				// @ts-ignore
+					itemConfig.componentState['refId'] = index;
+				else itemConfig.componentState = { refId: index };
+			} else if (itemConfig.content.length > 0) {
+				contents.push(
             itemConfig.content as
                 | RowOrColumnItemConfig[]
                 | StackItemConfig[]
                 | ComponentItemConfig[]
-        );
-      }
-    }
-  }
+				);
+			}
+		}
+	}
 
-  await nextTick(); // wait 1 tick for vue to add the dom
+	await nextTick(); // wait 1 tick for vue to add the dom
 
-  GLayout.loadLayout(config);
+	GLayout.loadLayout(config);
 };
 
 const getLayoutConfig = () => {return GLayout.saveLayout();};
@@ -141,120 +144,122 @@ const getLayoutConfig = () => {return GLayout.saveLayout();};
  * Mount
  *******************/
 onMounted(() => {
-  if (GLRoot.value == null)
-    throw new Error("Golden Layout can't find the root DOM!");
+	if (GLRoot.value == null)
+		throw new Error('Golden Layout can\'t find the root DOM!');
 
-  const onResize = () => {
-    const dom = GLRoot.value;
-    let width = dom ? dom.offsetWidth : 0;
-    let height = dom ? dom.offsetHeight : 0;
-    GLayout.setSize(width, height);
-  };
+	const onResize = () => {
+		const dom = GLRoot.value;
+		const width = dom ? dom.offsetWidth : 0;
+		const height = dom ? dom.offsetHeight : 0;
+		GLayout.setSize(width, height);
+	};
 
-  window.addEventListener("resize", onResize, { passive: true });
+	window.addEventListener('resize', onResize, { passive: true });
 
-  const handleBeforeVirtualRectingEvent = (count: number) => {
-    GlBoundingClientRect = (GLRoot.value as HTMLElement).getBoundingClientRect();
-  };
+	const handleBeforeVirtualRectingEvent = () => {
+		GlBoundingClientRect = (GLRoot.value as HTMLElement).getBoundingClientRect();
+	};
 
-  const handleContainerVirtualRectingRequiredEvent = (
-      container: ComponentContainer,
-      width: number,
-      height: number
-  ): void => {
-    const component = MapComponents.get(container);
-    if (!component || !component?.glc) {
-      throw new Error("handleContainerVirtualRectingRequiredEvent: Component not found");
-    }
+	const handleContainerVirtualRectingRequiredEvent = (
+		container: ComponentContainer,
+		width: number,
+		height: number
+	): void => {
+		const component = MapComponents.get(container);
+		if (!component || !component?.glc) {
+			throw new Error('handleContainerVirtualRectingRequiredEvent: Component not found');
+		}
 
-    const containerBoundingClientRect =
+		const containerBoundingClientRect =
         container.element.getBoundingClientRect();
-    const left =
+		const left =
         containerBoundingClientRect.left - GlBoundingClientRect.left;
-    const top = containerBoundingClientRect.top - GlBoundingClientRect.top;
-    component.glc.setPosAndSize(left, top, width, height);
-  };
+		const top = containerBoundingClientRect.top - GlBoundingClientRect.top;
+		component.glc.setPosAndSize(left, top, width, height);
+	};
 
-  const handleContainerVirtualVisibilityChangeRequiredEvent = (
-      container: ComponentContainer,
-      visible: boolean
-  ): void => {
-    const component = MapComponents.get(container);
-    if (!component || !component?.glc) {
-      throw new Error("handleContainerVirtualVisibilityChangeRequiredEvent: Component not found");
-    }
+	const handleContainerVirtualVisibilityChangeRequiredEvent = (
+		container: ComponentContainer,
+		visible: boolean
+	): void => {
+		const component = MapComponents.get(container);
+		if (!component || !component?.glc) {
+			throw new Error('handleContainerVirtualVisibilityChangeRequiredEvent: Component not found');
+		}
 
-    component.glc.setVisibility(visible);
-  };
+		component.glc.setVisibility(visible);
+	};
 
-  const handleContainerVirtualZIndexChangeRequiredEvent = (
-      container: ComponentContainer,
-      logicalZIndex: LogicalZIndex,
-      defaultZIndex: string
-  ): void => {
-    const component = MapComponents.get(container);
-    if (!component || !component?.glc) {
-      throw new Error("handleContainerVirtualZIndexChangeRequiredEvent: Component not found");
-    }
+	const handleContainerVirtualZIndexChangeRequiredEvent = (
+		container: ComponentContainer,
+		logicalZIndex: LogicalZIndex,
+		defaultZIndex: string
+	): void => {
+		const component = MapComponents.get(container);
+		if (!component || !component?.glc) {
+			throw new Error('handleContainerVirtualZIndexChangeRequiredEvent: Component not found');
+		}
 
-    component.glc.setZIndex(defaultZIndex);
-  };
+		component.glc.setZIndex(defaultZIndex);
+	};
 
-  const bindComponentEventListener = (
-      container: ComponentContainer,
-      itemConfig: ResolvedComponentItemConfig
-  ): ComponentContainer.BindableComponent => {
-    let refId = -1;
-    if (itemConfig && itemConfig.componentState) {
-      refId = (itemConfig.componentState as Json).refId as number;
-    } else {
-      throw new Error("bindComponentEventListener: component's ref id is required");
-    }
+	const bindComponentEventListener = (
+		container: ComponentContainer,
+		itemConfig: ResolvedComponentItemConfig
+	): ComponentContainer.BindableComponent => {
+		let refId = -1;
+		if (itemConfig && itemConfig.componentState) {
+			refId = (itemConfig.componentState as Json).refId as number;
+		} else {
+			throw new Error('bindComponentEventListener: component\'s ref id is required');
+		}
 
-    const ref = GlcKeyPrefix.value + refId;
-    const component = instance?.refs[ref][0] as typeof GlComponent;
+		const ref = GlcKeyPrefix.value + refId;
+		// @ts-ignore
+		const component = instance?.refs[ref][0] as typeof GlComponent;
 
-    MapComponents.set(container, { refId: refId, glc: component });
-    AllComponents.value.get(refId).container = container;
+		MapComponents.set(container, { refId, glc: component });
+		// @ts-ignore
+		AllComponents.value.get(refId).container = container;
 
-    container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent.bind(this);
-    container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent.bind(this);
-    container.virtualZIndexChangeRequiredEvent = handleContainerVirtualZIndexChangeRequiredEvent.bind(this);
+		container.virtualRectingRequiredEvent = handleContainerVirtualRectingRequiredEvent.bind(this);
+		container.virtualVisibilityChangeRequiredEvent = handleContainerVirtualVisibilityChangeRequiredEvent.bind(this);
+		container.virtualZIndexChangeRequiredEvent = handleContainerVirtualZIndexChangeRequiredEvent.bind(this);
 
-    return {
-      component,
-      virtual: true,
-    };
-  };
+		return {
+			component,
+			virtual: true,
+		};
+	};
 
-  const unbindComponentEventListener = (
-      container: ComponentContainer
-  ): void => {
-    const component = MapComponents.get(container);
-    if (!component || !component?.glc) {
-      throw new Error("handleUnbindComponentEvent: Component not found");
-    }
+	const unbindComponentEventListener = (
+		container: ComponentContainer
+	): void => {
+		const component = MapComponents.get(container);
+		if (!component || !component?.glc) {
+			throw new Error('handleUnbindComponentEvent: Component not found');
+		}
 
-    MapComponents.delete(container);
-    AllComponents.value.delete(component.refId);
-    UnusedIndexes.push(component.refId);
-  };
+		MapComponents.delete(container);
+		AllComponents.value.delete(component.refId);
+		UnusedIndexes.push(component.refId);
+	};
 
-  GLayout = new VirtualLayout(
+	GLayout = new VirtualLayout(
       GLRoot.value as HTMLElement,
       bindComponentEventListener,
       unbindComponentEventListener
-  );
+	);
 
-  GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
+	GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
 });
 
 /*******************
  * Expose
  *******************/
 defineExpose({
-  addGLComponent,
-  loadGLLayout,
-  getLayoutConfig,
+	addGLComponent,
+	loadGLLayout,
+	getLayoutConfig,
 });
 </script>

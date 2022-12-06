@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 function cloneIntoPermanent(mouseTooltip, highlightedSSR) {
-	let permanentTooltip = mouseTooltip.clone(true);
+	const permanentTooltip = mouseTooltip.clone(true);
 
 	// on rightclick dismiss permanent tooltip
 	const rightclick = event => {

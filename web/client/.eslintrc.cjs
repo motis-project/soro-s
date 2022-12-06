@@ -1,23 +1,26 @@
 module.exports = { // TODO add TS support in ESLint
-	'env': {
-		'browser': true,
-		'es2021': true
+	root: true,
+	env: {
+		browser: true,
+		es2021: true
 	},
-	'extends': [
+	extends: [
 		'eslint:recommended',
 		'plugin:vue/vue3-essential',
 		'plugin:vue/vue3-recommended',
+		'@vue/eslint-config-typescript',
+		'@vue/eslint-config-typescript/recommended',
 	],
-	'overrides': [
-	],
-	'parserOptions': {
-		'ecmaVersion': 'latest',
-		'sourceType': 'module'
+	overrides: [],
+	parserOptions: {
+		ecmaVersion: 'latest',
+		sourceType: 'module'
 	},
-	'plugins': [
-		'vue'
+	plugins: [
+		'vue',
+		'@typescript-eslint'
 	],
-	'rules': {
+	rules: {
 		'indent': [
 			'error',
 			'tab'
@@ -45,7 +48,7 @@ module.exports = { // TODO add TS support in ESLint
 		'object-shorthand': [
 			'error',
 			'properties',
-			{ "avoidQuotes": true }
+			{ avoidQuotes: true }
 		],
 		'vue/html-indent': [
 			'error',
