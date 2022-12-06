@@ -146,19 +146,9 @@
           type: 'column',
           content: [
             {
-              title: 'Infrastructure',
+              title: 'Ordering Graph',
               type: 'component',
-              componentType: 'InfrastructureComponent',
-              componentState: {
-                getCurrentInfrastructure: () => {
-                  return undefined
-                }
-              }
-            },
-            {
-              title: 'Simulation',
-              type: 'component',
-              componentType: 'SimulationComponent',
+              componentType: 'OrderingGraphComponent',
             },
           ]
         }
