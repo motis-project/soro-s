@@ -43,6 +43,7 @@
 				</div>
 			</div>
 			<div class="station-detail-signal-routes">
+				<!-- TODO refactor collapsible to own component -->
 				<div class="wrap-collapsible">
 					<input
 						id="ssrCollapsible"
