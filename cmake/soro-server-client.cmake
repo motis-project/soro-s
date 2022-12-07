@@ -18,13 +18,12 @@ else ()
     set(SORO_SERVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
     file(MAKE_DIRECTORY ${SORO_SERVER_DIR})
 
+    add_custom_target(soro-client-production COMMAND npm run build WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/web/client/)
+    add_custom_command(TARGET soro-client-production POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/web/client/dist
+            ${SORO_SERVER_DIR}/server_resources)
+
     add_subdirectory(web/server/)
     add_dependencies(soro-server-client soro-server)
-
-    file(GLOB_RECURSE soro-client-files web/client/dist/ *.html *.css *.js *.ico *.png *.svg *.map)
-    foreach (file ${soro-client-files})
-        set(path ${file})
-        cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/web/client/dist OUTPUT_VARIABLE relative-path)
-        configure_file(${file} ${SORO_SERVER_DIR}/server_resources/${relative-path} COPYONLY)
-    endforeach ()
+    add_dependencies(soro-server-client soro-client-production)
 endif ()

@@ -19,4 +19,14 @@ npm run dev
 You can access the client with hmr now on the port shown in the console (usually [5173](http://localhost:5173)).
 
 ### Building the web interface for production
-###### TODOS
+ 
+If you never ran ninja before, run it now in your `build/{clang,gcc}-release` directory.
+```shell
+ninja 
+```
+
+Then simply execute
+```shell
+ninja soro-client-production
+```
+This target has also been added to the `soro-server-client` target for convenience.
