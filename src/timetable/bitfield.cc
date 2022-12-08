@@ -187,8 +187,8 @@ bitfield make_bitfield(date::year_month_day const first_date,
   std::fill(std::begin(buf), std::end(buf), '0');
 
   std::copy(bitmask, bitmask + bitmask_length,
-            std::end(buf) - static_cast<ssize_t>(bitmask_length));
-  std::reverse(std::end(buf) - static_cast<ssize_t>(bitmask_length),
+            std::end(buf) - static_cast<std::ptrdiff_t>(bitmask_length));
+  std::reverse(std::end(buf) - static_cast<std::ptrdiff_t>(bitmask_length),
                std::end(buf));
 
   std::string_view const bits_view{std::begin(buf), std::end(buf)};
