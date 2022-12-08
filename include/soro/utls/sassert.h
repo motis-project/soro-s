@@ -25,10 +25,8 @@ struct bool_with_loc {
                 unsigned line = __builtin_LINE(), unsigned column = 0)
 #else
   bool_with_loc(bool const b,  // NOLINT
-                const char* filename = "",
-                const char* function_name = "",
-                unsigned line = 0,
-                unsigned column = 0))
+                const char* filename = "", const char* function_name = "",
+                unsigned line = 0, unsigned column = 0)
 #endif
       : b_(b),
         filename_(filename),
