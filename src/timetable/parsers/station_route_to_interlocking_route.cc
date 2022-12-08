@@ -50,8 +50,8 @@ auto get_prefix_length(interlocking_route const& interlocking_route,
                        stop_sequence const& stop_sequence,
                        std::size_t const sr_offset) {
   auto sr1 = interlocking_route.station_routes_.begin();
-  auto sr2 =
-      std::begin(stop_sequence.points_) + static_cast<ssize_t>(sr_offset);
+  auto sr2 = std::begin(stop_sequence.points_) +
+             static_cast<std::ptrdiff_t>(sr_offset);
 
   std::size_t prefix_length = 0;
 

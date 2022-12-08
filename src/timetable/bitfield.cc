@@ -1,5 +1,7 @@
 #include "soro/timetable/bitfield.h"
 
+#include <array>
+
 #include "utl/verify.h"
 
 #include "soro/utls/sassert.h"
