@@ -57,11 +57,6 @@ bool adjust_speed_limits(interval_list& list, rs::train_physics const& tp) {
     if (interval.limit_right_ >= initial_speed && !interval.is_halt()) {
       continue;
     }
-    //    auto const initial_speed = std::min(interval.speed_limit_,
-    //    tv.max_speed()); if (!(next_interval.speed_limit_ < initial_speed ||
-    //    interval.halt_)) {
-    //      continue;
-    //    }
 
     auto const target_speed = interval.target_speed(tp);
     auto const& deaccel_results = brake(tp, initial_speed, target_speed);

@@ -34,17 +34,6 @@ struct section {
 
       co_yield e;
     }
-
-    //    if constexpr (Skip == skip::No) {
-    //      return utls::make_range(elements);
-    //    } else {
-    //      return utl::all(elements) | utl::remove_if([](element::ptr e) {
-    //               return e->is_directed_track_element() &&
-    //                      e->as<track_element>().rising_ !=
-    //                      static_cast<bool>(Dir);
-    //             }) |
-    //             utl::iterable();
-    //    }
   }
 
   std::size_t size() const { return rising_order_.size(); }

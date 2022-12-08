@@ -41,7 +41,6 @@ struct node {
   node::ptr next_node_{nullptr};
   node::ptr branch_node_{nullptr};
 
-  // TODO(julian) the max size here should be 4 -> static vector
   soro::vector<node::ptr> reverse_edges_{};
 };
 

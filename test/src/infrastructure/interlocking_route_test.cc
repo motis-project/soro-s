@@ -90,7 +90,7 @@ void interlocking_route_path_is_valid(interlocking_route const& ir,
 
   // check if start and end offset don't violate the station routes sizes
   CHECK_LT(ir.start_offset_, ir.first_sr(infra)->size());
-  CHECK_LT(ir.end_offset_, ir.last_sr(infra)->size());
+  CHECK_LE(ir.end_offset_, ir.last_sr(infra)->size());
 
   CHECK_MESSAGE(ir.valid_ends().contains(ir.first_node(infra)->type()),
                 "Interlocking route does not start on a valid type");
@@ -127,7 +127,6 @@ void check_interlocking_route_lengths(infrastructure const& infra) {
 
     CHECK_MESSAGE((e1 == s1),
                   "Different lengths from the two length calculation funs");
-    CHECK_EQ(ir.length_, e1);
   }
 }
 

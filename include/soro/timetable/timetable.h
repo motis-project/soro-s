@@ -11,7 +11,7 @@
 
 namespace soro::tt {
 
-enum class TimetableSource : uint8_t { NOT_FOUND, CSV, KSS };
+enum class TimetableSource : uint8_t { NOT_FOUND, KSS };
 
 struct timetable : utls::serializable<base_timetable> {
   using utls::serializable<base_timetable>::serializable;

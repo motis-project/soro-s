@@ -35,6 +35,10 @@ void check_infrastructure_stats(infrastructure_options const& opts) {
 
 TEST_CASE("get_infra_stats") {
   for (auto const& opts : soro::test::ALL_INFRA_OPTS) {
+    if (!std::filesystem::exists(opts.infrastructure_path_)) {
+      continue;
+    }
+
     check_infrastructure_stats(opts);
   }
 }

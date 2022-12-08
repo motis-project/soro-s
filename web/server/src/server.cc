@@ -16,6 +16,11 @@ struct server_settings {
                      UTL_DESC("where the server reads the resources from")>
       resource_dir_{"../../resources/"};
 
+  utl::cmd_line_flag<fs::path, UTL_LONG("--misc_dir"),
+                     UTL_DESC(
+                         "where the server reads the misc ressources from")>
+      misc_dir_{"../../resources/misc/"};
+
   utl::cmd_line_flag<fs::path, UTL_LONG("--server_resource_dir"),
                      UTL_DESC("where the server puts the generated resources")>
       server_resource_dir_{"server_resources/"};
@@ -62,7 +67,7 @@ int main(int argc, char const** argv) {
     return failed_startup();
   }
 
-  auto const coord_file = s.resource_dir_ / "misc" / "btrs_geo.csv";
+  auto const coord_file = s.misc_dir_ / "btrs_geo.csv";
 
   fs::path const tt_dir = s.server_resource_dir_ / "timetable";
   fs::path const infra_dir = s.server_resource_dir_ / "infrastructure";
@@ -103,6 +108,9 @@ int main(int argc, char const** argv) {
     soro::infra::infrastructure_options opts;
     opts.infrastructure_path_ = infra_file;
     opts.gps_coord_path_ = coord_file;
+    opts.determine_layout_ = true;
+    opts.determine_interlocking_ = false;
+    opts.determine_conflicts_ = false;
 
     soro::infra::infrastructure const infra(opts);
 

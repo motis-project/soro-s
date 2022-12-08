@@ -13,7 +13,7 @@ namespace soro::simulation::test {
 
 TEST_CASE("ordering graph - follow" * doctest::skip()) {
   for (auto const& scenario : soro::test::get_timetable_scenarios()) {
-    ordering_graph const og(scenario.infra_, scenario.timetable_);
+    ordering_graph const og(*scenario->infra_, scenario->timetable_);
   }
 }
 

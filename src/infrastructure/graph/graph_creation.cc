@@ -229,17 +229,6 @@ void set_neighbour(undirected_track_element& e, std::string const&,
     e.end_falling_neighbour() = neigh;
     return;
   }
-
-  //  if (rising) {
-  //    e.start_rising_neighbour() == nullptr ? e.start_rising_neighbour() =
-  //    neigh
-  //                                          : e.end_falling_neighbour() =
-  //                                          neigh;
-  //  } else {
-  //    e.end_rising_neighbour() == nullptr ? e.end_rising_neighbour() = neigh
-  //                                        : e.start_falling_neighbour() =
-  //                                        neigh;
-  //  }
 }
 
 void set_neighbour(cross& e, std::string const& name, element* neigh,

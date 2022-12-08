@@ -127,8 +127,9 @@ bitfield parse_services(xml_node const services_xml) {
 
       utls::sasserts([&]() {
         auto const bitmask_length = strlen(bitmask);
+        auto const dist = distance(start_date, end_date);
 
-        utls::sassert(bitmask_length == distance(start_date, end_date) + 1,
+        utls::sassert(bitmask_length == dist + 1,
                       "Bitmask has not the same size as distance between start "
                       "and end date!");
 

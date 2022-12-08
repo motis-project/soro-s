@@ -79,8 +79,6 @@ struct interlocking_route {
   node::idx start_offset_{node::INVALID_IDX};
   node::idx end_offset_{node::INVALID_IDX};
   soro::vector<station_route::id> station_routes_{};
-
-  si::length length_{si::INVALID<si::length>};
 };
 
 // shorthand aliases

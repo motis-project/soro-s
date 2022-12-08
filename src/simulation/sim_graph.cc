@@ -65,7 +65,7 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
   ssr_to_node_.resize(tt->trains_.size());
 
   for (auto const& tr : tt->trains_) {
-    sim_node::id const first_node = static_cast<sim_node::id>(nodes_.size());
+    auto const first_node = static_cast<sim_node::id>(nodes_.size());
 
     sim_node init_sn;
     init_sn.id_ = static_cast<sim_node::id>(nodes_.size());
@@ -115,7 +115,7 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
     }
   }
 
-  ordering_graph const og(infra, tt);
+  //  ordering_graph const og(infra, tt);
 
   // these are the ordering edges; these impose an order in which trains
   // use shared/contested resources (signal station routes)
@@ -218,7 +218,8 @@ TimeDPD fold_max(TimeDPD const& dpd1, TimeDPD const& dpd2) {
 }
 
 void simulation_result::compute_dists(const sim_node::id, sim_graph const&,
-                                      simulation_options const&) {
+                                      simulation_options const&) const {
+  std::ignore = this->results_;
   utls::sassert(false, "Not implemented");
 }
 

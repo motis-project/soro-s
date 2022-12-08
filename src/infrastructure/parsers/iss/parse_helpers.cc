@@ -9,7 +9,7 @@ namespace soro::infra {
 using namespace soro::utls;
 
 kilometrage parse_kilometrage(pugi::xml_node const& node) {
-  std::string_view kmp(node.child_value(KILOMETER_POINT));
+  std::string_view const kmp(node.child_value(KILOMETER_POINT));
 
   if (auto const pos = kmp.find('+'); pos != std::string::npos) {
     auto const base_km =

@@ -1,6 +1,8 @@
 #include "doctest/doctest.h"
 
 #include "utl/logging.h"
+#include "utl/parallel_for.h"
+#include "utl/timer.h"
 
 #include "soro/runtime/runtime.h"
 
@@ -41,14 +43,19 @@ void check_ascending_timestamps(timestamps const& ts) {
     CHECK_MESSAGE(valid(time_stamp.arrival_), "No valid arrival timestamp.");
     CHECK_MESSAGE(valid(time_stamp.departure_), "No valid arrival timestamp.");
 
-    if (valid(last_time_stamp.arrival_)) {
-      CHECK_MESSAGE((last_time_stamp.arrival_ <= time_stamp.arrival_),
-                    "Non increasing time stamps!");
-    }
+    if (last_time_stamp.element_->is_track_element() &&
+        time_stamp.element_->is_track_element()) {
+      auto const last_km = last_time_stamp.element_->get_km(nullptr);
+      auto const km = time_stamp.element_->get_km(nullptr);
 
-    if (valid(time_stamp.departure_)) {
-      CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.departure_),
-                    "Non increasing time stamps!");
+      if (last_km != km) {
+        CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.arrival_),
+                      "Non increasing time stamps!");
+      }
+    } else {
+      // TODO(julian) reenable this
+      //      CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.arrival_),
+      //                    "Non increasing time stamps!");
     }
 
     last_time_stamp = time_stamp;
@@ -97,7 +104,6 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
         avg_too_early += sp.arrival_ - ts.arrival_;
       }
 
-
       ++halt_id;
     }
   }
@@ -107,8 +113,13 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
   uLOG(info) << "Total delayed timestamps: " << delayed_count;
   uLOG(info) << "Total over punctual timestamps: " << too_early_count;
 
-  uLOG(info) << "AVG delay: " << avg_delay.count() / delayed_count;
-  uLOG(info) << "AVG too early: " << avg_too_early.count() / too_early_count;
+  if (avg_delay != duration2::zero()) {
+    uLOG(info) << "AVG delay: " << avg_delay.count() / delayed_count;
+  }
+
+  if (avg_too_early != duration2::zero()) {
+    uLOG(info) << "AVG too early: " << avg_too_early.count() / too_early_count;
+  }
 
   uLOG(info) << "Maximum delay: " << max_delay.count();
   uLOG(info) << "Maximum over punctuality: " << max_too_early.count();
@@ -166,32 +177,12 @@ void check_runtime(infrastructure const& infra, timetable const& tt) {
       infra, tt,
       {type::RUNTIME_CHECKPOINT_UNDIRECTED, type::RUNTIME_CHECKPOINT,
        type::APPROACH_SIGNAL, type::MAIN_SIGNAL, type::EOTD});
-  //  check_runtime_with_events(infra, tt, type_set{all_types()});
+  check_runtime_with_events(infra, tt, type_set{all_types()});
 }
 
-TEST_SUITE("overtake runtime") {
-  TEST_CASE("overtake") {  // NOLINT
-    infrastructure const infra(soro::test::SMALL_OPTS);
-    timetable const tt(soro::test::OVERTAKE_OPTS, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
-  }
-}
-
-TEST_SUITE("follow runtime") {
-  TEST_CASE("follow") {  // NOLINT
-    infrastructure const infra(soro::test::SMALL_OPTS);
-    timetable const tt(soro::test::FOLLOW_OPTS, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
-  }
-}
-
-TEST_SUITE("kss") {
-  TEST_CASE("kssruntime") {  // NOLINT
-    infrastructure const infra(soro::test::DE_ISS_OPTS);
-    timetable const tt(soro::test::DE_KSS_OPTS, infra);
-    //    check_runtime(infra, tt);
-    check_delays(infra, tt);
+TEST_CASE("runtime") {
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    check_runtime(*scenario->infra_, scenario->timetable_);
+    check_delays(*scenario->infra_, scenario->timetable_);
   }
 }

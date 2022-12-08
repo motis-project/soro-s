@@ -236,37 +236,14 @@ void runtime_calculation(train const& tr, infrastructure const& infra,
 
     if (interval.is_halt()) {
       auto const earliest_possible_dep =
-          interval_end_arrival + (*interval.sequence_point_)->min_stop_time_;
-      auto const planned_dep = (*interval.sequence_point_)->departure_;
+          interval_end_arrival + interval.min_stop_time();
+      auto const planned_dep = interval.departure();
 
       interval_end_departure = std::max(planned_dep, earliest_possible_dep);
 
       auto const stand_time = interval_end_departure - interval_end_arrival;
       current.time_ += relative_to_si_time(stand_time);
     }
-
-    //    // determine stand time for the halt, except the last one
-    //    if (interval.halt_ && inter_idx != il.size() - 2) {
-    //
-    //      auto const& halt_entry = train_run.entries_[next_halt_idx];
-    //
-    //      auto const earliest_possible_dep =
-    //          interval_end_arrival + halt_entry.min_stop_time_;
-    //      auto const planned_dep = halt_entry.departure_;
-    //      interval_end_departure = std::max(planned_dep,
-    //      earliest_possible_dep);
-    //
-    //      time stand_time{
-    //          static_cast<float>(interval_end_departure -
-    //          interval_end_arrival)};
-    //      current.time_ += stand_time;
-    //
-    //      next_halt_idx = get_next_halt_idx(train_run, next_halt_idx);
-    //    }
-
-    //    if (inter_idx == il.size() - 2) {
-    //      interval_end_departure = INVALID_TIME;
-    //    }
 
     determine_event_timestamps(prev_interval, interval,
                                interval_start_departure, interval_end_arrival,
@@ -287,7 +264,10 @@ timestamps runtime_calculation(train const& tr, infrastructure const& infra,
     utls::sassert(ts.times_.empty() || valid(arrival),
                   "Only the first timestamp can have invalid arrival");
     utls::sassert(departure >= arrival);
-    utls::sassert(ts.times_.empty() || arrival >= ts.times_.back().departure_);
+    // TODO(julian) reenable this, after improving the condition.
+    // elements on the same kilometrage do not necessarily have to be
+    // in ascending order
+    // utls::sassert(ts.times_.empty() || arrival >= ts.times_.back().departure_);
 
     if (element->is(type::HALT)) {
       ts.halt_indices_.push_back(ts.times_.size());

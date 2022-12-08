@@ -19,16 +19,9 @@ struct event {
 };
 
 struct interval {
-  interval(si::length const dist, si::speed const left_limit)
-      : distance_{dist}, speed_limit_{left_limit} {}
-
-  interval(si::length const dist, si::speed const limit, bool const,
-           infra::type const element)
-      : distance_{dist}, speed_limit_{limit}, elements_{element} {}
-
   interval(si::length const dist, si::speed const left_limit,
            si::speed const right_limit, tt::sequence_point::optional_ptr sp,
-           std::vector<event>& events)
+           std::vector<event> events)
       : distance_(dist),
         limit_left_{left_limit},
         limit_right_{right_limit},
@@ -50,6 +43,16 @@ struct interval {
 
   bool is_halt() const { return sequence_point_.has_value(); }
 
+  duration2 min_stop_time() const {
+    utls::sassert(is_halt(), "Asking for min stop time on non-halt interval");
+    return (*sequence_point_)->min_stop_time_;
+  }
+
+  relative_time departure() const {
+    utls::sassert(is_halt(), "Asking for departure time on non-halt interval");
+    return (*sequence_point_)->departure_;
+  }
+
   si::speed target_speed() const {
     return is_halt() ? si::ZERO<si::speed> : limit_right_;
   }
@@ -62,14 +65,9 @@ struct interval {
   si::speed limit_left_{si::INVALID<si::speed>};
   si::speed limit_right_{si::INVALID<si::speed>};
 
-public:
   tt::sequence_point::optional_ptr sequence_point_{};
 
   std::vector<event> events_;
-
-  // deprecated
-  si::speed speed_limit_{si::INVALID<si::speed>};
-  std::vector<infra::type> elements_;
 };
 
 using interval_list = soro::vector<interval>;

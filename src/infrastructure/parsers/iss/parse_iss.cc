@@ -555,7 +555,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     }
 
     soro::vector<node::idx> main_signals;
-    for (node::idx idx = 0UL; idx < nodes.size(); ++idx) {
+    for (auto idx = 0U; idx < nodes.size(); ++idx) {
       auto const& node = nodes[idx];
       if (node->is(type::MAIN_SIGNAL) && !omitted_main_signals.contains(node)) {
         main_signals.emplace_back(static_cast<node::idx>(idx));
@@ -792,7 +792,7 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
 
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
-    station_route::id const sr_id = static_cast<station_route::id>(
+    auto const sr_id = static_cast<station_route::id>(
         mats.intermediate_station_routes_.size());
 
     auto const publish_only = xml_sr.child(PUBLISH_ONLY);

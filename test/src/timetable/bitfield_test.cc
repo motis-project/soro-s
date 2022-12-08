@@ -10,7 +10,6 @@ using namespace soro;
 using namespace soro::tt;
 
 TEST_SUITE("bitfield") {
-
   TEST_CASE("construct bitfield") {
     year_month_day const s = 2022_y / February / 22;
     year_month_day const t = 2022_y / March / 1;

@@ -10,10 +10,7 @@
       "name": "base-preset",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "environment": {
-        "EMSDK": "${sourceDir}/deps/emsdk/"
-      }
+      "binaryDir": "${sourceDir}/build/${presetName}"
     },
     {
       "name": "clang-preset",

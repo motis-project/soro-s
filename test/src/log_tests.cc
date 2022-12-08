@@ -60,13 +60,29 @@ void log_possible_speed_limit_values(infrastructure const& infra) {
   uLOG(info) << "In total: " << possible_values.size();
 }
 
-void logs(infrastructure const& infra) {
+void log_timetable_stats(timetable const& tt) {
+  soro::size_t avg_length_in_irs = 0;
+  soro::size_t avg_service_days = 0;
+
+  for (auto const& train : tt->trains_) {
+    avg_length_in_irs += train.path_.size();
+    avg_service_days += train.service_days_.count();
+  }
+
+  uLOG(info) << "Average train length in interlocking routes: "
+             << avg_length_in_irs / tt->trains_.size();
+  uLOG(info) << "Average train service days: "
+             << avg_service_days / tt->trains_.size();
+}
+
+void logs(infrastructure const& infra, timetable const& tt) {
   log_main_signal_in_station_routes_stats(infra);
   log_possible_speed_limit_values(infra);
+  log_timetable_stats(tt);
 }
 
 TEST_CASE("log infrastructure stats") {  // NOLINT
-  for (auto const& infra : soro::test::get_infrastructure_scenarios()) {
-    logs(infra);
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    logs(*scenario->infra_, scenario->timetable_);
   }
 }

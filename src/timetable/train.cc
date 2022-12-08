@@ -47,6 +47,7 @@ std::size_t train::total_halts() const {
 }
 
 bool train::effected_by(speed_limit const& spl) const {
+  std::ignore = this->freight();
   return spl.type_ == speed_limit::type::GENERAL_ALLOWED &&
          // ignore speed limits with limit == 0 for now.
          !si::is_zero(spl.limit_) &&

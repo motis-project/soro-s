@@ -24,6 +24,7 @@ auto get_successors_from_through_route(station_route::ptr sr) {
 }
 
 auto get_successors_from_in_route(station_route::ptr, graph const&) {
+  // TODO(julian) whats with this?
   soro::vector<station_route::ptr> succs;
   return succs;
 

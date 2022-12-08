@@ -293,6 +293,7 @@ std::pair<soro::vector<gps>, soro::vector<gps>> layout_to_gps(
   soro::vector<gps> adjusted_station_coords;
 
   adjusted_station_coords = interpolate_coordinates(stations, station_coords);
+  // TODO(julian) enable this
   //  adjusted_station_coords = resolve_overlaps(stations,
   //  adjusted_station_coords);
 

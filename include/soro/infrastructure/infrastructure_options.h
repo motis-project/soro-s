@@ -17,8 +17,8 @@ struct infrastructure_options {
   CISTA_COMPARABLE()
 
   bool determine_interlocking_{true};
-  bool determine_conflicts_{false};
-  bool determine_layout_{false};
+  bool determine_conflicts_{true};
+  bool determine_layout_{true};
 
   std::filesystem::path gps_coord_path_{""};
   std::filesystem::path infrastructure_path_{""};

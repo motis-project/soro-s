@@ -96,16 +96,8 @@ void check_interval_list(infrastructure const& infra, timetable const& tt) {
   }
 }
 
-TEST_SUITE("interval") {
-  TEST_CASE("interval case") {
-    infrastructure const infra(soro::test::SMALL_OPTS);
-    timetable const tt(soro::test::FOLLOW_OPTS, infra);
-    check_interval_list(infra, tt);
-  }
-
-  TEST_CASE("kssinterval") {
-    infrastructure const infra(soro::test::DE_ISS_OPTS);
-    timetable const tt(soro::test::DE_KSS_OPTS, infra);
-    check_interval_list(infra, tt);
+TEST_CASE("interval") {
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    check_interval_list(*scenario->infra_, scenario->timetable_);
   }
 }

@@ -65,12 +65,12 @@ struct sorted_wrapper {
 //  requires c1 and c2 to be sorted
 template <typename Range1, typename Range2, bool AssertSort = true>
 bool overlap(Range1 const& c1, Range2 const& c2) {
-  //  if constexpr (AssertSort) {
-  //    utl::verify(std::is_sorted(std::cbegin(c1), std::cend(c1)),
-  //                "Must be sorted");
-  //    utl::verify(std::is_sorted(std::cbegin(c2), std::cend(c2)),
-  //                "Must be sorted");
-  //  }
+  if constexpr (AssertSort) {
+    utl::verify(std::is_sorted(std::cbegin(c1), std::cend(c1)),
+                "Must be sorted");
+    utl::verify(std::is_sorted(std::cbegin(c2), std::cend(c2)),
+                "Must be sorted");
+  }
 
   size_t idx1 = 0;
   size_t idx2 = 0;

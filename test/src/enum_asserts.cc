@@ -13,7 +13,6 @@ using namespace soro::utls;
 using namespace soro::infra;
 
 TEST_SUITE("static asserts") {
-
   TEST_CASE("ctc") {
     static_assert(!static_cast<bool>(CTC::NO));
     static_assert(static_cast<bool>(CTC::YES));

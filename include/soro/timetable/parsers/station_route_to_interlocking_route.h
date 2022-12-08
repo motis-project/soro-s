@@ -2,7 +2,6 @@
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/rolling_stock/freight.h"
-#include "soro/timetable/parsers/raw_to_trains.h"
 #include "soro/timetable/stop_sequence.h"
 
 namespace soro::tt {

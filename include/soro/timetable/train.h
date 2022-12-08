@@ -29,7 +29,7 @@ struct stop_time {
 struct train_node : infra::route_node {
   train_node(route_node const& rn, sequence_point::optional_ptr sp);
 
-  bool omitted() const;
+  bool omitted() const;  // NOLINT
 
   sequence_point::optional_ptr sequence_point_;
 };

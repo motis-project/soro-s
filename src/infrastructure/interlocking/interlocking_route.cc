@@ -227,14 +227,11 @@ utls::generator<sub_path> interlocking_route::iterate_station_routes(
         .station_route_ = sr, .from_ = start_offset_, .to_ = end_offset_};
   } else {
     auto const first_sr = infra.station_routes_[station_routes_.front()];
-    //    std::cout << "yielding sr: " << station_routes_.front() << std::endl;
-    //    std::cout << "yielding sr with offset: " << first_sr.offset_ <<
-    //    std::endl;
     co_yield sub_path{.station_route_ = first_sr,
                       .from_ = start_offset_,
                       .to_ = first_sr->size()};
 
-    for (sr_offset i = 1; i < station_routes_.size() - 1; ++i) {
+    for (soro::size_t i = 1; i < station_routes_.size() - 1; ++i) {
       auto const sr = infra.station_routes_[station_routes_[i]];
       co_yield sub_path{.station_route_ = sr, .from_ = 0, .to_ = sr->size()};
     }

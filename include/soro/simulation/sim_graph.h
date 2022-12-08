@@ -80,7 +80,7 @@ struct simulation_result {
   sim_node_result const& operator[](uint32_t const idx) const noexcept;
 
   void compute_dists(sim_node::id const sn_id, sim_graph const& sg,
-                     simulation_options const& opts);
+                     simulation_options const& opts) const;
 
   soro::vector<sim_node_result> results_;
 };

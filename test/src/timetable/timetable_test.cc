@@ -131,8 +131,7 @@ void check_timetable(timetable const& tt, infrastructure const& infra) {
 }
 
 TEST_CASE("timetable test") {
-  for (auto const& scenario :
-       soro::test::get_timetable_scenarios(soro::test::DE_SCENARIO)) {
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
 
 #if defined(SERIALIZE)
     scenario.infra_.save("infra.raw");
@@ -141,8 +140,8 @@ TEST_CASE("timetable test") {
     infrastructure const infra("infra.raw");
     timetable const tt("tt.raw");
 #else
-    auto const& infra = scenario.infra_;
-    auto const& tt = scenario.timetable_;
+    auto const& infra = *scenario->infra_;
+    auto const& tt = scenario->timetable_;
 #endif
 
     check_timetable(tt, infra);

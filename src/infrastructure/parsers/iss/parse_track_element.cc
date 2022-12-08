@@ -170,9 +170,6 @@ element* parse_track_element(xml_node const& track_node, type const type,
                              bool const rising, line_id const line,
                              graph& network, station& station,
                              construction_materials& mats) {
-  // TODO(julian) parse order according to typecode
-  // TOOD(julian) parse direction for *B elements correctly
-
   auto element = create_element(network, station, mats, type,
                                 parse_rp_node_id(track_node), rising);
 

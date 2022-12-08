@@ -1,15 +1,10 @@
 #include "soro/timetable/timetable.h"
 
-#include "soro/timetable/parsers/csv/parse_csv_timetable.h"
 #include "soro/timetable/parsers/kss/parse_kss_timetable.h"
 
 namespace soro::tt {
 
 TimetableSource get_source_type(timetable_options const& opts) {
-  if (is_csv_timetable(opts)) {
-    return TimetableSource::CSV;
-  }
-
   if (is_kss_timetable(opts)) {
     return TimetableSource::KSS;
   }
@@ -22,10 +17,6 @@ timetable::timetable(timetable_options const& opts,
     : source_type_{get_source_type(opts)} {
 
   switch (source_type_) {
-    case TimetableSource::CSV: {
-      mem_ = parse_csv_timetable(opts, infra);
-      break;
-    }
     case TimetableSource::KSS: {
       mem_ = parse_kss_timetable(opts, infra);
       break;

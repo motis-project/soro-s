@@ -147,8 +147,7 @@ TEST_CASE("parse infrastructure") {
     auto const& infra = not_serialized;
 #endif
 
-    CAPTURE(infra->source_);
-    check_infra(infra);
+    check_infra(*infra);
   }
 }
 
