@@ -99,7 +99,8 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
         .ir_id_ = interlocking_route::INVALID,
     });
 
-    train_to_sim_nodes_[tr.id_] = {first_node, nodes_.size()};
+    train_to_sim_nodes_[tr.id_] = {first_node,
+                                   static_cast<sim_node::id>(nodes_.size())};
   }
 
   // --- Create simulation graph edges --- //
