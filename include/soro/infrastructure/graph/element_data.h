@@ -16,6 +16,10 @@ struct eotd {
   bool signal_{false};
 };
 
+struct main_signal {
+  soro::string name_;
+};
+
 struct slope {
   si::per_mille rising_{si::INVALID<si::per_mille>};
   si::per_mille falling_{si::INVALID<si::per_mille>};
@@ -75,6 +79,7 @@ struct speed_limit {
   soro::ptr<node> node_{nullptr};
 };
 
-using element_data_t = soro::variant<empty, eotd, slope, halt, speed_limit>;
+using element_data_t =
+    soro::variant<empty, eotd, slope, halt, speed_limit, main_signal>;
 
 }  // namespace soro::infra
