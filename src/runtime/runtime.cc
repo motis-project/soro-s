@@ -267,7 +267,8 @@ timestamps runtime_calculation(train const& tr, infrastructure const& infra,
     // TODO(julian) reenable this, after improving the condition.
     // elements on the same kilometrage do not necessarily have to be
     // in ascending order
-    // utls::sassert(ts.times_.empty() || arrival >= ts.times_.back().departure_);
+    // utls::sassert(ts.times_.empty() || arrival >=
+    // ts.times_.back().departure_);
 
     if (element->is(type::HALT)) {
       ts.halt_indices_.push_back(ts.times_.size());

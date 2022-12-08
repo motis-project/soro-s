@@ -7,7 +7,9 @@ namespace soro::utls {
 template <typename Result, typename Iterable>
 concept yields =
     requires(Iterable i) {
-      { *(i.begin()) } -> is_any_of<Result, Result&, Result const, Result const&>;
+      {
+        *(i.begin())
+        } -> is_any_of<Result, Result&, Result const, Result const&>;
 
       {
         *(std::begin(i))
