@@ -65,7 +65,7 @@ jobs:
       - name: Run Server
         run: |
           cd ./build/${{ matrix.config.preset }}
-          ./soro-server -t
+          ./soro-server -t --resource_dir ../../resources
 
       # ==== DISTRIBUTION ====
       - name: Create Distribution

@@ -12,12 +12,7 @@ namespace fs = std::filesystem;
 struct server_settings {
   utl::cmd_line_flag<fs::path, UTL_LONG("--resource_dir"),
                      UTL_DESC("where the server reads the resources from")>
-      resource_dir_{"../../resources/"};
-
-  utl::cmd_line_flag<fs::path, UTL_LONG("--misc_dir"),
-                     UTL_DESC(
-                         "where the server reads the misc ressources from")>
-      misc_dir_{"../../resources/misc/"};
+      resource_dir_{"server_resources/resources/"};
 
   utl::cmd_line_flag<fs::path, UTL_LONG("--server_resource_dir"),
                      UTL_DESC("where the server puts the generated resources")>
@@ -65,7 +60,7 @@ int main(int argc, char const** argv) {
     return failed_startup();
   }
 
-  auto const coord_file = s.misc_dir_ / "btrs_geo.csv";
+  auto const coord_file = s.server_resource_dir_ / "misc" / "btrs_geo.csv";
 
   fs::path const tt_dir = s.server_resource_dir_ / "timetable";
   fs::path const infra_dir = s.server_resource_dir_ / "infrastructure";
