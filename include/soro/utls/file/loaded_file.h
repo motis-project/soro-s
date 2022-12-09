@@ -36,7 +36,7 @@ inline std::string read_file_to_string(std::filesystem::path const& fp) {
 
 struct loaded_file {
   explicit loaded_file(std::filesystem::path const& p) : path_{p} {
-      contents_ = read_file_to_string(p);
+    contents_ = read_file_to_string(p);
   }
 
   std::size_t size() const { return contents_.size(); }
@@ -56,9 +56,9 @@ struct loaded_file {
   }
 
   std::size_t size() const { return contents_.size(); }
-  uint8_t* begin() const { return contents_.begin(); }
-  uint8_t* end() const { return contents_.end(); }
-  uint8_t* data() const { return contents_.data(); }
+  uint8_t const* begin() const { return contents_.begin(); }
+  uint8_t const* end() const { return contents_.end(); }
+  uint8_t const* data() const { return contents_.data(); }
 
   std::filesystem::path path_;
   cista::mmap contents_;
