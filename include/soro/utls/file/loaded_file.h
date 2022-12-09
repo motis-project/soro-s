@@ -36,7 +36,7 @@ inline std::string read_file_to_string(std::filesystem::path const& fp) {
 
 struct loaded_file {
   explicit loaded_file(std::filesystem::path const& p) : path_{p} {
-      contents_ = read_file_to_string(p);
+    contents_ = read_file_to_string(p);
   }
 
   std::size_t size() const { return contents_.size(); }
