@@ -128,7 +128,7 @@ std::pair<node::idx, node::idx> fast_forward_indices(station_route const& r,
 }
 
 utls::recursive_generator<route_node> station_route::iterate() const {
-  return from_to(0, size());
+  co_yield from_to(0, size());
 }
 
 utls::recursive_generator<route_node> station_route::from_to(

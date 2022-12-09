@@ -190,9 +190,11 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
                   "To station route is located before from station route in "
                   "interlocking route iterator.");
 
-    co_yield *from_it == *to_it
-        ? infra->station_routes_[*from_it]->from_to(from, to)
-        : detail::from_to(this, from_it, from, to_it, to, infra);
+    if (*from_it == *to_it) {
+      co_yield infra->station_routes_[*from_it]->from_to(from, to);
+    } else {
+      co_yield detail::from_to(this, from_it, from, to_it, to, infra);
+    }
   }
 }
 
