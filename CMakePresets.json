@@ -142,6 +142,17 @@
       }
     },
     {
+      "name": "msvc-relwithdebinfo",
+      "displayName": "MSVC RelWithDebInfo",
+      "inherits": [
+        "base-preset",
+        "msvc-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "msvc-debug",
       "displayName": "MSVC Debug",
       "inherits": [
