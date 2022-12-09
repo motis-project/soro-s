@@ -49,3 +49,40 @@ jobs:
       # ==== TESTS ====
       - name: Run Tests
         run: .\build\${{ matrix.config.preset }}\soro-test.exe
+
+      # ==== WEB BUILD ====
+      - name: Build
+        run: |
+          cmake --build build\${{ matrix.config.preset }} --target soro-server-client
+
+      # ==== WEB TESTS ====
+      - name: Run Server
+        run: |
+          .\build\${{ matrix.config.preset }}\soro-server.exe -t
+
+      # ==== DISTRIBUTION ====
+      - name: Delete unnecessary files
+        run: |
+          Remove-Item .\build\msvc-release\server_resources\infrastructure
+          Remove-Item .\build\msvc-release\server_resources\timetable
+
+      - name: Create Distribution
+        if: matrix.config.preset == 'msvc-release'
+        run: >
+          7z a soro-s-windows.zip
+          .\build\msvc-release\soro-server.exe
+          .\build\msvc-release\server_resources
+
+      - name: Upload Distribution
+        if: matrix.config.preset == 'msvc-release'
+        uses: actions/upload-artifact@v1
+        with:
+          name: soro-s-windows
+          path: soro-s-windows.zip
+
+      # ==== RELEASE ====
+      - name: Upload Release
+        if: github.event.action == 'published' && matrix.config.preset == 'msvc-release'
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
