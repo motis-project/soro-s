@@ -24,6 +24,9 @@ option(SORO_LINT "Run clang-tidy with the compiler." OFF)
 
 if (SORO_SAN)
     SET(SORO_COMPILE_DEFINITIONS SORO_SAN ${SORO_COMPILE_DEFINITIONS})
+    SET(SORO_LINK_STATIC "")
+else ()
+    SET(SORO_LINK_STATIC "-static")
 endif ()
 
 if (SORO_LINT)
@@ -68,7 +71,6 @@ find_package(Threads REQUIRED)
 set(SORO_COMPILE_OPTIONS "")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
-            -static
             -Weverything
             -Wno-c++98-compat
             -Wno-c++98-compat-pedantic
@@ -87,6 +89,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
             -Wno-missing-noreturn
             -Wno-deprecated-experimental-coroutine
             -Werror
+            ${SORO_LINK_STATIC}
             )
 
     if (CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 13)
@@ -105,11 +108,11 @@ elseif (MSVC)
             )
 else ()
     set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
-            -static
             -Wall
             -Wextra
             -Werror
             -fcoroutines
+            ${SORO_LINK_STATIC}
             )
 endif ()
 

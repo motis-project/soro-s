@@ -6,7 +6,7 @@ set(BUILD_SHARED_LIBS OFF)
 if (MSVC)
     set(TILES_WARNINGS "/W4" "/MT")
 else ()
-    set(TILES_WARNINGS "-Wall" "-Wextra" "-static")
+    set(TILES_WARNINGS "-Wall" "-Wextra" ${SORO_LINK_STATIC})
 endif ()
 
 file(GLOB_RECURSE soro-server-files src/*.cc)
@@ -49,7 +49,7 @@ target_link_libraries(soro-server-lib PUBLIC
         tiles-import-library
         boost
         soro-lib
-        -static
+        ${SORO_LINK_STATIC}
         )
 
 add_executable(soro-server EXCLUDE_FROM_ALL src/server.cc)
@@ -58,5 +58,6 @@ target_compile_options(soro-server PRIVATE ${TILES_WARNINGS})
 target_compile_definitions(soro-server PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_compile_features(soro-server PRIVATE ${SORO_COMPILE_FEATURES})
 
-target_link_libraries(soro-server PUBLIC soro-server-lib -static)
+target_link_libraries(soro-server PUBLIC soro-server-lib ${SORO_LINK_STATIC})
+
 
