@@ -1,106 +1,99 @@
 #pragma once
 
-#include <cassert>
 #include <chrono>
-#include <algorithm>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
-
-#if !defined(__EMSCRIPTEN__)
-#include <source_location>
-#endif
 
 // TODO(julian) replace this with the c++20 <format> header when available
 #include "fmt/ostream.h"
 
 namespace soro::utls {
 
-#if defined(__EMSCRIPTEN__)
-
-template <typename Msg, typename... Args>
-constexpr void sassert([[maybe_unused]] bool const assert_this,
-                       [[maybe_unused]] Msg&& msg,
-                       [[maybe_unused]] Args... args) {
-
-#if !defined(NDEBUG)
-  if (!assert_this) {
-    using clock = std::chrono::system_clock;
-
-    auto const now = clock::to_time_t(clock::now());
-    struct tm tmp;
-#if _MSC_VER >= 1400
-    gmtime_s(&tmp, &now);
-#else
-    gmtime_r(&now, &tmp);
-#endif
-
-    fmt::print(std::clog, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
-    fmt::print(std::clog, std::forward<Msg>(msg), std::forward<Args>(args)...);
-    fmt::print(std::clog, "\n");
-
-    std::abort();
-  }
-#endif
-}
-
-constexpr void sassert(bool const assert_this) {
-  sassert(assert_this, "I didn't specify a error message :(");
-}
-
-#else
-
 struct bool_with_loc {
-  constexpr bool_with_loc(bool const b, std::source_location const loc =
-                                            std::source_location::current())
-      : b_(b), loc_(loc) {}
 
-  constexpr operator bool() const noexcept { return b_; }  // NOLINT
+#if defined(__clang__)
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = __builtin_FILE(),
+                const char* function_name = __builtin_FUNCTION(),
+                unsigned line = __builtin_LINE(),
+                unsigned column = __builtin_COLUMN())
+#elif defined(__GNUC__)
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = __builtin_FILE(),
+                const char* function_name = __builtin_FUNCTION(),
+                unsigned line = __builtin_LINE(), unsigned column = 0)
+#else
+  bool_with_loc(bool const b,  // NOLINT
+                const char* filename = "", const char* function_name = "",
+                unsigned line = 0, unsigned column = 0)
+#endif
+      : b_(b),
+        filename_(filename),
+        function_name_(function_name),
+        line_(line),
+        column_(column) {
+  }
+
+  operator bool() const noexcept { return b_; }  // NOLINT
 
   bool b_;
-  std::source_location loc_;
+  const char* filename_;
+  const char* function_name_;
+  unsigned line_;
+  unsigned column_;
 };
 
 #if !defined(NDEBUG)
 template <typename Msg, typename... Args>
-constexpr void sassert(bool_with_loc const& assert_this, Msg&& msg,
-                       Args... args) {
+inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
 
   if (!assert_this) {
     using clock = std::chrono::system_clock;
 
     auto const now = clock::to_time_t(clock::now());
-    struct tm tmp;
+    struct tm tmp {};
 #if _MSC_VER >= 1400
     gmtime_s(&tmp, &now);
 #else
     gmtime_r(&now, &tmp);
 #endif
 
-    fmt::print(std::clog, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
-    fmt::print(std::clog, std::forward<Msg>(msg), std::forward<Args>(args)...);
-    fmt::print(std::clog, "\n");
-    fmt::print(std::clog, "[FAILED HERE] {}:{}:{} in {}",
-               std::filesystem::path(assert_this.loc_.file_name()).filename(),
-               assert_this.loc_.line(), assert_this.loc_.column(),
-               assert_this.loc_.function_name());
-    fmt::print(std::clog, "\n");
+    std::stringstream ss;
 
-    std::abort();
+    fmt::print(ss, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
+    fmt::print(ss, std::forward<Msg>(msg), std::forward<Args>(args)...);
+    fmt::print(ss, "\n");
+    fmt::print(ss, "[FAILED HERE] {}:{}:{} in {}",
+               std::filesystem::path(assert_this.filename_).filename().string(),
+               assert_this.line_, assert_this.column_,
+               assert_this.function_name_);
+    fmt::print(ss, "\n");
+
+    std::clog << ss.rdbuf();
+    throw std::runtime_error(ss.str());
   }
 }
 
 #else
 
 template <typename Msg, typename... Args>
-constexpr void sassert(bool_with_loc const&, Msg&&, Args...) {}
+inline void sassert(bool const, Msg&&, Args...) {}
 
 #endif
 
-constexpr void sassert(bool_with_loc const& assert_this) {
+inline void sassert(bool const assert_this) {
   sassert(assert_this, "I didn't specify a error message :(");
 }
 
+#if !defined(NDEBUG)
+template <typename F>
+inline void sasserts(F&& f) {
+  f();
+}
+#else
+template <typename F>
+inline void sasserts(F&&) {}
 #endif
 
 }  // namespace soro::utls

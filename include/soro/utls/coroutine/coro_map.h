@@ -1,6 +1,7 @@
 #pragma once
 
 #include "soro/utls/coroutine/generator.h"
+#include "soro/utls/coroutine/recursive_generator.h"
 
 namespace soro::utls {
 

@@ -4,7 +4,7 @@
 
 #include "soro/base/soro_types.h"
 
-namespace soro {
+namespace soro::infra {
 
 constexpr const char* const STATION = "Betriebsstelle";
 
@@ -18,10 +18,21 @@ constexpr const char* const RAIL_PLAN_SECTIONS = "Spurplanabschnitte";
 
 constexpr const char* const LINE = "Strecke";
 
+constexpr const char* const PUBLISH_ONLY = "nurVeroeffentlichung";
+
 constexpr const char* const BRAKE_PATH_FALLING = "BremswegF";
 constexpr const char* const BRAKE_PATH_RISING = "BremswegS";
 
 constexpr const char* const RUNTIME_CHECKPOINT = "Fahrzeitmesspunkt";
+
+constexpr const char* const RUNTIME_CHECKPOINT_RISING = "FahrzeitmesspunktF";
+constexpr const char* const RUNTIME_CHECKPOINT_FALLING = "FahrzeitmesspunktS";
+
+constexpr const char* const ETCS_START_RISING = "ETCSAnfangS";
+constexpr const char* const ETCS_START_FALLING = "ETCSAnfangF";
+
+constexpr const char* const ETCS_END_RISING = "ETCSEndeS";
+constexpr const char* const ETCS_END_FALLING = "ETCSEndeF";
 
 constexpr const char* const CTC_START_FALLING = "LZBAnfangF";
 constexpr const char* const CTC_END_FALLING = "LZBEndeF";
@@ -34,6 +45,9 @@ constexpr const char* const CTC_BLOCK_SIGN_FALLING = "LZBBlockkennzeichenF";
 
 constexpr const char* const SPEED_LIMIT_RISING = "GeschwZulaessigS";
 constexpr const char* const SPEED_LIMIT_FALLING = "GeschwZulaessigF";
+
+constexpr const char* const POINT_SPEED_RISING = "PunktgeschwF";
+constexpr const char* const POINT_SPEED_FALLING = "PunktgeschwS";
 
 constexpr const char* const SPEED_LIMIT = "GeschwBeschraenkung";
 
@@ -75,10 +89,15 @@ constexpr const char* const HALT_PASSENGER_RIGHT_LEFT_RISING =
 constexpr const char* const HALT_PASSENGER_RIGHT_LEFT_FALLING =
     "HalteplatzRzRechtsLinksF";
 
+constexpr const char* const FORCED_HALT_RISING = "ZwangshaltS";
+constexpr const char* const FORCED_HALT_FALLING = "ZwangshaltF";
+
 constexpr const char* const KM_JUMP_START = "KmSprungAnfang";
 constexpr const char* const KM_JUMP_END = "KmSprungEnde";
 
 constexpr const char* const SLOPE = "Neigung";
+
+constexpr const char* const WARNING_SIGN = "Warnfeld";
 
 constexpr const char* const BUMPER = "Prellbock";
 constexpr const char* const TRACK_END = "Gleisende";
@@ -119,6 +138,7 @@ constexpr const char* const MAIN_NODE_END = "HauptknotenEnde";
 constexpr const char* const KILOMETER_POINT = "Kilometrierung";
 
 constexpr const char* const ID = "ID";
+constexpr const char* const TYPE = "Typ";
 
 constexpr const char* const XML_ISS_DATA = "XmlIssDaten";
 constexpr const char* const CREATOR = "Ersteller";
@@ -229,4 +249,4 @@ constexpr size_t attribute_index(const char* const attribute) {
   return std::numeric_limits<size_t>::max();
 }
 
-}  // namespace soro
+}  // namespace soro::infra

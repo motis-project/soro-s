@@ -14,6 +14,6 @@ element* parse_track_element(pugi::xml_node const& track_node, type const type,
                              construction_materials& mats);
 
 speed_limit get_speed_limit(pugi::xml_node const& speed_limit_xml,
-                            element_ptr element);
+                            element::ptr element);
 
 }  // namespace soro::infra

@@ -171,7 +171,7 @@ auto get_best_rotation(station::ptr station,
   rotation best_rotation = std::numeric_limits<rotation>::max();
   double best_rotation_score = std::numeric_limits<double>::max();
 
-  for (uint32_t degree = 0; degree < 360; degree += 1) {
+  for (uint32_t degree = 0; degree < 360; degree += 5) {
     // rotation score is the total distance between all neighbouring borders
     // smaller score is better
     auto rotation_score = 0.0;
@@ -208,7 +208,7 @@ auto get_best_rotations(soro::vector<station::ptr> const& stations,
 
   // we are only optimizing rotations for a single station at a time
   // do a couple of passes to improve the result
-  for (auto pass = 0; pass < 5; ++pass) {
+  for (auto pass = 0; pass < 3; ++pass) {
     station_rotations = soro::to_vec(stations, [&](auto&& s) {
       return get_best_rotation(s, station_coords, element_coords,
                                station_rotations);
@@ -293,7 +293,9 @@ std::pair<soro::vector<gps>, soro::vector<gps>> layout_to_gps(
   soro::vector<gps> adjusted_station_coords;
 
   adjusted_station_coords = interpolate_coordinates(stations, station_coords);
-  adjusted_station_coords = resolve_overlaps(stations, adjusted_station_coords);
+  // TODO(julian) enable this
+  //  adjusted_station_coords = resolve_overlaps(stations,
+  //  adjusted_station_coords);
 
   auto element_coords =
       get_element_gps_coords(stations, adjusted_station_coords, layout);
