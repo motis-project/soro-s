@@ -191,22 +191,23 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
                   "interlocking route iterator.");
 
     co_yield *from_it == *to_it
-               ? infra->station_routes_[*from_it]->from_to(from, to)
-               : detail::from_to(this, from_it, from, to_it, to, infra);
+        ? infra->station_routes_[*from_it]->from_to(from, to)
+        : detail::from_to(this, from_it, from, to_it, to, infra);
   }
 }
 
 utls::recursive_generator<route_node> interlocking_route::to(
     station_route::id const sr_id, node::idx const to,
     infrastructure const& infra) const {
-  co_yield this->from_to(this->station_routes_.front(), start_offset_, sr_id, to,
-                       infra);
+  co_yield this->from_to(this->station_routes_.front(), start_offset_, sr_id,
+                         to, infra);
 }
 
 utls::recursive_generator<route_node> interlocking_route::from(
     station_route::id const sr_id, node::idx const from,
     infrastructure const& infra) const {
-  co_yield this->from_to(sr_id, from, station_routes_.back(), end_offset_, infra);
+  co_yield this->from_to(sr_id, from, station_routes_.back(), end_offset_,
+                         infra);
 }
 
 utls::recursive_generator<route_node> interlocking_route::iterate(
@@ -215,7 +216,8 @@ utls::recursive_generator<route_node> interlocking_route::iterate(
     co_yield this->first_sr(infra)->from_to(start_offset_, end_offset_);
   } else {
     co_yield detail::from_to(this, std::cbegin(station_routes_), start_offset_,
-                           std::cend(station_routes_) - 1, end_offset_, infra);
+                             std::cend(station_routes_) - 1, end_offset_,
+                             infra);
   }
 }
 
