@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.18)
 project(soro)
 
+set(BUILD_SHARED_LIBS OFF)
+
 if (MSVC)
-    set(TILES_WARNINGS "/W4")
+    set(TILES_WARNINGS "/W4" "/MT")
 else ()
-    set(TILES_WARNINGS "-Wall" "-Wextra")
+    set(TILES_WARNINGS "-Wall" "-Wextra" "-static")
 endif ()
 
 file(GLOB_RECURSE soro-server-files src/*.cc)
@@ -47,6 +49,7 @@ target_link_libraries(soro-server-lib PUBLIC
         tiles-import-library
         boost
         soro-lib
+        -static
         )
 
 add_executable(soro-server EXCLUDE_FROM_ALL src/server.cc)
@@ -55,5 +58,5 @@ target_compile_options(soro-server PRIVATE ${TILES_WARNINGS})
 target_compile_definitions(soro-server PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_compile_features(soro-server PRIVATE ${SORO_COMPILE_FEATURES})
 
-target_link_libraries(soro-server PUBLIC soro-server-lib)
+target_link_libraries(soro-server PUBLIC soro-server-lib -static)
 

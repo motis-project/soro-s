@@ -1,7 +1,7 @@
 # This file is responsible for defining the 'soro-lib' target
 
 file(GLOB_RECURSE soro-lib-files src/*.cc)
-add_library(soro-lib EXCLUDE_FROM_ALL ${soro-lib-files})
+add_library(soro-lib STATIC EXCLUDE_FROM_ALL ${soro-lib-files})
 
 if (SORO_CUDA)
     add_library(infrastructure-cuda src/infrastructure/gpu/exclusion.cu)
