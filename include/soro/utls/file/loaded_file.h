@@ -56,9 +56,9 @@ struct loaded_file {
   }
 
   std::size_t size() const { return contents_.size(); }
-  uint8_t* begin() const { return contents_.begin(); }
-  uint8_t* end() const { return contents_.end(); }
-  uint8_t* data() const { return contents_.data(); }
+  uint8_t const* begin() const { return contents_.begin(); }
+  uint8_t const* end() const { return contents_.end(); }
+  uint8_t const* data() const { return contents_.data(); }
 
   std::filesystem::path path_;
   cista::mmap contents_;
