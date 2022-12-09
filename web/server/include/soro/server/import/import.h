@@ -13,7 +13,7 @@ struct import_settings {
       : osm_path_{std::move(osm_path)},
         db_path_{std::move(db_path)},
         tmp_dir_{std::move(tmp_dir)},
-        osm_profile_{"profile/profile.lua"} {}
+        osm_profile_{"server_resources/profile/profile.lua"} {}
 
   fs::path osm_path_;
   fs::path db_path_;

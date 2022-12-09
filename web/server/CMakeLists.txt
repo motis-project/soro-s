@@ -28,7 +28,7 @@ file(GLOB_RECURSE soro-server-profiles profile/*.lua)
 foreach (file ${soro-server-profiles})
     set(path ${file})
     cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE relative-path)
-    configure_file(${file} ${CMAKE_BINARY_DIR}/${relative-path} COPYONLY)
+    configure_file(${file} ${CMAKE_BINARY_DIR}/server_resources/${relative-path} COPYONLY)
 endforeach ()
 
 # Copy the server resources to the server_resources directory in the binary directory. Includes:
