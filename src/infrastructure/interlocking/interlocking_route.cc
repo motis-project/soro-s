@@ -173,7 +173,7 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
         "got from {} and to {}.",
         this->id_, from_sr, to_sr);
 
-    return this->first_sr(infra)->from_to(from, to);
+    co_yield this->first_sr(infra)->from_to(from, to);
   } else {
     auto from_it = utls::find(this->station_routes_, from_sr);
     auto to_it = utls::find(this->station_routes_, to_sr);
@@ -190,7 +190,7 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
                   "To station route is located before from station route in "
                   "interlocking route iterator.");
 
-    return *from_it == *to_it
+    co_yield *from_it == *to_it
                ? infra->station_routes_[*from_it]->from_to(from, to)
                : detail::from_to(this, from_it, from, to_it, to, infra);
   }
@@ -199,22 +199,22 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
 utls::recursive_generator<route_node> interlocking_route::to(
     station_route::id const sr_id, node::idx const to,
     infrastructure const& infra) const {
-  return this->from_to(this->station_routes_.front(), start_offset_, sr_id, to,
+  co_yield this->from_to(this->station_routes_.front(), start_offset_, sr_id, to,
                        infra);
 }
 
 utls::recursive_generator<route_node> interlocking_route::from(
     station_route::id const sr_id, node::idx const from,
     infrastructure const& infra) const {
-  return this->from_to(sr_id, from, station_routes_.back(), end_offset_, infra);
+  co_yield this->from_to(sr_id, from, station_routes_.back(), end_offset_, infra);
 }
 
 utls::recursive_generator<route_node> interlocking_route::iterate(
     infrastructure const& infra) const {
   if (station_routes_.size() == 1) {
-    return this->first_sr(infra)->from_to(start_offset_, end_offset_);
+    co_yield this->first_sr(infra)->from_to(start_offset_, end_offset_);
   } else {
-    return detail::from_to(this, std::cbegin(station_routes_), start_offset_,
+    co_yield detail::from_to(this, std::cbegin(station_routes_), start_offset_,
                            std::cend(station_routes_) - 1, end_offset_, infra);
   }
 }
