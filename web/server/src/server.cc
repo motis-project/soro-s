@@ -128,7 +128,6 @@ int main(int argc, char const** argv) {
   
 
   for (auto const& infra_file : infra_todo) {
-      continue;
       auto const infra_res_dir = infra_dir / infra_file.filename();
       exists_or_create_dir(infra_res_dir);
 
