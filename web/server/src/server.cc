@@ -9,8 +9,6 @@
 #include "soro/server/osm_export/osm_export.h"
 #include "soro/server/soro_server.h"
 
-#include <iostream>
-
 namespace fs = std::filesystem;
 
 struct server_settings {
