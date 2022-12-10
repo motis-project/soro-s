@@ -128,6 +128,7 @@ int main(int argc, char const** argv) {
   
 
   for (auto const& infra_file : infra_todo) {
+      continue;
       auto const infra_res_dir = infra_dir / infra_file.filename();
       exists_or_create_dir(infra_res_dir);
 
@@ -160,8 +161,11 @@ int main(int argc, char const** argv) {
   
   // Create paths for osm files
   std::vector<fs::path> osm_paths;
-  for (auto&& dir_entry : fs::directory_iterator{ s.resource_dir_ / "osm" }) {
-      osm_paths.emplace_back(dir_entry);
+  auto osm_path = s.resource_dir_ / "osm";
+  if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
+      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
+          osm_paths.emplace_back(dir_entry);
+      }
   }
 
   // Copy every osm file to server
