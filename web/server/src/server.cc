@@ -174,7 +174,7 @@ int main(int argc, char const** argv) {
 
       // load and copy
       pugi::xml_document osm_data;
-      pugi::xml_parse_result error = osm_data.load_file(osm_file.c_str()); // load
+      auto const error = osm_data.load_file(osm_file.c_str()); // load
 
       if (error) {
           osm_data.save_file(osm_server_file.c_str()); // copy
