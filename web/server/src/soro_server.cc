@@ -137,7 +137,8 @@ bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
 
 
     std::cmatch regmatch;
-    tiles::regex_matcher::match_result_t match = (std::optional<std::vector<std::string_view, std::allocator<std::string_view>>>)NULL;
+    
+    tiles::regex_matcher::match_result_t match;
 
     if (std::regex_match(decoded_url.c_str(), regmatch, std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
 
