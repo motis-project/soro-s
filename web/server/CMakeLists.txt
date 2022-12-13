@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(soro)
 
 set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 if (MSVC)
     set(TILES_WARNINGS "/W4" "/MT")
