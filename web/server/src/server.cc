@@ -124,7 +124,10 @@ int main(int argc, char const** argv) {
   }
 
   
+  // Create paths for infraFiles files
+  std::vector<fs::path> all_osm_paths;
 
+  //OSM data is generated from the XML files in Infrastructure and stored in /Serverresources
   for (auto const& infra_file : infra_todo) {
       auto const infra_res_dir = infra_dir / infra_file.filename();
       exists_or_create_dir(infra_res_dir);
@@ -139,25 +142,15 @@ int main(int argc, char const** argv) {
           infra_res_dir / infra_file.filename().replace_extension(".osm");
       //This generates a new OSMFile from the infrasData
       soro::server::osm_export::export_and_write(*infra, osm_file);
-        
-      auto const tiles_dir = infra_res_dir / "tiles";
-      exists_or_create_dir(tiles_dir);
+      
+      all_osm_paths.push_back(osm_file);
 
-      auto const tmp_dir = infra_res_dir / "tmp";
-      exists_or_create_dir(tmp_dir);
-
-      soro::server::import_settings const import_settings(
-        osm_file,
-        infra_res_dir / "tiles" /
-            infra_file.filename().replace_extension(".mdb"),
-        tmp_dir);
-      //tile server created tiles for given OSM file
-      soro::server::import_tiles(import_settings);
   }
-
   
   // Create paths for osm files
   std::vector<fs::path> osm_paths;
+     
+  //All real osm files are collected from folder /resources/osm
   auto osm_path = s.resource_dir_ / "osm";
   if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
       for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
@@ -165,9 +158,10 @@ int main(int argc, char const** argv) {
       }
   }
 
-  // Copy every osm file to server
+
+  // Copy every osm file to server 
   for (const auto& osm_file : osm_paths) {
-      auto const infra_res_dir = infra_dir / osm_file.filename();
+      auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
       exists_or_create_dir(infra_res_dir);
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
@@ -183,6 +177,14 @@ int main(int argc, char const** argv) {
           std::cout << "Failed to read real OSM Data. Will resume without it \n";
           continue;
       }
+      all_osm_paths.push_back(osm_server_file);
+  }
+
+  
+  //Generate Tiles and its filestructure for all osm files
+  for(const auto& osm_file : all_osm_paths){
+      auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
+      auto const osm_server_file = infra_res_dir / osm_file.filename();
 
       auto const tiles_dir = infra_res_dir / "tiles";
       exists_or_create_dir(tiles_dir);
