@@ -43,12 +43,14 @@
 					<div class="dev-tools">
 						<button
 							class="matter-button-contained window-button"
+							disabled
 							@click="deleteAllFiles"
 						>
 							Clear Cache
 						</button>
 						<button
 							class="matter-button-contained window-button"
+							disabled
 							@click="triggerSimulation"
 						>
 							Simulate
