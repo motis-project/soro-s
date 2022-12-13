@@ -1,5 +1,7 @@
 # This file is responsible for defining the 'soro-lib' target
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 file(GLOB_RECURSE soro-lib-files src/*.cc)
 add_library(soro-lib STATIC EXCLUDE_FROM_ALL ${soro-lib-files})
 
