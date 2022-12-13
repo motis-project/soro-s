@@ -1,9 +1,4 @@
-export const elementTypes = ['bumper', 'border', 'track_end', 'simple_switch',
-	'as', 'ms', 'ps', 'eotd', 'spl', 'tunnel', 'hlt',
-	'rtcp', 'km_jump', 'line_switch', 'slope', 'cross',
-	'ctc', 'station'];
-
-export const elementTypesReadable = {
+export const elementTypeLabels = {
 	'bumper': 'Bumper',
 	'border': 'Border',
 	'track_end': 'Track End',
@@ -23,4 +18,6 @@ export const elementTypesReadable = {
 	'ctc': 'CTC',
 	'station': 'Station'
 };
+
+export const elementTypes = Object.keys(elementTypeLabels);
 

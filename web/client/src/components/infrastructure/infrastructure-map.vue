@@ -30,7 +30,7 @@
 						:src="iconUrl + elementType + iconExtension"
 						alt=""
 					>
-					{{ elementTypesReadable[elementType] ?? elementType }}
+					{{ elementTypeLabels[elementType] ?? elementType }}
 				</label>
 				<br>
 			</template>
@@ -60,7 +60,7 @@ import {
 import { Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle.js';
 import { addIcons, iconExtension, iconUrl } from './addIcons.js';
-import { elementTypes, elementTypesReadable } from './elementTypes.js';
+import { elementTypes, elementTypeLabels } from './elementTypes.js';
 import { ClickTooltip } from '../../util/Tooltip.js';
 
 const specialLayoutControls = ['Rising', 'Falling']; // question figure out what these do
@@ -69,6 +69,16 @@ const legendControlTypes = [
 	...elementTypes,
 	...specialLayoutControls
 ];
+
+const mapDefaults = {
+	style: infrastructureMapStyle,
+	attributionControl: false,
+	zoom: 14,
+	hash: 'location',
+	center: [14, 49],
+	maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
+	bearing: 0,
+};
 
 export default {
 	name: 'InfrastructureMap',
@@ -81,7 +91,7 @@ export default {
 			initiallyCheckedControls,
 			iconUrl,
 			iconExtension,
-			elementTypesReadable,
+			elementTypeLabels,
 		};
 	},
 
@@ -169,14 +179,8 @@ export default {
 
 		createMap(infrastructure) {
 			const map = new Map({
+				...mapDefaults,
 				container: this.$refs.map,
-				style: infrastructureMapStyle,
-				attributionControl: false,
-				zoom: 14,
-				hash: 'location',
-				center: [14, 49],
-				maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
-				bearing: 0,
 				transformRequest: (relative_url) => {
 					if (relative_url.startsWith('/')) {
 						const url = window.origin + '/' + infrastructure + relative_url;
