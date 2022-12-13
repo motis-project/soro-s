@@ -5,7 +5,7 @@ set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 if (MSVC)
-    set(TILES_WARNINGS "/W4" "/MT")
+    set(TILES_WARNINGS "/W4")
 else ()
     set(TILES_WARNINGS "-Wall" "-Wextra" ${SORO_LINK_STATIC})
 endif ()

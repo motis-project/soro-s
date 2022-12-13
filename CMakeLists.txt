@@ -104,7 +104,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 elseif (MSVC)
     set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
             /WX
-            /MT
             )
 else ()
     set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
