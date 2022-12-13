@@ -63,7 +63,10 @@
 						id="subOverlayContent"
 						class="sub-overlay-content"
 					>
-						<disruption-detail ref="disruption" />
+						<disruption-detail
+							v-if="disruptionDetail"
+							ref="disruption"
+						/>
 					</div>
 					<div
 						ref="subOverlayClose"
@@ -192,6 +195,7 @@ export default {
 		return {
 			overlay: false,
 			subOverlay: false,
+			disruptionDetail: false,
 		};
 	},
 
@@ -249,7 +253,7 @@ export default {
 
 		onDisruptionDetailClicked() {
 			this.$refs.disruptionDetailButton.classList.add('enabled');
-			this.$refs.disruption.showDetail();
+			this.disruptionDetail = true;
 			this.showSubOverlay();
 		},
 
