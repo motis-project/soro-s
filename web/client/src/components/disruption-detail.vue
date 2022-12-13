@@ -1,15 +1,32 @@
 <template>
-	<div
-		id="disruptionDetail"
-		class="disruption-detail hidden"
-	>
+	<div class="disruption-detail hidden">
 		Disruption:
-		<div
-			id="trainMaxSpeeds"
-			ref="trainMaxSpeeds"
-		>
+		<div>
 			Maximum Speeds [km/h]
 			<br>
+			<template
+				v-for="trainRun in iterate(currentTimetable.trainRuns)"
+				:key="trainRun.name"
+			>
+				<label :for="`${trainRun.name}Input`">{{ trainRun.name }}</label>
+				<input
+					:id="`${trainRun.name}Input`"
+					:name="trainRun.name"
+					:value="disruptionMap.get(trainRun.name)"
+					type="text"
+					@input="(e) => disruptionMap.set(e.target.name, e.target.value)"
+				>
+				<br>
+				<br>
+			</template>
+			<label class="matter-switch">
+				<input
+					v-model="useDistributions"
+					type="checkbox"
+					value="UseDists"
+				>
+				<span>Use Distributions</span>
+			</label>
 		</div>
 	</div>
 </template>
@@ -19,68 +36,29 @@ import { iterate } from '../util/iterate.js';
 import { mapState } from 'vuex';
 import { TimetableNamespace } from '../stores/timetable-store';
 
-const disruptionMap = new Map();
-disruptionMap.set('1', 80);
-disruptionMap.set('2', 120);
-let disruptionDists = false;
-
-function createInputField(name, maxSpeedsDiv) {
-	const input = document.createElement('input');
-	input.type = 'text';
-	input.id = name + 'Input';
-	input.name = name;
-	input.value = disruptionMap.get(name);
-
-	input.addEventListener('input',
-		e => disruptionMap.set(e.target.name, e.target.value));
-
-	const label = document.createElement('label');
-	label.htmlFor = input.id;
-	label.innerText = name + ' ';
-
-	const br = document.createElement('br');
-
-	maxSpeedsDiv.appendChild(label);
-	maxSpeedsDiv.appendChild(input);
-	maxSpeedsDiv.appendChild(br);
-	maxSpeedsDiv.appendChild(br);
-
-}
-
-function fillDisruptionDetail(currentTimetable, maxSpeedsDiv) {
-	for (const train_run of iterate(currentTimetable.trainRuns)) {
-		createInputField(train_run.name, maxSpeedsDiv);
-	}
-
-	const br = document.createElement('br');
-
-	const distsLabel = document.createElement('label');
-	distsLabel.classList.add('matter-switch');
-
-	const distsInput = document.createElement('input');
-	distsInput.type = 'checkbox';
-	distsInput.value = 'UseDists';
-	distsInput.checked = disruptionDists;
-	distsInput.addEventListener('input', e => disruptionDists = e.target.checked);
-
-	const span = document.createElement('span');
-	span.innerHTML = 'Use Distributions';
-
-	distsLabel.append(distsInput);
-	distsLabel.append(span);
-	maxSpeedsDiv.appendChild(distsLabel);
-}
+const disruptionMapDefaults = {
+	1: 80,
+	2: 120,
+};
+const useDistributions = false;
 
 export default {
 	name: 'DisruptionDetail',
 
+	data() {
+		return {
+			useDistributions,
+			disruptionMap: new Map(),
+		};
+	},
+
 	computed: mapState(TimetableNamespace, ['currentTimetable']),
 
-	methods: {
-		showDetail() {
-			fillDisruptionDetail(this.currentTimetable, this.$refs.trainMaxSpeeds);
-		},
+	created() {
+		Object.keys(disruptionMapDefaults).forEach((key) => this.disruptionMap.set(key, disruptionMapDefaults[key]));
 	},
+
+	methods: { iterate },
 };
 </script>
 
