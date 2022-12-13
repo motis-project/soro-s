@@ -125,7 +125,7 @@
     cursor: pointer;
 }
 
-.window-controls {
+.window-controls, .dev-tools {
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
