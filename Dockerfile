@@ -1,4 +1,3 @@
-
 FROM alpine:3.14
 ARG TARGETARCH
 ADD soro-s-linux-$TARGETARCH/soro-s-linux-$TARGETARCH.tar.bz2 /
