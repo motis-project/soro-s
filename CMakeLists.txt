@@ -138,21 +138,21 @@ if (SORO_CUDA)
     set_property(TARGET infrastructure-cuda PROPERTY CUDA_ARCHITECTURES 75 61)
 endif ()
 
-if (${CMAKE_USE_PTHREADS_INIT})
-    set(SORO_LIB_COMPILE_OPTIONS "-pthread")
-endif ()
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 target_compile_options(soro-lib PRIVATE ${SORO_COMPILE_OPTIONS} ${SORO_LIB_COMPILE_OPTIONS})
 target_compile_features(soro-lib PRIVATE ${SORO_COMPILE_FEATURES})
 target_compile_definitions(soro-lib PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_include_directories(soro-lib PUBLIC include)
-target_link_libraries(soro-lib PRIVATE utl cista date pugixml)
+target_link_libraries(soro-lib PRIVATE utl cista date pugixml Threads::Threads)
 
 if (SORO_CUDA)
     target_link_libraries(soro-lib PUBLIC infrastructure-cuda)
 endif ()
 
 # Gets us the soro-server-client target
+set(SORO_SERVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory(web/server)
 add_subdirectory(web/client)
 
@@ -168,7 +168,7 @@ target_compile_options(soro-test PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_features(soro-test PRIVATE ${SORO_COMPILE_FEATURES})
 target_compile_definitions(soro-test PRIVATE ${SORO_COMPILE_DEFINITIONS})
 
-target_link_libraries(soro-test PUBLIC doctest soro-lib)
+target_link_libraries(soro-test PUBLIC utl doctest date soro-lib soro-server-lib)
 target_include_directories(soro-test PUBLIC test/include)
 
 # Make clang-tidy only output on soro-s files, not on dependencies.
