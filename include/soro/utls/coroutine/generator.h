@@ -9,7 +9,7 @@
 
 #pragma once
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__clang__)
 #include <experimental/coroutine>
 #else
 #include <coroutine>
@@ -23,7 +23,7 @@
 
 namespace soro::utls {
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__clang__)
 namespace coro = std::experimental;
 #else
 namespace coro = std;

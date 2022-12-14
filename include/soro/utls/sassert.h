@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 // TODO(julian) replace this with the c++20 <format> header when available
 #include "fmt/ostream.h"
