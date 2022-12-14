@@ -22,6 +22,7 @@ jobs:
       matrix:
         config:
           - preset: clang-release
+            artifact: linux-amd64
           - preset: clang-debug
           - preset: gcc-release
           - preset: gcc-debug
@@ -69,32 +70,32 @@ jobs:
 
       # ==== DISTRIBUTION ====
       - name: Create Distribution
-        if: matrix.config.preset == 'clang-release'
+        if: matrix.config.artifact
         run: |
           mkdir -p soro-s
           rm -rf build/clang-release/server_resources/infrastructure
           rm -rf build/clang-release/server_resources/timetable
           mv build/clang-release/soro-server soro-s/
           mv build/clang-release/server_resources soro-s/
-          tar cjf soro-s-linux-amd64.tar.bz2 soro-s
+          tar cjf soro-s-${{ matrix.config.artifact }}.tar.bz2 soro-s
 
       - name: Upload Distribution
-        if: matrix.config.preset == 'clang-release'
+        if: matrix.config.artifact
         uses: actions/upload-artifact@v1
         with:
-          name: soro-s-linux-amd64
-          path: soro-s-linux-amd64.tar.bz2
+          name: soro-s-${{ matrix.config.artifact }}
+          path: soro-s-${{ matrix.config.artifact }}.tar.bz2
 
       # ==== RELEASE ====
       - name: Upload Release
-        if: github.event.action == 'published' && matrix.config.preset == 'clang-release'
+        if: github.event.action == 'published' && matrix.config.artifact
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-s-linux-amd64.tar.bz2
-          asset_name: soro-s-linux-amd64.tar.bz2
+          asset_path: ./soro-s-${{ matrix.config.artifact }}.tar.bz2
+          asset_name: soro-s-${{ matrix.config.artifact }}.tar.bz2
           asset_content_type: application/x-tar
 
   docker:
