@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(soro)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 file(GLOB_RECURSE soro-server-files src/*.cc)
 
 add_library(soro-server-lib STATIC EXCLUDE_FROM_ALL ${soro-server-files})
@@ -51,13 +53,13 @@ target_link_libraries(soro-server-lib PUBLIC
         ${SORO_LINK_STATIC}
         )
 
-add_executable(soro-server EXCLUDE_FROM_ALL src/server.cc)
+add_executable(soro-server src/server.cc)
 set_target_properties(PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${SORO_SERVER_DIR})
 
 target_compile_options(soro-server PRIVATE ${SORO_COMPILE_OPTIONS})
-target_compile_definitions(soro-server PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_compile_features(soro-server PRIVATE ${SORO_COMPILE_FEATURES})
+target_compile_definitions(soro-server PRIVATE ${SORO_COMPILE_DEFINITIONS})
 
-target_link_libraries(soro-server PUBLIC soro-server-lib ${SORO_LINK_STATIC})
+target_link_libraries(soro-server PUBLIC soro-server-lib)
 
