@@ -70,8 +70,10 @@ void create_way_osm(pugi::xml_node& osm_node, element_id const first,
   osm_add_tag(railway_str, rail_str, way);
 }
 
-std::size_t create_interpolation_osm(pugi::xml_node osm, interpolation const& interpolation,
-                                     infra::element_id const id, osm_information& osm_info) {
+infra::element_id create_interpolation_osm(pugi::xml_node osm,
+                                           interpolation const& interpolation,
+                                           infra::element_id const id,
+                                           osm_information& osm_info) {
   std::vector<size_t> ids;
   osm_info.ways_.emplace_back(std::pair(interpolation.first_elem_, id));
   for (auto i = 0UL; i < interpolation.points_.size(); i++) {
@@ -85,11 +87,12 @@ std::size_t create_interpolation_osm(pugi::xml_node osm, interpolation const& in
     osm_add_coordinates(auxiliary_coords, auxiliary_node);
     osm_add_tag(type_str, interpolation_str, auxiliary_node);
   }
-  osm_info.ways_.emplace_back(std::pair(static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
-                                        interpolation.second_elem_));
+  osm_info.ways_.emplace_back(std::pair(
+      static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
+      interpolation.second_elem_));
   osm_info.element_to_interpolation_nodes_[interpolation.first_elem_] =
       std::make_pair(interpolation.second_elem_, ids);
-  return id + interpolation.points_.size();
+  return static_cast<element_id>(id + interpolation.points_.size());
 }
 
 void create_ways(auto& osm_info, infrastructure_t const& iss, element_ptr e) {
@@ -195,7 +198,7 @@ pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
     append_fragment(osm_node, e.get());
   }
 
-  auto id = osm_info.nodes_.back().first + 1;
+  auto id = static_cast<element_id>(osm_info.nodes_.back().first + 1);
 
   uLOG(info) << "[ OSM Export ] Interpolations to OSM.";
   for (const auto& interpolation : osm_info.interpolations_) {
