@@ -1,6 +1,9 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck as this is currently unused
 import { iterate } from '../../util/iterate.js';
+import { Map, Source } from 'maplibre-gl';
 
-function highlightPath(mapSource, infrastructure, nodeID, nodePath) {
+function highlightPath(mapSource: Source, infrastructure: string, nodeID: string, nodePath: any) {
 	const pathGeoJSON = {
 		type: 'Feature',
 		properties: { id: nodeID },
@@ -22,7 +25,7 @@ function highlightPath(mapSource, infrastructure, nodeID, nodePath) {
 	mapSource.setData(newData);
 }
 
-function deHighlightPath(mapSource, pathID) {
+function deHighlightPath(mapSource: Source, pathID: string) {
 	// again: probably quite unethical
 	const newData = mapSource._data;
 	const idx = newData.features.findIndex(f => f.properties.id === pathID);
@@ -31,24 +34,24 @@ function deHighlightPath(mapSource, pathID) {
 	mapSource.setData(newData);
 }
 
-export function highlightSignalStationRoute(map, infrastructure, signalStationRouteID) {
+export function highlightSignalStationRoute(map: Map, infrastructure: string, signalStationRouteID: string) {
 	highlightPath(map.getSource('signal-station-routes'),
 		infrastructure,
 		signalStationRouteID,
 		infrastructure.signal_station_routes.get(signalStationRouteID).nodes);
 }
 
-export function deHighlightSignalStationRoute(map, signalStationRouteID) {
+export function deHighlightSignalStationRoute(map: Map, signalStationRouteID: string) {
 	deHighlightPath(map.getSource('signal-station-routes'), signalStationRouteID);
 }
 
-export function highlightStationRoute(map, infrastructure, stationRouteID) {
+export function highlightStationRoute(map: Map, infrastructure: string, stationRouteID: string) {
 	highlightPath(map.getSource('station-routes'),
 		infrastructure,
 		stationRouteID,
 		infrastructure.station_routes.get(stationRouteID).nodes);
 }
 
-export function deHighlightStationRoute(map, stationRouteID) {
+export function deHighlightStationRoute(map: Map, stationRouteID: string) {
 	deHighlightPath(map.getSource('station-routes'), stationRouteID);
 }

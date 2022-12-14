@@ -56,7 +56,7 @@ import {
 	deHighlightStationRoute,
 	highlightSignalStationRoute,
 	highlightStationRoute
-} from './infrastructureMap.js';
+} from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle.js';
 import { addIcons, iconExtension, iconUrl } from './addIcons.js';

@@ -1,11 +1,12 @@
 import { elementTypes } from './elementTypes';
+import { StyleSpecification } from 'maplibre-gl';
 
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
 export const infrastructureMapStyle = (() => {
-	const style = {
-		'version': 8,
-		'sources': {
+	const style: StyleSpecification = {
+		version: 8,
+		sources: {
 			'osm': {
 				'type': 'vector',
 				'tiles': ['/tiles/{z}/{x}/{y}.mvt'],
@@ -105,7 +106,7 @@ export const infrastructureMapStyle = (() => {
 				'source-layer': type,
 				'type': 'symbol',
 				'minzoom': 5,
-				'maxzoom:': 24,
+				'maxzoom': 24,
 				'paint': {
 					'text-halo-width': 1,
 					'text-halo-color': '#ffffff',
@@ -120,14 +121,14 @@ export const infrastructureMapStyle = (() => {
 				}
 			});
 		} else {
-			// gives us the small black dots for icon stand ins
+			// gives us the small black dots for icon stand-ins
 			style.layers.push({
 				'id': 'circle-' + type + '-layer',
 				'source': 'osm',
 				'source-layer': type,
 				'type': 'circle',
 				'minzoom': 13,
-				'maxzoom:': 24,
+				'maxzoom': 24,
 				'paint': {
 					'circle-radius': 3,
 					'circle-color': '#000000',
@@ -143,7 +144,7 @@ export const infrastructureMapStyle = (() => {
 				'source-layer': type,
 				'type': 'symbol',
 				'minzoom': 15,
-				'maxzoom:': 24,
+				'maxzoom': 24,
 				'layout': {
 					'text-field': ['get', 'id'],
 					'text-anchor': 'top',
