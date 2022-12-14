@@ -53,7 +53,7 @@ jobs:
       # ==== WEB BUILD ====
       - name: Build
         run: |
-          cmake --build build\${{ matrix.config.preset }} --target soro-server-client
+          cmake --build build\${{ matrix.config.preset }} --target soro-server
 
       # ==== WEB TESTS ====
       - name: Run Server

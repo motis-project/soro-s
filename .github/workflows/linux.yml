@@ -58,7 +58,7 @@ jobs:
       - name: Build
         run: |
           buildcache -z
-          cmake --build build/${{ matrix.config.preset }} --target soro-server-client
+          cmake --build build/${{ matrix.config.preset }} --target soro-server
           buildcache -s
 
       # ==== WEB TESTS ====
