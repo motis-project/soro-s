@@ -20,8 +20,10 @@
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, PropType } from 'vue';
+
+export default defineComponent({
 	name: 'SoroSelect',
 
 	props: {
@@ -31,7 +33,7 @@ export default {
 			default: null,
 		},
 		options: {
-			type: Array,
+			type: Array as PropType<string[]>,
 			required: false,
 			default: () => [],
 		},
@@ -44,21 +46,23 @@ export default {
 	emits: ['select'],
 
 	data() {
-		return { extendedOptions: [] };
+		return {
+			extendedOptions: new Array<string>(),
+		};
 	},
 
 	watch: {
 		options() {
-			this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..');
-			this.extendedOptions.push(null);
+			this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..') as string[]; // TODO filter outside
+			this.extendedOptions.push('');
 		},
 	},
 
 	methods: {
-		emitChange(event) {
+		emitChange(event: Event) {
 			event.preventDefault();
-			this.$emit('select', event.target.value);
+			this.$emit('select', (event.target as HTMLInputElement).value);
 		},
 	},
-};
+});
 </script>

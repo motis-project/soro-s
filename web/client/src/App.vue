@@ -15,13 +15,13 @@
 						</button>
 						<button
 							class="matter-button-contained window-button"
-							@click="addSimulationTab"
+							disabled
 						>
 							Simulation
 						</button>
 						<button
 							class="matter-button-contained window-button"
-							@click="addTimetableTab"
+							disabled
 						>
 							Timetable
 						</button>
@@ -44,14 +44,12 @@
 						<button
 							class="matter-button-contained window-button"
 							disabled
-							@click="deleteAllFiles"
 						>
 							Clear Cache
 						</button>
 						<button
 							class="matter-button-contained window-button"
 							disabled
-							@click="triggerSimulation"
 						>
 							Simulate
 						</button>
@@ -66,14 +64,13 @@
 						class="sub-overlay-content"
 					>
 						<disruption-detail
-							v-if="disruptionDetail"
+							v-if="false"
 							ref="disruption"
 						/>
 					</div>
 					<div
 						ref="subOverlayClose"
 						class="sub-overlay-close"
-						@click="onSubOverlayCloseClicked"
 					>
 						<i class="material-icons">close</i>
 					</div>
@@ -97,75 +94,39 @@
 				<div
 					ref="stationDetailButton"
 					class="sub-overlay-tab-button"
-					@click="onStationDetailClicked"
 				>
 					<i class="material-icons">home</i>
 				</div>
 				<div
 					ref="disruptionDetailButton"
 					class="sub-overlay-tab-button"
-					@click="onDisruptionDetailClicked"
 				>
 					<i class="material-icons">train</i>
 				</div>
 			</div>
 		</div>
-		<glayout
+		<golden-layout-adapter
 			ref="GLayoutRoot"
 			style="width: 100%; height: calc(100% - 90px)"
 		/>
 	</div>
 </template>
 
-<script setup>
-// TODO make this TS
-// import { Module, FS, IDBFS } from "./soro-client.js";
-import Glayout from './golden-layout/Glayout.vue';
+<script setup lang="ts">
+import GoldenLayoutAdapter from './golden-layout/golden-layout-adapter.vue';
 import DisruptionDetail from './components/disruption-detail.vue';
 import SoroSelect from './components/soro-select.vue';
-
-// import {
-//   saveToPersistent,
-//   loadFromPersistent,
-//   exists,
-//   saveFileToIDBFS,
-//   createFolders,
-//   deleteAllFiles,
-//   getStationCoordPath
-// } from "./utl/IDBFSHelper.js";
-
-// function mountIDBFS(callback) {
-//   FS.mkdir('/idbfs');
-//   FS.mount(IDBFS, {}, '/idbfs');
-//
-//   loadFromPersistent(function () {
-//     createFolders();
-//     callback();
-//     saveToPersistent();
-//   });
-// }
-
-/*
-    Run the setup routines after emscripten has done all of its own initialization
-   */
-// Module.onRuntimeInitialized = async function () {
-//   mountIDBFS(() => {
-//
-//     fetch(window.origin + '/misc/btrs_geo.csv')
-//       .then(response => response.arrayBuffer())
-//       .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
-//       .catch(e => console.error(e));
-//   })
-//
-// }
 </script>
 
-<script>
+<script lang="ts">
 import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from './stores/infrastructure-store';
 import { TimetableNamespace } from './stores/timetable-store';
+import { defineComponent, ref } from 'vue';
+import { LayoutConfig } from 'golden-layout';
+import { Components } from './golden-layout/golden-layout-constants';
 
-const initLayout = {
+const initLayout: LayoutConfig = {
 	root: {
 		type: 'row',
 		content: [
@@ -181,23 +142,14 @@ const initLayout = {
 			}
 		]
 	}
-	/* If these are not shown it is not possible to rearrange GoldenLayout windows.
-     Instead of disabling them the images in goldenlayout-mdl-theme.css are removed
-     and all click events disabled ..
-  settings: {
-    showPopoutIcon: false,
-    showMaximiseIcon: false,
-    showCloseIcon: false
-  }
-  */
 };
 
-export default {
+const GLayoutRoot = ref();
+
+export default defineComponent({
 	data() {
 		return {
 			overlay: false,
-			subOverlay: false,
-			disruptionDetail: false,
 		};
 	},
 
@@ -207,7 +159,7 @@ export default {
 		},
 
 		subOverlayClasses() {
-			return `sub-overlay ${this.subOverlay ? '' : 'hidden'}`;
+			return 'sub-overlay hidden';
 		},
 
 		...mapState(InfrastructureNamespace, [
@@ -223,7 +175,7 @@ export default {
 	mounted() {
 		this.loadInfrastructures();
 		this.loadTimetables();
-		this.$refs.GLayoutRoot.loadGLLayout(initLayout);
+		GLayoutRoot.value.loadGLLayout(initLayout);
 	},
 
 	methods: {
@@ -231,56 +183,8 @@ export default {
 			this.overlay = !this.overlay;
 		},
 
-		showSubOverlay() {
-			this.overlay = true;
-			this.subOverlay = true;
-		},
-
-		hideSubOverlay() {
-			this.subOverlay = false;
-		},
-
-		toggleSubOverlay() {
-			if (!this.subOverlay) {
-				this.showSubOverlay();
-			} else {
-				this.hideSubOverlay();
-			}
-		},
-
-		onStationDetailClicked() {
-			this.$refs.stationDetailButton.classList.toggle('enabled');
-			this.showSubOverlay();
-		},
-
-		onDisruptionDetailClicked() {
-			this.$refs.disruptionDetailButton.classList.add('enabled');
-			this.disruptionDetail = true;
-			this.showSubOverlay();
-		},
-
-		onSubOverlayCloseClicked() {
-			this.hideSubOverlay();
-
-			for (const overlayTab of this.$refs.subOverlayTabs.children) {
-				overlayTab.classList.remove('enabled');
-			}
-		},
-
 		addInfrastructureTab() {
-			this.$refs.GLayoutRoot.addGLComponent('InfrastructureComponent', 'Infra');
-		},
-
-		addSimulationTab() {
-			this.$refs.GLayoutRoot.addGLComponent('SimulationComponent', 'Simulation');
-		},
-
-		addTimetableTab() {
-			this.$refs.GLayoutRoot.addGLComponent('TimetableComponent', 'Timetable');
-		},
-
-		triggerSimulation() {
-			// TODO trigger simulation in store (has to move first)
+			GLayoutRoot.value.addGLComponent(Components.Infrastructure, 'Infrastructure');
 		},
 
 		...mapActions(InfrastructureNamespace, {
@@ -293,7 +197,7 @@ export default {
 			loadTimetable: 'load',
 		}),
 	},
-};
+});
 </script>
 
 <style>

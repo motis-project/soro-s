@@ -1,10 +1,10 @@
 <template>
 	<div>
-		<infrastructure-map />
+		<infrastructure-map ref="infrastructureMap" />
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from 'vue';
 import { ComponentContainer } from 'golden-layout';
 import InfrastructureMap from '../infrastructure/infrastructure-map.vue';
@@ -20,13 +20,15 @@ export default defineComponent({
 		},
 	},
 
+	created() { this.configureContainer(); },
+
 	methods: {
 		configureContainer() {
 			if (!this.container)
 				return;
 
-			// TODO find solution for this
-			this.container.on('resize', () => this.libreGLMap?.resize());
+			// TODO make this less hacky
+			this.container.on('resize', () => (this.$refs.infrastructureMap as { resize: () => void }).resize());
 		}
 	}
 });

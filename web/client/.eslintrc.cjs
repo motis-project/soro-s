@@ -1,4 +1,4 @@
-module.exports = { // TODO add TS support in ESLint
+module.exports = {
 	root: true,
 	env: {
 		browser: true,
@@ -12,7 +12,9 @@ module.exports = { // TODO add TS support in ESLint
 		'@vue/eslint-config-typescript/recommended',
 	],
 	overrides: [],
+	parser: "vue-eslint-parser",
 	parserOptions: {
+		parser: "@typescript-eslint/parser",
 		ecmaVersion: 'latest',
 		sourceType: 'module'
 	},

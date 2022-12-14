@@ -6,7 +6,7 @@
 		/>
 		<!-- Root dom for Golden-Layout manager -->
 		<div style="position: absolute; width: 100%; height: 100%">
-			<gl-component
+			<golden-layout-component
 				v-for="pair in AllComponents"
 				:key="pair[0]"
 				:ref="GlcKeyPrefix + pair[0]"
@@ -15,7 +15,7 @@
 					:is="pair[1].glc"
 					:container="pair[1].container"
 				/>
-			</gl-component>
+			</golden-layout-component>
 		</div>
 	</div>
 </template>
@@ -40,9 +40,8 @@ import {
 	ResolvedComponentItemConfig,
 	LogicalZIndex,
 	VirtualLayout,
-	ResolvedLayoutConfig,
 } from 'golden-layout';
-import GlComponent from './GlComponent.vue';
+import GoldenLayoutComponent from './golden-layout-component.vue';
 
 /*******************
  * Data
@@ -51,7 +50,7 @@ const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref('glc_'));
 
-const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GlComponent }>();
+const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GoldenLayoutComponent }>();
 const AllComponents = ref(new Map<number, { glc: any; container?: ComponentContainer }>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
@@ -88,23 +87,15 @@ const addGLComponent = async (componentType: string, title: string) => {
 	GLayout.addComponent(componentType, { refId: index }, title);
 };
 
-const loadGLLayout = async (
-	layoutConfig: LayoutConfig | ResolvedLayoutConfig
-) => {
+const loadGLLayout = async (layoutConfig: LayoutConfig) => {
 	GLayout.clear();
 	AllComponents.value.clear();
 
-	const config = (
-      Object.hasOwn(layoutConfig, 'resolved') // TODO simplify
-      	? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
-      	: layoutConfig
-  ) as LayoutConfig;
-
-	if (!config.root) {
+	if (!layoutConfig.root)  {
 		throw new Error('GoldenLayout: Root element not found');
 	}
 
-	const contents = [config.root.content];
+	const contents = [layoutConfig.root.content];
 
 	let index = 0;
 	while (contents.length > 0) {
@@ -135,7 +126,7 @@ const loadGLLayout = async (
 
 	await nextTick(); // wait 1 tick for vue to add the dom
 
-	GLayout.loadLayout(config);
+	GLayout.loadLayout(layoutConfig);
 };
 
 const getLayoutConfig = () => {return GLayout.saveLayout();};
@@ -216,7 +207,7 @@ onMounted(() => {
 
 		const ref = GlcKeyPrefix.value + refId;
 		// @ts-ignore
-		const component = instance?.refs[ref][0] as typeof GlComponent;
+		const component = instance?.refs[ref][0] as typeof GoldenLayoutComponent;
 
 		MapComponents.set(container, { refId, glc: component });
 		// @ts-ignore

@@ -48,22 +48,22 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { mapState } from 'vuex';
-import { InfrastructureNamespace } from '../../stores/infrastructure-store.ts';
+import { InfrastructureNamespace } from '../../stores/infrastructure-store';
 import {
 	deHighlightSignalStationRoute,
 	deHighlightStationRoute,
 	highlightSignalStationRoute,
 	highlightStationRoute
 } from './infrastructureMap.js';
-import { Map } from 'maplibre-gl';
+import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle.js';
 import { addIcons, iconExtension, iconUrl } from './addIcons.js';
 import { elementTypes, elementTypeLabels } from './elementTypes.js';
-import { ClickTooltip } from '../../util/Tooltip.js';
+import { defineComponent } from 'vue';
 
-const specialLayoutControls = ['Rising', 'Falling']; // question figure out what these do
+const specialLayoutControls = ['Rising', 'Falling']; // TODO make em display stuff actually
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
 const legendControlTypes = [
 	...elementTypes,
@@ -73,20 +73,19 @@ const legendControlTypes = [
 const mapDefaults = {
 	style: infrastructureMapStyle,
 	attributionControl: false,
-	zoom: 14,
+	zoom: 18,
 	hash: 'location',
-	center: [14, 49],
+	center: [8, 47],
 	maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
 	bearing: 0,
 };
 
-export default {
+export default defineComponent({
 	name: 'InfrastructureMap',
 
 	data() {
 		return {
-			libreGLMap: undefined,
-			tooltip: undefined,
+			libreGLMap: null as (Map | null),
 			legendControlTypes,
 			initiallyCheckedControls,
 			iconUrl,
@@ -104,7 +103,8 @@ export default {
 	},
 
 	watch: {
-		currentInfrastructure(newInfrastructure) {
+		currentInfrastructure(newInfrastructure: string | null) {
+			// @ts-ignore
 			this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : undefined;
 		},
 
@@ -112,7 +112,7 @@ export default {
 			if (newID) {
 				highlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
 			} else {
-				deHighlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, oldID);
+				deHighlightSignalStationRoute(this.libreGLMap, oldID);
 			}
 		},
 
@@ -125,40 +125,50 @@ export default {
 		},
 	},
 
-	created() { this.componentCreated(); },
-
 	methods: {
-		componentCreated() {
-			this.tooltip = new ClickTooltip(this.$refs.infrastructureTooltip); // question what does he do
+		resize() {
+			if (!this.libreGLMap)
+				return;
+
+			this.libreGLMap.resize();
 		},
 
-		hasImage(elementType) {
+		hasImage(elementType: string) {
 			return !specialLayoutControls.includes(elementType);
 		},
 
-		onLegendControlClicked(event) {
-			if (specialLayoutControls.includes(event.target.id)) {
+		onLegendControlClicked(event: Event) {
+			if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
 				this.evaluateSpecialLegendControls();
 
 				return;
 			}
 
-			this.evaluateLegendControlForControlType(event.target.value);
+			this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
 		},
 
-		evaluateLegendControlForControlType(type) {
+		evaluateLegendControlForControlType(type: string) {
+			if (!this.libreGLMap)
+				return;
+
+			// @ts-ignore
 			this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
 
 			if (type !== 'station') {
+				// @ts-ignore
 				this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
 			}
 		},
 
 		evaluateSpecialLegendControls() {
-			const rising_checked = this.$refs.Rising.checked;
-			const falling_checked = this.$refs.Falling.checked;
+			if (!this.libreGLMap)  {
+				return;
+			}
 
-			let filter;
+			const rising_checked = (this.$refs.Rising as HTMLInputElement).checked;
+			const falling_checked = (this.$refs.Falling as HTMLInputElement).checked;
+
+			let filter: FilterSpecification;
 			if (!rising_checked && falling_checked) {
 				filter = ['!', ['get', 'rising']];
 			} else if (rising_checked && !falling_checked) {
@@ -172,15 +182,18 @@ export default {
 					return;
 				}
 
+				// @ts-ignore
 				this.libreGLMap.setFilter(elementType + '-layer', filter);
+				// @ts-ignore
 				this.libreGLMap.setFilter('circle-' + elementType + '-layer', filter);
 			});
 		},
 
-		createMap(infrastructure) {
+		createMap(infrastructure: string) {
 			const map = new Map({
 				...mapDefaults,
-				container: this.$refs.map,
+				container: this.$refs.map as HTMLElement,
+				// @ts-ignore
 				transformRequest: (relative_url) => {
 					if (relative_url.startsWith('/')) {
 						const url = window.origin + '/' + infrastructure + relative_url;
@@ -204,7 +217,7 @@ export default {
 			return map;
 		},
 	}
-};
+});
 </script>
 
 <style>

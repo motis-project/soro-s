@@ -1,4 +1,4 @@
-import { elementTypes } from './elementTypes.js';
+import { elementTypes } from './elementTypes';
 
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
