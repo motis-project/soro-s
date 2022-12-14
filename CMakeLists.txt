@@ -89,12 +89,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
             -Wno-missing-noreturn
             -Wno-deprecated-experimental-coroutine
             -Werror
+            -fcoroutines-ts
             ${SORO_LINK_STATIC}
             )
 
-    if (CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 13)
+    if (CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 15)
         set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
-                -Wno-reserved-identifier)
+                -Wno-deprecated-non-prototype)
     endif ()
 
     if (SORO_SAN)
@@ -119,11 +120,41 @@ set(SORO_COMPILE_FEATURES cxx_std_20)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Gets us the soro-lib library
-include(cmake/soro-lib.cmake)
+# === soro-lib ===
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+file(GLOB_RECURSE soro-lib-files src/*.cc)
+add_library(soro-lib STATIC EXCLUDE_FROM_ALL ${soro-lib-files})
+
+if (SORO_CUDA)
+    add_library(infrastructure-cuda src/infrastructure/gpu/exclusion.cu)
+    set_target_properties(infrastructure-cuda PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS ON
+            CUDA_STANDARD 20
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+            INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+    target_include_directories(infrastructure-cuda PUBLIC include)
+    set_property(TARGET infrastructure-cuda PROPERTY CUDA_ARCHITECTURES 75 61)
+endif ()
+
+if (${CMAKE_USE_PTHREADS_INIT})
+    set(SORO_LIB_COMPILE_OPTIONS "-pthread")
+endif ()
+
+target_compile_options(soro-lib PRIVATE ${SORO_COMPILE_OPTIONS} ${SORO_LIB_COMPILE_OPTIONS})
+target_compile_features(soro-lib PRIVATE ${SORO_COMPILE_FEATURES})
+target_compile_definitions(soro-lib PRIVATE ${SORO_COMPILE_DEFINITIONS})
+target_include_directories(soro-lib PUBLIC include)
+target_link_libraries(soro-lib PRIVATE utl cista date pugixml)
+
+if (SORO_CUDA)
+    target_link_libraries(soro-lib PUBLIC infrastructure-cuda)
+endif ()
 
 # Gets us the soro-server-client target
-include(cmake/soro-server-client.cmake)
+add_subdirectory(web/server)
+add_subdirectory(web/client)
 
 # Generate file_paths.h for locating the test resources
 configure_file(test/include/test/file_paths.h.in
@@ -137,7 +168,7 @@ target_compile_options(soro-test PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_features(soro-test PRIVATE ${SORO_COMPILE_FEATURES})
 target_compile_definitions(soro-test PRIVATE ${SORO_COMPILE_DEFINITIONS})
 
-target_link_libraries(soro-test PUBLIC doctest soro-lib soro-server-lib)
+target_link_libraries(soro-test PUBLIC doctest soro-lib)
 target_include_directories(soro-test PUBLIC test/include)
 
 # Make clang-tidy only output on soro-s files, not on dependencies.
@@ -165,9 +196,3 @@ if (SORO_LINT)
                 )
     endforeach ()
 endif ()
-
-# add an ALL target for CLion convenience
-add_custom_target(ALL)
-add_dependencies(ALL
-        soro-test
-        soro-server-client)
