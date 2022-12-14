@@ -136,12 +136,6 @@
     margin-bottom: 0.5em;
 }
 
-.window-button {
-    width: 50%;
-    margin-top: 0.2em;
-    margin-bottom: 0.2em;
-}
-
 .data-selects {
     display: flex;
     flex-direction: column;

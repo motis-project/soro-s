@@ -7,24 +7,18 @@
 			<div class="overlay">
 				<div class="overlay-content">
 					<div class="window-controls">
-						<button
-							class="matter-button-contained window-button"
+						<soro-button
+							label="New Infrastructure Tab"
 							@click="addInfrastructureTab"
-						>
-							Infrastructure
-						</button>
-						<button
-							class="matter-button-contained window-button"
+						/>
+						<soro-button
 							disabled
-						>
-							Simulation
-						</button>
-						<button
-							class="matter-button-contained window-button"
+							label="New Simulation Tab"
+						/>
+						<soro-button
 							disabled
-						>
-							Timetable
-						</button>
+							label="New Timetable Tab"
+						/>
 					</div>
 					<div class="data-selects">
 						<soro-select
@@ -41,18 +35,14 @@
 						/>
 					</div>
 					<div class="dev-tools">
-						<button
-							class="matter-button-contained window-button"
+						<soro-button
 							disabled
-						>
-							Clear Cache
-						</button>
-						<button
-							class="matter-button-contained window-button"
+							label="Clear Cache"
+						/>
+						<soro-button
 							disabled
-						>
-							Simulate
-						</button>
+							label="Simulate"
+						/>
 					</div>
 				</div>
 				<div
@@ -116,6 +106,7 @@
 import GoldenLayoutAdapter from './golden-layout/golden-layout-adapter.vue';
 import DisruptionDetail from './components/disruption-detail.vue';
 import SoroSelect from './components/soro-select.vue';
+import SoroButton from './components/soro-button.vue';
 </script>
 
 <script lang="ts">
