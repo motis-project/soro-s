@@ -75,7 +75,7 @@ infra::element_id create_interpolation_osm(pugi::xml_node osm,
                                            infra::element_id const id,
                                            osm_information& osm_info) {
   std::vector<size_t> ids;
-  osm_info.ways_.emplace_back(std::pair(interpolation.first_elem_, id));
+  osm_info.ways_.emplace_back(interpolation.first_elem_, id);
   for (auto i = 0UL; i < interpolation.points_.size(); i++) {
     if (i < interpolation.points_.size() - 1) {
       osm_info.ways_.emplace_back(std::pair(id + i, id + i + 1));
@@ -87,9 +87,9 @@ infra::element_id create_interpolation_osm(pugi::xml_node osm,
     osm_add_coordinates(auxiliary_coords, auxiliary_node);
     osm_add_tag(type_str, interpolation_str, auxiliary_node);
   }
-  osm_info.ways_.emplace_back(std::pair(
+  osm_info.ways_.emplace_back(
       static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
-      interpolation.second_elem_));
+      interpolation.second_elem_);
   osm_info.element_to_interpolation_nodes_[interpolation.first_elem_] =
       std::make_pair(interpolation.second_elem_, ids);
   return static_cast<element_id>(id + interpolation.points_.size());
