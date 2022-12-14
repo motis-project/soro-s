@@ -10,4 +10,3 @@ VOLUME ["/resources"]
 WORKDIR /soro-s
 USER soro-s
 CMD ["/soro-s/soro-server", "--resource_dir", "/resources"]
-CMD ["/motis/motis", "--system_config", "/system_config.ini", "-c", "/input/config.ini"]
