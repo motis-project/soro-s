@@ -70,8 +70,8 @@ void create_way_osm(pugi::xml_node& osm_node, element_id const first,
   osm_add_tag(railway_str, rail_str, way);
 }
 
-std::size_t create_interpolation_osm(auto osm, auto const& interpolation,
-                                     auto id, auto& osm_info) {
+std::size_t create_interpolation_osm(pugi::xml_node osm, interpolation const& interpolation,
+                                     infra::element_id const id, osm_information& osm_info) {
   std::vector<size_t> ids;
   osm_info.ways_.emplace_back(std::pair(interpolation.first_elem_, id));
   for (auto i = 0UL; i < interpolation.points_.size(); i++) {
@@ -85,7 +85,7 @@ std::size_t create_interpolation_osm(auto osm, auto const& interpolation,
     osm_add_coordinates(auxiliary_coords, auxiliary_node);
     osm_add_tag(type_str, interpolation_str, auxiliary_node);
   }
-  osm_info.ways_.emplace_back(std::pair(id + interpolation.points_.size() - 1,
+  osm_info.ways_.emplace_back(std::pair(static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
                                         interpolation.second_elem_));
   osm_info.element_to_interpolation_nodes_[interpolation.first_elem_] =
       std::make_pair(interpolation.second_elem_, ids);
