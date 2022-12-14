@@ -17,8 +17,8 @@ included.
 
 - Git
 - CMake >= 3.19
-- GCC 11
-- Clang 15
+- GCC >= 11
+- Clang >= 14
 - Ninja
 
 ### Steps:
@@ -46,7 +46,7 @@ sudo apt install clang-15 lldb-15 lld-15 clangd-15 clang-tidy-15 clang-format-15
 Add Toolchains Repo.
 
 ```shell
-sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa && sudo apt update
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test && sudo apt update
 ```
 
 Install GCC.
@@ -78,12 +78,6 @@ sudo apt install git cmake ninja-build
 
 #### Cloning the SORO-S repository
 
-First add your SSH key to your ssh-agent (adjust path to your github SSH key).
-
-```shell
-ssh-add ~./ssh/id_rsa 
-```
-
 Clone the repository.
 
 ```shell
@@ -99,8 +93,6 @@ cd soro-s && cmake --preset clang-release
 ```
 
 .. or 'gcc-release' for a build with gcc.
-
-[comment]: <> (Create soro-test build files either with GCC as the compiler ...)
 
 ```shell
 cd soro-s && cmake --preset gcc-release
@@ -126,28 +118,20 @@ Test & Run.
 
 ### Webinterface
 
-To use the webinterface locally you need the following:
-
-- Python 3
-
-Install the dependencies:
-
-```shell
-sudo apt install python3
-```
+To use the webinterface locally you need to do the following:
 
 #### Building the web interface
 
 Build the webinterface by invoking the following in a build directory.
 
 ```shell
-ninja soro-server-client
+ninja soro-server
 ```
 
 Start the soro-server.
 
 ```shell
-./soro-server
+./soro-server --resource_dir ../../resources
 ```
 
 You can access the interface now on [localhost:8080](http://localhost:8080).
@@ -173,10 +157,11 @@ the build environment.
 - Git
 - Ninja
 - CMake
-- Python (only needed for the web interface)
-
-Currently, only MSVC 14.29 is supported. Please make sure that you have the
-appropriate version installed.
+- MSVC >= 14.34
 
 After adding the repository in Visual Studio select either the MSVC Debug or
 MSVC Release preset to compile.
+
+## Not supported:
+
+- MinGW
