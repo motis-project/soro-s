@@ -1,5 +1,5 @@
 <template>
-	<div class="material-select data-select">
+	<div class="material-select">
 		<select
 			class="material-select-text"
 			@change="emitChange"
