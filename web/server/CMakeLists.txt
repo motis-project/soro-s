@@ -1,22 +1,15 @@
 cmake_minimum_required(VERSION 3.18)
 project(soro)
 
-set(BUILD_SHARED_LIBS OFF)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-if (MSVC)
-    set(TILES_WARNINGS "/W4")
-else ()
-    set(TILES_WARNINGS "-Wall" "-Wextra" ${SORO_LINK_STATIC})
-endif ()
+set(SORO_SERVER_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
 
 file(GLOB_RECURSE soro-server-files src/*.cc)
 
 add_library(soro-server-lib STATIC EXCLUDE_FROM_ALL ${soro-server-files})
 
-target_compile_options(soro-server-lib PRIVATE ${TILES_WARNINGS})
-target_compile_definitions(soro-server-lib PRIVATE ${SORO_COMPILE_DEFINITIONS} BOOST_BEAST_USE_STD_STRING_VIEW=1)
+target_compile_options(soro-server-lib PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_features(soro-server-lib PRIVATE ${SORO_COMPILE_FEATURES})
+target_compile_definitions(soro-server-lib PRIVATE ${SORO_COMPILE_DEFINITIONS} BOOST_BEAST_USE_STD_STRING_VIEW=1)
 
 target_include_directories(soro-server-lib PUBLIC include)
 
@@ -42,6 +35,9 @@ foreach (file ${soro-server-resources})
     configure_file(${file} ${CMAKE_BINARY_DIR}/${relative-path} COPYONLY)
 endforeach ()
 
+# Disable warnings for tiles dependency by configuring it as a systems dependency
+set_target_properties(tiles PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:tiles,INTERFACE_INCLUDE_DIRECTORIES>)
+
 target_link_libraries(soro-server-lib PUBLIC
         pugixml
         rapidjson
@@ -55,10 +51,8 @@ target_link_libraries(soro-server-lib PUBLIC
 
 add_executable(soro-server EXCLUDE_FROM_ALL src/server.cc)
 
-target_compile_options(soro-server PRIVATE ${TILES_WARNINGS})
+target_compile_options(soro-server PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_definitions(soro-server PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_compile_features(soro-server PRIVATE ${SORO_COMPILE_FEATURES})
 
 target_link_libraries(soro-server PUBLIC soro-server-lib ${SORO_LINK_STATIC})
-
-
