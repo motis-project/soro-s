@@ -17,7 +17,8 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang-15",
-        "CMAKE_CXX_COMPILER": "clang++-15"
+        "CMAKE_CXX_COMPILER": "clang++-15",
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++"
       }
     },
     {
