@@ -61,15 +61,15 @@ jobs:
       - name: Delete unnecessary files
         if: matrix.config.artifact
         run: |
-          Remove-Item .\build\msvc-release\server_resources\infrastructure
-          Remove-Item .\build\msvc-release\server_resources\timetable
+          rm .\build\${{ matrix.config.preset }}\server_resources\infrastructure -r -force
+          rm .\build\${{ matrix.config.preset }}\server_resources\timetable -r -force
 
       - name: Create Distribution
         if: matrix.config.artifact
         run: >
           7z a soro-s-${{ matrix.config.artifact }}.zip
-          .\build\msvc-release\soro-server.exe
-          .\build\msvc-release\server_resources
+          .\build\${{ matrix.config.preset }}\soro-server.exe
+          .\build\${{ matrix.config.preset }}\server_resources
 
       - name: Upload Distribution
         if: matrix.config.artifact
