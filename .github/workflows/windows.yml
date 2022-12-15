@@ -55,7 +55,7 @@ jobs:
       # ==== WEB TESTS ====
       - name: Run Server
         run: |
-          .\build\${{ matrix.config.preset }}\soro-server.exe -t --resource_dir resources
+          .\build\${{ matrix.config.preset }}\soro-server.exe -t --resource_dir .\resources --server_resource_dir .\build\msvc-release\server_resources\
 
       # ==== DISTRIBUTION ====
       - name: Delete unnecessary files

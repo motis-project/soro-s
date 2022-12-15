@@ -123,7 +123,7 @@ int main(int argc, char const** argv) {
         osm_file,
         infra_res_dir / "tiles" /
             infra_file.filename().replace_extension(".mdb"),
-        tmp_dir);
+        tmp_dir, s.server_resource_dir_ / "profiles" / "profile.lua");
     soro::server::import_tiles(import_settings);
   }
 
