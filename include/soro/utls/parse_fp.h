@@ -91,4 +91,10 @@ constexpr T parse_fp(std::string const& s) {
   return parse_fp<T, ReplaceComma>(s.data(), s.size());
 }
 
+template <typename T, replace_comma ReplaceComma = OFF>
+constexpr T parse_fp(const char* const start, const char* const end) {
+  return parse_fp<T, ReplaceComma>(
+      start, static_cast<std::size_t>(std::distance(start, end)));
+}
+
 }  // namespace soro::utls

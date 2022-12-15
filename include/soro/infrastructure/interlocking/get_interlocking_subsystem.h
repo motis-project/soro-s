@@ -6,6 +6,6 @@
 namespace soro::infra {
 
 interlocking_subsystem get_interlocking_subsystem(
-    base_infrastructure const& base_infra, bool const determine_conflicts);
+    infrastructure_t const& infra, bool const determine_exclusions);
 
 }  // namespace soro::infra

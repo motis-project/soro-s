@@ -14,8 +14,6 @@ TEST_SUITE("optional") {
     optional<t, std::numeric_limits<t>::max()> opt;
 
     CHECK(!opt.has_value());
-    CHECK(opt.value() == std::numeric_limits<t>::max());
-    CHECK(opt.value() == decltype(opt)::INVALID_VALUE);
 
     opt = t{400};
 
@@ -94,7 +92,6 @@ TEST_SUITE("optional") {
     CHECK(*result1 == int{400});
 
     CHECK(!result2.has_value());
-    CHECK(result2.value() == -1);
   }
 
   TEST_CASE("optional and_then") {
@@ -113,6 +110,5 @@ TEST_SUITE("optional") {
     CHECK(*result1 == int{400});
 
     CHECK(!result2.has_value());
-    CHECK(result2.value() == -1);
   }
 }

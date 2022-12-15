@@ -9,12 +9,12 @@ namespace soro::infra {
 
 struct graph {
   template <typename T>
-  T const& element_data(node_ptr const n) const {
+  T const& element_data(node::ptr const n) const {
     return element_data_[n->element_->id()].as<T>();
   }
 
-  soro::vector<node_ptr> nodes_;
-  soro::vector<element_ptr> elements_;
+  soro::vector<node::ptr> nodes_;
+  soro::vector<element::ptr> elements_;
 
   soro::vector<element_data_t> element_data_;
 

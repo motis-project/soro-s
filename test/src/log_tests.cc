@@ -17,30 +17,29 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace utl;
 
-TEST_SUITE_BEGIN("log_test_suite");  // NOLINT
-
 void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
-  soro::map<soro::size_type, soro::size_type> ms_count_to_sr_count;
+  soro::map<soro::size_t, soro::size_t> ms_count_to_sr_count;
 
   for (auto const& sr : infra->station_routes_) {
-    auto const ms_it = ms_count_to_sr_count.find(sr->main_signals_.size());
+    auto const ms_it =
+        ms_count_to_sr_count.find(sr->path_->main_signals_.size());
     if (ms_it != std::end(ms_count_to_sr_count)) {
       ++(ms_it->second);
     } else {
-      ms_count_to_sr_count[sr->main_signals_.size()] = 1;
+      ms_count_to_sr_count[sr->path_->main_signals_.size()] = 1;
     }
   }
 
   uLOG(info) << "Main signal in station route stats:";
 
-  soro::size_type check_count = 0;
+  soro::size_t check_count = 0;
   for (auto const& [ms_count, sr_count] : ms_count_to_sr_count) {
     uLOG(info) << "Station routes with " << ms_count
                << " main signals: " << sr_count;
     check_count += sr_count;
   }
 
-  CHECK(check_count == infra->station_routes_.size());
+  CHECK_EQ(check_count, infra->station_routes_.size());
 }
 
 void log_possible_speed_limit_values(infrastructure const& infra) {
@@ -61,66 +60,29 @@ void log_possible_speed_limit_values(infrastructure const& infra) {
   uLOG(info) << "In total: " << possible_values.size();
 }
 
-void log_signal_station_route_halt_counts(infrastructure const& infra) {
-  std::map<soro::size_type, soro::size_type> passenger_halt_counts;
-  std::map<soro::size_type, soro::size_type> freight_halt_counts;
+void log_timetable_stats(timetable const& tt) {
+  soro::size_t avg_length_in_irs = 0;
+  soro::size_t avg_service_days = 0;
 
-  for (auto const& ssr : infra->interlocking_.interlocking_routes_) {
-    if (passenger_halt_counts.contains(ssr->passenger_halts_.size())) {
-      ++(passenger_halt_counts[ssr->passenger_halts_.size()]);
-    } else {
-      passenger_halt_counts[ssr->passenger_halts_.size()] = 1;
-    }
-
-    if (freight_halt_counts.contains(ssr->freight_halts_.size())) {
-      ++(freight_halt_counts[ssr->freight_halts_.size()]);
-    } else {
-      freight_halt_counts[ssr->freight_halts_.size()] = 1;
-    }
+  for (auto const& train : tt->trains_) {
+    avg_length_in_irs += train.path_.size();
+    avg_service_days += train.service_days_.count();
   }
 
-  uLOG(info) << "Signal station route passenger halt count stats:";
-  for (auto const& [passenger_halts, stat] : passenger_halt_counts) {
-    uLOG(info) << "Passenger halt count: " << passenger_halts << " occured "
-               << stat << " times.";
-  }
-
-  uLOG(info) << "Signal station route freight halt count stats:";
-  for (auto const& [freight_halts, stat] : freight_halt_counts) {
-    uLOG(info) << "Freight halt count: " << freight_halts << " occured " << stat
-               << " times.";
-  }
+  uLOG(info) << "Average train length in interlocking routes: "
+             << avg_length_in_irs / tt->trains_.size();
+  uLOG(info) << "Average train service days: "
+             << avg_service_days / tt->trains_.size();
 }
 
-void print_first_departure_buckets(timetable const& tt) {
-  std::map<unixtime, size_t> buckets;
-
-  for (auto const& train_run : tt->train_store_) {
-    auto const one_hour = unixtime{3600};
-    auto const remainder = train_run->first_departure() % one_hour;
-    auto const bucket_time = train_run->first_departure() - remainder;
-
-    if (auto it = buckets.find(bucket_time); it != std::end(buckets)) {
-      ++(it->second);
-    } else {
-      buckets[bucket_time] = 1;
-    }
-  }
-
-  for (auto const& [bucket_time, size] : buckets) {
-    uLOG(utl::info) << "Bucket Time: " << bucket_time << " Size: " << size;
-  }
-}
-
-void logs(infrastructure const& infra) {
+void logs(infrastructure const& infra, timetable const& tt) {
   log_main_signal_in_station_routes_stats(infra);
   log_possible_speed_limit_values(infra);
-  log_signal_station_route_halt_counts(infra);
+  log_timetable_stats(tt);
 }
 
 TEST_CASE("log infrastructure stats") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  logs(infra);
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    logs(*scenario->infra_, scenario->timetable_);
+  }
 }
-
-TEST_SUITE_END();  // NOLINT

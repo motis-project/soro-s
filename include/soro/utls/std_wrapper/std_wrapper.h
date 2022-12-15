@@ -10,12 +10,18 @@ template <
     typename Container, typename ValueType,
     std::enable_if_t<!std::is_same_v<Container, std::string>, bool> = true>
 inline bool contains(Container const& c, ValueType const& e) {
-  return std::find(std::cbegin(c), std::cend(c), e) != std::cend(c);
+  using std::begin;
+  using std::end;
+
+  return std::find(std::begin(c), std::end(c), e) != std::end(c);
 }
 
 template <typename Container, typename Pred>
-inline bool contains_if(Container const& c, Pred const& pred) {
-  return std::find_if(std::cbegin(c), std::cend(c), pred) != std::cend(c);
+inline bool contains_if(Container&& c, Pred const& pred) {
+  using std::begin;
+  using std::end;
+
+  return std::find_if(begin(c), end(c), pred) != end(c);
 }
 
 template <typename ValueType>
@@ -118,7 +124,7 @@ inline auto sort(Container& c) {
 }
 
 template <typename Container, typename Pred>
-inline auto sort(Container& c, Pred const&& pred) {
+inline auto sort(Container& c, Pred&& pred) {
   return std::sort(std::begin(c), std::end(c), pred);
 }
 
@@ -155,8 +161,11 @@ inline auto any_of(Iteratable const& i, Pred&& p) {
 }
 
 template <typename Iteratable, typename Pred>
-inline auto all_of(Iteratable&& i, Pred&& p) {
-  return std::all_of(std::begin(i), std::end(i), p);
+constexpr auto all_of(Iteratable&& i, Pred&& p) {
+  using std::begin;
+  using std::end;
+
+  return std::all_of(begin(i), end(i), p);
 }
 
 template <typename Iterable, typename T>
@@ -164,15 +173,32 @@ constexpr auto sum(Iterable const& i, T init) {
   return std::accumulate(std::cbegin(i), std::cend(i), init);
 }
 
+template <typename Iterable, typename T, typename Fn>
+constexpr auto accumulate(Iterable&& i, T init, Fn&& fn) {
+  return std::accumulate(std::cbegin(i), std::cend(i), init, fn);
+}
+
 template <typename Iterable, typename Pred>
-constexpr std::size_t count_if(Iterable const& i, Pred&& p) {
-  return static_cast<std::size_t>(
-      std::count_if(std::cbegin(i), std::cend(i), p));
+constexpr std::size_t count_if(Iterable&& i, Pred&& p) {
+  using std::begin;
+  using std::end;
+
+  return static_cast<std::size_t>(std::count_if(begin(i), end(i), p));
 }
 
 template <typename Iterable, typename T>
 constexpr std::size_t count(Iterable const& i, T const& v) {
   return static_cast<std::size_t>(std::count(std::cbegin(i), std::cend(i), v));
+}
+
+template <typename Iterable>
+constexpr bool is_sorted(Iterable const& i) {
+  return std::is_sorted(std::begin(i), std::end(i));
+}
+
+template <typename Iterable, typename Comp>
+constexpr bool is_sorted(Iterable const& i, Comp&& cmp) {
+  return std::is_sorted(std::begin(i), std::end(i), cmp);
 }
 
 }  // namespace soro::utls

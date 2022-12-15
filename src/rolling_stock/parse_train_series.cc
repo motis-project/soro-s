@@ -2,6 +2,8 @@
 
 #include "pugixml.hpp"
 
+#include "utl/logging.h"
+
 #include "soro/utls/parse_fp.h"
 
 #include "soro/si/constants.h"
@@ -82,6 +84,12 @@ tractive_curve_t get_tractive_force_curve(
     polynomials.push_back(piece);
   }
 
+  if (!is_continuous(polynomials)) {
+    uLOG(utl::warn) << "Found non continuous piecewise function for tractive "
+                       "force curve, skipping it.";
+    return {};
+  }
+
   return make_piecewise(std::move(polynomials));
 }
 
@@ -109,8 +117,11 @@ auto get_running_resistance_curve(xml_node const& running_resistance_factors,
   return utls::make_polynomial(drag, dampening, rolling);
 }
 
-auto parse_variants(xml_node const& xml_variants) {
+std::pair<bool, soro::map<variant_id, traction_vehicle>> parse_variants(
+    xml_node const& xml_variants) {
   soro::map<variant_id, traction_vehicle> variants;
+
+  auto success = true;
 
   for (auto const& xml_variant :
        xml_variants.children("Triebfahrzeugbaureihenvariante")) {
@@ -121,6 +132,17 @@ auto parse_variants(xml_node const& xml_variants) {
     auto weight = si::from_ton(parse_fp<si::precision, replace_comma::ON>(
         xml_variant.child("EigenGewicht").child_value()));
 
+    auto const tractive_force_curve =
+        get_tractive_force_curve(xml_variant.child("Stromartausruestungen")
+                                     .child("Stromartausruestung")
+                                     .child("Zugkraftfaktoren"));
+
+    if (tractive_force_curve.pieces_.empty()) {
+      success = false;
+      uLOG(utl::warn) << "Skipping variant " << id;
+      continue;
+    }
+
     variants.emplace(
         id, traction_vehicle{
                 .name_ = xml_variant.child("Bezeichnung").child_value(),
@@ -129,15 +151,12 @@ auto parse_variants(xml_node const& xml_variants) {
                     si::from_km_h(parse_fp<si::precision, replace_comma::ON>(
                         xml_variant.child("ZulaessigeGeschwindigkeit")
                             .child_value())),
-                .tractive_curve_ = get_tractive_force_curve(
-                    xml_variant.child("Stromartausruestungen")
-                        .child("Stromartausruestung")
-                        .child("Zugkraftfaktoren")),
+                .tractive_curve_ = tractive_force_curve,
                 .resistance_curve_ =
                     get_running_resistance_curve(xml_variant, weight)});
   }
 
-  return variants;
+  return {success, variants};
 }
 
 soro::vector<train_series> parse_train_series(
@@ -154,8 +173,14 @@ soro::vector<train_series> parse_train_series(
                          .attribute("Nr")
                          .value();
 
-    ts.variants_ = parse_variants(
+    bool success = false;
+    std::tie(success, ts.variants_) = parse_variants(
         xml_train_model_range.child("Triebfahrzeugbaureihenvarianten"));
+
+    if (!success) {
+      uLOG(utl::warn) << "Could not parse every train variant in train no "
+                      << ts.nr_ << " from company " << ts.company_nr_;
+    }
 
     train_series.push_back(ts);
   }

@@ -1,25 +1,24 @@
+#include "test/infrastructure/reverse_ahead_test.h"
+
 #include "doctest/doctest.h"
 
 #include "soro/infrastructure/infrastructure.h"
 
-#include "test/file_paths.h"
-
-using namespace soro;
-using namespace soro::infra;
+namespace soro::infra::test {
 
 bool is_final_frontier(element_ptr border) {
   auto const& b = border->as<simple_element>();
   return (b.rising_ ? b.top() : b.bot())->next_node_ == nullptr;
 }
 
-void check_reverse_ahead(base_infrastructure const& iss) {
+void check_reverse_ahead(infrastructure const& infra) {
   size_t nulls = 0;
   size_t ends = 0;
 
-  for (auto const& element : iss.graph_.elements_) {
-    ends += static_cast<size_t>(element->is_end_element());
-    ends += static_cast<size_t>(element->is(type::BORDER) &&
-                                is_final_frontier(element));
+  for (auto const& element : infra->graph_.elements_) {
+    ends += static_cast<std::size_t>(element->is_end_element());
+    ends += static_cast<std::size_t>(element->is(type::BORDER) &&
+                                     is_final_frontier(element));
 
     for (auto const& node : element->nodes()) {
       auto const rev = node->reverse_ahead();
@@ -31,10 +30,11 @@ void check_reverse_ahead(base_infrastructure const& iss) {
 
   // TODO(julian) check if the path is correct
 
-  CHECK(nulls == ends);
+  CHECK_EQ(nulls, ends);
 }
 
-TEST_CASE("reverse ahead") {  // NOLINT
-  infrastructure const infra(SMALL_OPTS);
-  check_reverse_ahead(*infra);
+void do_reverse_ahead_tests(infrastructure const& infra) {
+  check_reverse_ahead(infra);
 }
+
+}  // namespace soro::infra::test

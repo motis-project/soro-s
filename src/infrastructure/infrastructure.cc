@@ -6,7 +6,11 @@ namespace soro::infra {
 
 infrastructure::infrastructure(infrastructure_options const& options) {
   this->mem_ = parse_iss(options);
-  this->access_ = std::addressof(std::get<base_infrastructure>(mem_));
+  this->access_ = std::addressof(std::get<infrastructure_t>(mem_));
+}
+
+infrastructure::infrastructure(infrastructure_t const* wrapped_infra) {
+  this->access_ = wrapped_infra;
 }
 
 }  // namespace soro::infra

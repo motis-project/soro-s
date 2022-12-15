@@ -1,6 +1,5 @@
 #include "soro/infrastructure/parsers/iss/parse_iss.h"
 
-#include <cmath>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -9,6 +8,7 @@
 
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
+#include "utl/get_or_create.h"
 #include "utl/logging.h"
 #include "utl/pipes.h"
 #include "utl/timer.h"
@@ -63,11 +63,128 @@ border parse_border(xml_node const& xml_rp_border, element* border_element,
 
   return b;
 }
+using type_order_key = int16_t;
+
+constexpr type_order_key get_type_order_key(type const t, bool const rising) {
+  switch (t) {
+      // section elements
+    case type::LINE_SWITCH:
+    case type::KM_JUMP:
+    case type::BORDER:
+    case type::BUMPER:
+    case type::SIMPLE_SWITCH:
+    case type::CROSS:
+    case type::TRACK_END:
+      return std::numeric_limits<type_order_key>::max();
+
+      // undirected track elements part 1
+    case type::TUNNEL: return 0;
+    case type::SLOPE: return 10;
+    case type::ENTRY: return 20;
+    case type::RUNTIME_CHECKPOINT_UNDIRECTED:
+      return 100;
+
+      // directed track elements
+    case type::RUNTIME_CHECKPOINT: return rising ? 101 : 102;
+    case type::HALT: return rising ? 110 : 111;
+    case type::MAIN_SIGNAL: return rising ? 120 : 121;
+    case type::APPROACH_SIGNAL: return rising ? 130 : 131;
+    case type::PROTECTION_SIGNAL: return rising ? 140 : 141;
+    case type::EOTD: return rising ? 150 : 151;
+    case type::CTC: return rising ? 160 : 161;
+    case type::SPEED_LIMIT: return rising ? 170 : 171;
+    case type::FORCED_HALT: return rising ? 180 : 181;
+    case type::POINT_SPEED: return rising ? 190 : 191;
+    case type::BRAKE_PATH:
+      return rising ? 200 : 201;
+
+      // undirected track elements part 2
+    case type::TRACK_NAME: return 300;
+    case type::LEVEL_CROSSING:
+      return 310;
+
+      // invalid
+    case type::INVALID: return std::numeric_limits<type_order_key>::max();
+  }
+
+  throw utl::fail("Could not find type {} in get_type_order_key",
+                  get_type_str(t));
+}
+
+std::vector<xml_node> get_sorted_track_elements(xml_node const xml_rp_section) {
+  std::vector<xml_node> result;
+
+  for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
+    auto const type = get_type(node.name());
+
+    if (is_directed_track_element(type) || is_undirected_track_element(type)) {
+      result.emplace_back(node);
+    }
+  }
+
+  return result;
+}
+
+template <typename Comparator>
+bool order_impl(kilometrage const km1, type const t1, bool const r1,
+                element_id const id1, kilometrage const km2, type const t2,
+                bool const r2, element_id const id2) {
+  if (km1 != km2) {
+    return Comparator{}(km1, km2);
+  }
+
+  auto const tok1 = get_type_order_key(t1, r1);
+  auto const tok2 = get_type_order_key(t2, r2);
+
+  if (tok1 != tok2) {
+    return tok1 < tok2;
+  }
+
+  return id1 < id2;
+}
+
+template <typename Comparator>
+bool element_order_from_nodes(xml_node const n1, xml_node const n2) {
+  auto const km1 = parse_kilometrage(n1);
+  auto const km2 = parse_kilometrage(n2);
+
+  auto const r1 = has_rising_name(n1);
+  auto const r2 = has_rising_name(n2);
+
+  auto const t1 = get_type(n1.name());
+  auto const t2 = get_type(n2.name());
+
+  return order_impl<Comparator>(
+      km1, t1, r1, static_cast<element_id>(parse_rp_node_id(n1)), km2, t2, r2,
+      static_cast<element_id>(parse_rp_node_id(n2)));
+}
+
+template <typename Comparator>
+bool element_order(element::ptr e1, element::ptr e2) {
+  auto const km1 = e1->is_directed_track_element()
+                       ? e1->as<track_element>().km_
+                       : e1->as<undirected_track_element>().km_;
+  auto const km2 = e2->is_directed_track_element()
+                       ? e2->as<track_element>().km_
+                       : e2->as<undirected_track_element>().km_;
+
+  auto const r1 = e1->is_directed_track_element()
+                      ? e1->as<track_element>().rising_
+                      : e1->as<undirected_track_element>().rising_;
+  auto const r2 = e2->is_directed_track_element()
+                      ? e2->as<track_element>().rising_
+                      : e2->as<undirected_track_element>().rising_;
+
+  auto const t1 = e1->type();
+  auto const t2 = e2->type();
+
+  return order_impl<Comparator>(km1, t1, r1, e1->id(), km2, t2, r2, e2->id());
+}
 
 section::id parse_section_into_network(xml_node const& xml_rp_section,
                                        station& station, graph& network,
                                        construction_materials& mats) {
-  line_id line =
+  line_id const line =
       static_cast<uint32_t>(std::stoul(xml_rp_section.child_value(LINE)));
   auto const& section_start =
       xml_rp_section.child(RAIL_PLAN_NODE).children().begin();
@@ -182,98 +299,207 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   };
 
   auto start_element = emplace_into_network(*section_start, true);
-  auto end_element = emplace_into_network(*section_end, false);
-
   set_km_point_and_line(*start_element, section_start->name(),
                         parse_kilometrage(*section_start), line);
-  set_km_point_and_line(*end_element, section_end->name(),
-                        parse_kilometrage(*section_end), line);
-
-  sec.elements_.emplace_back(start_element);
   network.element_id_to_section_ids_[start_element->id()].push_back(section_id);
 
-  auto prev_rising_element = start_element;
-  auto prev_falling_element = start_element;
+  auto end_element = emplace_into_network(*section_end, false);
+  set_km_point_and_line(*end_element, section_end->name(),
+                        parse_kilometrage(*section_end), line);
+  network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
 
-  auto prev_rising_rp_node = *section_start;
-  auto prev_falling_rp_node = *section_start;
+  std::map<xml_node, element*> undirected_track_elements;
 
-  for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
+  auto const create_directed_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+
+        auto const rising_element = has_rising_name(node);
+
+        auto const track_element = parse_track_element(
+            node, type, rising_element, line, network, station, mats);
+
+        if (dir || prev_element->is_track_element()) {
+          set_neighbour(*prev_element, prev_node.name(), track_element, true);
+          set_neighbour(*track_element, node.name(), prev_element, false);
+        } else {
+          set_neighbour(*prev_element, prev_node.name(), track_element, false);
+          set_neighbour(*track_element, node.name(), prev_element, false);
+        }
+
+        network.element_id_to_section_ids_[track_element->id()].push_back(
+            section_id);
+
+        prev_element = track_element;
+        prev_node = node;
+
+        return track_element;
+      };
+
+  auto const create_undirected_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+
+        auto const track_element =
+            utl::get_or_create(undirected_track_elements, node, [&]() {
+              return parse_track_element(node, type, false, line, network,
+                                         station, mats);
+            });
+
+        if (prev_element->is_section_element()) {
+          set_neighbour(*prev_element, prev_node.name(), track_element, dir);
+        } else {
+          set_neighbour(*prev_element, prev_node.name(), track_element, true);
+        }
+
+        set_neighbour(*track_element, node.name(), prev_element, !dir);
+
+        network.element_id_to_section_ids_[track_element->id()].push_back(
+            section_id);
+
+        prev_element = track_element;
+        prev_node = node;
+
+        return track_element;
+      };
+
+  auto const create_track_element =
+      [&](xml_node const node, xml_node& prev_node, element*& prev_element,
+          bool const dir) {
+        auto const type = get_type(node.name());
+        return is_directed_track_element(type)
+                   ? create_directed_track_element(node, prev_node,
+                                                   prev_element, dir)
+                   : create_undirected_track_element(node, prev_node,
+                                                     prev_element, dir);
+      };
+
+  std::set<element::ptr> all_track_elements;
+
+  auto const insert_in_direction =
+      [&](std::vector<xml_node> const& track_elements, xml_node& prev_node,
+          element*& prev_element, bool const direction) {
+        for (auto const& node : track_elements) {
+
+          if (is_directed_track_element(get_type(node.name())) &&
+              has_rising_name(node) != direction) {
+            continue;
+          }
+
+          auto const track_element =
+              create_track_element(node, prev_node, prev_element, direction);
+          all_track_elements.insert(track_element);
+        }
+      };
+
+  // gather all track elements in one vector, we need to sort them in two
+  // different orders later
+  std::vector<xml_node> sorted_track_nodes;
+  for (auto const node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
     auto const type = get_type(node.name());
-    if (is_track_element(type) && !is_undirected_track_element(type)) {
-      auto const rising = has_rising_name(node);
-
-      auto& prev_element = rising ? prev_rising_element : prev_falling_element;
-      auto& prev_node = rising ? prev_rising_rp_node : prev_falling_rp_node;
-
-      // TODO(julian) start parsing the route end of train detectors
-      // cf get_infra_stats.cc
-      if (equal(node.name(), ROUTE_EOTD_FALLING) ||
-          equal(node.name(), ROUTE_EOTD_RISING)) {
-        continue;
-      }
-
-      auto const track_element =
-          parse_track_element(node, type, rising, line, network, station, mats);
-
-      set_neighbour(*prev_element, prev_node.name(), track_element, rising);
-      set_neighbour(*track_element, node.name(), prev_element, !rising);
-
-      sec.elements_.emplace_back(track_element);
-      network.element_id_to_section_ids_[track_element->id()].push_back(
-          section_id);
-
-      prev_element = track_element;
-      prev_node = node;
-    } else if (is_undirected_track_element(type)) {
-      auto const track_rising =
-          parse_track_element(node, type, true, line, network, station, mats);
-      auto const track_falling =
-          parse_track_element(node, type, false, line, network, station, mats);
-
-      set_neighbour(*prev_rising_element, prev_rising_rp_node.name(),
-                    track_rising, true);
-      set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
-                    track_falling, false);
-
-      set_neighbour(*track_rising, node.name(), prev_rising_element, false);
-      set_neighbour(*track_falling, node.name(), prev_falling_element, true);
-
-      sec.elements_.emplace_back(track_rising);
-      sec.elements_.emplace_back(track_falling);
-      network.element_id_to_section_ids_[track_rising->id()].push_back(
-          section_id);
-      network.element_id_to_section_ids_[track_falling->id()].push_back(
-          section_id);
-
-      prev_rising_element = track_rising;
-      prev_falling_element = track_falling;
-      prev_rising_rp_node = node;
-      prev_falling_rp_node = node;
+    if (type == type::INVALID || !is_track_element(type)) {
+      continue;
     }
+
+    sorted_track_nodes.emplace_back(node);
   }
 
+  // scan the section in rising direction and add all rising and undirected
+  // elements
+  auto prev_rising_element = start_element;
+  auto prev_rising_rp_node = *section_start;
+
+  utls::sort(sorted_track_nodes, element_order_from_nodes<std::less<>>);
+  insert_in_direction(sorted_track_nodes, prev_rising_rp_node,
+                      prev_rising_element, true);
   set_neighbour(*prev_rising_element, prev_rising_rp_node.name(), end_element,
                 true);
-  set_neighbour(*prev_falling_element, prev_falling_rp_node.name(), end_element,
-                false);
   set_neighbour(*end_element, section_end->name(), prev_rising_element, true);
-  set_neighbour(*end_element, section_end->name(), prev_falling_element, false);
 
-  sec.elements_.emplace_back(end_element);
-  network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
+  // scan the section in falling direction and add all falling and undirected
+  // elements
+  auto prev_falling_element = end_element;
+  auto prev_falling_rp_node = *section_end;
+
+  utls::sort(sorted_track_nodes, element_order_from_nodes<std::greater<>>);
+  insert_in_direction(sorted_track_nodes, prev_falling_rp_node,
+                      prev_falling_element, false);
+  set_neighbour(*start_element, section_start->name(), prev_falling_element,
+                false);
+
+  if (prev_falling_element->is_track_element()) {
+    set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
+                  start_element, true);
+  } else {
+    set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
+                  start_element, false);
+  }
+
+  // don't sort the first section element, since when a section has length 0
+  // we don't want the order to be
+  // [section element, section element, track element, ...]
+  sec.rising_order_.emplace_back(start_element);
+  sec.rising_order_.insert(std::end(sec.rising_order_),
+                           std::begin(all_track_elements),
+                           std::end(all_track_elements));
+  std::sort(std::begin(sec.rising_order_) + 1, std::end(sec.rising_order_),
+            element_order<std::less<>>);
+  sec.rising_order_.emplace_back(end_element);
+
+  sec.falling_order_.emplace_back(end_element);
+  sec.falling_order_.insert(std::end(sec.falling_order_),
+                            std::begin(all_track_elements),
+                            std::end(all_track_elements));
+  std::sort(std::begin(sec.falling_order_) + 1, std::end(sec.falling_order_),
+            element_order<std::greater<>>);
+  sec.falling_order_.emplace_back(start_element);
 
   return section_id;
 }
 
-void calculate_station_routes(base_infrastructure& iss,
-                              construction_materials const& mats) {
-  auto const& network = iss.graph_;
+std::set<rail_plan_node_id> get_omitted_relevant_rp_nodes(
+    intermediate_station_route const& isr1) {
+  type_set const INTERLOCKING_DISCERNING_TYPES = {type::MAIN_SIGNAL};
 
-  auto get_path = [&](intermediate_station_route const& sr, node_ptr next_node,
-                      auto const last_node_id) {
-    auto course_idx = 0UL;
-    soro::vector<node_ptr> nodes;
+  std::set<rail_plan_node_id> omitted_nodes;
+
+  for (auto const& omitted : isr1.omitted_rp_nodes_) {
+    if (INTERLOCKING_DISCERNING_TYPES.contains(omitted.type_)) {
+      omitted_nodes.insert(omitted.rp_node_id_);
+    }
+  }
+
+  return omitted_nodes;
+}
+
+bool same_path(intermediate_station_route const& isr1,
+               intermediate_station_route const& isr2) {
+  auto const same_start = isr1.start_ == isr2.start_;
+  auto const same_end = isr1.end_ == isr2.end_;
+  auto const same_course = isr1.course_ == isr2.course_;
+
+  auto const same_omitted = get_omitted_relevant_rp_nodes(isr1) ==
+                            get_omitted_relevant_rp_nodes(isr2);
+
+  return same_start && same_end && same_course && same_omitted;
+}
+
+struct deduplicated_paths {
+  soro::vector<station_route::path::ptr> paths_;
+  soro::vector<soro::unique_ptr<station_route::path>> path_store_;
+  soro::vector<station_route::path::ptr> station_route_id_to_path_id_;
+};
+
+deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
+                                           construction_materials const& mats) {
+  utl::scoped_timer const timer("Deduplicating Paths");
+
+  auto const get_path = [&](intermediate_station_route const& sr,
+                            node::ptr next_node, auto const last_node_id) {
+    uint32_t course_idx = 0;
+    soro::vector<node::ptr> nodes;
     while (next_node != nullptr && next_node->id_ != last_node_id) {
       nodes.push_back(next_node);
 
@@ -296,7 +522,7 @@ void calculate_station_routes(base_infrastructure& iss,
     return nodes;
   };
 
-  auto const& get_node = [](element_ptr e, bool const start) {
+  auto const get_node = [](element::ptr e, bool const start) {
     if (e->is(type::BORDER)) {
       auto const& border = e->as<simple_element>();
       auto ret = start ? (e->rising() ? border.bot() : border.top())
@@ -315,76 +541,153 @@ void calculate_station_routes(base_infrastructure& iss,
         "Station route does not start with border, end or track element");
   };
 
+  auto const get_main_signals = [&](intermediate_station_route const& isr,
+                                    soro::vector<node::ptr> const& nodes) {
+    std::set<node::ptr> omitted_main_signals;
+
+    for (auto const& omitted : isr.omitted_rp_nodes_) {
+      if (omitted.type_ == type::MAIN_SIGNAL) {
+        auto const element_id =
+            mats.rp_id_to_element_id_.at(omitted.rp_node_id_);
+        omitted_main_signals.insert(
+            infra.graph_.elements_[element_id]->as<track_element>().get_node());
+      }
+    }
+
+    soro::vector<node::idx> main_signals;
+    for (auto idx = 0U; idx < nodes.size(); ++idx) {
+      auto const& node = nodes[idx];
+      if (node->is(type::MAIN_SIGNAL) && !omitted_main_signals.contains(node)) {
+        main_signals.emplace_back(static_cast<node::idx>(idx));
+      }
+    }
+
+    return main_signals;
+  };
+
+  auto const& graph = infra.graph_;
+
+  deduplicated_paths result;
+  result.station_route_id_to_path_id_.resize(
+      mats.intermediate_station_routes_.size());
+
+  // this is just a helper data structure to help finding identical paths
+  // it maps the following: element::id -> [{sr_id, path::ptr}]
+  soro::vector<soro::vector<std::pair<element_id, station_route::path::ptr>>>
+      start_elements_to_isr_paths(graph.elements_.size());
+
+  for (auto const& i_sr : mats.intermediate_station_routes_) {
+    auto start = graph.elements_[mats.rp_id_to_element_id_.at(i_sr.start_)];
+    auto end = graph.elements_[mats.rp_id_to_element_id_.at(i_sr.end_)];
+
+    // check if there already exists an identical path
+    auto path_it = utls::find_if(
+        start_elements_to_isr_paths[start->id()], [&](auto&& pair) {
+          return same_path(mats.intermediate_station_routes_[pair.first], i_sr);
+        });
+
+    if (path_it != std::end(start_elements_to_isr_paths[start->id()])) {
+      // we found an identical path, use it
+      result.station_route_id_to_path_id_[i_sr.id_] = path_it->second;
+      continue;
+    }
+
+    // create new path
+    auto nodes =
+        get_path(i_sr, get_node(start, true), get_node(end, false)->id_);
+    auto main_signals = get_main_signals(i_sr, nodes);
+
+    result.path_store_.emplace_back();
+    result.path_store_.back() = soro::make_unique<station_route::path>(
+        station_route::path{.start_ = start,
+                            .end_ = end,
+                            .course_ = i_sr.course_,
+                            .nodes_ = std::move(nodes),
+                            .main_signals_ = std::move(main_signals)});
+    auto const path_ptr = result.path_store_.back().get();
+    result.paths_.emplace_back(path_ptr);
+
+    result.station_route_id_to_path_id_[i_sr.id_] = path_ptr;
+    start_elements_to_isr_paths[start->id()].emplace_back(i_sr.id_, path_ptr);
+  }
+
+  return result;
+}
+
+void calculate_station_routes(infrastructure_t& infra,
+                              construction_materials const& mats) {
+  utl::scoped_timer const calc_timer("Calculating Station Routes");
+
+  auto deduplicated_paths = get_station_route_paths(infra, mats);
+  infra.station_route_path_store_ = std::move(deduplicated_paths.path_store_);
+  infra.station_route_paths_ = std::move(deduplicated_paths.paths_);
+
+  auto const& graph = infra.graph_;
+
   size_t through_routes = 0;
   size_t in_routes = 0;
   size_t out_routes = 0;
 
-  iss.station_route_store_.reserve(mats.intermediate_station_routes_.size());
+  infra.station_route_store_.reserve(mats.intermediate_station_routes_.size());
   for (auto const& i_sr : mats.intermediate_station_routes_) {
-    iss.station_route_store_.emplace_back();
-    sassert(iss.station_route_store_.size() == i_sr.id_ + 1,
+    infra.station_route_store_.emplace_back();
+    sassert(infra.station_route_store_.size() == i_sr.id_ + 1,
             "Did not allocate enough space for the signal station route");
 
-    iss.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
-    auto sr = iss.station_route_store_[i_sr.id_].get();
-    iss.station_routes_.emplace_back(sr);
+    infra.station_route_store_[i_sr.id_] = soro::make_unique<station_route>();
+    auto sr = infra.station_route_store_[i_sr.id_].get();
+    infra.station_routes_.emplace_back(sr);
 
     sr->id_ = static_cast<station_route::id>(i_sr.id_);
+    sr->path_ = deduplicated_paths.station_route_id_to_path_id_[i_sr.id_];
     sr->name_ = i_sr.name_;
-    sr->course_ = i_sr.course_;
     sr->station_ = i_sr.station_;
     sr->attributes_ = i_sr.attributes_;
 
-    auto& station = iss.station_store_[i_sr.station_->id_];
+    auto& station = infra.station_store_[i_sr.station_->id_];
 
-    sassert(station->station_routes_.find(i_sr.name_) ==
-                std::end(station->station_routes_),
-            "There is already a station route with the name {} in station {}",
-            i_sr.name_, station->ds100_);
+    utls::sassert(
+        station->station_routes_.find(i_sr.name_) ==
+            std::end(station->station_routes_),
+        "There is already a station route with the name {} in station {}",
+        i_sr.name_, station->ds100_);
 
     station->station_routes_[i_sr.name_] = sr;
 
-    auto start = network.elements_[mats.rp_id_to_element_id_.at(i_sr.start_)];
-    auto end = network.elements_[mats.rp_id_to_element_id_.at(i_sr.end_)];
-
-    sr->start_element_ = start;
-    sr->end_element_ = end;
-
-    sr->r_.nodes_ =
-        get_path(i_sr, get_node(start, true), get_node(end, false)->id_);
-
-    if (start->is_track_element()) {
+    if (sr->path_->start_->is_track_element()) {
       ++out_routes;
-    } else if (end->is_track_element()) {
+    } else if (sr->path_->end_->is_track_element()) {
       ++in_routes;
     } else {
       ++through_routes;
     }
 
-    if (auto first = sr->nodes().back()->next_node_; first != nullptr) {
-      sr->to_ = iss.element_to_station_.at(first->element_->id());
+    if (auto next = sr->path_->nodes_.back()->next_node_; next != nullptr) {
+      auto const next_station =
+          infra.element_to_station_.at(next->element_->id());
+      sr->to_station_ = next_station != sr->station_ ? next_station : nullptr;
     }
 
-    if (auto inc = sr->nodes().front()->reverse_edges_; !inc.empty()) {
-      sr->from_ = iss.element_to_station_.at(inc.front()->element_->id());
+    if (auto inc = sr->path_->nodes_.front()->reverse_edges_; !inc.empty()) {
+      auto const prev_station =
+          infra.element_to_station_.at(inc.front()->element_->id());
+      sr->from_station_ = prev_station != sr->station_ ? prev_station : nullptr;
     }
 
-    auto const get_halt_node = [&](auto&& rp_id) -> node_ptr {
-      if (rp_id == INVALID_RP_NODE_ID) {
-        return nullptr;
-      }
-
-      auto const e = network.elements_[mats.rp_id_to_element_id_.at(rp_id)];
-      return e->template as<track_element>().get_node();
+    auto const rp_id_to_element = [&](auto&& rp_id) -> element::ptr {
+      return rp_id == INVALID_RP_NODE_ID
+                 ? nullptr
+                 : graph.elements_[mats.rp_id_to_element_id_.at(rp_id)];
     };
 
-    auto const passenger_node = get_halt_node(i_sr.rp_passenger_halt_);
-    auto const freight_node = get_halt_node(i_sr.rp_freight_halt_);
+    auto const passenger_element = rp_id_to_element(i_sr.rp_passenger_halt_);
+    auto const freight_element = rp_id_to_element(i_sr.rp_freight_halt_);
+    auto const runtime_check_e = rp_id_to_element(i_sr.rp_runtime_checkpoint_);
 
-    std::set<node_ptr> omitted_nodes_set;
-    for (auto const& omit_rp_id : i_sr.omitted_rp_nodes_) {
-      auto const omit_element =
-          network.elements_[mats.rp_id_to_element_id_.at(omit_rp_id)];
+    std::set<node::ptr> omitted_nodes_set;
+    for (auto const& omitted_rp_node : i_sr.omitted_rp_nodes_) {
+      auto const omit_element = graph.elements_[mats.rp_id_to_element_id_.at(
+          omitted_rp_node.rp_node_id_)];
 
       utl::verify(omit_element->is_track_element(),
                   "Cannot omit a non track element!");
@@ -399,32 +702,36 @@ void calculate_station_routes(base_infrastructure& iss,
         continue;
       }
 
-      if (node == passenger_node) {
+      if (node->element_ == runtime_check_e) {
+        sr->runtime_checkpoint_ = idx;
+      }
+
+      if (node->element_ == passenger_element) {
         sr->passenger_halt_ = idx;
       }
 
-      if (node == freight_node) {
+      if (node->element_ == freight_element) {
         sr->freight_halt_ = idx;
       }
 
-      bool omitted = false;
       if (omitted_nodes_set.contains(node)) {
-        sr->r_.omitted_nodes_.push_back(idx);
-        omitted = true;
-      }
-
-      if (node->is(type::MAIN_SIGNAL) && !omitted) {
-        sr->main_signals_.emplace_back(idx);
+        sr->omitted_nodes_.push_back(idx);
       }
     }
 
-    for (auto& spl : sr->r_.extra_speed_limits_) {
-      spl.node_ = *utls::find_if(sr->nodes(), [&spl](auto&& n) {
+    sr->extra_speed_limits_ = i_sr.extra_speed_limits_;
+    for (auto& spl : sr->extra_speed_limits_) {
+      auto const it = utls::find_if(sr->nodes(), [&spl](auto&& n) {
         return n->element_->id() == spl.element_->id();
       });
+
+      utls::sassert(it != std::end(sr->nodes()),
+                    "Could not find node for the extra speed limit!");
+
+      spl.node_ = *it;
     }
 
-    utls::sort(sr->r_.extra_speed_limits_,
+    utls::sort(sr->extra_speed_limits_,
                [&sr](auto const& spl1, auto const& spl2) {
                  auto n1 = utls::find_if(sr->nodes(), [&spl1](auto const& n) {
                    return n->element_->id() == spl1.element_->id();
@@ -439,11 +746,17 @@ void calculate_station_routes(base_infrastructure& iss,
                });
 
     sr->length_ = get_path_length_from_elements(sr->nodes());
+
+    utls::sassert(
+        sr->extra_speed_limits_.size() == i_sr.extra_speed_limits_.size(),
+        "Did not account for every extra speed limit.");
+    utls::sassert(sr->omitted_nodes_.size() == i_sr.omitted_rp_nodes_.size(),
+                  "Did not account for every omitted node.");
   }
 
   // TODO(julian) refactor this into a separate function
   // fill element_to_station_routes_ map in every station
-  for (auto& station : iss.station_store_) {
+  for (auto& station : infra.station_store_) {
     for (auto const& [name, station_route] : station->station_routes_) {
       auto const first = station_route->nodes().front()->element_;
       auto it = station->element_to_routes_.find(first->id());
@@ -455,14 +768,15 @@ void calculate_station_routes(base_infrastructure& iss,
     }
   }
 
-  uLOG(info) << "Parsed " << iss.station_routes_.size() << " station routes";
+  uLOG(info) << "Parsed " << infra.station_routes_.size() << " station routes";
+  uLOG(info) << "Used " << infra.station_route_paths_.size() << " paths";
   uLOG(info) << through_routes << " through routes.";
   uLOG(info) << in_routes << " in routes.";
   uLOG(info) << out_routes << " out routes.";
 }
 
 soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
-                                            base_infrastructure& iss,
+                                            infrastructure_t& iss,
                                             construction_materials& mats,
                                             station::id const id) {
   auto station = soro::make_unique<struct station>();
@@ -478,7 +792,14 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
 
   for (auto const& xml_sr :
        rp_station.child(STATION_ROUTES).children(STATION_ROUTE)) {
-    auto const sr_id = mats.intermediate_station_routes_.size();
+    auto const sr_id = static_cast<station_route::id>(
+        mats.intermediate_station_routes_.size());
+
+    auto const publish_only = xml_sr.child(PUBLISH_ONLY);
+    if (static_cast<bool>(publish_only)) {
+      continue;
+    }
+
     mats.intermediate_station_routes_.push_back(
         parse_station_route(sr_id, xml_sr, station.get(), iss.graph_, mats));
   }
@@ -486,7 +807,7 @@ soro::unique_ptr<station> parse_iss_station(xml_node const& rp_station,
   return station;
 }
 
-void complete_borders(base_infrastructure& iss) {
+void complete_borders(infrastructure_t& iss) {
   sassert(!iss.station_store_.empty(), "Requires station already constructed");
   sassert(!iss.ds100_to_station_.empty(), "Requires DS100 to station mapping");
 
@@ -558,9 +879,11 @@ void complete_borders(base_infrastructure& iss) {
       new_sec.line_id_ = border.line_;
 
       if (border.low_border_) {
-        new_sec.elements_ = {border.neighbour_element_, border.element_};
+        new_sec.rising_order_ = {border.neighbour_element_, border.element_};
+        new_sec.falling_order_ = {border.element_, border.neighbour_element_};
       } else {
-        new_sec.elements_ = {border.element_, border.neighbour_element_};
+        new_sec.rising_order_ = {border.element_, border.neighbour_element_};
+        new_sec.falling_order_ = {border.neighbour_element_, border.element_};
       }
 
       iss.graph_.element_id_to_section_ids_[border.element_->id()].push_back(
@@ -573,7 +896,7 @@ void complete_borders(base_infrastructure& iss) {
   }
 }
 
-auto get_element_to_station_map(base_infrastructure const& iss) {
+auto get_element_to_station_map(infrastructure_t const& iss) {
   soro::map<element_id, station::ptr> element_to_station;
 
   for (auto const& station : iss.stations_) {
@@ -591,9 +914,9 @@ soro::map<soro::string, station::ptr> get_ds100_to_station(
            return soro::pair<soro::string, station::ptr>{s_ptr->ds100_, s_ptr};
          }) |
          utl::emplace<soro::map<string, station::ptr>>();
-};
+}
 
-void log_stats(base_infrastructure const& iss) {
+void log_stats(infrastructure_t const& iss) {
   uLOG(info) << "Parsed ISS with " << iss.stations_.size() << " stations.";
   uLOG(info) << "Parsed ISS with " << iss.graph_.elements_.size()
              << " elements and " << iss.graph_.nodes_.size() << " nodes.";
@@ -618,6 +941,54 @@ void log_stats(base_infrastructure const& iss) {
              << spl_with_signal_poa;
   uLOG(info) << "Speed limits with 'here' point of action: "
              << spl_with_here_poa;
+
+  std::size_t total_section_elements = 0;
+  std::size_t total_main_signals = 0;
+  std::size_t total_simple_switches = 0;
+  std::size_t total_crosses = 0;
+  std::size_t total_cross_switches = 0;
+  std::size_t switchables = 0;
+  for (auto const& element : iss.graph_.elements_) {
+    if (element->is(type::MAIN_SIGNAL)) {
+      ++total_main_signals;
+    }
+
+    if (element->is_section_element()) {
+      ++total_section_elements;
+    }
+
+    if (element->is_switch()) {
+      ++switchables;
+    }
+
+    if (element->is(type::CROSS) && !element->is_cross_switch()) {
+      ++total_crosses;
+    }
+
+    if (element->is_cross_switch()) {
+      ++total_cross_switches;
+    }
+
+    if (element->is(type::SIMPLE_SWITCH)) {
+      ++total_simple_switches;
+    }
+  }
+
+  uLOG(info) << "Got " << total_main_signals << " main signals.";
+  uLOG(info) << "Got " << total_section_elements << " section elements.";
+  uLOG(info) << "Got " << total_simple_switches << " simple switches.";
+  uLOG(info) << "Got " << total_crosses << " crosses.";
+  uLOG(info) << "Got " << total_cross_switches << " cross switches.";
+  uLOG(info) << "Got " << switchables << " total switchables.";
+
+  std::size_t total_variants = 0;
+  for (auto const& ts : iss.rolling_stock_.train_series_) {
+    total_variants += ts.second.variants_.size();
+  }
+
+  uLOG(info) << "Got " << iss.rolling_stock_.train_series_.size()
+             << " train series.";
+  uLOG(info) << "Got " << total_variants << " train series variants.";
 }
 
 default_values parse_default_values(xml_node const& default_values_xml) {
@@ -636,7 +1007,8 @@ default_values parse_default_values(xml_node const& default_values_xml) {
 
 std::pair<default_values, rs::rolling_stock> parse_core_data(
     std::vector<utls::loaded_file> const& core_files) {
-  uLOG(utl::info) << "Parsing " << core_files.size() << " core data files.";
+  utl::scoped_timer const core_data_timer("Parsing Core Data");
+
   default_values dv;
   rs::rolling_stock rs;
 
@@ -644,9 +1016,8 @@ std::pair<default_values, rs::rolling_stock> parse_core_data(
     uLOG(utl::info) << "Parsing core data file " << core_file.path_;
 
     xml_document d;
-    auto success =
-        d.load_buffer(reinterpret_cast<void const*>(core_file.contents_.data()),
-                      core_file.contents_.size());
+    auto success = d.load_buffer(
+        reinterpret_cast<void const*>(core_file.data()), core_file.size());
     utl::verify(success, "bad xml in parse_core_data: {}",
                 success.description());
 
@@ -674,7 +1045,7 @@ std::pair<default_values, rs::rolling_stock> parse_core_data(
   return {dv, rs};
 }
 
-void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
+void parse_xml_into_iss(utls::loaded_file const& iss_xml, infrastructure_t& iss,
                         construction_materials& mats) {
   xml_document d;
   auto success = d.load_buffer(reinterpret_cast<void const*>(iss_xml.data()),
@@ -692,24 +1063,24 @@ void parse_xml_into_iss(std::string const& iss_xml, base_infrastructure& iss,
   }
 }
 
-std::pair<base_infrastructure, construction_materials> parse_iss(
+std::pair<infrastructure_t, construction_materials> parse_iss(
     std::vector<utls::loaded_file> const& rail_plan_files) {
-  uLOG(info) << "Parsing " << rail_plan_files.size() << " station files.";
+  utl::scoped_timer const station_timer("Parsing ISS Stations");
 
-  std::pair<base_infrastructure, construction_materials> result;
+  std::pair<infrastructure_t, construction_materials> result;
   auto& iss = result.first;
   auto& mats = result.second;
 
   for (auto const& file : rail_plan_files) {
     uLOG(info) << "Station file: " << file.path_;
-    parse_xml_into_iss(file.contents_, iss, mats);
+    parse_xml_into_iss(file, iss, mats);
   }
 
   return result;
 }
 
 auto get_layouted_positions(
-    base_infrastructure const& iss, iss_files const& iss_files,
+    infrastructure_t const& iss, iss_files const& iss_files,
     soro::vector<gps> const& station_positions,
     soro::map<rail_plan_node_id, element_id> const& rp_id_to_element_id) {
   auto const layout = layout::get_layout(
@@ -720,19 +1091,16 @@ auto get_layouted_positions(
 }
 
 soro::vector<soro::string> get_full_station_names(
-    base_infrastructure const& base_infra,
+    infrastructure_t const& base_infra,
     regulatory_station_data const& regulatory_data) {
-  soro::vector<soro::string> result;
-
-  result.resize(base_infra.stations_.size());
-  for (auto const& [ds100, full_name] : regulatory_data.ds100_to_full_name_) {
-    result[base_infra.ds100_to_station_.at(ds100)->id_] = full_name;
-  }
-
-  return result;
+  return soro::to_vec(base_infra.stations_, [&](station::ptr s) {
+    auto const it = regulatory_data.ds100_to_full_name_.find(s->ds100_);
+    return it != std::end(regulatory_data.ds100_to_full_name_) ? it->second
+                                                               : s->ds100_;
+  });
 }
 
-base_infrastructure parse_iss(infrastructure_options const& options) {
+infrastructure_t parse_iss(infrastructure_options const& options) {
   utl::scoped_timer const parse_timer("Parsing ISS");
   auto const iss_files = get_iss_files(options.infrastructure_path_);
 
@@ -750,9 +1118,11 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   auto const station_positions =
       parse_station_coords(options.gps_coord_path_, iss.ds100_to_station_);
 
-  std::tie(iss.station_positions_, iss.element_positions_) =
-      get_layouted_positions(iss, iss_files, station_positions,
-                             mats.rp_id_to_element_id_);
+  if (options.determine_layout_) {
+    std::tie(iss.station_positions_, iss.element_positions_) =
+        get_layouted_positions(iss, iss_files, station_positions,
+                               mats.rp_id_to_element_id_);
+  }
 
   auto const regulatory_station_data =
       parse_regulatory_stations(iss_files.regulatory_station_files_);
@@ -765,16 +1135,16 @@ base_infrastructure parse_iss(infrastructure_options const& options) {
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
 
-  iss.interlocking_ =
-      get_interlocking_subsystem(iss, options.determine_conflicts_);
+  if (options.determine_interlocking_) {
+    iss.interlocking_ =
+        get_interlocking_subsystem(iss, options.determine_conflicts_);
+  }
 
   log_stats(iss);
 
+  iss.source_ = options.infrastructure_path_.filename().string();
+
   return std::move(iss);
 }
-
-// TODO(julian) print node types that can be omitted
-// TODO(julian) print cycle detection in stations
-// TODO(julian) print cycle detection in whole graph
 
 }  // namespace soro::infra
