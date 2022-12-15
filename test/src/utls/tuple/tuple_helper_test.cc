@@ -13,7 +13,7 @@ using namespace soro::utls::tuple;
 TEST_CASE("is_tuple test") {  // NOLINT
   soro::tuple<int, int, int> const t = {1, 2, 3};
   static_assert(is_tuple_v<decltype(t)>);
-  static_assert(!is_tuple_v<size_t>);
+  static_assert(!is_tuple_v<std::size_t>);
 }
 
 TEST_CASE("find_if test") {  // NOLINT

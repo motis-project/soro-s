@@ -25,7 +25,6 @@ jobs:
           - preset: clang-debug
           - preset: gcc-release
           - preset: gcc-debug
-          - preset: gcc-cista-debug
           - preset: clang-tidy
           - preset: clang-sanitizer
 

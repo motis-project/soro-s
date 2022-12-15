@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utl/get_or_create.h"
+
 #include "soro/utls/coroutine/generator.h"
 
 #include "soro/infrastructure/infrastructure.h"
@@ -14,7 +16,7 @@ struct sim_graph;
 struct simulation_result;
 
 struct sim_node {
-  using id = std::size_t;
+  using id = uint32_t;
   static constexpr id INVALID = std::numeric_limits<id>::max();
 
   bool finished(simulation_result const&) const;
@@ -53,7 +55,7 @@ struct sim_graph {
   std::vector<sim_node> nodes_;
   // Pairs of indices into the nodes_ vector, giving a [from, to) range for
   // sim_nodes belonging to a given train
-  std::vector<std::pair<size_t, size_t>> train_to_sim_nodes_;
+  std::vector<std::pair<tt::train::id, sim_node::id>> train_to_sim_nodes_;
   std::vector<std::map<infra::interlocking_route::id, sim_node::id>>
       ssr_to_node_;
 
@@ -73,12 +75,12 @@ struct sim_node_result {
 };
 
 struct simulation_result {
-  simulation_result(sim_graph const& sg);
+  explicit simulation_result(sim_graph const& sg);
 
-  sim_node_result const& operator[](std::size_t const idx) const noexcept;
+  sim_node_result const& operator[](uint32_t const idx) const noexcept;
 
   void compute_dists(sim_node::id const sn_id, sim_graph const& sg,
-                     simulation_options const& opts);
+                     simulation_options const& opts) const;
 
   soro::vector<sim_node_result> results_;
 };

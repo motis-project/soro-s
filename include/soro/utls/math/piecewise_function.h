@@ -8,6 +8,7 @@
 #include "soro/base/fp_precision.h"
 
 #include "soro/utls/math/polynomial.h"
+#include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 #include "soro/utls/template/is_vector.h"
 #include "soro/utls/template/type_at_position.h"
@@ -30,6 +31,16 @@ template <typename Polynomial, typename InputType>
 auto make_piece(Polynomial poly_piece, InputType from, InputType to) {
   return piece<Polynomial, InputType>{
       .piece_ = poly_piece, .from_ = from, .to_ = to};
+}
+
+template <typename Pieces>
+inline bool is_continuous(Pieces const& pieces) {
+  using soro::equal;
+  using std::abs;
+
+  return utls::all_of(utl::pairwise(pieces), [](auto&& pair) {
+    return equal(abs(std::get<0>(pair).to_ - std::get<1>(pair).from_), 0.0);
+  });
 }
 
 template <typename PieceType>
@@ -58,15 +69,8 @@ struct piecewise_function {
 
 template <typename PieceType>
 auto make_piecewise(soro::vector<PieceType>&& pieces) {
-  using soro::equal;
-  using std::abs;
-
-  for (auto const& [b1, b2] : utl::pairwise(pieces)) {
-    utl::verify(equal(abs(b1.to_ - b2.from_), 0.0),
-                "Piecewise function is not continuously defined. Jumping "
-                "from {} to {}.",
-                b1.to_, b2.from_);
-  }
+  utls::sassert(is_continuous(pieces),
+                "Trying to make non continuous piecewise function!");
 
   return piecewise_function<PieceType>{.pieces_ = std::move(pieces)};
 }

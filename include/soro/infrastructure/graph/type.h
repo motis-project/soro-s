@@ -20,17 +20,24 @@ enum class type : type_id {
   SIMPLE_SWITCH,
   // cross
   CROSS,
-  // track elements
+  // directed track elements
   MAIN_SIGNAL,
   PROTECTION_SIGNAL,
   APPROACH_SIGNAL,
   RUNTIME_CHECKPOINT,
   EOTD,
   SPEED_LIMIT,
+  POINT_SPEED,
+  BRAKE_PATH,
   CTC,
+  FORCED_HALT,
   HALT,
   // undirected track elements
   TUNNEL,
+  ENTRY,
+  TRACK_NAME,
+  RUNTIME_CHECKPOINT_UNDIRECTED,
+  LEVEL_CROSSING,
   SLOPE,
   //
   INVALID
@@ -74,15 +81,26 @@ constexpr bool is_track_element(type const type) {
   return type >= type::MAIN_SIGNAL && type <= type::SLOPE;
 }
 
-constexpr bool is_section_element(type const type) {
-  return !is_track_element(type);
+constexpr bool is_directed_track_element(type const type) {
+  return type >= type::MAIN_SIGNAL && type <= type::HALT;
 }
 
 constexpr bool is_undirected_track_element(type const type) {
   return type >= type::TUNNEL && type <= type::SLOPE;
 }
 
+constexpr bool is_section_element(type const type) {
+  return !is_track_element(type);
+}
+
 constexpr bool is_cross(type const type) { return type == type::CROSS; }
 constexpr bool is_border(type const type) { return type == type::BORDER; }
+
+constexpr bool is_runtime_checkpoint(type const type) {
+  return type == type::RUNTIME_CHECKPOINT ||
+         type == type::RUNTIME_CHECKPOINT_UNDIRECTED;
+}
+
+constexpr bool is_halt(type const type) { return type == type::HALT; }
 
 }  // namespace soro::infra

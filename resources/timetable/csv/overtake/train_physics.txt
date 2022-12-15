@@ -1,3 +1,0 @@
-id,series,owner,variant,max_speed,weight,length
-0,42,8000,1,140,200,100,0
-1,1337,8000,1,300,0,200,0
