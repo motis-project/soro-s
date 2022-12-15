@@ -54,7 +54,7 @@ target_link_libraries(soro-server-lib PUBLIC
         )
 
 add_executable(soro-server src/server.cc)
-set_target_properties(PROPERTIES
+set_target_properties(soro-server PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${SORO_SERVER_DIR})
 
 target_compile_options(soro-server PRIVATE ${SORO_COMPILE_OPTIONS})
