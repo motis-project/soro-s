@@ -6,8 +6,6 @@
 #include "utl/timer.h"
 
 #include "soro/utls/file/file_to_binary_buffer.h"
-#include "soro/utls/file/tar_reader.h"
-#include "soro/utls/file/zstd_file.h"
 
 namespace fs = std::filesystem;
 
