@@ -25,6 +25,6 @@ module.exports = {
   },
   output: {
     filename: 'main.js',
-    path: path.resolve(__dirname, '/..', 'Users', 'toebn', 'source', 'repos', 'soro-s', 'build', 'msvc-release', 'server_resources', 'components', 'ordering_graph'),
+    path: path.resolve(__dirname, 'components', 'ordering_graph'),
   },
 };

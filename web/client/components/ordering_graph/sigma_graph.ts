@@ -1,15 +1,13 @@
-/**
- * This is a minimal example of sigma. You can use it as a base to write new
- * examples, or reproducible test cases for new issues, for instance.
- */
 import Graph from "graphology";
 import Sigma from "sigma";
-
 import data from "./data2.json";
 
 export class SigmaGraphCreator {
+    //the ordering graph html
     rootelement;
+    //the div element, where the graph will be
     sigmaContainer;
+    //the canvas elements which make up the graph
     renderer;
     constructor(rootelement: HTMLElement){
         this.rootelement = rootelement;
@@ -18,31 +16,38 @@ export class SigmaGraphCreator {
         this.rootelement.appendChild(this.sigmaContainer);
     };
 
-   /**
-    c foo
-    */
    public createSigmaGraph() {       
         const graph = new Graph();
         graph.import(data);
-        var train_id_dummy;
-        var x_value = 0;
+        var trainIdDummy;
+        var nodeXValue = 0;
 
-        graph.nodes().forEach((node, i) => {
-            let currrent_train_id = graph.getNodeAttribute(node, "train_id");
-            if (train_id_dummy === undefined || train_id_dummy !== currrent_train_id) {
-                train_id_dummy = currrent_train_id;
-                x_value = 0;
+        //nodes
+        graph.forEachNode((node, i) => {
+            let currrentTrainId = graph.getNodeAttribute(node, "train_id")
+            if (trainIdDummy === currrentTrainId) {
+                nodeXValue++
             }
             else {
-                x_value++;
+                trainIdDummy = currrentTrainId
+                nodeXValue = 0
             }
-            graph.setNodeAttribute(node, "x", x_value);
-            //graph.setNodeAttribute(node, "x", graph.getNodeAttribute(node, "route_id"));
-            graph.setNodeAttribute(node, "y", currrent_train_id);
-            let labelName = "Train:" + currrent_train_id +" Route:" + graph.getNodeAttribute(node, "route_id");
-            graph.mergeNodeAttributes(node, {"label": labelName});
+            //coordinates of each node
+            graph.setNodeAttribute(node, "x", nodeXValue / 2);
+            graph.setNodeAttribute(node, "y", currrentTrainId / 2);
+
+            //style elements
+            let labelName = "Train:" + currrentTrainId +" Route:" + graph.getNodeAttribute(node, "route_id")
+            graph.mergeNodeAttributes(node, {"label": labelName})
+            graph.setNodeAttribute(node, "color", "#FC8F5C")
           });
-       
+        
+
+        //edges
+        graph.forEachEdge((edge) => {
+            //style elements
+            graph.setEdgeAttribute(edge, "type", "arrow")
+        }); 
         this.renderer = new Sigma(graph, this.sigmaContainer, {allowInvalidContainer : true});
     }
 
