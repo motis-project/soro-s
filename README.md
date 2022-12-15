@@ -16,6 +16,6 @@ To simply use SORO-S you can build it yourself you have the following options:
 
 - Building it yourself by following one of the developer setup guides above
 - Follow
-  the [Docker Container Setup](https://github.com/motis-project/soro-s/wiki/Docker-Container-Usage)
+  the [Docker Container Setup](https://github.com/motis-project/soro-s/wiki/Docker-Container-Usage)
 - Use one of the
   supplied [Binaries](https://github.com/motis-project/soro-s/releases)
