@@ -18,6 +18,7 @@ jobs:
       matrix:
         config:
           - preset: msvc-release
+            artifact: windows-amd64
           - preset: msvc-debug
 
     env:
@@ -58,27 +59,33 @@ jobs:
 
       # ==== DISTRIBUTION ====
       - name: Delete unnecessary files
+        if: matrix.config.artifact
         run: |
           Remove-Item .\build\msvc-release\server_resources\infrastructure
           Remove-Item .\build\msvc-release\server_resources\timetable
 
       - name: Create Distribution
-        if: matrix.config.preset == 'msvc-release'
+        if: matrix.config.artifact
         run: >
-          7z a soro-s-windows.zip
+          7z a soro-s-${{ matrix.config.artifact }}.zip
           .\build\msvc-release\soro-server.exe
           .\build\msvc-release\server_resources
 
       - name: Upload Distribution
-        if: matrix.config.preset == 'msvc-release'
+        if: matrix.config.artifact
         uses: actions/upload-artifact@v1
         with:
-          name: soro-s-windows
-          path: soro-s-windows.zip
+          name: soro-s-${{ matrix.config.artifact }}
+          path: soro-s-${{ matrix.config.artifact }}.zip
 
       # ==== RELEASE ====
       - name: Upload Release
-        if: github.event.action == 'published' && matrix.config.preset == 'msvc-release'
+        if: github.event.action == 'published' && matrix.config.artifact
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./soro-s-${{ matrix.config.artifact }}.zip
+          asset_name: soro-s-${{ matrix.config.artifact }}.zip
+          asset_content_type: application/zip
