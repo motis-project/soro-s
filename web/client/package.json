@@ -3,6 +3,7 @@
   "dependencies": {
     "@types/node": "^18.11.10",
     "graphology": "^0.25.1",
+    "graphology-layout-force": "^0.2.4",
     "sigma": "^2.4.0",
     "typescript": "^4.9.3"
   },
