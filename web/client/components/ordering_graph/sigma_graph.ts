@@ -9,14 +9,14 @@ export class SigmaGraphCreator {
     sigmaContainer;
     //the canvas elements which make up the graph
     renderer;
-    constructor(rootelement: HTMLElement){
+    constructor(rootelement: HTMLElement) {
         this.rootelement = rootelement;
         this.sigmaContainer = document.createElement('div');
         this.sigmaContainer.setAttribute("style", "height:100%;");
         this.rootelement.appendChild(this.sigmaContainer);
     };
 
-   public createSigmaGraph() {       
+    public createSigmaGraph() {
         const graph = new Graph();
         graph.import(data);
         var trainIdDummy;
@@ -37,32 +37,32 @@ export class SigmaGraphCreator {
             graph.setNodeAttribute(node, "y", currrentTrainId / 2);
 
             //style elements
-            let labelName = "Train:" + currrentTrainId +" Route:" + graph.getNodeAttribute(node, "route_id")
-            graph.mergeNodeAttributes(node, {"label": labelName})
+            let labelName = "Train:" + currrentTrainId + " Route:" + graph.getNodeAttribute(node, "route_id")
+            graph.mergeNodeAttributes(node, { "label": labelName })
             graph.setNodeAttribute(node, "color", "#FC8F5C")
-          });
-        
+        });
+
 
         //edges
         graph.forEachEdge((edge) => {
             //style elements
             graph.setEdgeAttribute(edge, "type", "arrow")
-        }); 
-        this.renderer = new Sigma(graph, this.sigmaContainer, {allowInvalidContainer : true});
+        });
+        this.renderer = new Sigma(graph, this.sigmaContainer, { allowInvalidContainer: true });
     }
 
     public resizeSigmaGraph() {
         if (this.renderer !== undefined) {
             this.renderer.refresh();
-        } 
+        }
         else {
             console.log("graph doesn't exist!");
-        }   
+        }
     }
-    
+
     //used to close the canvas to not run into errors when opening to many windows
     public destroySigmaGraph() {
-        if(this.renderer !== undefined) {
+        if (this.renderer !== undefined) {
             this.renderer.clear();
             this.renderer.kill();
             this.rootelement.removeChild(this.sigmaContainer);
