@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "cista/reflection/comparable.h"
+
 #include "soro/utls/unixtime.h"
 
 namespace soro::tt {
@@ -15,6 +17,8 @@ namespace soro::tt {
 // will be indexed and put into train_runs_ in the resulting timetable
 
 struct timetable_options {
+  CISTA_COMPARABLE()
+
   std::filesystem::path timetable_path_{""};
   utls::unixtime start_{utls::EPOCH};
   utls::unixtime end_{utls::END_OF_TIME};

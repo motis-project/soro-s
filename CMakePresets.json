@@ -10,10 +10,7 @@
       "name": "base-preset",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "environment": {
-        "EMSDK": "${sourceDir}/deps/emsdk/"
-      }
+      "binaryDir": "${sourceDir}/build/${presetName}"
     },
     {
       "name": "clang-preset",
@@ -145,6 +142,17 @@
       }
     },
     {
+      "name": "msvc-relwithdebinfo",
+      "displayName": "MSVC RelWithDebInfo",
+      "inherits": [
+        "base-preset",
+        "msvc-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "msvc-debug",
       "displayName": "MSVC Debug",
       "inherits": [
@@ -179,6 +187,43 @@
         "CMAKE_C_COMPILER": "gcc-10",
         "CMAKE_CXX_COMPILER": "g++-10",
         "SORO_CUDA": "On"
+      }
+    },
+    {
+      "name": "clang-cista-release",
+      "displayName": "Linux AMD64 Clang CISTA Release",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "clang-cista-debug",
+      "displayName": "Linux AMD64 Clang CISTA Debug",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "clang-cista-sanitizer",
+      "displayName": "Linux AMD64 Clang CISTA Sanitizer",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On",
+        "SORO_SAN": "On"
       }
     },
     {

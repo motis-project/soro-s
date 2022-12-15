@@ -7,7 +7,7 @@ namespace soro::infra {
 bool node::is(soro::infra::type const t) const { return element_->is(t); }
 type node::type() const { return element_->type(); }
 
-node_ptr node::reverse_ahead() const {
+node::ptr node::reverse_ahead() const {
   if (reverse_edges_.empty()) {
     return nullptr;
   }

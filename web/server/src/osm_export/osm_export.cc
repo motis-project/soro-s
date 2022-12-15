@@ -92,8 +92,7 @@ std::size_t create_interpolation_osm(auto osm, auto const& interpolation,
   return id + interpolation.points_.size();
 }
 
-void create_ways(auto& osm_info, base_infrastructure const& iss,
-                 element_ptr e) {
+void create_ways(auto& osm_info, infrastructure_t const& iss, element_ptr e) {
   auto const e_station = iss.element_to_station_.at(e->id());
 
   for (auto neigh : e->neighbours()) {
@@ -124,7 +123,7 @@ void create_ways(auto& osm_info, base_infrastructure const& iss,
 
 pugi::xml_document export_osm_nodes(std::size_t const min,
                                     std::size_t const max,
-                                    base_infrastructure const& iss,
+                                    infrastructure_t const& iss,
                                     osm_information& osm_info) {
   pugi::xml_document osm_node;
   for (std::size_t i = min; i < max; i++) {
@@ -152,7 +151,7 @@ void append_fragment(pugi::xml_node target,
   }
 }
 
-pugi::xml_document export_to_osm(soro::infra::base_infrastructure const& iss) {
+pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
   uLOG(info) << "[ OSM Export ] Starting OSM export.";
   pugi::xml_document document;
   pugi::xml_node osm_node = document.append_child("osm");
@@ -217,7 +216,7 @@ void write_osm_to_file(pugi::xml_document const& osm_xml, fs::path const& out) {
   uLOG(info) << "[ OSM Export ] Exported file successfully to " << out << ".";
 }
 
-void export_and_write(base_infrastructure const& iss, fs::path const& out) {
+void export_and_write(infrastructure_t const& iss, fs::path const& out) {
   write_osm_to_file(export_to_osm(iss), out);
 }
 
