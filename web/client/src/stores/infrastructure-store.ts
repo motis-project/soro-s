@@ -7,9 +7,11 @@ type InfrastructureState = {
     highlightedStationRouteID?: string,
 }
 
+type InfrastructureFetchResponse = { dirs: string[] }
+
 export const InfrastructureNamespace = 'infrastructure';
 
-export const InfrastructureStore: Module<InfrastructureState, undefined> = { // TODO rewrite with global namespace
+export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 	namespaced: true,
 
 	state() {
@@ -43,8 +45,8 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = { // 
 		initialLoad({ commit }) {
 			fetch(window.origin + '/infrastructure/')
 				.then(response => response.json())
-				.then(dir => {
-					commit('setInfrastructures', dir.dirs);
+				.then((dir: InfrastructureFetchResponse) => {
+					commit('setInfrastructures', dir.dirs.filter((option: string) => option !== '.' && option !== '..'));
 				});
 		},
 

@@ -4,14 +4,17 @@
 	</div>
 </template>
 
+<script setup lang="ts">
+import InfrastructureMap from '@/components/infrastructure/infrastructure-map.vue';
+</script>
+
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { ComponentContainer } from 'golden-layout';
-import InfrastructureMap from '../infrastructure/infrastructure-map.vue';
 
 export default defineComponent({
 	name: 'InfrastructureComponent',
-	components: { InfrastructureMap },
+
 	props: {
 		container: {
 			type: ComponentContainer,

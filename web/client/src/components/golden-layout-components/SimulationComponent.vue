@@ -20,10 +20,10 @@
 </template>
 
 <script>
-import { d3Graph } from './simulation/d3Graph.js';
+import { d3Graph } from '@/components/simulation/d3Graph.js';
 import { mapState } from 'vuex';
-import { InfrastructureNamespace } from '../../stores/infrastructure-store';
-import { TimetableNamespace } from '../../stores/timetable-store';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { TimetableNamespace } from '@/stores/timetable-store';
 import { ComponentContainer } from 'golden-layout';
 
 const nodeWidth = 100;

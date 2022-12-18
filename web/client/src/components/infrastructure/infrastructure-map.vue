@@ -49,8 +49,9 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { mapState } from 'vuex';
-import { InfrastructureNamespace } from '../../stores/infrastructure-store';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import {
 	deHighlightSignalStationRoute,
 	deHighlightStationRoute,
@@ -58,9 +59,9 @@ import {
 	highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { infrastructureMapStyle } from './mapStyle.js';
-import { addIcons, iconExtension, iconUrl } from './addIcons.js';
-import { elementTypes, elementTypeLabels } from './elementTypes.js';
+import { infrastructureMapStyle } from './mapStyle';
+import { addIcons, iconExtension, iconUrl } from './addIcons';
+import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 
 const specialLayoutControls = ['Rising', 'Falling']; // TODO make em display stuff actually
@@ -104,22 +105,29 @@ export default defineComponent({
 
 	watch: {
 		currentInfrastructure(newInfrastructure: string | null) {
-			// @ts-ignore
-			this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : undefined;
+			// @ts-ignore type instantiation for some reason is too deep
+			this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
 		},
 
 		highlightedSignalStationRouteID(newID, oldID) {
+			if (!this.libreGLMap)
+				return;
+
 			if (newID) {
+				// @ts-ignore
 				highlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
 			} else {
+				// @ts-ignore
 				deHighlightSignalStationRoute(this.libreGLMap, oldID);
 			}
 		},
 
 		highlightedStationRouteID(newID, oldID) {
 			if (newID) {
+				// @ts-ignore
 				highlightStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
 			} else {
+				// @ts-ignore
 				deHighlightStationRoute(this.libreGLMap, oldID);
 			}
 		},

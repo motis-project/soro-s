@@ -53,8 +53,8 @@ export default defineComponent({
 
 	watch: {
 		options() {
-			this.extendedOptions = this.options.filter((option) => option !== '.' && option !== '..') as string[]; // TODO filter outside
 			this.extendedOptions.push('');
+			this.extendedOptions.push(...this.options as string[]);
 		},
 	},
 

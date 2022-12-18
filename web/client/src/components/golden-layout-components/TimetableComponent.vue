@@ -5,5 +5,7 @@
 </template>
 
 <script>
-export default { name: 'TimetableComponent' };
+import { defineComponent } from 'vue';
+
+export default defineComponent({ name: 'TimetableComponent' });
 </script>

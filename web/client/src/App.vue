@@ -9,17 +9,17 @@
 </template>
 
 <script setup lang="ts">
-import GoldenLayoutAdapter from './golden-layout/golden-layout-adapter.vue';
-import SoroOverlay from './components/soro-overlay.vue';
+import GoldenLayoutAdapter from '@/golden-layout/golden-layout-adapter.vue';
+import SoroOverlay from '@/components/soro-overlay.vue';
 </script>
 
 <script lang="ts">
 import { mapActions, mapState } from 'vuex';
-import { InfrastructureNamespace } from './stores/infrastructure-store';
-import { TimetableNamespace } from './stores/timetable-store';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { TimetableNamespace } from '@/stores/timetable-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
-import { Components } from './golden-layout/golden-layout-constants';
+import { Components } from '@/golden-layout/golden-layout-constants';
 
 const initLayout: LayoutConfig = {
 	root: {
@@ -31,7 +31,7 @@ const initLayout: LayoutConfig = {
 					{
 						title: 'Infrastructure',
 						type: 'component',
-						componentType: 'InfrastructureComponent',
+						componentType: Components.Infrastructure,
 					},
 				]
 			}
@@ -49,7 +49,6 @@ export default defineComponent({
 	},
 
 	computed: {
-
 		...mapState(InfrastructureNamespace, [
 			'currentInfrastructure',
 			'infrastructures',
