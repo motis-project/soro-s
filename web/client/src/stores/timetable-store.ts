@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck as this store was (and is) unfinished
 
 // import {
@@ -76,7 +75,7 @@ export const TimetableStore: Module<TimetableState, undefined> = {
 				});
 		},
 
-		load({ commit, rootState }, timetableFilename) {
+		load({ rootState }, timetableFilename) {
 			const currentInfrastructure = rootState[`${InfrastructureNamespace}/currentInfrastructure`];
 			if (!currentInfrastructure) {
 				console.error('Tried loading a timetable with the currentInfrastructure undefined!');

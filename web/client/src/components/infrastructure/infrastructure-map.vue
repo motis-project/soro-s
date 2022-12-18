@@ -49,7 +49,6 @@
 </template>
 
 <script lang="ts">
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import {
@@ -91,7 +90,7 @@ export default defineComponent({
 			initiallyCheckedControls,
 			iconUrl,
 			iconExtension,
-			elementTypeLabels,
+			elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
 		};
 	},
 

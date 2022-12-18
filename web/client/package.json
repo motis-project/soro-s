@@ -26,6 +26,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:eslint": "npx eslint ./src",
+    "lint:eslint:fix": "npx eslint --fix ./src"
   }
 }

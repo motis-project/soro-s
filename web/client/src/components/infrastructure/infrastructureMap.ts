@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck as this is currently unused
 import { iterate } from '@/util/iterate.js';
 import { Map, Source } from 'maplibre-gl';

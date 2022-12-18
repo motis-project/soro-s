@@ -62,7 +62,7 @@ const instance = getCurrentInstance();
  * Method
  *******************/
 /** @internal */
-const addComponent = (componentType: string, title: string) => {
+const addComponent = (componentType: string) => {
 	const glc = markRaw(
 		defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`))
 	);
@@ -80,7 +80,7 @@ const addGLComponent = async (componentType: string, title: string) => {
 	if (componentType.length == 0)
 		throw new Error('addGLComponent: Component\'s type is empty');
 
-	const index = addComponent(componentType, title);
+	const index = addComponent(componentType);
 
 	await nextTick(); // wait 1 tick for vue to add the dom
 
@@ -106,12 +106,10 @@ const loadGLLayout = async (layoutConfig: LayoutConfig) => {
 		for (const itemConfig of content) {
 			if (itemConfig.type == 'component') {
 				index = addComponent(
-            itemConfig.componentType as string,
-            itemConfig.title as string
+            itemConfig.componentType as string
 				);
 				if (typeof itemConfig.componentState === 'object' && itemConfig.componentState)
-				// @ts-ignore
-					itemConfig.componentState['refId'] = index;
+					(itemConfig.componentState as any)['refId'] = index;
 				else itemConfig.componentState = { refId: index };
 			} else if (itemConfig.content.length > 0) {
 				contents.push(

@@ -56,5 +56,7 @@ module.exports = {
 			'error',
 			'tab',
 		],
+		'@typescript-eslint/no-explicit-any': 0,
+		'@typescript-eslint/ban-ts-comment': 0,
 	}
 };

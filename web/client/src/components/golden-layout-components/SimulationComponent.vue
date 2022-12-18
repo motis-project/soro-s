@@ -20,11 +20,13 @@
 </template>
 
 <script>
+/* eslint-disable */
 import { d3Graph } from '@/components/simulation/d3Graph.js';
 import { mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { ComponentContainer } from 'golden-layout';
+import { defineComponent } from 'vue';
 
 const nodeWidth = 100;
 const nodeHeight = 80;
@@ -42,7 +44,7 @@ const innerNodeHeight = (nodeHeight - outerHeightPadding * 2) / innerNodeCount;
 
 const innerHeightPadding = innerNodeHeight * 0.1;
 
-export default {
+export default defineComponent({
 	name: 'SimulationComponent',
 
 	props: {
@@ -84,7 +86,7 @@ export default {
 			this.d3Graph.simulate();
 		},
 	},
-};
+});
 </script>
 
 <style scoped>

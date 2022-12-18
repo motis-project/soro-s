@@ -48,17 +48,18 @@
 	</div>
 </template>
 
+<script setup>
+import SoroCollapsible from '@/components/soro-collapsible.vue';
+</script>
+
 <script>
 import { mapMutations } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store.js';
 import { iterate } from '@/util/iterate';
-import SoroCollapsible from '@/components/soro-collapsible.vue';
+import { defineComponent } from 'vue';
 
-document.getElementById('subOverlayContent').innerHTML = ''; // TODO do in App.vue
-
-export default {
+export default defineComponent({
 	name: 'StationDetail',
-	components: { SoroCollapsible },
 
 	data() {
 		return {
@@ -111,7 +112,7 @@ export default {
 			'setHighlightedSignalStationRouteID',
 		]),
 	}
-};
+});
 </script>
 
 <style>

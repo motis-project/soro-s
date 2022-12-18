@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { select } from 'd3';
 
 function makeIntoPermanent(mouseTooltip) {
