@@ -9,73 +9,40 @@
 				{{ station.name }}
 			</div>
 			<div class="station-detail-routes">
-				<div class="wrap-collapsible">
-					<input
-						id="collapsible"
-						class="collapsible-toggle hidden"
-						type="checkbox"
+				<soro-collapsible label="Station Routes">
+					<template
+						v-for="(stationRoute, index) in stationRoute"
+						:key="index"
 					>
-					<label
-						for="collapsible"
-						class="collapsible-toggle"
-					>Station Routes</label>
-					<div class="collapsible-content">
-						<div
-							id="stationRouteCollapsibleContent"
-							class="content-inner"
-						>
-							<template
-								v-for="(stationRoute, index) in stationRoute"
-								:key="index"
+						<label class="matter-switch station-detail-signal-route">
+							<input
+								type="checkbox"
+								:value="stationRoute.sr.id"
+								:checked="highlightedStationRoutes.find(f => f.properties.id === stationRoute.sr.id)"
+								@change="onStationRouteInput"
 							>
-								<label class="matter-switch station-detail-signal-route">
-									<input
-										type="checkbox"
-										:value="stationRoute.sr.id"
-										:checked="highlightedStationRoutes.find(f => f.properties.id === stationRoute.sr.id)"
-										@change="onStationRouteInput"
-									>
-									<span>{{ stationRoute.key }}</span>
-								</label>
-							</template>
-						</div>
-					</div>
-				</div>
+							<span>{{ stationRoute.key }}</span>
+						</label>
+					</template>
+				</soro-collapsible>
 			</div>
 			<div class="station-detail-signal-routes">
-				<!-- TODO refactor collapsible to own component -->
-				<div class="wrap-collapsible">
-					<input
-						id="ssrCollapsible"
-						class="collapsible-toggle hidden"
-						type="checkbox"
+				<soro-collapsible label="Signal Station Routes">
+					<template
+						v-for="(signalStationRoute, index) in signalStationRoutes"
+						:key="index"
 					>
-					<label
-						for="ssrCollapsible"
-						class="collapsible-toggle"
-					>Signal Station Routes</label>
-					<div class="collapsible-content">
-						<div
-							id="signalStationRouteCollapsibleContent"
-							class="content-inner"
-						>
-							<template
-								v-for="(signalStationRoute, index) in signalStationRoutes"
-								:key="index"
+						<label class="matter-switch station-detail-signal-route">
+							<input
+								type="checkbox"
+								:value="signalStationRoute.id"
+								:checked="highlightedSignalStationRoutes.find(f => f.properties.id === signalStationRoute.id)"
+								@change="onSignalStationRouteInput"
 							>
-								<label class="matter-switch station-detail-signal-route">
-									<input
-										type="checkbox"
-										:value="signalStationRoute.id"
-										:checked="highlightedSignalStationRoutes.find(f => f.properties.id === signalStationRoute.id)"
-										@change="onSignalStationRouteInput"
-									>
-									<span>{{ `ID: ${signalStationRoute.id}` }}</span>
-								</label>
-							</template>
-						</div>
-					</div>
-				</div>
+							<span>{{ `ID: ${signalStationRoute.id}` }}</span>
+						</label>
+					</template>
+				</soro-collapsible>
 			</div>
 		</div>
 	</div>
@@ -85,11 +52,13 @@
 import { mapMutations } from 'vuex';
 import { InfrastructureNamespace } from '../stores/infrastructure-store.js';
 import { iterate } from '../util/iterate.js';
+import SoroCollapsible from '@/components/soro-collapsible.vue';
 
 document.getElementById('subOverlayContent').innerHTML = ''; // TODO do in App.vue
 
 export default {
 	name: 'StationDetail',
+	components: { SoroCollapsible },
 
 	data() {
 		return {
@@ -134,7 +103,7 @@ export default {
 				this.signalStationRoutes.push(ssr);
 			}
 
-			// showSubOverlay(); // TODO
+			// showSubOverlay();
 		},
 
 		...mapMutations(InfrastructureNamespace, [
