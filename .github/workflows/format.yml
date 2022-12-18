@@ -42,4 +42,4 @@ jobs:
         run: npm clean-install --prefix web/client
 
       - name: Run ESLint
-        run: npm run lint:eslint
+        run: npm run lint:eslint --prefix web/client
