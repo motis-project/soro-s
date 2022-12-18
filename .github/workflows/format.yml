@@ -28,3 +28,17 @@ jobs:
           git status --porcelain
           git diff
           git status --porcelain | xargs -I {} -0 test -z \"{}\"
+
+  eslint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.1
+
+      # ==== WEB LINT ====
+      - name: Install deps
+        run: npm clean-install --prefix web/client
+
+      - name: Run ESLint
+        run: npx lint:eslint
