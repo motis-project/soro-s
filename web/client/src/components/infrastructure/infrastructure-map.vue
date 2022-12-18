@@ -105,6 +105,7 @@ export default defineComponent({
 
 	watch: {
 		currentInfrastructure(newInfrastructure: string | null) {
+			// Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
 			// @ts-ignore type instantiation for some reason is too deep
 			this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
 		},
@@ -210,8 +211,8 @@ export default defineComponent({
 				}
 			});
 
-			map.on('load', () => {
-				addIcons(map);
+			map.on('load', async () => {
+				await addIcons(map);
 				elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
 			});
 

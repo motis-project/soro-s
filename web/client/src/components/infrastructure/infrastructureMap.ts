@@ -1,9 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck as this is currently unused
-import { iterate } from '../../util/iterate.js';
+import { iterate } from '@/util/iterate.js';
 import { Map, Source } from 'maplibre-gl';
 
-function highlightPath(mapSource: Source, infrastructure: string, nodeID: string, nodePath: any) {
+function highlightPath(mapSource: Source, infrastructure: string, nodeID: string, nodePath: never) {
 	const pathGeoJSON = {
 		type: 'Feature',
 		properties: { id: nodeID },

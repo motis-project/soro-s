@@ -32,9 +32,9 @@
 </template>
 
 <script>
-import { iterate } from '../util/iterate.js';
+import { iterate } from '@/util/iterate';
 import { mapState } from 'vuex';
-import { TimetableNamespace } from '../stores/timetable-store';
+import { TimetableNamespace } from '@/stores/timetable-store';
 
 const disruptionMapDefaults = {
 	1: 80,

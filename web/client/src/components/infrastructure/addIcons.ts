@@ -5,15 +5,22 @@ export const iconUrl = window.origin + '/icons/';
 export const iconExtension = '.png';
 
 export function addIcons(map: Map) {
-	for (const type of elementTypes) {
-		const iconName = 'icon-' + type;
+	return Promise.all(elementTypes.map((elementType) => {
+		const iconName = 'icon-' + elementType;
 
-		map.loadImage(iconUrl + type + iconExtension, (error, image) => {
-			if (error || !image) {
-				throw error ?? new Error('Image was not loaded but error was not thrown');
-			}
+		return new Promise<void>((resolve: () => void, reject) => {
+			map.loadImage(iconUrl + elementType + iconExtension, (error, image) => {
+				if (error || !image) {
+					reject(error ?? new Error('Image was not loaded but error was not thrown'));
 
-			map.addImage(iconName, image);
+					return;
+				}
+
+				if (!map.hasImage(iconName))
+					map.addImage(iconName, image);
+
+				resolve();
+			});
 		});
-	}
+	}));
 }
