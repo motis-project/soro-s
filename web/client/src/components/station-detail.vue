@@ -50,8 +50,8 @@
 
 <script>
 import { mapMutations } from 'vuex';
-import { InfrastructureNamespace } from '../stores/infrastructure-store.js';
-import { iterate } from '../util/iterate.js';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store.js';
+import { iterate } from '@/util/iterate';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
 
 document.getElementById('subOverlayContent').innerHTML = ''; // TODO do in App.vue

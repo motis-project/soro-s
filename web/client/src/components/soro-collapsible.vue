@@ -1,27 +1,30 @@
 <template>
 	<div class="wrap-collapsible">
-		<input
-			:id="`collapsible-${inputId}`"
-			class="collapsible-toggle hidden"
-			type="checkbox"
-		>
 		<label
-			:for="`collapsible-${inputId}`"
 			class="collapsible-toggle"
-		>{{ label }}</label>
-		<div class="collapsible-content">
-			<div
-				id="stationRouteCollapsibleContent"
-				class="content-inner"
+		>
+			<input
+				class="collapsible-toggle hidden"
+				type="checkbox"
+				@input="toggleContent"
 			>
-				<slot name="default" />
+			{{ label }}
+		</label>
+		<div
+			ref="innerContent"
+			class="collapsible-content"
+		>
+			<div class="content-inner">
+				<slot />
 			</div>
 		</div>
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
 	name: 'SoroCollapsible',
 
 	props: {
@@ -31,12 +34,12 @@ export default {
 		},
 	},
 
-	computed: {
-		inputId() {
-			return Math.random().toString();
-		}
-	}
-};
+	methods: {
+		toggleContent() {
+			(this.$refs.innerContent as HTMLDivElement).classList.toggle('show-content');
+		},
+	},
+});
 </script>
 
 <style scoped>
@@ -46,8 +49,6 @@ input[type=checkbox].hidden {
 
 .wrap-collapsible {
   display: inline;
-  margin: 1.2em 0;
-  width: 100%;
 }
 
 .collapsible-toggle {
@@ -62,47 +63,34 @@ input[type=checkbox].hidden {
 
   padding: 1em;
 
-  margin: 1em;
-  margin-bottom: 0;
-
   color: var(--text-color);
   background: var(--dialog-color);
 
   cursor: pointer;
 
   border-radius: var(--border-radius);
-  transition: all 2.25s ease-out;
 }
 
-.collapsible-toggle::after {
-  font-family: 'Material Icons';
-  content: '\e5cc';
-
-  vertical-align: middle;
-  horiz-align: center;
-  padding-left: calc(100% - 8.5em);
-}
 
 .collapsible-toggle:hover {
   background-color: var(--element-color);
 }
 
 .collapsible-content {
-  position: absolute;
-  width: calc(100% - 3.6em);
+  position: relative;
   max-height: 0;
-
-  margin: 1em;
-  margin-top: 0;
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0 20px 10px rgba(0, 0, 0, 0.19), 0 8px 6px rgba(0, 0, 0, 0.23);
 }
 
+.collapsible-content.show-content  {
+  max-height: 100%;
+}
+
 .content-inner {
   display: flex;
   flex-direction: column;
-  width: 95%;
   background: var(--dialog-color);
   border-bottom: 1px solid var(--dialog-color);
 

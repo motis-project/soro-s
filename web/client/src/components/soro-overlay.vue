@@ -19,6 +19,7 @@
 						label="New Timetable Tab"
 					/>
 				</div>
+
 				<div class="data-selects">
 					<soro-select
 						class="data-select"
@@ -35,7 +36,11 @@
 						@select="loadTimetable"
 					/>
 				</div>
-				<div class="dev-tools">
+
+				<soro-collapsible
+					label="Dev Tools"
+					class="dev-tools"
+				>
 					<soro-button
 						disabled
 						label="Clear Cache"
@@ -44,7 +49,7 @@
 						disabled
 						label="Simulate"
 					/>
-				</div>
+				</soro-collapsible>
 			</div>
 			<div
 				ref="subOverlay"
@@ -102,14 +107,15 @@
 import DisruptionDetail from './disruption-detail.vue';
 import SoroSelect from './soro-select.vue';
 import SoroButton from './soro-button.vue';
+import SoroCollapsible from '@/components/soro-collapsible.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapActions, mapState } from 'vuex';
-import { InfrastructureNamespace } from '../stores/infrastructure-store';
-import { TimetableNamespace } from '../stores/timetable-store';
-import { Components } from '../golden-layout/golden-layout-constants';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { TimetableNamespace } from '@/stores/timetable-store';
+import { Components } from '@/golden-layout/golden-layout-constants';
 
 export default defineComponent({
 	name: 'SoroOverlay',
