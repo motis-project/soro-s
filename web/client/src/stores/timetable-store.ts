@@ -7,7 +7,7 @@
 //   saveFileToIDBFS,
 //   timetableFileExists
 // } from "../utl/IDBFSHelper.js";
-import { InfrastructureNamespace } from 'infrastructure-store';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import type { Module } from 'vuex';
 
 // import { Module } from "../soro-client.js";

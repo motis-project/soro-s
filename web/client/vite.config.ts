@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 const relayServer = 'http://0.0.0.0:8080';
 const relayLocations = [
@@ -17,6 +18,6 @@ relayLocations.forEach((location) => proxy[location] = {
 	changeOrigin: true,
 });
 export default defineConfig({
-	plugins: [vue()],
+	plugins: [vue(), tsconfigPaths()],
 	server: { proxy },
 });
