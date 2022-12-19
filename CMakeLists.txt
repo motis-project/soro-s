@@ -193,3 +193,11 @@ if (SORO_LINT)
                 )
     endforeach ()
 endif ()
+
+# This is needed for clangd to find system headers no nixos systems
+# using a compile_commands.json generated with
+# -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+endif()
