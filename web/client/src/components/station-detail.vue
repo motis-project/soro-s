@@ -74,7 +74,7 @@ export default defineComponent({
     methods: {
         onStationRouteInput(event) {
             if (event.target.checked) {
-                this.setHighlightedStationRouteID(Number(event.target.value)); // TODO own soro-checkbox with abstraction events
+                this.setHighlightedStationRouteID(Number(event.target.value));
             } else {
                 this.setHighlightedStationRouteID(undefined);
             }

@@ -33,7 +33,6 @@ export default defineComponent({
                 return;
             }
 
-            // TODO make this less hacky
             this.container.on('resize', () => (this.$refs.infrastructureMap as { resize: () => void }).resize());
         }
     }

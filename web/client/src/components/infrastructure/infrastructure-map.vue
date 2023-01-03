@@ -63,7 +63,7 @@ import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 
-const specialLayoutControls = ['Rising', 'Falling']; // TODO make em display stuff actually
+const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
 const legendControlTypes = [
     ...elementTypes,
