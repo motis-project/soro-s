@@ -11,16 +11,16 @@
 import { defineComponent, PropType } from 'vue';
 
 export default defineComponent({
-	name: 'SoroButton',
+  name: 'SoroButton',
 
-	props: {
-		label: {
-			type: String as PropType<string>,
-			required: true,
-		},
-	},
+  props: {
+    label: {
+      type: String as PropType<string>,
+      required: true,
+    },
+  },
 
-	emits: ['click'],
+  emits: ['click'],
 });
 </script>
 

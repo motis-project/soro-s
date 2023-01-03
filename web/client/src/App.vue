@@ -22,64 +22,64 @@ import { LayoutConfig } from 'golden-layout';
 import { Components } from '@/golden-layout/golden-layout-constants';
 
 const initLayout: LayoutConfig = {
-	root: {
-		type: 'row',
-		content: [
-			{
-				type: 'column',
-				content: [
-					{
-						title: 'Infrastructure',
-						type: 'component',
-						componentType: Components.Infrastructure,
-					},
-				]
-			}
-		]
-	}
+  root: {
+    type: 'row',
+    content: [
+      {
+        type: 'column',
+        content: [
+          {
+            title: 'Infrastructure',
+            type: 'component',
+            componentType: Components.Infrastructure,
+          },
+        ]
+      }
+    ]
+  }
 };
 
 const GLayoutRoot = ref();
 
 export default defineComponent({
-	data() {
-		return {
-			overlay: false,
-		};
-	},
+  data() {
+    return {
+      overlay: false,
+    };
+  },
 
-	computed: {
-		...mapState(InfrastructureNamespace, [
-			'currentInfrastructure',
-			'infrastructures',
-		]),
-		...mapState(TimetableNamespace, [
-			'currentTimetable',
-			'timetables',
-		]),
-	},
+  computed: {
+    ...mapState(InfrastructureNamespace, [
+      'currentInfrastructure',
+      'infrastructures',
+    ]),
+    ...mapState(TimetableNamespace, [
+      'currentTimetable',
+      'timetables',
+    ]),
+  },
 
-	mounted() {
-		this.loadInfrastructures();
-		this.loadTimetables();
-		GLayoutRoot.value.loadGLLayout(initLayout);
-	},
+  mounted() {
+    this.loadInfrastructures();
+    this.loadTimetables();
+    GLayoutRoot.value.loadGLLayout(initLayout);
+  },
 
-	methods: {
-		addGoldenLayoutTab({ component, title }: { component: typeof Components[keyof typeof Components], title: string}) {
-			GLayoutRoot.value.addGLComponent(component, title);
-		},
+  methods: {
+    addGoldenLayoutTab({ component, title }: { component: typeof Components[keyof typeof Components], title: string}) {
+      GLayoutRoot.value.addGLComponent(component, title);
+    },
 
-		...mapActions(InfrastructureNamespace, {
-			loadInfrastructures: 'initialLoad',
-			loadInfrastructure: 'load',
-		}),
+    ...mapActions(InfrastructureNamespace, {
+      loadInfrastructures: 'initialLoad',
+      loadInfrastructure: 'load',
+    }),
 
-		...mapActions(TimetableNamespace, {
-			loadTimetables: 'initialLoad',
-			loadTimetable: 'load',
-		}),
-	},
+    ...mapActions(TimetableNamespace, {
+      loadTimetables: 'initialLoad',
+      loadTimetable: 'load',
+    }),
+  },
 });
 </script>
 
