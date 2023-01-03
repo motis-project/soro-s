@@ -1,22 +1,22 @@
 <template>
-	<div>
-		<div id="simWrapper">
-			<div id="simDivider">
-				<div id="simGraph" />
-			</div>
-			<div id="distGraph" />
-		</div>
+    <div>
+        <div id="simWrapper">
+            <div id="simDivider">
+                <div id="simGraph" />
+            </div>
+            <div id="distGraph" />
+        </div>
 
-		<div
-			id="toolTip"
-			class="toolTip"
-		>
-			<ul id="tooltipList">
-				<li id="tooltipID" />
-				<li id="tooltipSSRID" />
-			</ul>
-		</div>
-	</div>
+        <div
+            id="toolTip"
+            class="toolTip"
+        >
+            <ul id="tooltipList">
+                <li id="tooltipID" />
+                <li id="tooltipSSRID" />
+            </ul>
+        </div>
+    </div>
 </template>
 
 <script>

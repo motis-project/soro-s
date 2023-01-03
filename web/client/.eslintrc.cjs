@@ -25,7 +25,19 @@ module.exports = {
 	rules: {
 		'indent': [
 			'error',
-			2
+			4
+		],
+		'curly': [
+			'error',
+			'all'
+		],
+		'brace-style': [
+			'error',
+			'1tbs'
+		],
+		'function-paren-newline': [
+			'error',
+			'multiline'
 		],
 		'linebreak-style': [
 			'error',
@@ -54,7 +66,7 @@ module.exports = {
 		],
 		'vue/html-indent': [
 			'error',
-			2,
+			4,
 		],
 		'@typescript-eslint/no-explicit-any': 0,
 		'@typescript-eslint/ban-ts-comment': 0,

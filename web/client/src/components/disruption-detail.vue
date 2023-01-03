@@ -1,34 +1,34 @@
 <template>
-	<div class="disruption-detail hidden">
-		Disruption:
-		<div>
-			Maximum Speeds [km/h]
-			<br>
-			<template
-				v-for="trainRun in iterate(currentTimetable.trainRuns)"
-				:key="trainRun.name"
-			>
-				<label :for="`${trainRun.name}Input`">{{ trainRun.name }}</label>
-				<input
-					:id="`${trainRun.name}Input`"
-					:name="trainRun.name"
-					:value="disruptionMap.get(trainRun.name)"
-					type="text"
-					@input="(e) => disruptionMap.set(e.target.name, e.target.value)"
-				>
-				<br>
-				<br>
-			</template>
-			<label class="matter-switch">
-				<input
-					v-model="useDistributions"
-					type="checkbox"
-					value="UseDists"
-				>
-				<span>Use Distributions</span>
-			</label>
-		</div>
-	</div>
+    <div class="disruption-detail hidden">
+        Disruption:
+        <div>
+            Maximum Speeds [km/h]
+            <br>
+            <template
+                v-for="trainRun in iterate(currentTimetable.trainRuns)"
+                :key="trainRun.name"
+            >
+                <label :for="`${trainRun.name}Input`">{{ trainRun.name }}</label>
+                <input
+                    :id="`${trainRun.name}Input`"
+                    :name="trainRun.name"
+                    :value="disruptionMap.get(trainRun.name)"
+                    type="text"
+                    @input="(e) => disruptionMap.set(e.target.name, e.target.value)"
+                >
+                <br>
+                <br>
+            </template>
+            <label class="matter-switch">
+                <input
+                    v-model="useDistributions"
+                    type="checkbox"
+                    value="UseDists"
+                >
+                <span>Use Distributions</span>
+            </label>
+        </div>
+    </div>
 </template>
 
 <script>
@@ -37,28 +37,28 @@ import { mapState } from 'vuex';
 import { TimetableNamespace } from '@/stores/timetable-store';
 
 const disruptionMapDefaults = {
-	1: 80,
-	2: 120,
+    1: 80,
+    2: 120,
 };
 const useDistributions = false;
 
 export default {
-	name: 'DisruptionDetail',
+    name: 'DisruptionDetail',
 
-	data() {
-		return {
-			useDistributions,
-			disruptionMap: new Map(),
-		};
-	},
+    data() {
+        return {
+            useDistributions,
+            disruptionMap: new Map(),
+        };
+    },
 
-	computed: mapState(TimetableNamespace, ['currentTimetable']),
+    computed: mapState(TimetableNamespace, ['currentTimetable']),
 
-	created() {
-		Object.keys(disruptionMapDefaults).forEach((key) => this.disruptionMap.set(key, disruptionMapDefaults[key]));
-	},
+    created() {
+        Object.keys(disruptionMapDefaults).forEach((key) => this.disruptionMap.set(key, disruptionMapDefaults[key]));
+    },
 
-	methods: { iterate },
+    methods: { iterate },
 };
 </script>
 

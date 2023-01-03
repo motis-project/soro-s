@@ -1,51 +1,51 @@
 <template>
-	<div>
-		<div
-			v-if="station"
-			id="stationDetail"
-			class="station-detail hidden"
-		>
-			<div class="station-detail-name">
-				{{ station.name }}
-			</div>
-			<div class="station-detail-routes">
-				<soro-collapsible label="Station Routes">
-					<template
-						v-for="(stationRoute, index) in stationRoute"
-						:key="index"
-					>
-						<label class="matter-switch station-detail-signal-route">
-							<input
-								type="checkbox"
-								:value="stationRoute.sr.id"
-								:checked="highlightedStationRoutes.find(f => f.properties.id === stationRoute.sr.id)"
-								@change="onStationRouteInput"
-							>
-							<span>{{ stationRoute.key }}</span>
-						</label>
-					</template>
-				</soro-collapsible>
-			</div>
-			<div class="station-detail-signal-routes">
-				<soro-collapsible label="Signal Station Routes">
-					<template
-						v-for="(signalStationRoute, index) in signalStationRoutes"
-						:key="index"
-					>
-						<label class="matter-switch station-detail-signal-route">
-							<input
-								type="checkbox"
-								:value="signalStationRoute.id"
-								:checked="highlightedSignalStationRoutes.find(f => f.properties.id === signalStationRoute.id)"
-								@change="onSignalStationRouteInput"
-							>
-							<span>{{ `ID: ${signalStationRoute.id}` }}</span>
-						</label>
-					</template>
-				</soro-collapsible>
-			</div>
-		</div>
-	</div>
+    <div>
+        <div
+            v-if="station"
+            id="stationDetail"
+            class="station-detail hidden"
+        >
+            <div class="station-detail-name">
+                {{ station.name }}
+            </div>
+            <div class="station-detail-routes">
+                <soro-collapsible label="Station Routes">
+                    <template
+                        v-for="(stationRoute, index) in stationRoute"
+                        :key="index"
+                    >
+                        <label class="matter-switch station-detail-signal-route">
+                            <input
+                                type="checkbox"
+                                :value="stationRoute.sr.id"
+                                :checked="highlightedStationRoutes.find(f => f.properties.id === stationRoute.sr.id)"
+                                @change="onStationRouteInput"
+                            >
+                            <span>{{ stationRoute.key }}</span>
+                        </label>
+                    </template>
+                </soro-collapsible>
+            </div>
+            <div class="station-detail-signal-routes">
+                <soro-collapsible label="Signal Station Routes">
+                    <template
+                        v-for="(signalStationRoute, index) in signalStationRoutes"
+                        :key="index"
+                    >
+                        <label class="matter-switch station-detail-signal-route">
+                            <input
+                                type="checkbox"
+                                :value="signalStationRoute.id"
+                                :checked="highlightedSignalStationRoutes.find(f => f.properties.id === signalStationRoute.id)"
+                                @change="onSignalStationRouteInput"
+                            >
+                            <span>{{ `ID: ${signalStationRoute.id}` }}</span>
+                        </label>
+                    </template>
+                </soro-collapsible>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -59,59 +59,59 @@ import { iterate } from '@/util/iterate';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-	name: 'StationDetail',
+    name: 'StationDetail',
 
-	data() {
-		return {
-			station: undefined,
-			stationRoutes: [],
-			highlightedStationRoutes: [],
-			signalStationRoutes: [],
-			highlightedSignalStationRoutes: [],
-		};
-	},
+    data() {
+        return {
+            station: undefined,
+            stationRoutes: [],
+            highlightedStationRoutes: [],
+            signalStationRoutes: [],
+            highlightedSignalStationRoutes: [],
+        };
+    },
 
-	methods: {
-		onStationRouteInput(event) {
-			if (event.target.checked) {
-				this.setHighlightedStationRouteID(Number(event.target.value)); // TODO own soro-checkbox with abstraction events
-			} else {
-				this.setHighlightedStationRouteID(undefined);
-			}
-		},
+    methods: {
+        onStationRouteInput(event) {
+            if (event.target.checked) {
+                this.setHighlightedStationRouteID(Number(event.target.value)); // TODO own soro-checkbox with abstraction events
+            } else {
+                this.setHighlightedStationRouteID(undefined);
+            }
+        },
 
-		onSignalStationRouteInput(event) {
-			if (event.target.checked) {
-				this.setHighlightedSignalStationRouteID(Number(event.target.value));
-			} else {
-				this.setHighlightedSignalStationRouteID(undefined);
-			}
-		},
+        onSignalStationRouteInput(event) {
+            if (event.target.checked) {
+                this.setHighlightedSignalStationRouteID(Number(event.target.value));
+            } else {
+                this.setHighlightedSignalStationRouteID(undefined);
+            }
+        },
 
-		fillStation(station, infrastructure, highlightedStationRoutes, highlightedSignalStationRoutes) {
-			this.stationRoutes = [];
-			this.highlightedStationRoutes = highlightedStationRoutes;
-			for (let i = 0; i < station.station_routes.size(); i++) {
-				const key = station.station_routes.keys().get(i);
-				const sr = station.station_routes.get(key);
+        fillStation(station, infrastructure, highlightedStationRoutes, highlightedSignalStationRoutes) {
+            this.stationRoutes = [];
+            this.highlightedStationRoutes = highlightedStationRoutes;
+            for (let i = 0; i < station.station_routes.size(); i++) {
+                const key = station.station_routes.keys().get(i);
+                const sr = station.station_routes.get(key);
 
-				this.stationRoutes.push({ key, sr });
-			}
+                this.stationRoutes.push({ key, sr });
+            }
 
-			this.signalStationRoutes = [];
-			this.highlightedSignalStationRoutes = highlightedSignalStationRoutes;
-			for (const ssr of iterate(infrastructure.station_to_ssrs.get(station.id))) {
-				this.signalStationRoutes.push(ssr);
-			}
+            this.signalStationRoutes = [];
+            this.highlightedSignalStationRoutes = highlightedSignalStationRoutes;
+            for (const ssr of iterate(infrastructure.station_to_ssrs.get(station.id))) {
+                this.signalStationRoutes.push(ssr);
+            }
 
-			// showSubOverlay();
-		},
+            // showSubOverlay();
+        },
 
-		...mapMutations(InfrastructureNamespace, [
-			'setHighlightedStationRouteID',
-			'setHighlightedSignalStationRouteID',
-		]),
-	}
+        ...mapMutations(InfrastructureNamespace, [
+            'setHighlightedStationRouteID',
+            'setHighlightedSignalStationRouteID',
+        ]),
+    }
 });
 </script>
 

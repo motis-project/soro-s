@@ -1,44 +1,44 @@
 <template>
-	<div class="wrap-collapsible">
-		<label
-			class="collapsible-toggle"
-		>
-			<input
-				class="collapsible-toggle hidden"
-				type="checkbox"
-				@input="toggleContent"
-			>
-			{{ label }}
-		</label>
-		<div
-			ref="innerContent"
-			class="collapsible-content"
-		>
-			<div class="content-inner">
-				<slot />
-			</div>
-		</div>
-	</div>
+    <div class="wrap-collapsible">
+        <label
+            class="collapsible-toggle"
+        >
+            <input
+                class="collapsible-toggle hidden"
+                type="checkbox"
+                @input="toggleContent"
+            >
+            {{ label }}
+        </label>
+        <div
+            ref="innerContent"
+            class="collapsible-content"
+        >
+            <div class="content-inner">
+                <slot />
+            </div>
+        </div>
+    </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-	name: 'SoroCollapsible',
+    name: 'SoroCollapsible',
 
-	props: {
-		label: {
-			type: String,
-			required: true
-		},
-	},
+    props: {
+        label: {
+            type: String,
+            required: true
+        },
+    },
 
-	methods: {
-		toggleContent() {
-			(this.$refs.innerContent as HTMLDivElement).classList.toggle('show-content');
-		},
-	},
+    methods: {
+        toggleContent() {
+            (this.$refs.innerContent as HTMLDivElement).classList.toggle('show-content');
+        },
+    },
 });
 </script>
 

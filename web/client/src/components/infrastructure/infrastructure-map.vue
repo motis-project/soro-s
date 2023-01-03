@@ -1,61 +1,61 @@
 <template>
-	<div ref="container">
-		<div
-			ref="map"
-			class="map infrastructure-map"
-		/>
-		<div
-			ref="mapLegend"
-			class="map-overlay infrastructure-map-legend"
-		>
-			<template
-				v-for="(elementType, index) in legendControlTypes"
-				:key="index"
-			>
-				<input
-					:id="elementType"
-					:ref="elementType"
-					:value="elementType"
-					:checked="initiallyCheckedControls.includes(elementType)"
-					type="checkbox"
-					@input="onLegendControlClicked"
-				>
-				<label
-					class="legend-key"
-					:for="elementType"
-				>
-					<img
-						v-if="hasImage(elementType)"
-						class="legend-key-icon"
-						:src="iconUrl + elementType + iconExtension"
-						alt=""
-					>
-					{{ elementTypeLabels[elementType] ?? elementType }}
-				</label>
-				<br>
-			</template>
-		</div>
+    <div ref="container">
+        <div
+            ref="map"
+            class="map infrastructure-map"
+        />
+        <div
+            ref="mapLegend"
+            class="map-overlay infrastructure-map-legend"
+        >
+            <template
+                v-for="(elementType, index) in legendControlTypes"
+                :key="index"
+            >
+                <input
+                    :id="elementType"
+                    :ref="elementType"
+                    :value="elementType"
+                    :checked="initiallyCheckedControls.includes(elementType)"
+                    type="checkbox"
+                    @input="onLegendControlClicked"
+                >
+                <label
+                    class="legend-key"
+                    :for="elementType"
+                >
+                    <img
+                        v-if="hasImage(elementType)"
+                        class="legend-key-icon"
+                        :src="iconUrl + elementType + iconExtension"
+                        alt=""
+                    >
+                    {{ elementTypeLabels[elementType] ?? elementType }}
+                </label>
+                <br>
+            </template>
+        </div>
 
-		<div
-			ref="infrastructureTooltip"
-			class="infrastructureTooltip infrastructure-tooltip"
-		>
-			<ul id="infrastructureTooltipList">
-				<li id="kilometerPoint" />
-				<li id="risingOrFalling" />
-			</ul>
-		</div>
-	</div>
+        <div
+            ref="infrastructureTooltip"
+            class="infrastructureTooltip infrastructure-tooltip"
+        >
+            <ul id="infrastructureTooltipList">
+                <li id="kilometerPoint" />
+                <li id="risingOrFalling" />
+            </ul>
+        </div>
+    </div>
 </template>
 
 <script lang="ts">
 import { mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import {
-	deHighlightSignalStationRoute,
-	deHighlightStationRoute,
-	highlightSignalStationRoute,
-	highlightStationRoute
+    deHighlightSignalStationRoute,
+    deHighlightStationRoute,
+    highlightSignalStationRoute,
+    highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle';
@@ -66,165 +66,168 @@ import { defineComponent } from 'vue';
 const specialLayoutControls = ['Rising', 'Falling']; // TODO make em display stuff actually
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
 const legendControlTypes = [
-	...elementTypes,
-	...specialLayoutControls
+    ...elementTypes,
+    ...specialLayoutControls
 ];
 
 const mapDefaults = {
-	style: infrastructureMapStyle,
-	attributionControl: false,
-	zoom: 18,
-	hash: 'location',
-	center: [8, 47],
-	maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
-	bearing: 0,
+    style: infrastructureMapStyle,
+    attributionControl: false,
+    zoom: 18,
+    hash: 'location',
+    center: [8, 47],
+    maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
+    bearing: 0,
 };
 
 export default defineComponent({
-	name: 'InfrastructureMap',
+    name: 'InfrastructureMap',
 
-	data() {
-		return {
-			libreGLMap: null as (Map | null),
-			legendControlTypes,
-			initiallyCheckedControls,
-			iconUrl,
-			iconExtension,
-			elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
-		};
-	},
+    data() {
+        return {
+            libreGLMap: null as (Map | null),
+            legendControlTypes,
+            initiallyCheckedControls,
+            iconUrl,
+            iconExtension,
+            elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
+        };
+    },
 
-	computed: {
-		...mapState(InfrastructureNamespace, [
-			'currentInfrastructure',
-			'highlightedSignalStationRouteID',
-			'highlightedStationRouteID',
-		]),
-	},
+    computed: {
+        ...mapState(InfrastructureNamespace, [
+            'currentInfrastructure',
+            'highlightedSignalStationRouteID',
+            'highlightedStationRouteID',
+        ]),
+    },
 
-	watch: {
-		currentInfrastructure(newInfrastructure: string | null) {
-			// Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
-			// @ts-ignore type instantiation for some reason is too deep
-			this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
-		},
+    watch: {
+        currentInfrastructure(newInfrastructure: string | null) {
+            // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
+            // @ts-ignore type instantiation for some reason is too deep
+            this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+        },
 
-		highlightedSignalStationRouteID(newID, oldID) {
-			if (!this.libreGLMap)
-				return;
+        highlightedSignalStationRouteID(newID, oldID) {
+            if (!this.libreGLMap) {
+                return;
+            }
 
-			if (newID) {
-				// @ts-ignore
-				highlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
-			} else {
-				// @ts-ignore
-				deHighlightSignalStationRoute(this.libreGLMap, oldID);
-			}
-		},
+            if (newID) {
+                // @ts-ignore
+                highlightSignalStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
+            } else {
+                // @ts-ignore
+                deHighlightSignalStationRoute(this.libreGLMap, oldID);
+            }
+        },
 
-		highlightedStationRouteID(newID, oldID) {
-			if (newID) {
-				// @ts-ignore
-				highlightStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
-			} else {
-				// @ts-ignore
-				deHighlightStationRoute(this.libreGLMap, oldID);
-			}
-		},
-	},
+        highlightedStationRouteID(newID, oldID) {
+            if (newID) {
+                // @ts-ignore
+                highlightStationRoute(this.libreGLMap, this.currentInfrastructure, newID);
+            } else {
+                // @ts-ignore
+                deHighlightStationRoute(this.libreGLMap, oldID);
+            }
+        },
+    },
 
-	methods: {
-		resize() {
-			if (!this.libreGLMap)
-				return;
+    methods: {
+        resize() {
+            if (!this.libreGLMap) {
+                return;
+            }
 
-			this.libreGLMap.resize();
-		},
+            this.libreGLMap.resize();
+        },
 
-		hasImage(elementType: string) {
-			return !specialLayoutControls.includes(elementType);
-		},
+        hasImage(elementType: string) {
+            return !specialLayoutControls.includes(elementType);
+        },
 
-		onLegendControlClicked(event: Event) {
-			if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
-				this.evaluateSpecialLegendControls();
+        onLegendControlClicked(event: Event) {
+            if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
+                this.evaluateSpecialLegendControls();
 
-				return;
-			}
+                return;
+            }
 
-			this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
-		},
+            this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
+        },
 
-		evaluateLegendControlForControlType(type: string) {
-			if (!this.libreGLMap)
-				return;
+        evaluateLegendControlForControlType(type: string) {
+            if (!this.libreGLMap) {
+                return;
+            }
 
-			// @ts-ignore
-			this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
+            // @ts-ignore
+            this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
 
-			if (type !== 'station') {
-				// @ts-ignore
-				this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
-			}
-		},
+            if (type !== 'station') {
+                // @ts-ignore
+                this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
+            }
+        },
 
-		evaluateSpecialLegendControls() {
-			if (!this.libreGLMap)  {
-				return;
-			}
+        evaluateSpecialLegendControls() {
+            if (!this.libreGLMap)  {
+                return;
+            }
 
-			const rising_checked = (this.$refs.Rising as HTMLInputElement).checked;
-			const falling_checked = (this.$refs.Falling as HTMLInputElement).checked;
+            const rising_checked = (this.$refs.Rising as HTMLInputElement).checked;
+            const falling_checked = (this.$refs.Falling as HTMLInputElement).checked;
 
-			let filter: FilterSpecification;
-			if (!rising_checked && falling_checked) {
-				filter = ['!', ['get', 'rising']];
-			} else if (rising_checked && !falling_checked) {
-				filter = ['get', 'rising'];
-			} else if (!rising_checked && !falling_checked) {
-				filter = ['boolean', false];
-			}
+            let filter: FilterSpecification;
+            if (!rising_checked && falling_checked) {
+                filter = ['!', ['get', 'rising']];
+            } else if (rising_checked && !falling_checked) {
+                filter = ['get', 'rising'];
+            } else if (!rising_checked && !falling_checked) {
+                filter = ['boolean', false];
+            }
 
-			elementTypes.forEach((elementType) => {
-				if (elementType === 'station') {
-					return;
-				}
+            elementTypes.forEach((elementType) => {
+                if (elementType === 'station') {
+                    return;
+                }
 
-				// @ts-ignore
-				this.libreGLMap.setFilter(elementType + '-layer', filter);
-				// @ts-ignore
-				this.libreGLMap.setFilter('circle-' + elementType + '-layer', filter);
-			});
-		},
+                // @ts-ignore
+                this.libreGLMap.setFilter(elementType + '-layer', filter);
+                // @ts-ignore
+                this.libreGLMap.setFilter('circle-' + elementType + '-layer', filter);
+            });
+        },
 
-		createMap(infrastructure: string) {
-			const map = new Map({
-				...mapDefaults,
-				container: this.$refs.map as HTMLElement,
-				// @ts-ignore
-				transformRequest: (relative_url) => {
-					if (relative_url.startsWith('/')) {
-						const url = window.origin + '/' + infrastructure + relative_url;
-						return { url };
-					}
-				}
-			});
+        createMap(infrastructure: string) {
+            const map = new Map({
+                ...mapDefaults,
+                container: this.$refs.map as HTMLElement,
+                // @ts-ignore
+                transformRequest: (relative_url) => {
+                    if (relative_url.startsWith('/')) {
+                        const url = window.origin + '/' + infrastructure + relative_url;
+                        return { url };
+                    }
+                }
+            });
 
-			map.on('load', async () => {
-				await addIcons(map);
-				elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
-			});
+            map.on('load', async () => {
+                await addIcons(map);
+                elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
+            });
 
-			map.dragPan.enable({
-				linearity: 0.01,
-				easing: t => t,
-				maxSpeed: 1400,
-				deceleration: 2500
-			});
+            map.dragPan.enable({
+                linearity: 0.01,
+                easing: t => t,
+                maxSpeed: 1400,
+                deceleration: 2500
+            });
 
-			return map;
-		},
-	}
+            return map;
+        },
+    }
 });
 </script>
 

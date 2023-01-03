@@ -1,11 +1,11 @@
 <template>
-	<div class="full-height">
-		<soro-overlay @add-golden-layout-tab="addGoldenLayoutTab" />
-		<golden-layout-adapter
-			ref="GLayoutRoot"
-			class="golden-layout-root"
-		/>
-	</div>
+    <div class="full-height">
+        <soro-overlay @add-golden-layout-tab="addGoldenLayoutTab" />
+        <golden-layout-adapter
+            ref="GLayoutRoot"
+            class="golden-layout-root"
+        />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -22,64 +22,64 @@ import { LayoutConfig } from 'golden-layout';
 import { Components } from '@/golden-layout/golden-layout-constants';
 
 const initLayout: LayoutConfig = {
-  root: {
-    type: 'row',
-    content: [
-      {
-        type: 'column',
+    root: {
+        type: 'row',
         content: [
-          {
-            title: 'Infrastructure',
-            type: 'component',
-            componentType: Components.Infrastructure,
-          },
+            {
+                type: 'column',
+                content: [
+                    {
+                        title: 'Infrastructure',
+                        type: 'component',
+                        componentType: Components.Infrastructure,
+                    },
+                ]
+            }
         ]
-      }
-    ]
-  }
+    }
 };
 
 const GLayoutRoot = ref();
 
 export default defineComponent({
-  data() {
-    return {
-      overlay: false,
-    };
-  },
-
-  computed: {
-    ...mapState(InfrastructureNamespace, [
-      'currentInfrastructure',
-      'infrastructures',
-    ]),
-    ...mapState(TimetableNamespace, [
-      'currentTimetable',
-      'timetables',
-    ]),
-  },
-
-  mounted() {
-    this.loadInfrastructures();
-    this.loadTimetables();
-    GLayoutRoot.value.loadGLLayout(initLayout);
-  },
-
-  methods: {
-    addGoldenLayoutTab({ component, title }: { component: typeof Components[keyof typeof Components], title: string}) {
-      GLayoutRoot.value.addGLComponent(component, title);
+    data() {
+        return {
+            overlay: false,
+        };
     },
 
-    ...mapActions(InfrastructureNamespace, {
-      loadInfrastructures: 'initialLoad',
-      loadInfrastructure: 'load',
-    }),
+    computed: {
+        ...mapState(InfrastructureNamespace, [
+            'currentInfrastructure',
+            'infrastructures',
+        ]),
+        ...mapState(TimetableNamespace, [
+            'currentTimetable',
+            'timetables',
+        ]),
+    },
 
-    ...mapActions(TimetableNamespace, {
-      loadTimetables: 'initialLoad',
-      loadTimetable: 'load',
-    }),
-  },
+    mounted() {
+        this.loadInfrastructures();
+        this.loadTimetables();
+        GLayoutRoot.value.loadGLLayout(initLayout);
+    },
+
+    methods: {
+        addGoldenLayoutTab({ component, title }: { component: typeof Components[keyof typeof Components], title: string}) {
+            GLayoutRoot.value.addGLComponent(component, title);
+        },
+
+        ...mapActions(InfrastructureNamespace, {
+            loadInfrastructures: 'initialLoad',
+            loadInfrastructure: 'load',
+        }),
+
+        ...mapActions(TimetableNamespace, {
+            loadTimetables: 'initialLoad',
+            loadTimetable: 'load',
+        }),
+    },
 });
 </script>
 

@@ -1,106 +1,106 @@
 <template>
-	<div
-		ref="overlayContainer"
-		:class="`overlay-container ${showOverlay ? '' : 'hidden'}`"
-	>
-		<div class="overlay">
-			<div class="overlay-content">
-				<div class="window-controls">
-					<soro-button
-						label="New Infrastructure Tab"
-						@click="addInfrastructureTab"
-					/>
-					<soro-button
-						disabled
-						label="New Simulation Tab"
-					/>
-					<soro-button
-						disabled
-						label="New Timetable Tab"
-					/>
-				</div>
+    <div
+        ref="overlayContainer"
+        :class="`overlay-container ${showOverlay ? '' : 'hidden'}`"
+    >
+        <div class="overlay">
+            <div class="overlay-content">
+                <div class="window-controls">
+                    <soro-button
+                        label="New Infrastructure Tab"
+                        @click="addInfrastructureTab"
+                    />
+                    <soro-button
+                        disabled
+                        label="New Simulation Tab"
+                    />
+                    <soro-button
+                        disabled
+                        label="New Timetable Tab"
+                    />
+                </div>
 
-				<div class="data-selects">
-					<soro-select
-						class="data-select"
-						label="Select Infrastructure"
-						:value="currentInfrastructure"
-						:options="infrastructures"
-						@select="loadInfrastructure"
-					/>
-					<soro-select
-						class="data-select"
-						label="Select Timetable"
-						:value="currentTimetable"
-						:options="timetables"
-						@select="loadTimetable"
-					/>
-				</div>
+                <div class="data-selects">
+                    <soro-select
+                        class="data-select"
+                        label="Select Infrastructure"
+                        :value="currentInfrastructure"
+                        :options="infrastructures"
+                        @select="loadInfrastructure"
+                    />
+                    <soro-select
+                        class="data-select"
+                        label="Select Timetable"
+                        :value="currentTimetable"
+                        :options="timetables"
+                        @select="loadTimetable"
+                    />
+                </div>
 
-				<soro-collapsible
-					label="Dev Tools"
-					class="dev-tools"
-				>
-					<soro-button
-						disabled
-						label="Clear Cache"
-					/>
-					<soro-button
-						disabled
-						label="Simulate"
-					/>
-				</soro-collapsible>
-			</div>
-			<div
-				ref="subOverlay"
-				class="sub-overlay hidden"
-			>
-				<div
-					id="subOverlayContent"
-					class="sub-overlay-content"
-				>
-					<disruption-detail
-						v-if="false"
-						ref="disruption"
-					/>
-				</div>
-				<div
-					ref="subOverlayClose"
-					class="sub-overlay-close"
-				>
-					<i class="material-icons">close</i>
-				</div>
-			</div>
-		</div>
-		<div
-			ref="subOverlayTabs"
-			class="overlay-tabs"
-		>
-			<div class="overlay-toggle">
-				<button
-					class="matter-button-contained overlay-toggle-button"
-					@click="toggleOverlay"
-				>
-					<i
-						class="material-icons"
-						style="display: flex; justify-content:center;"
-					>menu</i>
-				</button>
-			</div>
-			<div
-				ref="stationDetailButton"
-				class="sub-overlay-tab-button"
-			>
-				<i class="material-icons">home</i>
-			</div>
-			<div
-				ref="disruptionDetailButton"
-				class="sub-overlay-tab-button"
-			>
-				<i class="material-icons">train</i>
-			</div>
-		</div>
-	</div>
+                <soro-collapsible
+                    label="Dev Tools"
+                    class="dev-tools"
+                >
+                    <soro-button
+                        disabled
+                        label="Clear Cache"
+                    />
+                    <soro-button
+                        disabled
+                        label="Simulate"
+                    />
+                </soro-collapsible>
+            </div>
+            <div
+                ref="subOverlay"
+                class="sub-overlay hidden"
+            >
+                <div
+                    id="subOverlayContent"
+                    class="sub-overlay-content"
+                >
+                    <disruption-detail
+                        v-if="false"
+                        ref="disruption"
+                    />
+                </div>
+                <div
+                    ref="subOverlayClose"
+                    class="sub-overlay-close"
+                >
+                    <i class="material-icons">close</i>
+                </div>
+            </div>
+        </div>
+        <div
+            ref="subOverlayTabs"
+            class="overlay-tabs"
+        >
+            <div class="overlay-toggle">
+                <button
+                    class="matter-button-contained overlay-toggle-button"
+                    @click="toggleOverlay"
+                >
+                    <i
+                        class="material-icons"
+                        style="display: flex; justify-content:center;"
+                    >menu</i>
+                </button>
+            </div>
+            <div
+                ref="stationDetailButton"
+                class="sub-overlay-tab-button"
+            >
+                <i class="material-icons">home</i>
+            </div>
+            <div
+                ref="disruptionDetailButton"
+                class="sub-overlay-tab-button"
+            >
+                <i class="material-icons">train</i>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -118,41 +118,41 @@ import { TimetableNamespace } from '@/stores/timetable-store';
 import { Components } from '@/golden-layout/golden-layout-constants';
 
 export default defineComponent({
-	name: 'SoroOverlay',
+    name: 'SoroOverlay',
 
-	emits: ['add-golden-layout-tab'],
+    emits: ['add-golden-layout-tab'],
 
-	data() {
-		return {
-			showOverlay: false,
-		};
-	},
+    data() {
+        return {
+            showOverlay: false,
+        };
+    },
 
-	computed: {
-		...mapState(InfrastructureNamespace, [
-			'currentInfrastructure',
-			'infrastructures',
-		]),
+    computed: {
+        ...mapState(InfrastructureNamespace, [
+            'currentInfrastructure',
+            'infrastructures',
+        ]),
 
-		...mapState(TimetableNamespace, [
-			'currentTimetable',
-			'timetables',
-		]),
-	},
+        ...mapState(TimetableNamespace, [
+            'currentTimetable',
+            'timetables',
+        ]),
+    },
 
-	methods: {
-		toggleOverlay() {
-			this.showOverlay = !this.showOverlay;
-		},
+    methods: {
+        toggleOverlay() {
+            this.showOverlay = !this.showOverlay;
+        },
 
-		addInfrastructureTab() {
-			this.$emit('add-golden-layout-tab', { component: Components.Infrastructure, title: 'Infrastructure' });
-		},
+        addInfrastructureTab() {
+            this.$emit('add-golden-layout-tab', { component: Components.Infrastructure, title: 'Infrastructure' });
+        },
 
-		...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
+        ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
 
-		...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
-	}
+        ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
+    }
 });
 </script>
 
