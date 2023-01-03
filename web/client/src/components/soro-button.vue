@@ -1,10 +1,10 @@
 <template>
-	<button
-		class="matter-button-contained soro-button"
-		@click="(event: Event) => $emit('click', event)"
-	>
-		{{ label }}
-	</button>
+  <button
+    class="matter-button-contained soro-button"
+    @click="(event: Event) => $emit('click', event)"
+  >
+    {{ label }}
+  </button>
 </template>
 
 <script lang="ts">

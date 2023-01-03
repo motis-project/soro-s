@@ -54,7 +54,7 @@ module.exports = {
 		],
 		'vue/html-indent': [
 			'error',
-			'tab',
+			2,
 		],
 		'@typescript-eslint/no-explicit-any': 0,
 		'@typescript-eslint/ban-ts-comment': 0,
