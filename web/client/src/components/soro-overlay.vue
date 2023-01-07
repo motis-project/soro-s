@@ -257,7 +257,7 @@ export default defineComponent({
 .window-controls,
 .dev-tools {
     display: flex;
-    flex-flow: wrap;
+    flex-flow: column wrap;
     width: 94%;
     justify-content: space-around;
     padding: 3%;
@@ -267,7 +267,7 @@ export default defineComponent({
 
 .data-selects {
     display: flex;
-    flex-flow: wrap;
+    flex-flow: column wrap;
     width: 94%;
     justify-content: space-around;
     padding: 3%;
