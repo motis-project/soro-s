@@ -85,11 +85,11 @@ export default defineComponent({
 
 <style scoped>
 .golden-layout-root {
-  width: 100%;
-  height: calc(100% - 90px);
+    width: 100%;
+    height: calc(100% - 90px);
 }
 
 .full-height {
-  height: 100%;
+    height: 100%;
 }
 </style>

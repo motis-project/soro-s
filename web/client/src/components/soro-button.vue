@@ -26,7 +26,7 @@ export default defineComponent({
 
 <style scoped>
 .soro-button {
-  margin-top: 0.2em;
-  margin-bottom: 0.2em;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 </style>

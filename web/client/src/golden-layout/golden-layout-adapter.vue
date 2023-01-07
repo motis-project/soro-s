@@ -1,11 +1,11 @@
 <template>
-    <div style="position: relative">
+    <div style="position: relative;">
         <div
             ref="GLRoot"
-            style="position: absolute; width: 100%; height: 100%"
+            style="position: absolute; width: 100%; height: 100%;"
         />
         <!-- Root dom for Golden-Layout manager -->
-        <div style="position: absolute; width: 100%; height: 100%">
+        <div style="position: absolute; width: 100%; height: 100%;">
             <golden-layout-component
                 v-for="pair in AllComponents"
                 :key="pair[0]"

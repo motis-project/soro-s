@@ -1,7 +1,7 @@
 <template>
     <div
         ref="GLComponent"
-        style="position: absolute; overflow: hidden"
+        style="position: absolute; overflow: hidden;"
     >
         <slot />
     </div>
