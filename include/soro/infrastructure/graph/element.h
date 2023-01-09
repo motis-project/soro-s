@@ -340,8 +340,9 @@ struct element {
 
   auto neighbours() const {
     return this->e_.apply([](auto&& e) {
-      return utls::make_range(std::cbegin(e.neighbours_),
-                              std::cend(e.neighbours_));
+      return utls::make_range(
+          &(*std::cbegin(e.neighbours_)),
+          &(*std::cbegin(e.neighbours_)) + e.neighbours_.size());
     });
   }
 
