@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <span>
 
 #include "soro/utls/container/it_range.h"
 
@@ -338,17 +339,15 @@ struct element {
     return e_.apply(std::forward<Fn>(f));
   }
 
-  auto neighbours() const {
-    return this->e_.apply([](auto&& e) {
-      return utls::make_range(
-          &(*std::cbegin(e.neighbours_)),
-          &(*std::cbegin(e.neighbours_)) + e.neighbours_.size());
+  std::span<const element_ptr> neighbours() const {
+    return this->e_.apply([](auto&& e) -> std::span<const element_ptr> {
+      return {std::cbegin(e.neighbours_), e.neighbours_.size()};
     });
   }
 
-  auto nodes() const {
-    return this->e_.apply([](auto&& e) {
-      return utls::make_range(std::cbegin(e.nodes_), std::cend(e.nodes_));
+  std::span<const node_ptr> nodes() const {
+    return this->e_.apply([](auto&& e) -> std::span<const node_ptr> {
+      return {std::cbegin(e.nodes_), e.nodes_.size()};
     });
   }
 
