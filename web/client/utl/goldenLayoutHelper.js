@@ -32,6 +32,12 @@ export function getSimulationComponent() {
   });
 }
 
+export function getOrderingGraphComponent() {
+    return getComponentsFilter(c => {
+        return c.isComponent && c.componentType === 'OrderingGraphComponent';
+    });
+}
+
 export function getControlComponent() {
   return getComponentsFilter(c => {
     return c.isComponent && c.componentType === 'ControlComponent';
