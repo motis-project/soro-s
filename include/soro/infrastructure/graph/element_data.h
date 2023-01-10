@@ -79,7 +79,12 @@ struct speed_limit {
   soro::ptr<node> node_{nullptr};
 };
 
-using element_data_t =
-    soro::variant<empty, eotd, slope, halt, speed_limit, main_signal>;
+struct switch_data {
+  soro::string name_;
+  cista::optional<soro::string> ui_identifier_;
+};
+
+using element_data_t = soro::variant<empty, eotd, slope, halt, speed_limit,
+                                     main_signal, switch_data>;
 
 }  // namespace soro::infra
