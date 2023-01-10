@@ -99,6 +99,7 @@ jobs:
           asset_content_type: application/x-tar
 
   docker:
+    if: github.event.action == 'published'
     runs-on: ubuntu-20.04
     needs: linux
     steps:
@@ -134,7 +135,6 @@ jobs:
             type=edge
 
       - name: Docker build and push
-        if: github.event.action == 'published'
         uses: docker/build-push-action@v3
         with:
           push: true
