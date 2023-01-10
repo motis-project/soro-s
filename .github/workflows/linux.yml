@@ -134,7 +134,7 @@ jobs:
             type=edge
 
       - name: Docker build and push
-        if: github.event.action == published'
+        if: github.event.action == 'published'
         uses: docker/build-push-action@v3
         with:
           push: true
