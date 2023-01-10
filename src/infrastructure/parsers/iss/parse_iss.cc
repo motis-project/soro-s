@@ -989,6 +989,11 @@ void log_stats(infrastructure_t const& iss) {
   uLOG(info) << "Got " << iss.rolling_stock_.train_series_.size()
              << " train series.";
   uLOG(info) << "Got " << total_variants << " train series variants.";
+
+  uLOG(info) << "Default values:";
+  uLOG(info) << "Route form time: " << iss.defaults_.route_form_time_;
+  uLOG(info) << "Brake path length: " << iss.defaults_.brake_path_length_;
+  uLOG(info) << "Speed limit: " << iss.defaults_.stationary_speed_limit_;
 }
 
 default_values parse_default_values(xml_node const& default_values_xml) {
