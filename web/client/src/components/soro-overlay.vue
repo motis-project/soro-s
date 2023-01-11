@@ -8,7 +8,7 @@
                 <div class="window-controls">
                     <soro-button
                         label="New Infrastructure Tab"
-                        @click="addInfrastructureTab"
+                        @click="addTab(ComponentTechnicalNames.INFRASTRUCTURE)"
                     />
                     <soro-button
                         disabled
@@ -17,6 +17,10 @@
                     <soro-button
                         disabled
                         label="New Timetable Tab"
+                    />
+                    <soro-button
+                        label="New OrderingGraph Tab"
+                        @click="addTab(ComponentTechnicalNames.ORDERING_GRAPH)"
                     />
                 </div>
 
@@ -115,7 +119,7 @@ import { defineComponent } from 'vue';
 import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
-import { Components } from '@/golden-layout/golden-layout-constants';
+import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 
 export default defineComponent({
     name: 'SoroOverlay',
@@ -125,6 +129,7 @@ export default defineComponent({
     data() {
         return {
             showOverlay: false,
+            ComponentTechnicalNames: ComponentTechnicalName,
         };
     },
 
@@ -145,8 +150,14 @@ export default defineComponent({
             this.showOverlay = !this.showOverlay;
         },
 
-        addInfrastructureTab() {
-            this.$emit('add-golden-layout-tab', { component: Components.Infrastructure, title: 'Infrastructure' });
+        addTab(componentTechnicalName: ComponentTechnicalName) {
+            this.$emit(
+                'add-golden-layout-tab',
+                {
+                    componentTechnicalName,
+                    title: GLComponentTitles[componentTechnicalName],
+                },
+            );
         },
 
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),

@@ -19,7 +19,7 @@ import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
-import { Components } from '@/golden-layout/golden-layout-constants';
+import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from '@/golden-layout/golden-layout-constants';
 
 const initLayout: LayoutConfig = {
     root: {
@@ -29,9 +29,9 @@ const initLayout: LayoutConfig = {
                 type: 'column',
                 content: [
                     {
-                        title: 'Infrastructure',
+                        title: GLComponentTitles[ComponentTechnicalName.INFRASTRUCTURE],
                         type: 'component',
-                        componentType: Components.Infrastructure,
+                        componentType: GLComponentNames[ComponentTechnicalName.INFRASTRUCTURE],
                     },
                 ]
             }
@@ -66,8 +66,8 @@ export default defineComponent({
     },
 
     methods: {
-        addGoldenLayoutTab({ component, title }: { component: typeof Components[keyof typeof Components], title: string}) {
-            GLayoutRoot.value.addGLComponent(component, title);
+        addGoldenLayoutTab({ componentTechnicalName, title }: { componentTechnicalName: ComponentTechnicalName, title: string}) {
+            GLayoutRoot.value.addGLComponent(GLComponentNames[componentTechnicalName], title);
         },
 
         ...mapActions(InfrastructureNamespace, {
