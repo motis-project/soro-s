@@ -11,7 +11,7 @@ namespace soro::utls {
 using hash = uint32_t;
 
 // FNV-1a 32bit hashing algorithm
-constexpr hash str_hash(char const* c, size_t const size) {
+constexpr hash str_hash(char const* c, std::size_t const size) {
   return ((static_cast<bool>(size) ? str_hash(c, size - 1) : 2166136261U) ^
           static_cast<uint8_t>(c[size])) *
          16777619U;

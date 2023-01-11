@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 struct server_settings {
   utl::cmd_line_flag<fs::path, UTL_LONG("--resource_dir"),
                      UTL_DESC("where the server reads the resources from")>
-      resource_dir_{"../../resources/"};
+      resource_dir_{"server_resources/resources/"};
 
   utl::cmd_line_flag<fs::path, UTL_LONG("--server_resource_dir"),
                      UTL_DESC("where the server puts the generated resources")>
@@ -49,31 +49,6 @@ void exists_or_create_dir(fs::path const& dir_path) {
   }
 }
 
-auto set_up_infrastructure(fs::path const& from_dir, fs::path const& to_dir) {
-  std::vector<fs::path> new_infrastructure_files;
-
-  for (auto const& dir_entry : fs::directory_iterator{from_dir}) {
-    if (!is_infrastructure_file(dir_entry)) {
-      continue;
-    }
-
-    auto const& from_file = dir_entry.path();
-    auto const to_file = to_dir / from_file.filename();
-
-    bool const new_file =
-        !fs::exists(to_file) || soro::utls::load_file(from_file).hash() !=
-                                    soro::utls::load_file(to_file).hash();
-
-    if (new_file) {
-      fs::copy(from_file, to_file, fs::copy_options::overwrite_existing);
-
-      new_infrastructure_files.push_back(to_file);
-    }
-  }
-
-  return new_infrastructure_files;
-}
-
 int failed_startup() { return 1; }
 
 int main(int argc, char const** argv) {
@@ -87,7 +62,7 @@ int main(int argc, char const** argv) {
     return failed_startup();
   }
 
-  auto const coord_file = s.resource_dir_ / "misc" / "btrs_geo.csv";
+  auto const coord_file = s.server_resource_dir_ / "misc" / "btrs_geo.csv";
 
   fs::path const tt_dir = s.server_resource_dir_ / "timetable";
   fs::path const infra_dir = s.server_resource_dir_ / "infrastructure";
@@ -128,6 +103,9 @@ int main(int argc, char const** argv) {
     soro::infra::infrastructure_options opts;
     opts.infrastructure_path_ = infra_file;
     opts.gps_coord_path_ = coord_file;
+    opts.determine_layout_ = true;
+    opts.determine_interlocking_ = false;
+    opts.determine_conflicts_ = false;
 
     soro::infra::infrastructure const infra(opts);
 
@@ -145,7 +123,7 @@ int main(int argc, char const** argv) {
         osm_file,
         infra_res_dir / "tiles" /
             infra_file.filename().replace_extension(".mdb"),
-        tmp_dir);
+        tmp_dir, s.server_resource_dir_ / "profile" / "profile.lua");
     soro::server::import_tiles(import_settings);
   }
 

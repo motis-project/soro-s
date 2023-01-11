@@ -5,6 +5,7 @@
 #include "soro/utls/container/priority_queue.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
+#include <random>
 #include "soro/runtime/runtime.h"
 
 namespace soro::simulation {
@@ -12,63 +13,6 @@ namespace soro::simulation {
 using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
-
-// route_ordering get_route_ordering(infra::infrastructure const& infra,
-//                                   tt::timetable const& tt) {
-//   route_ordering ordering(infra->ssr_manager_.signal_station_routes_.size());
-//
-//   for (auto const& tr : tt->train_runs_) {
-//     auto const stamps = runtime_calculation(*tr, *infra,
-//     {type::MAIN_SIGNAL});
-//
-//     utl::verify(tr->ssr_run_.path_.size() == stamps.times_.size() + 1,
-//                 "Differing amounts of signal station routes in train path and
-//                 " "main signals in running time calculation timestamps");
-//
-//     for (auto const [idx, ssr] : utl::enumerate(tr->ssr_run_.path_)) {
-//       auto const from =
-//           idx == 0 ? tr->first_departure() : stamps.times_[idx -
-//           1].departure_;
-//       auto const to = idx == tr->ssr_run_.path_.size() - 1
-//                           ? tr->last_arrival()
-//                           : stamps.times_[idx].arrival_;
-//
-//       // the train tr will actually use the signal station route ssr
-//       //  -> insert a usage for it
-//       //      ordering[ssr->id_].push_back(
-//       //          {.from_ = from, .to_ = to, .train_id_ = tr->id_});
-//
-//       // the train tr will block signal station routes in conflict with ssr
-//       //  -> insert a usage for all conflicting routes
-//       for (auto const& conflict : infra->ssr_manager_.conflicts_[ssr->id_]) {
-//         ordering[conflict->id_].push_back(
-//             {.from_ = from, .to_ = to, .train_id_ = tr->id_});
-//       }
-//     }
-//   }
-//
-//   for (auto& usage_order : ordering) {
-//     utls::sort(usage_order, [](auto&& usage1, auto&& usage2) {
-//       return usage1.from_ < usage2.from_;
-//     });
-//   }
-//
-//   return ordering;
-// }
-//
-// usage_index get_usage_index(route_ordering const& ordering,
-//                             tt::dispo_train_run_id const train,
-//                             signal_station_route::id const ssr) {
-//   for (auto const [idx, order] : utl::enumerate(ordering[ssr])) {
-//     if (order.train_id_ == train) {
-//       return idx;
-//     }
-//   }
-//
-//   throw utl::fail(
-//       "Could not find train with ID {} using signal station route with ID
-//       {}.", train, ssr);
-// }
 
 struct route_usage {
   utls::unixtime from_{utls::INVALID_TIME};
@@ -81,29 +25,27 @@ constexpr auto const INVALID_USAGE_IDX = std::numeric_limits<usage_idx>::max();
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
                                tt::timetable const& tt) {
+  utls::sassert(false, "Not implemented");
 
   std::vector<std::vector<route_usage>> route_orderings(
-      infra->interlocking_.interlocking_routes_.size());
+      infra->interlocking_.routes_.size());
 
-  for (auto const& train : tt) {
-    auto const stamps = runtime_calculation(*train, infra, {type::MAIN_SIGNAL});
+  for (auto const& train : tt->trains_) {
+    auto const stamps = runtime_calculation(train, infra, {type::MAIN_SIGNAL});
 
-    utl::verify(train->path_.size() == stamps.times_.size() + 1,
+    utl::verify(train.path_.size() == stamps.times_.size() + 1,
                 "Differing amounts of signal station routes in train path and "
                 "main signals in running time calculation timestamps");
 
-    for (auto const [idx, ssr] : utl::enumerate(train->path_)) {
+    for (auto const [idx, ir_id] : utl::enumerate(train.path_)) {
       auto const id = static_cast<ordering_node::id>(nodes_.size());
 
-      nodes_.emplace_back(id, ssr->id_, train->id_);
+      nodes_.emplace_back(id, ir_id, train.id_);
 
-      auto const from = idx == 0 ? train->first_departure()
-                                 : stamps.times_[idx - 1].departure_;
-      auto const to = idx == train->path_.size() - 1
-                          ? train->last_arrival()
-                          : stamps.times_[idx].arrival_;
+      utls::unixtime const from;
+      utls::unixtime const to;
 
-      route_orderings[ssr->id_].push_back(
+      route_orderings[ir_id].push_back(
           {.from_ = from, .to_ = to, .node_id_ = id});
     }
   }
@@ -156,8 +98,8 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
     auto const from_usage = route_orderings[from_ssr][from_idx];
     auto const from_node = from_usage.node_id_;
 
-    for (auto const& to_ssr : infra->interlocking_.exclusions_[from_ssr]) {
-      auto to_idx = current_route_usage_index[to_ssr->id_];
+    for (auto const& to_ir : infra->interlocking_.exclusions_[from_ssr]) {
+      auto to_idx = current_route_usage_index[to_ir];
 
       if (to_idx == INVALID_USAGE_IDX) {
         continue;
@@ -167,8 +109,8 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
       // since we are currently processing the usage of an interlocking
       // route we have to manually increment the usage index to get the next
       // usage of a different train of the same interlocking route
-      if (to_ssr->id_ == from_ssr) {
-        if (to_idx < route_orderings[to_ssr->id_].size() - 1) {
+      if (to_ir == from_ssr) {
+        if (to_idx < route_orderings[to_ir].size() - 1) {
           ++to_idx;
         } else {
           // if its the last usage of the interlocking route we can simply
@@ -177,7 +119,7 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
         }
       }
 
-      auto const& to_usage = route_orderings[to_ssr->id_][to_idx];
+      auto const& to_usage = route_orderings[to_ir][to_idx];
       auto const to_node = to_usage.node_id_;
 
       nodes_[from_node].out_.emplace_back(to_node);
@@ -189,6 +131,85 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
       todo_queue.emplace(from_ssr);
     }
   }
+}
+
+ordering_graph::ordering_graph() = default;
+
+/**
+ * Generates a graph with given amount of trains, tracks and a given minimum and
+ * maximum amount of nodes per train.
+ *
+ * Example: 2 trains with 5 tracks, and minimum of 2 and maximum of 5 could
+ * yield a graph, where:
+ * train A follows tracks 1, 2, 3, 4 and 5 (all 5 tracks)
+ * train B follows tracks 3 and 1 (just 2 tracks)
+ */
+ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
+                                  const int min_nodes, const int max_nodes) {
+  ordering_graph graph;
+
+  // are min and max valid?
+  const int min = min_nodes >= 0 ? min_nodes : 0;
+  const int max = max_nodes <= track_amnt ? max_nodes : track_amnt;
+
+  // get random number generator
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<> distr(1, 6);
+
+  // generate nodes for each train and connect them
+  for (auto train = 0; train < train_amnt; train++) {
+    // amount of tracks this train will use for now
+    const auto node_amnt = min + (distr(mt) % (max - min));
+
+    for (auto n = 0; n < node_amnt; n++) {
+      // choose a random new track that this train will use
+      std::vector<int> chosen_ids;
+      int track_id = 0;
+      while (true) {
+        track_id = distr(mt) % track_amnt;
+        // track must not already be used by this train
+        if (!utls::contains(chosen_ids, track_id)) {
+          chosen_ids.emplace_back(track_id);
+          break;
+        }
+      }
+      const auto size = graph.nodes_.size();
+      graph.nodes_.emplace_back(static_cast<ordering_node::id>(size), track_id,
+                                train);
+      // connect the node before this one with the new one
+      if (n != 0) {
+        graph.nodes_[size - 1].out_.emplace_back(
+            static_cast<ordering_node::id>(size));
+        graph.nodes_[size].in_.emplace_back(
+            static_cast<ordering_node::id>(size - 1));
+      }
+    }
+  }
+
+  // iterate over all nodes and test, whether future nodes have other trains on
+  // the same track to generate edges (nodes further back will be trains with
+  // higher ids!)
+  const auto size = graph.nodes_.size();
+  for (uint64_t first_index = 0; first_index < size; first_index++) {
+    for (auto second_index = first_index + 1; second_index < size;
+         second_index++) {
+      // other train on different track is irrelevant and same
+      // train can not have same track
+      if (graph.nodes_[first_index].ir_id_ != graph.nodes_[second_index].ir_id_)
+        continue;
+      // connect first train with problematic second
+      graph.nodes_[first_index].out_.emplace_back(
+          graph.nodes_[second_index].id_);
+      graph.nodes_[second_index].in_.emplace_back(
+          graph.nodes_[first_index].id_);
+      // to prevent unnecessary edges (will be added transivitely): move
+      // firstIndex further
+      break;
+    }
+  }
+
+  return graph;
 }
 
 }  // namespace soro::simulation

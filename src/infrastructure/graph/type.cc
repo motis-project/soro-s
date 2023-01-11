@@ -22,7 +22,7 @@ type get_type(const char* const str) {
     case str_hash(BORDER): return type::BORDER;
     case str_hash(TRACK_END):
       return type::TRACK_END;
-      // track elements
+      // directed track elements
     case str_hash(APPROACH_SIGNAL_RISING):
     case str_hash(APPROACH_SIGNAL_FALLING): return type::APPROACH_SIGNAL;
     case str_hash(MAIN_SIGNAL_FALLING):
@@ -37,7 +37,12 @@ type get_type(const char* const str) {
     case str_hash(SPECIAL_SPEED_LIMIT_END_RISING):
     case str_hash(SPEED_LIMIT_RISING):
     case str_hash(SPEED_LIMIT_FALLING): return type::SPEED_LIMIT;
-    case str_hash(TUNNEL): return type::TUNNEL;
+    case str_hash(POINT_SPEED_RISING):
+    case str_hash(POINT_SPEED_FALLING): return type::POINT_SPEED;
+    case str_hash(FORCED_HALT_RISING):
+    case str_hash(FORCED_HALT_FALLING): return type::FORCED_HALT;
+    case str_hash(RUNTIME_CHECKPOINT_FALLING):
+    case str_hash(RUNTIME_CHECKPOINT_RISING): return type::RUNTIME_CHECKPOINT;
     case str_hash(HALT_FREIGHT_FALLING):
     case str_hash(HALT_FREIGHT_RISING):
     case str_hash(HALT_PASSENGER_LEFT_RISING):
@@ -48,9 +53,18 @@ type get_type(const char* const str) {
     case str_hash(HALT_PASSENGER_BOTH_FALLING):
     case str_hash(HALT_PASSENGER_RIGHT_LEFT_FALLING):
     case str_hash(HALT_PASSENGER_RIGHT_LEFT_RISING): return type::HALT;
+    case str_hash(BRAKE_PATH_FALLING):
+    case str_hash(BRAKE_PATH_RISING):
+      return type::BRAKE_PATH;
+      // undirected track elements
     case str_hash(SLOPE): return type::SLOPE;
+    case str_hash(TUNNEL): return type::TUNNEL;
+    case str_hash(TRACK_NAME): return type::TRACK_NAME;
+    case str_hash(LEVEL_CROSSING): return type::LEVEL_CROSSING;
     case str_hash(RUNTIME_CHECKPOINT):
-      return type::RUNTIME_CHECKPOINT;
+      return type::RUNTIME_CHECKPOINT_UNDIRECTED;
+    case str_hash(ENTRY):
+      return type::ENTRY;
       // switches
     case str_hash(SWITCH_START):
     case str_hash(SWITCH_STEM):
@@ -73,16 +87,15 @@ type get_type(const char* const str) {
     case str_hash(CTC_END_FALLING):
     case str_hash(CTC_START_RISING):
     case str_hash(CTC_END_RISING):
+    case str_hash(ETCS_END_RISING):
+    case str_hash(ETCS_END_FALLING):
+    case str_hash(ETCS_START_RISING):
+    case str_hash(ETCS_START_FALLING):
       return type::CTC;
       // ignore these  for the moment
     default:
     case str_hash(PICTURE_POINT):
-    case str_hash(BRAKE_PATH_FALLING):
-    case str_hash(BRAKE_PATH_RISING):
-    case str_hash(LEVEL_CROSSING):
-    case str_hash(ENTRY):
-    case str_hash(LINE_CLASS):
-    case str_hash(TRACK_NAME): return type::INVALID;
+    case str_hash(LINE_CLASS): return type::INVALID;
   }
 }
 
@@ -99,13 +112,20 @@ std::string get_type_str(type const& t) {
     case type::MAIN_SIGNAL: return "ms";
     case type::PROTECTION_SIGNAL: return "ps";
     case type::EOTD: return "eotd";
+    case type::ENTRY: return "entry";
     case type::SPEED_LIMIT: return "spl";
+    case type::POINT_SPEED: return "point_speed";
+    case type::BRAKE_PATH: return "brake_path";
     case type::TUNNEL: return "tunnel";
+    case type::TRACK_NAME: return "track_name";
     case type::HALT: return "hlt";
+    case type::FORCED_HALT: return "forced_halt";
     case type::RUNTIME_CHECKPOINT: return "rtcp";
+    case type::RUNTIME_CHECKPOINT_UNDIRECTED: return "rtcp_u";
     case type::KM_JUMP: return "km_jump";
     case type::LINE_SWITCH: return "line_switch";
     case type::SLOPE: return "slope";
+    case type::LEVEL_CROSSING: return "level_crossing";
     case type::CROSS: return "cross";
     case type::CTC: return "ctc";
   }

@@ -23,7 +23,8 @@ soro::vector<gps> parse_station_coords(
     return {};
   }
 
-  soro::vector<gps> station_coords(ds100_to_station.size());
+  soro::vector<gps> station_coords(
+      static_cast<uint32_t>(ds100_to_station.size()));
 
   auto const gps_content = utls::read_file_to_string(gps_path);
 

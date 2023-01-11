@@ -36,7 +36,7 @@ TEST_CASE("tractive force piecewise test") {  // NOLINT
   CHECK(result2 == tfc(hundred));
 }
 
-#if !(defined(__EMSCRIPTEN__) || defined(SORO_SAN))
+#if !(defined(NDEBUG) || defined(SORO_SAN))
 TEST_CASE("piecewise jump should throw") {  // NOLINT
   auto const p1 = make_polynomial(0.2, 0.3, 0.4);
   auto const p2 = make_polynomial(1.2, 2.3, 3.4);

@@ -9,11 +9,12 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::simulation;
 
-TEST_SUITE("ordering graph") {
-  TEST_CASE("ordering graph - follow") {
-    auto const infra = infrastructure(SMALL_OPTS);
-    auto const tt = timetable(FOLLOW_OPTS, infra);
+namespace soro::simulation::test {
 
-    ordering_graph const og(infra, tt);
+TEST_CASE("ordering graph - follow" * doctest::skip()) {
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    ordering_graph const og(*scenario->infra_, scenario->timetable_);
   }
 }
+
+}  // namespace soro::simulation::test

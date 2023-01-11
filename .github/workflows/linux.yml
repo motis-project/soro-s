@@ -22,10 +22,10 @@ jobs:
       matrix:
         config:
           - preset: clang-release
+            artifact: linux-amd64
           - preset: clang-debug
           - preset: gcc-release
           - preset: gcc-debug
-          - preset: gcc-cista-debug
           - preset: clang-tidy
           - preset: clang-sanitizer
 
@@ -63,11 +63,86 @@ jobs:
         run: |
           buildcache -z
           npm clean-install --prefix web/client
-          cmake --build build/${{ matrix.config.preset }} --target soro-server-client
+          cmake --build build/${{ matrix.config.preset }} --target soro-server
           buildcache -s
 
       # ==== WEB TESTS ====
       - name: Run Server
         run: |
           cd ./build/${{ matrix.config.preset }}
-          ./soro-server -t
+          ./soro-server -t --resource_dir ../../resources
+
+      # ==== DISTRIBUTION ====
+      - name: Create Distribution
+        if: matrix.config.artifact
+        run: |
+          mkdir -p soro-s
+          rm -rf build/clang-release/server_resources/infrastructure
+          rm -rf build/clang-release/server_resources/timetable
+          mv build/clang-release/soro-server soro-s/
+          mv build/clang-release/server_resources soro-s/
+          tar cjf soro-s-${{ matrix.config.artifact }}.tar.bz2 soro-s
+
+      - name: Upload Distribution
+        if: matrix.config.artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: soro-s-${{ matrix.config.artifact }}
+          path: soro-s-${{ matrix.config.artifact }}.tar.bz2
+
+      # ==== RELEASE ====
+      - name: Upload Release
+        if: github.event.action == 'published' && matrix.config.artifact
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./soro-s-${{ matrix.config.artifact }}.tar.bz2
+          asset_name: soro-s-${{ matrix.config.artifact }}.tar.bz2
+          asset_content_type: application/x-tar
+
+  docker:
+    if: github.event.action == 'published'
+    runs-on: ubuntu-20.04
+    needs: linux
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Docker setup-buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=edge
+
+      - name: Docker build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
