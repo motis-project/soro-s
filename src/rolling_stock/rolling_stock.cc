@@ -3,8 +3,8 @@
 namespace soro::rs {
 
 traction_vehicle rolling_stock::get_traction_vehicle(
-    soro::string const& series, soro::string const& owner,
-    variant_id const& variant_id) const {
+    std::string_view const series, std::string_view const owner,
+    variant_id variant_id) const {
 
   std::string tsk = series.data() + std::string("-") + owner.data();  // NOLINT
   soro::string const train_series_key{tsk.data()};  // NOLINT

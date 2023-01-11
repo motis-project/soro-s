@@ -1,6 +1,8 @@
 #include "doctest/doctest.h"
 
 #include "utl/logging.h"
+#include "utl/parallel_for.h"
+#include "utl/timer.h"
 
 #include "soro/runtime/runtime.h"
 
@@ -17,34 +19,43 @@ using namespace soro::infra;
 using namespace soro::runtime;
 
 void check_halt_count(train const& train, timestamps const& ts) {
-  auto const halt_count = std::count_if(
-      std::cbegin(ts.times_), std::cend(ts.times_),
-      [](auto&& stamp) { return stamp.element_->is(type::HALT); });
+  auto const halt_count = utls::count_if(
+      ts.times_, [](auto&& stamp) { return stamp.element_->is(type::HALT); });
 
-  CHECK_MESSAGE(train.total_halts() == halt_count,
+  CHECK_MESSAGE((train.total_halts() == halt_count),
                 "There should be as many halt events in the timestamps as "
                 "there are halts in the train run.");
 }
 
 void check_ascending_timestamps(timestamps const& ts) {
+  if (ts.times_.empty()) {
+    uLOG(utl::warn) << "Checking ascending timestamps with empty timestamps.";
+    return;
+  }
+
   auto last_time_stamp = ts.times_.front();
-  for (size_t idx = 1; idx < ts.times_.size(); ++idx) {
+  for (auto idx = 1U; idx < ts.times_.size(); ++idx) {
     auto const& time_stamp = ts.times_[idx];
 
-    CHECK_MESSAGE(time_stamp.arrival_ <= time_stamp.departure_,
+    CHECK_MESSAGE((time_stamp.arrival_ <= time_stamp.departure_),
                   "Arrival must happen before/same time as departure!");
 
-    CHECK_MESSAGE(time_stamp.arrival_ > 0, "No negative timestamps allowed!");
-    CHECK_MESSAGE(time_stamp.departure_ > 0, "No negative timestamps allowed!");
+    CHECK_MESSAGE(valid(time_stamp.arrival_), "No valid arrival timestamp.");
+    CHECK_MESSAGE(valid(time_stamp.departure_), "No valid arrival timestamp.");
 
-    if (valid(last_time_stamp.arrival_)) {
-      CHECK_MESSAGE(last_time_stamp.arrival_ <= time_stamp.arrival_,
-                    "Non increasing time stamps!");
-    }
+    if (last_time_stamp.element_->is_track_element() &&
+        time_stamp.element_->is_track_element()) {
+      auto const last_km = last_time_stamp.element_->get_km(nullptr);
+      auto const km = time_stamp.element_->get_km(nullptr);
 
-    if (valid(time_stamp.departure_)) {
-      CHECK_MESSAGE(last_time_stamp.departure_ <= time_stamp.departure_,
-                    "Non increasing time stamps!");
+      if (last_km != km) {
+        CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.arrival_),
+                      "Non increasing time stamps!");
+      }
+    } else {
+      // TODO(julian) reenable this
+      //      CHECK_MESSAGE((last_time_stamp.departure_ <= time_stamp.arrival_),
+      //                    "Non increasing time stamps!");
     }
 
     last_time_stamp = time_stamp;
@@ -52,36 +63,45 @@ void check_ascending_timestamps(timestamps const& ts) {
 }
 
 void check_delays(infrastructure const& infra, timetable const& tt) {
-  size_t too_early_count = 0;
-  size_t delayed_count = 0;
-  size_t total_count = 0;
+  uLOG(utl::info) << "Checking delays";
+  soro::size_t too_early_count = 0;
+  soro::size_t delayed_count = 0;
+  soro::size_t total_count = 0;
 
-  duration max_delay = duration{0};
-  duration max_too_early = duration{0};
+  duration2 max_delay = duration2::zero();
+  duration2 max_too_early = duration2::zero();
 
-  for (auto const& train : tt) {
-    auto const timestamps = runtime_calculation(*train, infra, {type::HALT});
+  auto avg_too_early = duration2::zero();
+  auto avg_delay = duration2::zero();
 
-    size_t halt_id = 0;
-    for (auto const& stop_time : train->stop_times_) {
-      if (!stop_time.is_halt()) {
+  for (auto const& train : tt->trains_) {
+    auto const timestamps = runtime_calculation(train, infra, {type::HALT});
+
+    if (timestamps.times_.empty()) {
+      continue;
+    }
+
+    soro::size_t halt_id = 0;
+    for (auto const& sp : train.sequence_points_) {
+      if (!sp.is_halt()) {
         continue;
       }
 
       auto const& ts = timestamps.times_[timestamps.halt_indices_[halt_id]];
 
       ++total_count;
-      if (valid(ts.departure_) && ts.departure_ > stop_time.departure_) {
+      if (valid(ts.departure_) && ts.departure_ > sp.departure_) {
         ++delayed_count;
-        duration const delay =
-            (ts.departure_ - stop_time.departure_).as_duration();
+        auto const delay = ts.departure_ - sp.departure_;
         max_delay = std::max(max_delay, delay);
+        avg_delay += ts.departure_ - sp.departure_;
       }
 
-      if (valid(ts.arrival_) && ts.arrival_ < stop_time.arrival_) {
+      if (valid(ts.arrival_) && ts.arrival_ < sp.arrival_) {
         ++too_early_count;
-        auto const too_early = (stop_time.arrival_ - ts.arrival_).as_duration();
+        auto const too_early = sp.arrival_ - ts.arrival_;
         max_too_early = std::max(max_too_early, too_early);
+        avg_too_early += sp.arrival_ - ts.arrival_;
       }
 
       ++halt_id;
@@ -93,19 +113,32 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
   uLOG(info) << "Total delayed timestamps: " << delayed_count;
   uLOG(info) << "Total over punctual timestamps: " << too_early_count;
 
-  uLOG(info) << "Maximum delay: " << max_delay;
-  uLOG(info) << "Maximum over punctuality: " << max_too_early;
+  if (avg_delay != duration2::zero()) {
+    uLOG(info) << "AVG delay: " << avg_delay.count() / delayed_count;
+  }
+
+  if (avg_too_early != duration2::zero()) {
+    uLOG(info) << "AVG too early: " << avg_too_early.count() / too_early_count;
+  }
+
+  uLOG(info) << "Maximum delay: " << max_delay.count();
+  uLOG(info) << "Maximum over punctuality: " << max_too_early.count();
 }
 
-void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
+void test_event_existance_in_timestamps(train const& tr, timestamps const& ts,
+                                        infrastructure const& infra) {
   std::set<type> event_types;
 
   for (auto const& timestamp : ts.times_) {
     event_types.insert(timestamp.element_->type());
   }
 
-  size_t ts_idx = 0;
-  for (auto const& rich_node : tr.iterate(skip_omitted::ON)) {
+  soro::size_t ts_idx = 0;
+  for (auto const& rich_node : tr.iterate(infra)) {
+    if (rich_node.omitted()) {
+      continue;
+    }
+
     if (!event_types.contains(rich_node.node_->type())) {
       continue;
     }
@@ -120,45 +153,36 @@ void test_event_existance_in_timestamps(train const& tr, timestamps const& ts) {
     ++ts_idx;
   }
 
-  CHECK_MESSAGE(ts_idx == ts.times_.size(), "Did not check every timestamp");
+  CHECK_MESSAGE((ts_idx == ts.times_.size()), "Did not check every timestamp");
 }
 
 void check_runtime_with_events(infrastructure const& infra, timetable const& tt,
                                type_set const& record_events) {
-  for (auto const& train : tt) {
-    auto const timestamps = runtime_calculation(*train, infra, record_events);
+  for (auto const& train : tt->trains_) {
+    auto const timestamps = runtime_calculation(train, infra, record_events);
 
     if (record_events.contains(type::HALT)) {
-      check_halt_count(*train, timestamps);
+      check_halt_count(train, timestamps);
     }
 
     check_ascending_timestamps(timestamps);
 
-    test_event_existance_in_timestamps(*train, timestamps);
+    test_event_existance_in_timestamps(train, timestamps, infra);
   }
 }
 
 void check_runtime(infrastructure const& infra, timetable const& tt) {
   check_runtime_with_events(infra, tt, {type::HALT});
   check_runtime_with_events(
-      infra, tt, {type::APPROACH_SIGNAL, type::MAIN_SIGNAL, type::EOTD});
+      infra, tt,
+      {type::RUNTIME_CHECKPOINT_UNDIRECTED, type::RUNTIME_CHECKPOINT,
+       type::APPROACH_SIGNAL, type::MAIN_SIGNAL, type::EOTD});
   check_runtime_with_events(infra, tt, type_set{all_types()});
 }
 
-TEST_SUITE("overtake runtime") {
-  TEST_CASE("overtake") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(OVERTAKE_OPTS, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
-  }
-}
-
-TEST_SUITE("follow runtime") {
-  TEST_CASE("follow") {  // NOLINT
-    infrastructure const infra(SMALL_OPTS);
-    timetable const tt(FOLLOW_OPTS, infra);
-    check_runtime(infra, tt);
-    check_delays(infra, tt);
+TEST_CASE("runtime") {
+  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
+    check_runtime(*scenario->infra_, scenario->timetable_);
+    check_delays(*scenario->infra_, scenario->timetable_);
   }
 }

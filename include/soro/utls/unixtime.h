@@ -52,6 +52,18 @@ struct duration {
   time_t d_{INVALID_VALUE};
 };
 
+inline duration from_seconds(time_t const seconds) { return duration{seconds}; }
+
+inline duration from_minutes(time_t const minutes) {
+  return from_seconds(minutes * 60);
+}
+
+inline duration from_hours(time_t const hours) {
+  return from_minutes(hours * 60);
+}
+
+inline duration from_days(time_t const days) { return from_hours(days * 24); }
+
 struct unixtime {
   using member_t = time_t;
 

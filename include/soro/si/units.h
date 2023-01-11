@@ -45,6 +45,11 @@ inline bool valid(T const& t) {
   return !std::isnan(t.val_);
 }
 
+template <typename T, std::enable_if_t<utls::is_fraction_v<T>, bool> = true>
+inline bool is_zero(T const& t) {
+  return t == ZERO<T>;
+}
+
 // --- factory methods --- //
 
 constexpr length from_m(precision length_in_m) { return length{length_in_m}; };

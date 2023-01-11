@@ -8,7 +8,7 @@
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/string.h"
 
-#include "soro/infrastructure/base_infrastructure.h"
+#include "soro/infrastructure/infrastructure_t.h"
 
 namespace soro::layout {
 
@@ -29,8 +29,8 @@ void calculate_track_element_coords(layout& layout,
   uLOG(info) << "[ Layout ] Calculating track element coordinates.";
 
   for (auto const& section : sections) {
-    auto const& start_coords = layout[section.elements_.front()->id()];
-    auto const& end_coords = layout[section.elements_.back()->id()];
+    auto const& start_coords = layout[section.first_rising()->id()];
+    auto const& end_coords = layout[section.last_rising()->id()];
 
     auto const sloped_upward = start_coords.y_ > end_coords.y_;
     auto const left_to_right = start_coords.x_ < end_coords.x_;
@@ -39,9 +39,10 @@ void calculate_track_element_coords(layout& layout,
     auto const y_total = std::abs(start_coords.y_ - end_coords.y_);
 
     auto const total_elements =
-        static_cast<coordinates::precision>(section.elements_.size());
+        static_cast<coordinates::precision>(section.size());
 
-    for (auto const [idx, element] : utl::enumerate(section.elements_)) {
+    std::size_t idx = 0;
+    for (auto const& element : section.iterate<direction::Rising, skip::No>()) {
       if (!element->is_track_element()) {
         continue;
       }
@@ -54,6 +55,8 @@ void calculate_track_element_coords(layout& layout,
           start_coords.x_ + (left_to_right ? x_distance : -x_distance);
       layout[element->id()].y_ =
           start_coords.y_ + (sloped_upward ? -y_distance : y_distance);
+
+      ++idx;
     }
   }
 }
@@ -64,8 +67,8 @@ void calculate_track_element_coords(layout& layout,
   uLOG(info) << "[ Layout ] Calculating track element coordinates.";
 
   for (auto const& section : sections) {
-    auto const& start_coords = layout[section.elements_.front()->id()];
-    auto const& end_coords = layout[section.elements_.back()->id()];
+    auto const& start_coords = layout[section.first_rising()->id()];
+    auto const& end_coords = layout[section.last_rising()->id()];
 
     auto const sloped_upward = start_coords.y_ > end_coords.y_;
     auto const left_to_right = start_coords.x_ < end_coords.x_;
@@ -77,7 +80,7 @@ void calculate_track_element_coords(layout& layout,
     // to correctly determine the coord data for track elements
     auto rising = 0.0F;
     auto falling = 0.0F;
-    for (auto const& element : section.elements_) {
+    for (auto const& element : section.iterate<direction::Rising, skip::No>()) {
       if (element->is_track_element()) {
         element->as<track_element>().rising_ ? ++rising : ++falling;
       }
@@ -87,7 +90,7 @@ void calculate_track_element_coords(layout& layout,
     auto current_falling = 1.0F;
     auto current_rising = 1.0F;
 
-    for (auto const& element : section.elements_) {
+    for (auto const& element : section.iterate<direction::Rising, skip::No>()) {
       if (element->is_track_element()) {
         if (element->as<track_element>().rising_) {
           auto const x_distance = x_total * (current_rising / (rising + 1));
@@ -148,7 +151,7 @@ layout get_layout(
     soro::vector<station::ptr> const& stations,
     soro::vector<section> const& sections,
     soro::map<rail_plan_node_id, element_id> const& rp_id_to_element_id,
-    std::size_t const element_count) {
+    soro::size_t const element_count) {
   uLOG(info) << "[ Layout ] Determining layout from ISS.";
 
   layout layout(element_count);
@@ -156,9 +159,9 @@ layout get_layout(
   // gather all coordinates from the railplan files
   for (auto const& rail_plan_file : rail_plan_files) {
     pugi::xml_document d;
-    auto success = d.load_buffer(
-        reinterpret_cast<void const*>(rail_plan_file.contents_.data()),
-        rail_plan_file.contents_.size());
+    auto success =
+        d.load_buffer(reinterpret_cast<void const*>(rail_plan_file.data()),
+                      rail_plan_file.size());
     utl::verify(success, "Bad xml in get_layout: {}", success.description());
 
     for (auto const& rp_station : d.child(XML_ISS_DATA)

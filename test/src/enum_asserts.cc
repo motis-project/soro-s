@@ -1,8 +1,10 @@
 #include "doctest/doctest.h"
 
 #include "soro/utls/parse_fp.h"
+#include "soro/utls/std_wrapper/std_wrapper.h"
 
-#include "soro/infrastructure/route.h"
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/station/station_route.h"
 #include "soro/rolling_stock/ctc.h"
 #include "soro/rolling_stock/freight.h"
 
@@ -11,14 +13,6 @@ using namespace soro::utls;
 using namespace soro::infra;
 
 TEST_SUITE("static asserts") {
-
-  TEST_CASE("skip_omitted") {
-    static_assert(!static_cast<bool>(skip_omitted::OFF));
-    static_assert(static_cast<bool>(skip_omitted::ON));
-    static_assert(static_cast<skip_omitted>(false) == skip_omitted::OFF);
-    static_assert(static_cast<skip_omitted>(true) == skip_omitted::ON);
-  }
-
   TEST_CASE("ctc") {
     static_assert(!static_cast<bool>(CTC::NO));
     static_assert(static_cast<bool>(CTC::YES));
@@ -45,5 +39,36 @@ TEST_SUITE("static asserts") {
     static_assert(static_cast<bool>(replace_comma::ON));
     static_assert(static_cast<replace_comma>(false) == replace_comma::OFF);
     static_assert(static_cast<replace_comma>(true) == replace_comma::ON);
+  }
+
+  TEST_CASE("skip") {
+    static_assert(!static_cast<bool>(skip::No));
+    static_assert(static_cast<bool>(skip::Yes));
+    static_assert(static_cast<skip>(false) == skip::No);
+    static_assert(static_cast<skip>(true) == skip::Yes);
+  }
+
+  TEST_CASE("direction") {
+    static_assert(!static_cast<bool>(direction::Falling));
+    static_assert(static_cast<bool>(direction::Rising));
+    static_assert(static_cast<direction>(false) == direction::Falling);
+    static_assert(static_cast<direction>(true) == direction::Rising);
+  }
+
+  constexpr bool true_exactly_once(type const t) {
+    auto const trues = static_cast<uint32_t>(is_end_element(t)) +
+                       static_cast<uint32_t>(is_simple_element(t)) +
+                       static_cast<uint32_t>(is_simple_switch(t)) +
+                       static_cast<uint32_t>(is_cross(t)) +
+                       static_cast<uint32_t>(is_directed_track_element(t)) +
+                       static_cast<uint32_t>(is_undirected_track_element(t));
+
+    return trues == 1;
+  }
+
+  TEST_CASE("check type enum") {
+    // every type should only belong to one of the following categories:
+    // end, simple, switch, cross, directed or undirected track element
+    static_assert(all_of(all_types(), true_exactly_once));
   }
 }

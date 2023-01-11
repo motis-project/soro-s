@@ -1,21 +1,29 @@
 #pragma once
 
+#include <cassert>
+#include <cstddef>
+#include <limits>
 #include <utility>
+
+#include "cista/serialization.h"
+
+#include "soro/base/soro_types.h"
 
 namespace soro::utls {
 
 template <typename T, T INVALID>
-  requires std::is_fundamental_v<T> || std::is_pointer_v<T>
+  requires std::is_integral_v<T> || soro::is_pointer_v<T>
 struct optional {
   using value_type = T;
-  static constexpr const auto INVALID_VALUE = INVALID;
+  static const constexpr auto INVALID_VALUE = INVALID;
 
   constexpr optional() noexcept = default;
-  constexpr explicit optional(T const val) noexcept : val_{val} {}
-  constexpr optional(optional const& other) = default;
-  constexpr optional(optional&& other) noexcept = default;
+  constexpr optional(T const val) noexcept : val_{val} {}  // NOLINT
 
+  constexpr optional(optional const& other) = default;
   constexpr optional& operator=(optional const&) = default;
+
+  constexpr optional(optional&& other) noexcept = default;
   constexpr optional& operator=(optional&&) noexcept = default;
 
   constexpr ~optional() = default;
@@ -25,9 +33,15 @@ struct optional {
     return *this;
   }
 
-  constexpr T const* operator->() const noexcept { return &val_; }
+  constexpr T const* operator->() const noexcept {
+    assert(has_value());
+    return &val_;
+  }
 
-  constexpr T* operator->() noexcept { return &val_; }
+  constexpr T* operator->() noexcept {
+    assert(has_value());
+    return &val_;
+  }
 
   constexpr T const& operator*() const& noexcept { return value(); }
 
@@ -35,16 +49,31 @@ struct optional {
 
   constexpr T const&& operator*() const&& noexcept { return value(); }
 
-  constexpr T&& operator*() && noexcept { return value(); }
+  constexpr T& operator*() && noexcept { return value(); }
 
   constexpr explicit operator bool() const noexcept { return has_value(); }
 
   constexpr bool has_value() const noexcept { return val_ != INVALID; }
 
-  constexpr T& value() & { return val_; }
-  constexpr T const& value() const& { return val_; }
-  constexpr T&& value() && { return val_; }
-  constexpr T const&& value() const&& { return val_; }
+  constexpr T& value() & {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T const& value() const& {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T& value() && {
+    assert(has_value());
+    return val_;
+  }
+
+  constexpr T const& value() const&& {
+    assert(has_value());
+    return val_;
+  }
 
   template <typename U>
   constexpr T value_or(U&& default_value) const& noexcept {
@@ -61,6 +90,13 @@ struct optional {
   }
 
   constexpr void reset() noexcept { val_ = INVALID_VALUE; }
+
+  template <typename Fn>
+  constexpr void execute_if(Fn&& fn) const noexcept {
+    if (has_value()) {
+      fn(value());
+    }
+  }
 
   template <typename ThenFunction>
   constexpr auto and_then(ThenFunction&& then_function) const noexcept {
@@ -107,13 +143,35 @@ struct optional {
     }
   }
 
+#if !defined(SERIALIZE)
 private:
+#endif
   T val_{INVALID_VALUE};
 };
 
 template <typename T, T INVALID>
+  requires std::is_integral_v<T> || std::is_pointer_v<T>
 optional<T, INVALID> make_optional(T&& value) {
   return optional<T, INVALID>(std::forward<T>(value));
+}
+
+template <typename Ctx, typename T, T INVALID>
+inline void serialize(Ctx& context, optional<T, INVALID> const* opt,
+                      cista::offset_t const offset) {
+  using cista::serialize;
+
+  // otherwise offsetof is not working
+  static_assert(std::is_standard_layout_v<optional<T, INVALID>>);
+
+  serialize(context, &opt->val_,
+            offset + static_cast<cista::offset_t>(
+                         offsetof(std::remove_pointer_t<decltype(opt)>, val_)));
+}
+
+template <typename Ctx, typename T, T INVALID>
+inline void deserialize(Ctx const& context, optional<T, INVALID>* opt) {
+  using cista::deserialize;
+  deserialize(context, &opt->val_);
 }
 
 }  // namespace soro::utls
