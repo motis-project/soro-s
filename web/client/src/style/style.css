@@ -19,25 +19,18 @@ body {
     --overlay-width: 450px;
     --overlay-padding-left: 20px;
     --overlay-padding-top: 50px;
-
     --border-radius: 3px;
     --border-width: 2px;
-
     --main-font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-
-    --text-color: rgba(0, 0, 0, 0.87);
-    --secondary-text-color: rgba(0, 0, 0, 0.54);
-    --hint-text-color: rgba(0, 0, 0, 0.38);
-
-    --border-color: rgba(0, 0, 0, 0.12);
-    --icon-color: rgba(0, 0, 0, 0.38);
-
-    --highlight-color: rgb(33, 150, 243);
-
+    --text-color: rgb(0 0 0 / 87%);
+    --secondary-text-color: rgb(0 0 0 / 54%);
+    --hint-text-color: rgb(0 0 0 / 38%);
+    --border-color: rgb(0 0 0 / 12%);
+    --icon-color: rgb(0 0 0 / 38%);
+    --highlight-color: rgb(33 150 243);
     --background-color: #e0e0e0;
     --overlay-color: #f5f5f5;
     --element-color: #fafafa;
-    --dialog-color: #ffffff;
-
+    --dialog-color: #fff;
     --data-select-width: 250px;
 }
