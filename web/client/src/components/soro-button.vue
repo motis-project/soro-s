@@ -1,6 +1,7 @@
 <template>
     <button
-        class="matter-button-contained soro-button"
+        class="soro-button"
+        :class="buttonClasses"
         @click="(event: Event) => $emit('click', event)"
     >
         {{ label }}
@@ -18,9 +19,20 @@ export default defineComponent({
             type: String as PropType<string>,
             required: true,
         },
+        type: {
+            type: String as PropType<'primary' | 'secondary'>,
+            required: false,
+            default: 'primary',
+        },
     },
 
     emits: ['click'],
+
+    computed: {
+        buttonClasses() {
+            return this.type === 'primary' ? 'matter-button-contained' : 'matter-button-outlined';
+        },
+    },
 });
 </script>
 

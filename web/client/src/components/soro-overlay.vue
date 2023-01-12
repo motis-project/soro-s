@@ -42,6 +42,19 @@
                 </div>
 
                 <soro-collapsible
+                    label="Settings"
+                    class="settings"
+                >
+                    <soro-n-way-switch
+                        name="some-internal-name"
+                        :value="darkLightModePreference"
+                        :options="darkLightModeOptions"
+                        label="Dark / Light Mode"
+                        @select="setDarkLightModePreference"
+                    />
+                </soro-collapsible>
+
+                <soro-collapsible
                     label="Dev Tools"
                     class="dev-tools"
                 >
@@ -112,14 +125,28 @@ import DisruptionDetail from './disruption-detail.vue';
 import SoroSelect from './soro-select.vue';
 import SoroButton from './soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
+import SoroNWaySwitch from '@/components/common/soro-n-way-switch.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapState, mapMutations } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
+import { SettingsNamespace } from '@/stores/settings-store';
+import { NWaySwitchOption } from '@/components/common/soro-n-way-switch.vue';
+
+const darkLightModeOptions: NWaySwitchOption[] = [
+    {
+        value: 'dark',
+        text: 'Dark'
+    },
+    {
+        value: 'light',
+        text: 'Light'
+    }
+];
 
 export default defineComponent({
     name: 'SoroOverlay',
@@ -130,6 +157,7 @@ export default defineComponent({
         return {
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
+            darkLightModeOptions,
         };
     },
 
@@ -138,11 +166,11 @@ export default defineComponent({
             'currentInfrastructure',
             'infrastructures',
         ]),
-
         ...mapState(TimetableNamespace, [
             'currentTimetable',
             'timetables',
         ]),
+        ...mapState(SettingsNamespace, ['darkLightModePreference']),
     },
 
     methods: {
@@ -160,8 +188,8 @@ export default defineComponent({
             );
         },
 
+        ...mapActions(SettingsNamespace, ['setDarkLightModePreference']),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
-
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }
 });
@@ -289,6 +317,10 @@ export default defineComponent({
 .data-select {
     margin-top: 2.2em;
     margin-bottom: 2.2em;
+}
+
+.settings {
+    padding: 3%;
 }
 
 /*  ============= Station Detail ============= */
