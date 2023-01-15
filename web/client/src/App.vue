@@ -4,11 +4,11 @@
             <v-layout>
                 <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
             </v-layout>
+            <golden-layout-adapter
+                ref="GLayoutRoot"
+                class="golden-layout-root"
+            />
         </v-theme-provider>
-        <golden-layout-adapter
-            ref="GLayoutRoot"
-            class="golden-layout-root"
-        />
     </div>
 </template>
 
