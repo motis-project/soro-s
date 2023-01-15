@@ -20,12 +20,4 @@ export const SettingsStore: Module<SettingsState, undefined> = {
             state.darkLightModePreference = darkLightModePreference;
         },
     },
-
-    actions: {
-        setDarkLightModePreference({ commit }, darkLightModePreference) {
-            document.documentElement.setAttribute('data-theme', darkLightModePreference);
-
-            commit('setDarkLightModePreference', darkLightModePreference);
-        }
-    }
 };
