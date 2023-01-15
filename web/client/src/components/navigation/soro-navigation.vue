@@ -52,7 +52,7 @@ export default defineComponent({
     
     data() {
         return {
-            overlay: true,
+            overlay: false,
         };
     },
     
