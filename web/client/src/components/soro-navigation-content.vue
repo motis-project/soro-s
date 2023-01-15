@@ -1,7 +1,7 @@
 <template>
     <div
         ref="overlayContainer"
-        :class="`overlay-container ${showOverlay ? '' : 'hidden'}`"
+        class="overlay-container"
     >
         <div class="overlay">
             <div class="overlay-content">
@@ -45,13 +45,7 @@
                     label="Settings"
                     class="settings"
                 >
-                    <soro-n-way-switch
-                        name="some-internal-name"
-                        :value="darkLightModePreference"
-                        :options="darkLightModeOptions"
-                        label="Dark / Light Mode"
-                        @select="setDarkLightModePreference"
-                    />
+                    <soro-button label="Theme" />
                 </soro-collapsible>
 
                 <soro-collapsible
@@ -89,34 +83,6 @@
                 </div>
             </div>
         </div>
-        <div
-            ref="subOverlayTabs"
-            class="overlay-tabs"
-        >
-            <div class="overlay-toggle">
-                <button
-                    class="matter-button-contained overlay-toggle-button"
-                    @click="toggleOverlay"
-                >
-                    <i
-                        class="material-icons"
-                        style="display: flex; justify-content: center;"
-                    >menu</i>
-                </button>
-            </div>
-            <div
-                ref="stationDetailButton"
-                class="sub-overlay-tab-button"
-            >
-                <i class="material-icons">home</i>
-            </div>
-            <div
-                ref="disruptionDetailButton"
-                class="sub-overlay-tab-button"
-            >
-                <i class="material-icons">train</i>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -125,31 +91,18 @@ import DisruptionDetail from './disruption-detail.vue';
 import SoroSelect from './soro-select.vue';
 import SoroButton from './soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
-import SoroNWaySwitch from '@/components/common/soro-n-way-switch.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapState, mapMutations } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { SettingsNamespace } from '@/stores/settings-store';
-import { NWaySwitchOption } from '@/components/common/soro-n-way-switch.vue';
-
-const darkLightModeOptions: NWaySwitchOption[] = [
-    {
-        value: 'dark',
-        text: 'Dark'
-    },
-    {
-        value: 'light',
-        text: 'Light'
-    }
-];
 
 export default defineComponent({
-    name: 'SoroOverlay',
+    name: 'SoroNavigationContent',
 
     emits: ['add-golden-layout-tab'],
 
@@ -157,7 +110,6 @@ export default defineComponent({
         return {
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
-            darkLightModeOptions,
         };
     },
 
@@ -174,10 +126,6 @@ export default defineComponent({
     },
 
     methods: {
-        toggleOverlay() {
-            this.showOverlay = !this.showOverlay;
-        },
-
         addTab(componentTechnicalName: ComponentTechnicalName) {
             this.$emit(
                 'add-golden-layout-tab',
@@ -197,61 +145,22 @@ export default defineComponent({
 
 <style scoped>
 .overlay {
-    z-index: 10;
-    background-color: var(--overlay-color);
-    box-shadow: 0 10px 20px rgb(0 0 0 / 19%), 0 6px 6px rgb(0 0 0 / 23%);
-    border-radius: 3px 0 3px 3px;
-    transition: all 0.4s ease;
     width: var(--overlay-width);
-    flex: 0 0 auto;
-    order: 1;
     height: 95%;
-    position: relative;
-}
-
-.overlay-container.hidden .overlay {
-    box-shadow: unset;
 }
 
 .overlay-content {
     display: flex;
     flex-direction: column;
-    height: 100%;
     pointer-events: auto;
     position: relative;
-}
-
-.overlay-tabs {
-    z-index: 10;
-    order: 2;
-    pointer-events: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.overlay-toggle-button {
-    box-shadow: 0 10px 20px rgb(0 0 0 / 19%), 0 6px 6px rgb(0 0 0 / 23%);
-    border-bottom-left-radius: 0;
-    border-top-left-radius: 0;
 }
 
 .overlay-container {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    height: 100%;
-    padding-left: var(--overlay-padding-left);
-    padding-top: var(--overlay-padding-top);
-    padding-bottom: 20px;
-    position: absolute;
-    top: 0;
-    left: 0;
     transition: all 0.4s ease;
-    pointer-events: none;
-}
-
-.overlay-container.hidden {
-    left: calc(0px - calc(var(--overlay-width) + var(--overlay-padding-left)));
 }
 
 .sub-overlay {
@@ -297,7 +206,6 @@ export default defineComponent({
 .dev-tools {
     display: flex;
     flex-flow: column wrap;
-    width: 94%;
     justify-content: space-around;
     padding: 3%;
     margin-top: 0.5em;
@@ -307,16 +215,10 @@ export default defineComponent({
 .data-selects {
     display: flex;
     flex-flow: column wrap;
-    width: 94%;
     justify-content: space-around;
     padding: 3%;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
-}
-
-.data-select {
-    margin-top: 2.2em;
-    margin-bottom: 2.2em;
 }
 
 .settings {

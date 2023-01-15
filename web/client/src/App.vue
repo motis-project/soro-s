@@ -1,6 +1,8 @@
 <template>
     <div class="full-height">
-        <soro-overlay @add-golden-layout-tab="addGoldenLayoutTab" />
+        <v-layout>
+            <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
+        </v-layout>
         <golden-layout-adapter
             ref="GLayoutRoot"
             class="golden-layout-root"
@@ -10,7 +12,7 @@
 
 <script setup lang="ts">
 import GoldenLayoutAdapter from '@/golden-layout/golden-layout-adapter.vue';
-import SoroOverlay from '@/components/soro-overlay.vue';
+import SoroNavigation from '@/components/soro-navigation.vue';
 </script>
 
 <script lang="ts">
@@ -42,12 +44,6 @@ const initLayout: LayoutConfig = {
 const GLayoutRoot = ref();
 
 export default defineComponent({
-    data() {
-        return {
-            overlay: false,
-        };
-    },
-
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
