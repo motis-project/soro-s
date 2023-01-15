@@ -1,8 +1,10 @@
 <template>
     <div class="full-height">
-        <v-layout>
-            <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
-        </v-layout>
+        <v-theme-provider :theme="darkLightModePreference">
+            <v-layout>
+                <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
+            </v-layout>
+        </v-theme-provider>
         <golden-layout-adapter
             ref="GLayoutRoot"
             class="golden-layout-root"
@@ -12,7 +14,7 @@
 
 <script setup lang="ts">
 import GoldenLayoutAdapter from '@/golden-layout/golden-layout-adapter.vue';
-import SoroNavigation from '@/components/soro-navigation.vue';
+import SoroNavigation from '@/components/navigation/soro-navigation.vue';
 </script>
 
 <script lang="ts">
@@ -22,6 +24,7 @@ import { TimetableNamespace } from '@/stores/timetable-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
 import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from '@/golden-layout/golden-layout-constants';
+import { SettingsNamespace } from '@/stores/settings-store';
 
 const initLayout: LayoutConfig = {
     root: {
@@ -53,6 +56,7 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
+        ...mapState(SettingsNamespace, ['darkLightModePreference']),
     },
 
     mounted() {
