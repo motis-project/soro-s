@@ -1,11 +1,11 @@
 <template>
-    <button
+    <v-btn
         class="soro-button"
         :class="buttonClasses"
         @click="(event: Event) => $emit('click', event)"
     >
         {{ label }}
-    </button>
+    </v-btn>
 </template>
 
 <script lang="ts">
