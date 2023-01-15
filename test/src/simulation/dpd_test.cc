@@ -21,11 +21,11 @@ TEST_CASE("round to nearest multiple unixtime") {  // NOLINT
                                    unixtime(0), unixtime(6), unixtime(6),
                                    unixtime(6), unixtime(6)};
 
-  CHECK(nums.size() == results.size());
+  CHECK_EQ(nums.size(), results.size());
 
   for (auto i = 0U; i < nums.size(); ++i) {
     auto const result = round_to_nearest_multiple(nums[i], multiple);
-    CHECK(result == results[i]);
+    CHECK_EQ(result, results[i]);
   }
 }
 
@@ -38,11 +38,11 @@ TEST_CASE("round to nearest multiple kilometer_per_hor") {  // NOLINT
   auto const multiple = default_granularity::get<kilometer_per_hour>();
   std::vector<kilometer_per_hour> results = nums;
 
-  CHECK(nums.size() == results.size());
+  CHECK_EQ(nums.size(), results.size());
 
   for (auto i = 0U; i < nums.size(); ++i) {
     auto const result = round_to_nearest_multiple(nums[i], multiple);
-    CHECK(result == results[i]);
+    CHECK_EQ(result, results[i]);
   }
 }
 
@@ -92,7 +92,7 @@ TEST_CASE("dpd simple") {  // NOLINT
     }
   }
 
-  CHECK(found_entries == times.size());
+  CHECK_EQ(found_entries, times.size());
 }
 
 TEST_CASE("dpd sums to one") {  // NOLINT
@@ -112,7 +112,7 @@ TEST_CASE("dpd sums to one") {  // NOLINT
     dpd.insert(times[idx], speeds[idx], 0.1F);
   }
 
-  CHECK(std::abs(sum(dpd) - 0.9F) <= 0.001F);
+  CHECK(equal(sum(dpd), 0.9F));
 }
 
 TEST_CASE("dpd iterate") {
@@ -151,7 +151,6 @@ TEST_CASE("dpd iterate") {
       unixtime{6}, unixtime{12}, unixtime{12}, unixtime{18},
   };
 
-  CHECK(found_times == expected_times);
-
-  CHECK(counter == 9);
+  CHECK_EQ(found_times, expected_times);
+  CHECK_EQ(counter, 9);
 }

@@ -24,7 +24,7 @@ void http_connection::start() {
           try {
             self->callback_(self->request_, self->response_);
           } catch (std::exception const& e) {
-            uLOG(err) << "unhandled error: {}", e.what();
+            uLOG(err) << "unhandled error: {}" << e.what();
             self->response_.result(http::status::internal_server_error);
           } catch (...) {
             uLOG(err) << "unhandled unknown error";
@@ -33,9 +33,9 @@ void http_connection::start() {
           self->response_.set(http::field::content_length,
                               std::to_string(self->response_.body().size()));
           http::async_write(self->socket_, self->response_,
-                            [self](beast::error_code ec, std::size_t) {
+                            [self](beast::error_code async_ec, std::size_t) {
                               self->socket_.shutdown(tcp::socket::shutdown_send,
-                                                     ec);
+                                                     async_ec);
                               self->deadline_.cancel();
                             });
         }

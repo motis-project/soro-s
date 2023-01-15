@@ -4,6 +4,8 @@
 #include <cmath>
 #include <concepts>
 
+#include "soro/utls/sassert.h"
+
 namespace soro {
 
 template <std::floating_point T>
@@ -11,9 +13,7 @@ constexpr T const FP_PRECISION = T(0.01);
 
 template <std::floating_point T>
 constexpr bool equal(T const a, T const b) noexcept {
-  assert(!std::isnan(a));
-  assert(!std::isnan(b));
-
+  utls::sassert(!std::isnan(a) && !std::isnan(b), "Never compare with nan.");
   return std::abs(a - b) < FP_PRECISION<T>;
 }
 

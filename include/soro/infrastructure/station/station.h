@@ -1,7 +1,7 @@
 #pragma once
 
 #include "soro/utls/algo/slice.h"
-#include "soro/utls/container/iterator_range.h"
+#include "soro/utls/container/it_range.h"
 #include "soro/utls/coordinates/gps.h"
 #include "soro/utls/coroutine/recursive_generator.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
@@ -20,20 +20,22 @@ struct station {
   static constexpr id INVALID = std::numeric_limits<id>::max();
   static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
+  using optional_ptr = utls::optional<ptr, nullptr>;
+
   soro::vector<station::ptr> neighbours() const;
 
   id id_{INVALID};
 
-  soro::string ds100_;
+  soro::string ds100_{};
 
-  soro::vector<section::id> sections_;
-  soro::vector<element_ptr> elements_;
+  soro::vector<section::id> sections_{};
+  soro::vector<element::ptr> elements_{};
 
-  soro::map<soro::string, soro::ptr<station_route>> station_routes_;
+  soro::map<soro::string, soro::ptr<station_route>> station_routes_{};
   soro::map<element_id, soro::vector<soro::ptr<station_route>>>
-      element_to_routes_;
+      element_to_routes_{};
 
-  soro::vector<border> borders_;
+  soro::vector<border> borders_{};
 };
 
 struct border {
@@ -55,10 +57,10 @@ struct border {
   soro::string neighbour_name_;
 
   station::ptr station_{nullptr};
-  element_ptr element_{nullptr};
+  element::ptr element_{nullptr};
 
   station::ptr neighbour_{nullptr};
-  element_ptr neighbour_element_{nullptr};
+  element::ptr neighbour_element_{nullptr};
 
   line_id line_{INVALID_LINE_ID};
   track_sign track_sign_{INVALID_TRACK_SIGN};

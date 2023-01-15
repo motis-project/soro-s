@@ -9,11 +9,12 @@ namespace soro::server {
 namespace fs = std::filesystem;
 
 struct import_settings {
-  import_settings(fs::path osm_path, fs::path db_path, fs::path tmp_dir)
+  import_settings(fs::path osm_path, fs::path db_path, fs::path tmp_dir,
+                  fs::path profile_path)
       : osm_path_{std::move(osm_path)},
         db_path_{std::move(db_path)},
         tmp_dir_{std::move(tmp_dir)},
-        osm_profile_{"profile/profile.lua"} {}
+        osm_profile_{std::move(profile_path)} {}
 
   fs::path osm_path_;
   fs::path db_path_;

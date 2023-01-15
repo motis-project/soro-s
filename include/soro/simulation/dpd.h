@@ -5,12 +5,14 @@
 #include <type_traits>
 #include <vector>
 
-#include "soro/utls/coroutine/generator.h"
 #include "utl/verify.h"
 
-#include "soro/base/fp_precision.h"
-#include "soro/simulation/granularity.h"
+#include "soro/utls/coroutine/generator.h"
 #include "soro/utls/tuple/for_each.h"
+
+#include "soro/base/fp_precision.h"
+#include "soro/base/soro_types.h"
+#include "soro/simulation/granularity.h"
 
 namespace soro::simulation {
 
@@ -127,8 +129,8 @@ struct dpd<Granularity, T> {
     if (granular < first_) {
       auto diff = (first_ - granular) / granularity;
       std::vector<probability_t> new_dpd(dpd_.size() + size_t{diff});
-      for (std::size_t idx = 0; idx < new_dpd.size(); ++idx) {
-        if (static_cast<std::size_t>(diff) < idx) {
+      for (soro::size_t idx = 0; idx < new_dpd.size(); ++idx) {
+        if (static_cast<soro::size_t>(diff) < idx) {
           new_dpd[idx] = 0.0F;
         } else {
           new_dpd[idx + size_t{diff}] = dpd_[idx];
@@ -173,10 +175,10 @@ struct dpd<Granularity, T, Ts...> {
     }
   }
 
-  size_t to_idx(primary_t const i) {
+  std::size_t to_idx(primary_t const i) {
     auto const granularity = get_granularity();
     auto const offset = round_to_nearest_multiple(i, granularity) - first_;
-    return static_cast<size_t>(offset / granularity);
+    return static_cast<std::size_t>((offset / granularity).t_);
   }
 
   container_t& operator[](primary_t const i) { return dpd_[to_idx(i)]; }
@@ -193,7 +195,8 @@ struct dpd<Granularity, T, Ts...> {
     }
 
     if (granular < first_) {
-      auto const diff = static_cast<size_t>((first_ - granular) / granularity);
+      auto const diff =
+          static_cast<std::size_t>(((first_ - granular) / granularity).t_);
       container_t new_dpds(dpd_.size() + diff);
       for (auto idx = 0U; idx < new_dpds.size(); ++idx) {
         if (idx < diff) {
@@ -241,9 +244,9 @@ utls::generator<std::tuple<
     utls::unixtime, kilometer_per_hour,
     probability_t>> inline iterate(dpd<default_granularity, utls::unixtime,
                                        kilometer_per_hour> const& dpd) {
-  for (std::size_t p1 = 0; p1 < dpd.dpd_.size(); ++p1) {
+  for (auto p1 = 0U; p1 < dpd.dpd_.size(); ++p1) {
     auto const& m2 = dpd.dpd_[p1];
-    for (std::size_t p2 = 0; p2 < m2.dpd_.size(); ++p2) {
+    for (auto p2 = 0U; p2 < m2.dpd_.size(); ++p2) {
       auto const& prob = m2.dpd_[p2];
 
       if (zero(prob)) {
@@ -264,7 +267,7 @@ utls::generator<std::tuple<
 utls::generator<std::tuple<utls::unixtime, probability_t>> inline iterate(
     dpd<default_granularity, utls::unixtime> const& dpd) {
 
-  for (std::size_t p1 = 0; p1 < dpd.dpd_.size(); ++p1) {
+  for (auto p1 = 0U; p1 < dpd.dpd_.size(); ++p1) {
     auto const& prob = dpd.dpd_[p1];
     if (zero(prob)) {
       continue;

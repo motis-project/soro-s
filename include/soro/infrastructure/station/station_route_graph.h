@@ -1,5 +1,6 @@
 #pragma once
 
+#include "soro/infrastructure/graph/graph.h"
 #include "soro/infrastructure/station/station_route.h"
 
 namespace soro::infra {

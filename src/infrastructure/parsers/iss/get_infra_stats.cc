@@ -14,14 +14,6 @@ void count_elements_in_section(pugi::xml_node xml_section, infra_stats& is) {
   ++is.sections_;
 
   for (auto const xml_element : xml_section.child(RAIL_PLAN_NODE).children()) {
-    // we are not parsing the route end of train detectors for now
-    // TODO(julian) start parsing the route end of train detectors
-    // cf parse_iss.cc
-    if (utls::equal(xml_element.name(), ROUTE_EOTD_FALLING) ||
-        utls::equal(xml_element.name(), ROUTE_EOTD_RISING)) {
-      continue;
-    }
-
     auto const t = get_type(xml_element.name());
     if (t != type::INVALID) {
       ++(is.number(t));
@@ -38,9 +30,10 @@ void count_elements_in_station(pugi::xml_node xml_station, infra_stats& is) {
   }
 }
 
-void count_elements_in_file(std::string const& xml_file, infra_stats& is) {
+void count_elements_in_file(utls::loaded_file const& xml_file,
+                            infra_stats& is) {
   pugi::xml_document d;
-  auto success = d.load_buffer(reinterpret_cast<void const*>(xml_file.data()),
+  auto success = d.load_buffer(reinterpret_cast<void const*>(xml_file.begin()),
                                xml_file.size());
   utl::verify(success, "bad xml: {}", success.description());
 
@@ -55,19 +48,13 @@ infra_stats get_infra_stats(iss_files const& files) {
   infra_stats is;
 
   for (auto const& file : files.rail_plan_files_) {
-    count_elements_in_file(file.contents_, is);
+    count_elements_in_file(file, is);
   }
 
   // for every border pair there is an extra (empty) section
   is.sections_ += is.number(type::BORDER) / 2;
 
   for (auto t : all_types()) {
-
-    // undirected track elements appear two times in the graph
-    if (is_undirected_track_element(t)) {
-      is.number(t) *= 2;
-    }
-
     // simple elements appear two times in the infrastructure data,
     // but are modelled as one element in the graph
     // exception: borders

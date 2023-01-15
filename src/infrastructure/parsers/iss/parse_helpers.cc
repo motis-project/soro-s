@@ -9,13 +9,17 @@ namespace soro::infra {
 using namespace soro::utls;
 
 kilometrage parse_kilometrage(pugi::xml_node const& node) {
-  std::string const kmp = node.child_value(KILOMETER_POINT);
+  std::string_view const kmp(node.child_value(KILOMETER_POINT));
+
   if (auto const pos = kmp.find('+'); pos != std::string::npos) {
-    //  TODO(julian) parse extra lengths
-    //  std::string const extra_length = kmp.substr(pos + 1, kmp.size());
-    return si::from_km(
+    auto const base_km =
         parse_fp<kilometrage::precision, utls::replace_comma::ON>(
-            kmp.substr(0, pos)));
+            kmp.substr(0, pos));
+    auto const extra_km =
+        parse_fp<kilometrage::precision, utls::replace_comma::ON>(
+            kmp.substr(pos + 1, kmp.size()));
+
+    return si::from_km(base_km) + si::from_km(extra_km);
   } else {
     return si::from_km(
         parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp));

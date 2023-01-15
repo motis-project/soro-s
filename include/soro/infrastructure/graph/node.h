@@ -2,6 +2,8 @@
 
 #include <limits>
 
+#include "soro/utls/container/optional.h"
+
 #include "soro/base/soro_types.h"
 
 #include "soro/infrastructure/graph/type.h"
@@ -23,20 +25,23 @@ struct node {
     return idx != INVALID_IDX;
   }
 
+  using optional_id = utls::optional<id, INVALID>;
+  using optional_ptr = utls::optional<ptr, nullptr>;
+  using optional_idx = utls::optional<idx, INVALID_IDX>;
+
   bool is(type const t) const;
 
-  ptr reverse_ahead() const;
+  node::ptr reverse_ahead() const;
 
   enum type type() const;
 
   id id_{INVALID};
   element_ptr element_{nullptr};
 
-  ptr next_node_{nullptr};
-  ptr branch_node_{nullptr};
+  node::ptr next_node_{nullptr};
+  node::ptr branch_node_{nullptr};
 
-  // TODO(julian) the max size here should be 4 -> static vector
-  soro::vector<ptr> reverse_edges_{};
+  soro::vector<node::ptr> reverse_edges_{};
 };
 
 }  // namespace soro::infra

@@ -70,10 +70,12 @@ void create_way_osm(pugi::xml_node& osm_node, element_id const first,
   osm_add_tag(railway_str, rail_str, way);
 }
 
-std::size_t create_interpolation_osm(auto osm, auto const& interpolation,
-                                     auto id, auto& osm_info) {
+infra::element_id create_interpolation_osm(pugi::xml_node osm,
+                                           interpolation const& interpolation,
+                                           infra::element_id const id,
+                                           osm_information& osm_info) {
   std::vector<size_t> ids;
-  osm_info.ways_.emplace_back(std::pair(interpolation.first_elem_, id));
+  osm_info.ways_.emplace_back(interpolation.first_elem_, id);
   for (auto i = 0UL; i < interpolation.points_.size(); i++) {
     if (i < interpolation.points_.size() - 1) {
       osm_info.ways_.emplace_back(std::pair(id + i, id + i + 1));
@@ -85,15 +87,15 @@ std::size_t create_interpolation_osm(auto osm, auto const& interpolation,
     osm_add_coordinates(auxiliary_coords, auxiliary_node);
     osm_add_tag(type_str, interpolation_str, auxiliary_node);
   }
-  osm_info.ways_.emplace_back(std::pair(id + interpolation.points_.size() - 1,
-                                        interpolation.second_elem_));
+  osm_info.ways_.emplace_back(
+      static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
+      interpolation.second_elem_);
   osm_info.element_to_interpolation_nodes_[interpolation.first_elem_] =
       std::make_pair(interpolation.second_elem_, ids);
-  return id + interpolation.points_.size();
+  return static_cast<element_id>(id + interpolation.points_.size());
 }
 
-void create_ways(auto& osm_info, base_infrastructure const& iss,
-                 element_ptr e) {
+void create_ways(auto& osm_info, infrastructure_t const& iss, element_ptr e) {
   auto const e_station = iss.element_to_station_.at(e->id());
 
   for (auto neigh : e->neighbours()) {
@@ -124,7 +126,7 @@ void create_ways(auto& osm_info, base_infrastructure const& iss,
 
 pugi::xml_document export_osm_nodes(std::size_t const min,
                                     std::size_t const max,
-                                    base_infrastructure const& iss,
+                                    infrastructure_t const& iss,
                                     osm_information& osm_info) {
   pugi::xml_document osm_node;
   for (std::size_t i = min; i < max; i++) {
@@ -152,7 +154,7 @@ void append_fragment(pugi::xml_node target,
   }
 }
 
-pugi::xml_document export_to_osm(soro::infra::base_infrastructure const& iss) {
+pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
   uLOG(info) << "[ OSM Export ] Starting OSM export.";
   pugi::xml_document document;
   pugi::xml_node osm_node = document.append_child("osm");
@@ -196,7 +198,7 @@ pugi::xml_document export_to_osm(soro::infra::base_infrastructure const& iss) {
     append_fragment(osm_node, e.get());
   }
 
-  auto id = osm_info.nodes_.back().first + 1;
+  auto id = static_cast<element_id>(osm_info.nodes_.back().first + 1);
 
   uLOG(info) << "[ OSM Export ] Interpolations to OSM.";
   for (const auto& interpolation : osm_info.interpolations_) {
@@ -217,7 +219,7 @@ void write_osm_to_file(pugi::xml_document const& osm_xml, fs::path const& out) {
   uLOG(info) << "[ OSM Export ] Exported file successfully to " << out << ".";
 }
 
-void export_and_write(base_infrastructure const& iss, fs::path const& out) {
+void export_and_write(infrastructure_t const& iss, fs::path const& out) {
   write_osm_to_file(export_to_osm(iss), out);
 }
 

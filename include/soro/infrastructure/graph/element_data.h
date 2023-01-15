@@ -2,6 +2,7 @@
 
 #include "soro/base/soro_types.h"
 #include "soro/si/units.h"
+#include "soro/utls/container/optional.h"
 
 namespace soro::infra {
 
@@ -49,6 +50,7 @@ struct halt {
 
 struct speed_limit {
   using ptr = soro::ptr<speed_limit>;
+  using optional_ptr = utls::optional<ptr, nullptr>;
 
   enum class type : uint8_t {
     END_SPECIAL,
@@ -77,7 +79,12 @@ struct speed_limit {
   soro::ptr<node> node_{nullptr};
 };
 
-using element_data_t =
-    soro::variant<empty, eotd, slope, halt, speed_limit, main_signal>;
+struct switch_data {
+  soro::string name_;
+  cista::optional<soro::string> ui_identifier_;
+};
+
+using element_data_t = soro::variant<empty, eotd, slope, halt, speed_limit,
+                                     main_signal, switch_data>;
 
 }  // namespace soro::infra

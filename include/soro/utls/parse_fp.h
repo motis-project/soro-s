@@ -2,10 +2,7 @@
 
 #include <charconv>
 #include <iomanip>
-
-#if defined(__EMSCRIPTEN__)
-#include <cmath>
-#endif
+#include <string>
 
 #include "utl/verify.h"
 
@@ -22,25 +19,19 @@ constexpr bool contains_char(char const* start, char const* end,
   return std::any_of(start, end, [&](auto&& c) { return c == needle; });
 }
 
-#if defined(__EMSCRIPTEN__)
-template <typename T>
-constexpr T parse_fp(const char* const start, const char* const) {
-  T result = std::numeric_limits<T>::max();
-
-  result = static_cast<T>(std::atof(start));
-
-  utl::verify(!std::isnan(result),
-              "Error while parsing floating point with atof: {}.",
-              std::quoted(start));
-
-  return result;
-}
-#else
-
 template <typename T>
 constexpr T parse_fp(const char* const start, const char* const end) {
   T result = std::numeric_limits<T>::max();
 
+#if defined(_LIBCPP_VERSION)
+  // TODO(julian) this can be removed when libc++ supports from_chars for fp
+  std::size_t processed = 0;
+  result = static_cast<T>(std::stod(start, &processed));
+  sassert(processed == static_cast<std::size_t>(end - start),
+          "Processed only {} chars while parsing floating point {}, should "
+          "have processed {}.",
+          processed, start, end - start);
+#else
   auto const [ptr, ec] = std::from_chars(start, end, result);
 
   sassert(ec == std::errc{}, "Error while parsing floating point input {}.",
@@ -49,9 +40,10 @@ constexpr T parse_fp(const char* const start, const char* const end) {
   sassert(ptr == end, "Error while parsing floating point input {}.",
           std::quoted(start));
 
+#endif
+
   return result;
 }
-#endif
 
 }  // namespace detail
 
@@ -89,6 +81,12 @@ constexpr T parse_fp(std::string_view s) {
 template <typename T, replace_comma ReplaceComma = OFF>
 constexpr T parse_fp(std::string const& s) {
   return parse_fp<T, ReplaceComma>(s.data(), s.size());
+}
+
+template <typename T, replace_comma ReplaceComma = OFF>
+constexpr T parse_fp(const char* const start, const char* const end) {
+  return parse_fp<T, ReplaceComma>(
+      start, static_cast<std::size_t>(std::distance(start, end)));
 }
 
 }  // namespace soro::utls
