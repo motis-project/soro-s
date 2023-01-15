@@ -1,10 +1,11 @@
 import { createApp } from 'vue';
-import './style.ts';
+import { applicationTheme } from './style';
 import App from './App.vue';
 import { InfrastructureStore, InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableStore, TimetableNamespace } from '@/stores/timetable-store';
 import { createStore } from 'vuex';
 import { SettingsNamespace, SettingsStore } from '@/stores/settings-store';
+import { createVuetify } from 'vuetify';
 
 const store = createStore({
     modules: {
@@ -13,6 +14,8 @@ const store = createStore({
         [SettingsNamespace]: SettingsStore,
     }
 });
-const app = createApp(App);
-app.use(store);
-app.mount('#app');
+
+createApp(App)
+    .use(store)
+    .use(createVuetify({ theme: applicationTheme }))
+    .mount('#app');
