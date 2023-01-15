@@ -1,7 +1,11 @@
 <template>
-     <v-expansion-panels>
+    <v-expansion-panels>
         <v-expansion-panel :title="label">
-            <v-expansion-panel-text><slot /></v-expansion-panel-text>
+            <v-expansion-panel-text>
+                <div class="soro-collapsible-content">
+                    <slot />
+                </div>
+            </v-expansion-panel-text>
         </v-expansion-panel>
     </v-expansion-panels>
 </template>
@@ -20,3 +24,10 @@ export default defineComponent({
     },
 });
 </script>
+
+<style scoped>
+.soro-collapsible-content {
+    display: flex;
+    flex-direction: column;
+}
+</style>

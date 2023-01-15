@@ -3,7 +3,7 @@
         v-bind="$attrs"
         :label="label"
         :items="options"
-        @change="emitChange"
+        @update:modelValue="emitChange"
     >
         <template #prepend-item>
             <v-list-item
@@ -47,7 +47,9 @@ export default defineComponent({
     },
 
     watch: {
-        value(newValue) { this.currentValue = newValue },
+        value(newValue) {
+            this.currentValue = newValue; 
+        },
     },
 
     methods: {

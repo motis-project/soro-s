@@ -1,7 +1,7 @@
 <template>
     <v-btn
         class="soro-button"
-        :class="buttonClasses"
+        :color="type"
         @click="(event: Event) => $emit('click', event)"
     >
         {{ label }}
@@ -27,12 +27,6 @@ export default defineComponent({
     },
 
     emits: ['click'],
-
-    computed: {
-        buttonClasses() {
-            return this.type === 'primary' ? 'matter-button-contained' : 'matter-button-outlined';
-        },
-    },
 });
 </script>
 
