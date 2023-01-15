@@ -37,6 +37,7 @@
                         label="Select Timetable"
                         :value="currentTimetable"
                         :options="timetables"
+                        disabled
                         @select="loadTimetable"
                     />
                 </div>
@@ -45,7 +46,21 @@
                     label="Settings"
                     class="settings"
                 >
-                    <soro-button label="Theme" />
+                    <v-btn-toggle
+                        :model-value="darkLightModePreference"
+                        tile
+                        color="deep-purple accent-3"
+                        group
+                        mandatory
+                        @update:modelValue="setDarkLightModePreference"
+                    >
+                        <v-btn value="light">
+                            Light
+                        </v-btn>
+                        <v-btn value="dark">
+                            Dark
+                        </v-btn>
+                    </v-btn-toggle>
                 </soro-collapsible>
 
                 <soro-collapsible
@@ -87,15 +102,15 @@
 </template>
 
 <script setup lang="ts">
-import DisruptionDetail from './disruption-detail.vue';
-import SoroSelect from './soro-select.vue';
-import SoroButton from './soro-button.vue';
+import DisruptionDetail from '../disruption-detail.vue';
+import SoroSelect from '../soro-select.vue';
+import SoroButton from '../soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapMutations, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
@@ -136,7 +151,7 @@ export default defineComponent({
             );
         },
 
-        ...mapActions(SettingsNamespace, ['setDarkLightModePreference']),
+        ...mapMutations(SettingsNamespace, ['setDarkLightModePreference']),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }
@@ -223,27 +238,5 @@ export default defineComponent({
 
 .settings {
     padding: 3%;
-}
-
-/*  ============= Station Detail ============= */
-
-.sub-overlay-tab-button {
-    width: 30px;
-    height: 40px;
-    margin-top: 10px;
-    background: var(--dialog-color);
-    color: var(--secondary-text-color);
-    box-shadow: 3px 3px 2px rgb(0 0 0 / 20%);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-    transition: all 0.2s ease;
-}
-
-.sub-overlay-tab-button.enabled {
-    color: white;
-    background: var(--highlight-color);
 }
 </style>
