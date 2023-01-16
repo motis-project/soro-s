@@ -43,7 +43,7 @@ class SeleniumTestCase(unittest.TestCase):
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         for line in self.proc.stderr:
-            if b'tiles-server started on 0.0.0.0:' in line:
+            if b"tiles-server started on 0.0.0.0:" in line:
                 break
 
     def tearDown(self):
@@ -58,6 +58,22 @@ class SeleniumTestCase(unittest.TestCase):
         self.proc.wait()
         self.proc.stdout.close()
         self.proc.stderr.close()
+
+    def assert_no_js_errors(self, driver):
+        """Assert the driver has not logged any JS errors."""
+        # firefox only supports WebDriver BiDi and log.entryAdded events from
+        # the W3C specs (https://github.com/mozilla/geckodriver/issues/284),
+        # which Selenium does not (yet) support
+        # (https://github.com/SeleniumHQ/selenium/issues/10335)
+        # So we just check chrome for logged JS errors
+        if driver.name == "chrome":
+            for line in driver.get_log("browser"):
+                if line['source'] != "javascript":
+                    continue
+                if line['level'] not in ["SEVERE"]:
+                    continue
+                self.fail("driver reported a JavaScript error " +
+                          f"({line['level']}): {line['message']}")
 
 
 class SimulationButtonTest(SeleniumTestCase):
@@ -93,6 +109,8 @@ class SimulationButtonTest(SeleniumTestCase):
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, xpath))
                 )
+
+                self.assert_no_js_errors(driver)
 
 
 if __name__ == "__main__":
