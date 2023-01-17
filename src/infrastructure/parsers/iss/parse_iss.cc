@@ -63,6 +63,19 @@ border parse_border(xml_node const& xml_rp_border, element* border_element,
 
   return b;
 }
+
+switch_data get_switch_data(pugi::xml_node const& node) {
+  std::string const name = node.child_value(NAME);
+
+  auto const ui_identifier_xml = node.child("Oberflaechenbezeichner");
+  if (static_cast<bool>(ui_identifier_xml)) {
+    return switch_data{.name_ = name,
+                       .ui_identifier_ = ui_identifier_xml.child_value()};
+  } else {
+    return switch_data{.name_ = name, .ui_identifier_ = {}};
+  }
+}
+
 using type_order_key = int16_t;
 
 constexpr type_order_key get_type_order_key(type const t, bool const rising) {
@@ -251,6 +264,10 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
       element->e_.apply([&is_start](auto&& e) { e.rising_ = !is_start; });
     } else {
       mats.rp_id_to_element_id_[rp_id] = element->id();
+    }
+
+    if (utls::equal(node.name(), SWITCH_START)) {
+      network.element_data_[element->id()] = get_switch_data(node);
     }
 
     if (utls::equal(node.name(), LINE_SWITCH_ONE)) {
@@ -989,6 +1006,11 @@ void log_stats(infrastructure_t const& iss) {
   uLOG(info) << "Got " << iss.rolling_stock_.train_series_.size()
              << " train series.";
   uLOG(info) << "Got " << total_variants << " train series variants.";
+
+  uLOG(info) << "Default values:";
+  uLOG(info) << "Route form time: " << iss.defaults_.route_form_time_;
+  uLOG(info) << "Brake path length: " << iss.defaults_.brake_path_length_;
+  uLOG(info) << "Speed limit: " << iss.defaults_.stationary_speed_limit_;
 }
 
 default_values parse_default_values(xml_node const& default_values_xml) {

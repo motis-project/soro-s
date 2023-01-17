@@ -24,7 +24,11 @@ struct ordering_node {
 
 struct ordering_graph {
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
+  ordering_graph();
   std::vector<ordering_node> nodes_;
 };
+
+ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
+                                  int max_nodes);
 
 }  // namespace soro::simulation
