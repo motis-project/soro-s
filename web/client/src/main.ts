@@ -6,6 +6,7 @@ import { TimetableStore, TimetableNamespace } from '@/stores/timetable-store';
 import { createStore } from 'vuex';
 import { SettingsNamespace, SettingsStore } from '@/stores/settings-store';
 import { createVuetify } from 'vuetify';
+import { aliases, md } from 'vuetify/iconsets/md';
 
 const store = createStore({
     modules: {
@@ -17,5 +18,14 @@ const store = createStore({
 
 createApp(App)
     .use(store)
-    .use(createVuetify({ theme: applicationTheme }))
+    .use(createVuetify({
+        theme: applicationTheme,
+        icons: {
+            defaultSet: 'md',
+            aliases,
+            sets: {
+                md,
+            }
+        },
+    }))
     .mount('#app');
