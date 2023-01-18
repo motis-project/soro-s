@@ -11,6 +11,7 @@
             >
                 <v-btn
                     class="overlay-tab-button"
+                    color="primary"
                     flat
                     @click="overlay = !overlay"
                 >
