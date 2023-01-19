@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import { applicationTheme } from './style';
+import { customLightTheme, customDarkTheme } from './style';
 import App from './App.vue';
 import { InfrastructureStore, InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableStore, TimetableNamespace } from '@/stores/timetable-store';
@@ -19,7 +19,13 @@ const store = createStore({
 createApp(App)
     .use(store)
     .use(createVuetify({
-        theme: applicationTheme,
+        theme: {
+            defaultTheme: 'light',
+            themes: {
+                light: customLightTheme,
+                dark: customDarkTheme,
+            },
+        },
         icons: {
             defaultSet: 'md',
             aliases,
