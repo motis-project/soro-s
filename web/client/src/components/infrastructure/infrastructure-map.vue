@@ -162,12 +162,18 @@ export default defineComponent({
                 return;
             }
 
-            // @ts-ignore
-            this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
+            this.libreGLMap.setLayoutProperty(
+                type + '-layer',
+                'visibility',
+                this.checkedControls.includes(type) ? 'visible' : 'none',
+            );
 
             if (type !== 'station') {
-                // @ts-ignore
-                this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
+                this.libreGLMap.setLayoutProperty(
+                    'circle-' + type + '-layer',
+                    'visibility',
+                    this.checkedControls.includes(type) ? 'visible' : 'none',
+                );
             }
         },
 

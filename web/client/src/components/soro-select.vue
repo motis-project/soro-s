@@ -1,6 +1,7 @@
 <template>
     <v-select
         v-bind="$attrs"
+        v-model="currentValue"
         :label="label"
         :items="options"
         @update:modelValue="emitChange"
