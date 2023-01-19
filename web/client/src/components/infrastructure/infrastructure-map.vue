@@ -4,7 +4,7 @@
             ref="map"
             class="map infrastructure-map"
         />
-        <div
+        <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
         >
@@ -12,30 +12,30 @@
                 v-for="(elementType, index) in legendControlTypes"
                 :key="index"
             >
-                <input
-                    :id="elementType"
+                <v-checkbox
                     :ref="elementType"
+                    v-model="checkedControls"
+                    :name="elementType"
                     :value="elementType"
-                    :checked="initiallyCheckedControls.includes(elementType)"
-                    type="checkbox"
-                    @input="onLegendControlClicked"
-                >
-                <label
                     class="legend-key"
-                    :for="elementType"
+                    color="primary"
+                    density="compact"
+                    min-height="0px"
+                    hide-details
+                    @click="onLegendControlClicked"
                 >
-                    <img
-                        v-if="hasImage(elementType)"
-                        class="legend-key-icon"
-                        :src="iconUrl + elementType + iconExtension"
-                        alt=""
-                    >
-                    {{ elementTypeLabels[elementType] ?? elementType }}
-                </label>
-                <br>
+                    <template #label>
+                        <img
+                            v-if="hasImage(elementType)"
+                            class="legend-key-icon"
+                            :src="iconUrl + elementType + iconExtension"
+                            alt=""
+                        >
+                        {{ elementTypeLabels[elementType] ?? elementType }}
+                    </template>
+                </v-checkbox>
             </template>
-        </div>
-
+        </v-sheet>
         <div
             ref="infrastructureTooltip"
             class="infrastructureTooltip infrastructure-tooltip"
@@ -87,7 +87,7 @@ export default defineComponent({
         return {
             libreGLMap: null as (Map | null),
             legendControlTypes,
-            initiallyCheckedControls,
+            checkedControls: Array.from(initiallyCheckedControls),
             iconUrl,
             iconExtension,
             elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
@@ -253,31 +253,25 @@ export default defineComponent({
     position: absolute;
     bottom: 0;
     right: 0;
-    background: var(--overlay-color);
     margin-right: 20px;
-    font-family: var(--main-font-family);
-    overflow: auto;
-    border-radius: var(--border-radius);
 }
 
 .infrastructure-map-legend {
-    padding: 10px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
-    line-height: 18px;
+    padding: 10px 10px 20px;
     height: fit-content;
     margin-bottom: 40px;
     width: fit-content;
-    background: var(--overlay-color);
 }
 
 .legend-key {
-    height: 1em;
+    height: 1.5em;
     margin-right: 5px;
     margin-left: 5px;
 }
 
 .legend-key-icon {
     margin-right: 7px;
+    margin-left: 7px;
     display: inline-block;
     height: 1em;
 }
