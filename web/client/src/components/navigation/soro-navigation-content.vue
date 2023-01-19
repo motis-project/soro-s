@@ -52,7 +52,7 @@
                         color="secondary"
                         group
                         mandatory
-                        @update:modelValue="setDarkLightModePreference"
+                        @update:model-value="setDarkLightModePreference"
                     >
                         <v-btn value="light">
                             Light

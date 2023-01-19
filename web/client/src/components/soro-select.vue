@@ -4,7 +4,7 @@
         v-model="currentValue"
         :label="label"
         :items="options"
-        @update:modelValue="emitChange"
+        @update:model-value="emitChange"
     >
         <template #prepend-item>
             <v-list-item

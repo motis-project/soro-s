@@ -71,12 +71,12 @@ export default defineComponent({
     z-index: 10;
 }
 
-nav.v-navigation-drawer--active .overlay-tabs {
+nav.v-navigation-drawer--active .overlay-tabs { /* stylelint-disable-line selector-class-pattern */
     position: absolute;
     left: var(--overlay-width);
 }
 
-nav:not(.v-navigation-drawer--active) .overlay-tabs {
+nav:not(.v-navigation-drawer--active) .overlay-tabs { /* stylelint-disable-line selector-class-pattern */
     position: fixed;
     left: calc(1.1 * var(--overlay-width));
 }
