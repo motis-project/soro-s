@@ -49,7 +49,7 @@
                     <v-btn-toggle
                         :model-value="darkLightModePreference"
                         tile
-                        color="deep-purple accent-3"
+                        color="secondary"
                         group
                         mandatory
                         @update:modelValue="setDarkLightModePreference"
