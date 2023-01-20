@@ -6,11 +6,6 @@
 
 namespace soro::infra {
 
-using exclusion_set_id = uint32_t;
-
-soro::vector<soro::vector<exclusion_set_id>>
-get_interlocking_route_exclusion_sets(infrastructure_t const& infra);
-
 /*
  *  Exclusion paths are used to partition the infrastructure into
  *  paths that can be used to compose station routes as well as interlocking

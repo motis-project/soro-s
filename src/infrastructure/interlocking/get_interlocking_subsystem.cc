@@ -72,6 +72,16 @@ auto get_starting_at(
     utls::sort(v);
   }
 
+  utls::sasserts([&]() {
+    auto const acc =
+        utls::accumulate(starting_at, soro::size_t{0},
+                         [](auto&& acc, auto&& v) { return acc + v.size(); });
+    utls::sassert(
+        acc == interlocking_routes.size(),
+        "Total interlocking routes {}, but accumulated starting at {}.",
+        interlocking_routes.size(), acc);
+  });
+
   return starting_at;
 }
 
