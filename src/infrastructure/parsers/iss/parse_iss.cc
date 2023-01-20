@@ -104,12 +104,17 @@ constexpr type_order_key get_type_order_key(type const t, bool const rising) {
     case type::APPROACH_SIGNAL: return rising ? 130 : 131;
     case type::PROTECTION_SIGNAL: return rising ? 140 : 141;
     case type::EOTD: return rising ? 150 : 151;
-    case type::CTC: return rising ? 160 : 161;
-    case type::SPEED_LIMIT: return rising ? 170 : 171;
-    case type::FORCED_HALT: return rising ? 180 : 181;
-    case type::POINT_SPEED: return rising ? 190 : 191;
+    case type::LZB_START: return rising ? 160 : 161;
+    case type::LZB_BLOCK_SIGN: return rising ? 170 : 171;
+    case type::LZB_END: return rising ? 180 : 181;
+    case type::ETCS_START: return rising ? 190 : 191;
+    case type::ETCS_BLOCK_SIGN: return rising ? 200 : 201;
+    case type::ETCS_END: return rising ? 210 : 211;
+    case type::SPEED_LIMIT: return rising ? 220 : 221;
+    case type::FORCED_HALT: return rising ? 230 : 231;
+    case type::POINT_SPEED: return rising ? 240 : 241;
     case type::BRAKE_PATH:
-      return rising ? 200 : 201;
+      return rising ? 250 : 251;
 
       // undirected track elements part 2
     case type::TRACK_NAME: return 300;

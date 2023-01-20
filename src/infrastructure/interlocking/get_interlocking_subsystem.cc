@@ -137,35 +137,6 @@ interlocking_route get_trailing_interlocking_route(
           .station_routes_ = {sr->id_}};
 }
 
-std::string generate_dot_tree(station_route::ptr const route,
-                              station_route_graph const& srg) {
-  std::set<station_route::id> ids;
-
-  auto const generate_graphviz = [&](station_route::ptr const sr,
-                                     auto&& generate_ref) {
-    ids.insert(sr->id_);
-
-    if (sr->can_end_an_interlocking(srg) && sr->id_ != route->id_) {
-      return;
-    }
-
-    for (auto const& neighbour : srg.successors_[sr->id_]) {
-      generate_ref(neighbour, generate_ref);
-    }
-  };
-
-  generate_graphviz(route, generate_graphviz);
-
-  std::string dot;
-  for (auto const& id : ids) {
-    for (auto const& neigh : srg.successors_[id]) {
-      dot += std::to_string(id) + " -> " + std::to_string(neigh->id_) + ";\n";
-    }
-  }
-
-  return dot;
-}
-
 soro::vector<interlocking_route> get_interlocking_routes_from_sr(
     station_route::ptr sr, station_route_graph const& srg) {
   soro::vector<interlocking_route> routes;
