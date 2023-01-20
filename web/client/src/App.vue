@@ -27,6 +27,7 @@ import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from '@/g
 import { SettingsNamespace } from '@/stores/settings-store';
 
 const initLayout: LayoutConfig = {
+    dimensions: { headerHeight: 36 },
     root: {
         type: 'row',
         content: [
