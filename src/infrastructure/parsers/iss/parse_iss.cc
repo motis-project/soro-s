@@ -45,14 +45,16 @@ using namespace soro::utls;
 
 length get_section_length(xml_node const& section_start,
                           xml_node const& section_end) {
-  auto const start_km = parse_kilometrage(section_start);
-  auto const end_km = parse_kilometrage(section_end);
+  auto const start_km =
+      parse_kilometrage(section_start.child_value(KILOMETER_POINT));
+  auto const end_km =
+      parse_kilometrage(section_end.child_value(KILOMETER_POINT));
 
   return abs(start_km - end_km);
 }
 
 border parse_border(xml_node const& xml_rp_border, element* border_element,
-                    line_id const line, bool const is_start) {
+                    line::id const line, bool const is_start) {
   border b;
 
   b.neighbour_name_ = xml_rp_border.child_value(PARTNER_STATION);
@@ -163,8 +165,8 @@ bool order_impl(kilometrage const km1, type const t1, bool const r1,
 
 template <typename Comparator>
 bool element_order_from_nodes(xml_node const n1, xml_node const n2) {
-  auto const km1 = parse_kilometrage(n1);
-  auto const km2 = parse_kilometrage(n2);
+  auto const km1 = parse_kilometrage(n1.child_value(KILOMETER_POINT));
+  auto const km2 = parse_kilometrage(n2.child_value(KILOMETER_POINT));
 
   auto const r1 = has_rising_name(n1);
   auto const r2 = has_rising_name(n2);
@@ -202,7 +204,7 @@ bool element_order(element::ptr e1, element::ptr e2) {
 section::id parse_section_into_network(xml_node const& xml_rp_section,
                                        station& station, graph& network,
                                        construction_materials& mats) {
-  line_id const line =
+  line::id const line =
       static_cast<uint32_t>(std::stoul(xml_rp_section.child_value(LINE)));
   auto const& section_start =
       xml_rp_section.child(RAIL_PLAN_NODE).children().begin();
@@ -321,13 +323,15 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   };
 
   auto start_element = emplace_into_network(*section_start, true);
-  set_km_point_and_line(*start_element, section_start->name(),
-                        parse_kilometrage(*section_start), line);
+  set_km_point_and_line(
+      *start_element, section_start->name(),
+      parse_kilometrage(section_start->child_value(KILOMETER_POINT)), line);
   network.element_id_to_section_ids_[start_element->id()].push_back(section_id);
 
   auto end_element = emplace_into_network(*section_end, false);
-  set_km_point_and_line(*end_element, section_end->name(),
-                        parse_kilometrage(*section_end), line);
+  set_km_point_and_line(
+      *end_element, section_end->name(),
+      parse_kilometrage(section_end->child_value(KILOMETER_POINT)), line);
   network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
 
   std::map<xml_node, element*> undirected_track_elements;
@@ -1155,6 +1159,8 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
       parse_regulatory_stations(iss_files.regulatory_station_files_);
   iss.full_station_names_ =
       get_full_station_names(iss, regulatory_station_data);
+
+  iss.lines_ = parse_lines(iss_files.regulatory_line_files_);
 
   iss.station_route_graph_ =
       get_station_route_graph(iss.station_routes_, iss.graph_);

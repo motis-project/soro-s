@@ -173,14 +173,15 @@ void add_element_data(pugi::xml_node const& xml_node, element* element,
 }
 
 element* parse_track_element(xml_node const& track_node, type const type,
-                             bool const rising, line_id const line,
+                             bool const rising, line::id const line,
                              graph& network, station& station,
                              construction_materials& mats) {
   auto element = create_element(network, station, mats, type,
                                 parse_rp_node_id(track_node), rising);
 
-  set_km_point_and_line(*element, track_node.name(),
-                        parse_kilometrage(track_node), line);
+  set_km_point_and_line(
+      *element, track_node.name(),
+      parse_kilometrage(track_node.child_value(KILOMETER_POINT)), line);
 
   add_element_data(track_node, element, network);
 

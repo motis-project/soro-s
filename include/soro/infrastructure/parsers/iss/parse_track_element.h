@@ -9,7 +9,7 @@
 namespace soro::infra {
 
 element* parse_track_element(pugi::xml_node const& track_node, type const type,
-                             bool const rising, line_id const line,
+                             bool const rising, line::id const line,
                              graph& network, station& station,
                              construction_materials& mats);
 
