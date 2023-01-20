@@ -50,6 +50,9 @@ struct station_route {
 
     soro::vector<node::ptr> nodes_{};
     soro::vector<node::idx> main_signals_{};
+
+    soro::vector<node::idx> etcs_starts_{};
+    soro::vector<node::idx> etcs_ends_{};
   };
 
   node::idx size() const noexcept;

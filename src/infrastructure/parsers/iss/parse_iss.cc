@@ -591,6 +591,24 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     return main_signals;
   };
 
+  auto const get_etcs = [&](soro::vector<node::ptr> const& nodes)
+      -> std::pair<soro::vector<node::idx>, soro::vector<node::idx>> {
+    soro::vector<node::idx> etcs_starts, etcs_ends;
+
+    for (node::idx idx = 0; idx < nodes.size(); ++idx) {
+      auto const& node = nodes[idx];
+      if (node->is(type::ETCS_START)) {
+        etcs_starts.emplace_back(idx);
+      }
+
+      if (node->is(type::ETCS_END)) {
+        etcs_ends.emplace_back(idx);
+      }
+    }
+
+    return {etcs_starts, etcs_ends};
+  };
+
   auto const& graph = infra.graph_;
 
   deduplicated_paths result;
@@ -622,6 +640,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     auto nodes =
         get_path(i_sr, get_node(start, true), get_node(end, false)->id_);
     auto main_signals = get_main_signals(i_sr, nodes);
+    auto [etcs_starts, etcs_ends] = get_etcs(nodes);
 
     result.path_store_.emplace_back();
     result.path_store_.back() = soro::make_unique<station_route::path>(
@@ -629,7 +648,9 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
                             .end_ = end,
                             .course_ = i_sr.course_,
                             .nodes_ = std::move(nodes),
-                            .main_signals_ = std::move(main_signals)});
+                            .main_signals_ = std::move(main_signals),
+                            .etcs_starts_ = std::move(etcs_starts),
+                            .etcs_ends_ = std::move(etcs_ends)});
     auto const path_ptr = result.path_store_.back().get();
     result.paths_.emplace_back(path_ptr);
 
