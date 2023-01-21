@@ -62,6 +62,7 @@ import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
+import {transformUrl} from "@/api/api-client";
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
@@ -207,8 +208,7 @@ export default defineComponent({
                 // @ts-ignore
                 transformRequest: (relative_url) => {
                     if (relative_url.startsWith('/')) {
-                        const url = window.origin + '/' + infrastructure + relative_url;
-                        return { url };
+                        return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
                 }
             });
