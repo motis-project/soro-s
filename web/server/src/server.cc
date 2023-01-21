@@ -86,6 +86,8 @@ int main(int argc, char const** argv) {
       infra_todo.emplace_back(dir_entry.path());
     }
   }
+  //For debuging purposes only. Technically it only needs to run this once
+  s.regenerate_ = true;
 
   if (s.regenerate_) {
     infra_todo.clear();
@@ -96,34 +98,85 @@ int main(int argc, char const** argv) {
     }
   }
 
-  for (auto const& infra_file : infra_todo) {
-    auto const infra_res_dir = infra_dir / infra_file.filename();
-    exists_or_create_dir(infra_res_dir);
 
-    soro::infra::infrastructure_options opts;
-    opts.infrastructure_path_ = infra_file;
-    opts.gps_coord_path_ = coord_file;
+  // Create paths for infraFiles files
+  std::vector<fs::path> all_osm_paths;
+
+  //OSM data is generated from the XML files in Infrastructure and stored in /Serverresources
+  for (auto const& infra_file : infra_todo) {
+      auto const infra_res_dir = infra_dir / infra_file.filename();
+      exists_or_create_dir(infra_res_dir);
+
+      soro::infra::infrastructure_options opts;
+      opts.infrastructure_path_ = infra_file;
+      opts.gps_coord_path_ = coord_file;
     opts.determine_layout_ = true;
     opts.determine_interlocking_ = false;
     opts.determine_conflicts_ = false;
 
-    soro::infra::infrastructure const infra(opts);
+      soro::infra::infrastructure const infra(opts);
 
-    auto const osm_file =
-        infra_res_dir / infra_file.filename().replace_extension(".osm");
-    soro::server::osm_export::export_and_write(*infra, osm_file);
+      auto const osm_file =
+          infra_res_dir / infra_file.filename().replace_extension(".osm");
+      //This generates a new OSMFile from the infrasData
+      soro::server::osm_export::export_and_write(*infra, osm_file);
 
-    auto const tiles_dir = infra_res_dir / "tiles";
-    exists_or_create_dir(tiles_dir);
+      all_osm_paths.push_back(osm_file);
 
-    auto const tmp_dir = infra_res_dir / "tmp";
-    exists_or_create_dir(tmp_dir);
+  }
 
-    soro::server::import_settings const import_settings(
-        osm_file,
+  // Create paths for osm files
+  std::vector<fs::path> osm_paths;
+
+  //All real osm files are collected from folder /resources/osm
+  auto osm_path = s.resource_dir_ / "osm";
+  if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
+      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
+          osm_paths.emplace_back(dir_entry);
+      }
+  }
+
+
+  // Copy every osm file to server
+  for (const auto& osm_file : osm_paths) {
+      auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
+      exists_or_create_dir(infra_res_dir);
+
+      auto const osm_server_file = infra_res_dir / osm_file.filename();
+
+      // load and copy
+      pugi::xml_document osm_data;
+      auto const error = osm_data.load_file(osm_file.c_str()); // load
+
+      if (error) {
+          osm_data.save_file(osm_server_file.c_str()); // copy
+      }
+      else {
+          std::cout << "Failed to read real OSM Data. Will resume without it \n";
+          continue;
+      }
+      all_osm_paths.push_back(osm_server_file);
+  }
+
+
+  //Generate Tiles and its filestructure for all osm files
+  for(const auto& osm_file : all_osm_paths){
+      auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
+      auto const osm_server_file = infra_res_dir / osm_file.filename();
+
+      auto const tiles_dir = infra_res_dir / "tiles";
+      exists_or_create_dir(tiles_dir);
+
+      auto const tmp_dir = infra_res_dir / "tmp";
+      exists_or_create_dir(tmp_dir);
+
+      soro::server::import_settings const import_settings(
+        osm_server_file,
         infra_res_dir / "tiles" /
-            infra_file.filename().replace_extension(".mdb"),
+            osm_file.filename().replace_extension(".mdb"),
         tmp_dir, s.server_resource_dir_ / "profile" / "profile.lua");
+
+    //tile server created tiles for given OSM file
     soro::server::import_tiles(import_settings);
   }
 

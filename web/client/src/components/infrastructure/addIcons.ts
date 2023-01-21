@@ -1,7 +1,8 @@
 import { elementTypes } from './elementTypes.js';
 import { Map } from 'maplibre-gl';
+import { transformUrl } from '@/api/api-client';
 
-export const iconUrl = window.origin + '/icons/';
+export const iconUrl = transformUrl('/icons/');
 export const iconExtension = '.png';
 
 export function addIcons(map: Map) {

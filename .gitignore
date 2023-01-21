@@ -12,5 +12,7 @@
 /CMakeSettings.json
 resources/infrastructure/de_iss
 resources/timetable/de_kss
+resources/osm
+
 # Ignore the file produced by cmake
 test/include/test/file_paths.h
