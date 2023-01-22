@@ -1,6 +1,6 @@
 import { elementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
-import {transformUrl} from "@/api/api-client";
+import { transformUrl } from '@/api/api-client';
 
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
