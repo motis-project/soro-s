@@ -58,11 +58,12 @@ import {
     highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { infrastructureMapStyle } from './mapStyle';
+import { createInfrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
-import {transformUrl} from "@/api/api-client";
+import { transformUrl } from '@/api/api-client';
+import { ThemeDefinition, ThemeInstance, useTheme } from 'vuetify';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
@@ -72,7 +73,6 @@ const legendControlTypes = [
 ];
 
 const mapDefaults = {
-    style: infrastructureMapStyle,
     attributionControl: false,
     zoom: 18,
     hash: 'location',
@@ -83,6 +83,10 @@ const mapDefaults = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+
+    setup() {
+        return { currentTheme: useTheme().global };
+    },
 
     data() {
         return {
@@ -108,6 +112,17 @@ export default defineComponent({
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+        },
+
+        currentTheme: {
+            handler(newTheme: ThemeInstance) {
+                if (!this.libreGLMap) {
+                    return;
+                }
+
+                this.libreGLMap.setStyle(createInfrastructureMapStyle({ currentTheme: newTheme.current.value }));
+            },
+            deep: true,
         },
 
         highlightedSignalStationRouteID(newID, oldID) {
@@ -216,7 +231,8 @@ export default defineComponent({
                     if (relative_url.startsWith('/')) {
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
-                }
+                },
+                style: createInfrastructureMapStyle({ currentTheme: this.$vuetify.theme.current }),
             });
 
             map.on('load', async () => {
