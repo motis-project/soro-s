@@ -7,6 +7,7 @@
             <golden-layout-adapter
                 ref="GLayoutRoot"
                 class="golden-layout-root"
+                :class="$vuetify.theme.themeClasses"
             />
         </v-theme-provider>
     </div>
