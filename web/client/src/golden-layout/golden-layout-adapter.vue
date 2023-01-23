@@ -253,3 +253,8 @@ defineExpose({
     getLayoutConfig,
 });
 </script>
+
+<style>
+@import "goldenlayout-base.css";
+@import "goldenlayout-mdl-theme.css";
+</style>
