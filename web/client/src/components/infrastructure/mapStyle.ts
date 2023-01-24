@@ -5,7 +5,7 @@ import { ThemeDefinition } from 'vuetify';
 
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
-export const createInfrastructureMapStyle = ({ currentTheme }: { currentTheme: ThemeDefinition }) => {
+export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof elementTypes }) => {
     const style: StyleSpecification = {
         version: 8,
         sources: {
@@ -115,6 +115,7 @@ export const createInfrastructureMapStyle = ({ currentTheme }: { currentTheme: T
                     'text-halo-color': '#ffffff',
                 },
                 'layout': {
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
                     'text-field': ['get', 'name'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
@@ -137,7 +138,10 @@ export const createInfrastructureMapStyle = ({ currentTheme }: { currentTheme: T
                     'circle-color': '#000000',
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#FFFFFF'
-                }
+                },
+                'layout': {
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
+                },
             });
 
             // gives us the elements as icons
@@ -149,6 +153,7 @@ export const createInfrastructureMapStyle = ({ currentTheme }: { currentTheme: T
                 'minzoom': 15,
                 'maxzoom': 24,
                 'layout': {
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
                     'text-field': ['get', 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],

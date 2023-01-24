@@ -121,7 +121,10 @@ export default defineComponent({
                     return;
                 }
 
-                this.libreGLMap.setStyle(createInfrastructureMapStyle({ currentTheme: newTheme.current.value }));
+                this.libreGLMap.setStyle(createInfrastructureMapStyle({
+                    currentTheme: newTheme.current.value,
+                    activatedElements: this.checkedControls,
+                }));
             },
             deep: true,
         },
@@ -233,7 +236,10 @@ export default defineComponent({
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
                 },
-                style: createInfrastructureMapStyle({ currentTheme: this.$vuetify.theme.current }),
+                style: createInfrastructureMapStyle({
+                    currentTheme: this.$vuetify.theme.current,
+                    activatedElements: this.checkedControls,
+                }),
             });
 
             map.on('load', async () => {
