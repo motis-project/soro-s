@@ -43,7 +43,7 @@ struct infrastructure_t {
   soro::vector<utls::gps> station_positions_{};
   soro::vector<utls::gps> element_positions_{};
 
-  soro::map<line::id, line> lines_{};
+  lines lines_{};
 
   soro::vector<soro::unique_ptr<station>> station_store_{};
   soro::vector<soro::unique_ptr<station_route>> station_route_store_{};
