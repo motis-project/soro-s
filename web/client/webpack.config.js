@@ -1,21 +1,23 @@
 const path = require('path');
 
 module.exports = {
-  watch:true,
-  entry: './components/ordering_graph/sigma_graph.ts',
+  watch: true,
+  entry: './components/ordering_graph/index.ts',
   devtool: 'inline-source-map',
   module: {
-    rules:[
+    rules: [
+      {
+        test: /\.svg/,
+        type: 'asset/inline'
+      },
+      {
+        test: /\.(glsl|vs|fs)$/,
+        use: 'ts-shader-loader',
+        exclude: /node_modules/,
+      },
       {
         test: /\.tsx?$/,
-        use: [{
-          loader: 'expose-loader',
-          options: {
-           exposes: ['myNameSpace'],
-          },
-         }, {
-           loader: 'ts-loader'
-         }],
+        use: 'ts-loader',
         exclude: /node_modules/,
       },
     ],
@@ -24,7 +26,11 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    filename: 'main.js',
+    filename: 'bundle.js',
     path: path.resolve(__dirname, 'components', 'ordering_graph'),
+    library: {
+      name: 'webpackSigmaGraph',
+      type: 'umd',
+    },
   },
 };
