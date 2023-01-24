@@ -91,7 +91,7 @@ nav:not(.v-navigation-drawer--active) .overlay-tabs { /* stylelint-disable-line 
     height: 40px;
     margin-top: 10px;
     background: var(--dialog-color);
-    color: var(--secondary-text-color);
+    color: rgb(var(--v-theme-on-surface));
     cursor: pointer;
     display: flex;
     align-items: center;
