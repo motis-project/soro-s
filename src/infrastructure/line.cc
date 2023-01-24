@@ -5,13 +5,16 @@
 namespace soro::infra {
 
 line::segment const& get_segment(line const& l, kilometrage const km) {
-  utls::expects(
-      km >= l.segments_.front().from_,
-      "Kilometrage {} less than first kilometrage value {} of line {}.", km,
-      l.segments_.front().from_, l.id_);
   utls::expects(!l.segments_.empty(), "Segments of line {} are empty.", l.id_);
 
-  // ideally this would be a precondition, alas
+  // ideally these would be a precondition, alas
+  if (km < l.segments_.front().from_) {
+    uLOG(utl::warn) << "Requesting line segment with kilometrage " << km
+                    << ", but first line segment only starts at "
+                    << l.segments_.front().from_ << ". Serving first segment.";
+    return l.segments_.front();
+  }
+
   if (km > l.segments_.back().to_) {
     uLOG(utl::warn) << "Requesting line segment with kilometrage " << km
                     << ", but last line segment only goes to "
@@ -22,7 +25,7 @@ line::segment const& get_segment(line const& l, kilometrage const km) {
   auto const it =
       std::lower_bound(
           std::begin(l.segments_), std::end(l.segments_), km,
-          [](auto&& segment, auto&& v) { return segment.from_ < v; }) -
+          [](auto&& segment, auto&& v) { return segment.from_ <= v; }) -
       1;
 
   utls::sassert(it->from_ <= km && km <= it->to_,
