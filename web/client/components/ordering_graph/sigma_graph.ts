@@ -9,7 +9,7 @@ export class SigmaGraphCreator {
     sigmaContainer:HTMLElement;
     //the canvas elements which make up the graph
     renderer: Sigma;
-    
+
     constructor(rootelement: HTMLElement) {
         this.rootelement = rootelement;
         this.sigmaContainer = rootelement.querySelector('#sigma-container') as HTMLElement;
