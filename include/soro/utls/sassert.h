@@ -46,8 +46,11 @@ struct bool_with_loc {
 };
 
 #if !defined(NDEBUG)
+
 template <typename Msg, typename... Args>
-inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
+inline void sassert_impl(bool_with_loc assert_this,
+                         std::string_view failure_type, Msg&& msg,
+                         Args... args) {
 
   if (!assert_this) {
     using clock = std::chrono::system_clock;
@@ -62,7 +65,7 @@ inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
 
     std::stringstream ss;
 
-    fmt::print(ss, "[ASSERT FAIL][{}] ", std::put_time(&tmp, "%FT%TZ"));
+    fmt::print(ss, "[{}][{}] ", failure_type, std::put_time(&tmp, "%FT%TZ"));
     fmt::print(ss, std::forward<Msg>(msg), std::forward<Args>(args)...);
     fmt::print(ss, "\n");
     fmt::print(ss, "[FAILED HERE] {}:{}:{} in {}",
@@ -81,10 +84,31 @@ inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
 template <typename Msg, typename... Args>
 inline void sassert(bool const, Msg&&, Args...) {}
 
+template <typename Msg, typename... Args>
+inline void expects(bool const, Msg&&, Args...) {}
+
+template <typename Msg, typename... Args>
+inline void ensures(bool const, Msg&&, Args...) {}
+
 #endif
 
+template <typename Msg, typename... Args>
+inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
+  sassert_impl(assert_this, "ASSERT", msg, args...);
+}
+
+template <typename Msg, typename... Args>
+inline void expects(bool_with_loc assert_this, Msg&& msg, Args... args) {
+  sassert_impl(assert_this, "PRECONDITION", msg, args...);
+}
+
+template <typename Msg, typename... Args>
+inline void ensures(bool_with_loc assert_this, Msg&& msg, Args... args) {
+  sassert_impl(assert_this, "POSTCONDITION", msg, args...);
+}
+
 inline void sassert(bool const assert_this) {
-  sassert(assert_this, "I didn't specify a error message :(");
+  sassert_impl(assert_this, "Unknown", "I didn't specify a error message :(");
 }
 
 #if !defined(NDEBUG)
@@ -92,9 +116,26 @@ template <typename F>
 inline void sasserts(F&& f) {
   f();
 }
+
+template <typename F>
+inline void expects(F&& f) {
+  f();
+}
+
+template <typename F>
+inline void ensures(F&& f) {
+  f();
+}
+
 #else
 template <typename F>
 inline void sasserts(F&&) {}
+
+template <typename F>
+inline void expects(F&&) {}
+
+template <typename F>
+inline void ensures(F&&) {}
 #endif
 
 }  // namespace soro::utls
