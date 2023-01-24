@@ -104,10 +104,10 @@ soro::vector<line> parse_lines_from_file(
 }
 
 soro::map<line::id, line> parse_lines(
-    std::vector<utls::loaded_file> const& regulatory_line_data) {
+    std::vector<utls::loaded_file> const& regulatory_line_files) {
   soro::vector<line> lines;
 
-  for (auto const& f : regulatory_line_data) {
+  for (auto const& f : regulatory_line_files) {
     utl::concat(lines, parse_lines_from_file(f));
   }
 

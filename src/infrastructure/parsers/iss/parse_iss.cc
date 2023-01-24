@@ -597,7 +597,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
       -> std::pair<soro::vector<node::idx>, soro::vector<node::idx>> {
     soro::vector<node::idx> etcs_starts, etcs_ends;
 
-    for (node::idx idx = 0; idx < nodes.size(); ++idx) {
+    for (node::idx idx = 0; idx < static_cast<node::idx>(nodes.size()); ++idx) {
       auto const& node = nodes[idx];
       if (node->is(type::ETCS_START)) {
         etcs_starts.emplace_back(idx);
