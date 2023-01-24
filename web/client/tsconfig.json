@@ -9,6 +9,11 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["glsl", "node", "svg"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types",
+    ],
   }
 }

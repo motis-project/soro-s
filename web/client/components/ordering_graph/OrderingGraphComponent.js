@@ -1,5 +1,6 @@
 import { getFileContents } from "../../utl/getFileContents.js";
-import "./main.js";
+// bundle basicly works as a library now for all typescript files
+import "./bundle.js";
 
 export class OrderingGraphComponent {
     constructor(container) {
@@ -10,7 +11,7 @@ export class OrderingGraphComponent {
             .then((html) => {
                 this.rootElement.innerHTML = html;
             }).then(() => {
-                var graph = new myNameSpace.SigmaGraphCreator(this.rootElement);
+                var graph = new webpackSigmaGraph.SigmaGraphCreator(this.rootElement);
                 graph.createSigmaGraph();
 
                 container.on('resize', () => {

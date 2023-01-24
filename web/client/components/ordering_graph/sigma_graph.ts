@@ -4,16 +4,15 @@ import data from "./data2.json";
 
 export class SigmaGraphCreator {
     //the ordering graph html
-    rootelement;
+    rootelement: HTMLElement;
     //the div element, where the graph will be
-    sigmaContainer;
+    sigmaContainer:HTMLElement;
     //the canvas elements which make up the graph
-    renderer;
+    renderer: Sigma;
+    
     constructor(rootelement: HTMLElement) {
         this.rootelement = rootelement;
-        this.sigmaContainer = document.createElement('div');
-        this.sigmaContainer.setAttribute("style", "height:100%;");
-        this.rootelement.appendChild(this.sigmaContainer);
+        this.sigmaContainer = rootelement.querySelector('#sigma-container') as HTMLElement;
     };
 
     public createSigmaGraph() {
@@ -39,7 +38,7 @@ export class SigmaGraphCreator {
             //style elements
             let labelName = "Train:" + currrentTrainId + " Route:" + graph.getNodeAttribute(node, "route_id")
             graph.mergeNodeAttributes(node, { "label": labelName })
-            graph.setNodeAttribute(node, "color", "#FC8F5C")
+            graph.setNodeAttribute(node, "color", "#000000")
         });
 
 
