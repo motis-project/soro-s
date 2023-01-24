@@ -82,13 +82,7 @@ inline void sassert_impl(bool_with_loc assert_this,
 #else
 
 template <typename Msg, typename... Args>
-inline void sassert(bool const, Msg&&, Args...) {}
-
-template <typename Msg, typename... Args>
-inline void expects(bool const, Msg&&, Args...) {}
-
-template <typename Msg, typename... Args>
-inline void ensures(bool const, Msg&&, Args...) {}
+inline void sassert_impl(bool const, Msg&&, Args...) {}
 
 #endif
 
