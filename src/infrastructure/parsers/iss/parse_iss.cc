@@ -16,6 +16,7 @@
 
 #include "soro/utls/execute_if.h"
 #include "soro/utls/parse_fp.h"
+#include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/string.h"
 
@@ -204,8 +205,8 @@ bool element_order(element::ptr e1, element::ptr e2) {
 section::id parse_section_into_network(xml_node const& xml_rp_section,
                                        station& station, graph& network,
                                        construction_materials& mats) {
-  line::id const line =
-      static_cast<uint32_t>(std::stoul(xml_rp_section.child_value(LINE)));
+  auto const line_id =
+      utls::parse_int<line::id>(xml_rp_section.child_value(LINE));
   auto const& section_start =
       xml_rp_section.child(RAIL_PLAN_NODE).children().begin();
   auto const& section_end =
@@ -214,7 +215,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   auto const section_id = create_section(network);
   auto& sec = network.sections_[section_id];
   sec.length_ = get_section_length(*section_start, *section_end);
-  sec.line_id_ = line;
+  sec.line_id_ = line_id;
 
   auto get_main_rp_node_id = [](auto const& node) -> rail_plan_node_id {
     switch (str_hash(node.name())) {
@@ -316,7 +317,8 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
     }
 
     if (utls::equal(node.name(), BORDER)) {
-      station.borders_.push_back(parse_border(node, element, line, is_start));
+      station.borders_.push_back(
+          parse_border(node, element, line_id, is_start));
     }
 
     return element;
@@ -325,13 +327,13 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   auto start_element = emplace_into_network(*section_start, true);
   set_km_point_and_line(
       *start_element, section_start->name(),
-      parse_kilometrage(section_start->child_value(KILOMETER_POINT)), line);
+      parse_kilometrage(section_start->child_value(KILOMETER_POINT)), line_id);
   network.element_id_to_section_ids_[start_element->id()].push_back(section_id);
 
   auto end_element = emplace_into_network(*section_end, false);
   set_km_point_and_line(
       *end_element, section_end->name(),
-      parse_kilometrage(section_end->child_value(KILOMETER_POINT)), line);
+      parse_kilometrage(section_end->child_value(KILOMETER_POINT)), line_id);
   network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
 
   std::map<xml_node, element*> undirected_track_elements;
@@ -344,7 +346,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
         auto const rising_element = has_rising_name(node);
 
         auto const track_element = parse_track_element(
-            node, type, rising_element, line, network, station, mats);
+            node, type, rising_element, line_id, network, station, mats);
 
         if (dir || prev_element->is_track_element()) {
           set_neighbour(*prev_element, prev_node.name(), track_element, true);
@@ -370,7 +372,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
 
         auto const track_element =
             utl::get_or_create(undirected_track_elements, node, [&]() {
-              return parse_track_element(node, type, false, line, network,
+              return parse_track_element(node, type, false, line_id, network,
                                          station, mats);
             });
 
