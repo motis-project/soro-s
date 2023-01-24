@@ -7,6 +7,7 @@
         <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
+            :elevation="5"
         >
             <template
                 v-for="(elementType, index) in legendControlTypes"
@@ -63,7 +64,7 @@ import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
-import { ThemeDefinition, ThemeInstance, useTheme } from 'vuetify';
+import { ThemeInstance, useTheme } from 'vuetify';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
