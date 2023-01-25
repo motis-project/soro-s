@@ -47,7 +47,7 @@ exclusion_materials get_exclusion_materials(infrastructure const& infra) {
 
   exclusion_materials mats(infra);
 
-  for (auto const& [ir_source_node, starting_at] :
+  for (auto const [ir_source_node, starting_at] :
        utl::enumerate(infra->interlocking_.starting_at_)) {
 
     if (starting_at.empty()) {
@@ -180,11 +180,16 @@ soro::vector<exclusion_set> get_interlocking_exclusion_sets(
     std::cout << "working sets before\n";
     std::cout << "non empty: " << non_empty << '\n';
     std::cout << "avg diff: " << size / non_empty << '\n';
-    std::cout << "25%: " << sizes[sizes.size() * 0.25] << '\n';
-    std::cout << "50%: " << sizes[sizes.size() * 0.5] << '\n';
-    std::cout << "75%: " << sizes[sizes.size() * 0.75] << '\n';
-    std::cout << "90%: " << sizes[sizes.size() * 0.9] << '\n';
-    std::cout << "99%: " << sizes[sizes.size() * 0.99] << '\n';
+    std::cout << "25%: " << sizes[static_cast<double>(sizes.size()) * 0.25]
+              << '\n';
+    std::cout << "50%: " << sizes[static_cast<double>(sizes.size()) * 0.5]
+              << '\n';
+    std::cout << "75%: " << sizes[static_cast<double>(sizes.size()) * 0.75]
+              << '\n';
+    std::cout << "90%: " << sizes[static_cast<double>(sizes.size()) * 0.9]
+              << '\n';
+    std::cout << "99%: " << sizes[static_cast<double>(sizes.size()) * 0.99]
+              << '\n';
   }
 
   clean_up_working_sets(working_sets);
@@ -208,11 +213,16 @@ soro::vector<exclusion_set> get_interlocking_exclusion_sets(
     std::cout << "working sets after\n";
     std::cout << "non empty: " << non_empty << '\n';
     std::cout << "avg diff: " << size / non_empty << '\n';
-    std::cout << "25%: " << sizes[sizes.size() * 0.25] << '\n';
-    std::cout << "50%: " << sizes[sizes.size() * 0.5] << '\n';
-    std::cout << "75%: " << sizes[sizes.size() * 0.75] << '\n';
-    std::cout << "90%: " << sizes[sizes.size() * 0.9] << '\n';
-    std::cout << "99%: " << sizes[sizes.size() * 0.99] << '\n';
+    std::cout << "25%: " << sizes[static_cast<double>(sizes.size()) * 0.25]
+              << '\n';
+    std::cout << "50%: " << sizes[static_cast<double>(sizes.size()) * 0.5]
+              << '\n';
+    std::cout << "75%: " << sizes[static_cast<double>(sizes.size()) * 0.75]
+              << '\n';
+    std::cout << "90%: " << sizes[static_cast<double>(sizes.size()) * 0.9]
+              << '\n';
+    std::cout << "99%: " << sizes[static_cast<double>(sizes.size()) * 0.99]
+              << '\n';
   }
 
   {
@@ -234,11 +244,16 @@ soro::vector<exclusion_set> get_interlocking_exclusion_sets(
     std::cout << "working sets\n";
     std::cout << "non empty: " << non_empty << '\n';
     std::cout << "avg diff: " << size / non_empty << '\n';
-    std::cout << "25%: " << sizes[sizes.size() * 0.25] << '\n';
-    std::cout << "50%: " << sizes[sizes.size() * 0.5] << '\n';
-    std::cout << "75%: " << sizes[sizes.size() * 0.75] << '\n';
-    std::cout << "90%: " << sizes[sizes.size() * 0.9] << '\n';
-    std::cout << "99%: " << sizes[sizes.size() * 0.99] << '\n';
+    std::cout << "25%: " << sizes[static_cast<double>(sizes.size()) * 0.25]
+              << '\n';
+    std::cout << "50%: " << sizes[static_cast<double>(sizes.size()) * 0.5]
+              << '\n';
+    std::cout << "75%: " << sizes[static_cast<double>(sizes.size()) * 0.75]
+              << '\n';
+    std::cout << "90%: " << sizes[static_cast<double>(sizes.size()) * 0.9]
+              << '\n';
+    std::cout << "99%: " << sizes[static_cast<double>(sizes.size()) * 0.99]
+              << '\n';
   }
 
   {
@@ -260,11 +275,16 @@ soro::vector<exclusion_set> get_interlocking_exclusion_sets(
     std::cout << "path working sets\n";
     std::cout << "non empty: " << non_empty << '\n';
     std::cout << "avg diff: " << size / non_empty << '\n';
-    std::cout << "25%: " << sizes[sizes.size() * 0.25] << '\n';
-    std::cout << "50%: " << sizes[sizes.size() * 0.5] << '\n';
-    std::cout << "75%: " << sizes[sizes.size() * 0.75] << '\n';
-    std::cout << "90%: " << sizes[sizes.size() * 0.9] << '\n';
-    std::cout << "99%: " << sizes[sizes.size() * 0.99] << '\n';
+    std::cout << "25%: " << sizes[static_cast<double>(sizes.size()) * 0.25]
+              << '\n';
+    std::cout << "50%: " << sizes[static_cast<double>(sizes.size()) * 0.5]
+              << '\n';
+    std::cout << "75%: " << sizes[static_cast<double>(sizes.size()) * 0.75]
+              << '\n';
+    std::cout << "90%: " << sizes[static_cast<double>(sizes.size()) * 0.9]
+              << '\n';
+    std::cout << "99%: " << sizes[static_cast<double>(sizes.size()) * 0.99]
+              << '\n';
   }
 
   //  utl::erase_if(sets, [](auto&& s) { return s.empty(); });
