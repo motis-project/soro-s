@@ -57,7 +57,7 @@ element* get_or_create_element(graph& network, station& station,
                                bool const rising);
 
 void set_km_point_and_line(element& e, std::string const& node_name,
-                           kilometrage km_point, line_id line);
+                           kilometrage km_point, line::id line);
 
 void set_neighbour(element& e, std::string const& name, element* neigh,
                    bool const rising);

@@ -34,14 +34,17 @@ constexpr const char* const ETCS_START_FALLING = "ETCSAnfangF";
 constexpr const char* const ETCS_END_RISING = "ETCSEndeS";
 constexpr const char* const ETCS_END_FALLING = "ETCSEndeF";
 
-constexpr const char* const CTC_START_FALLING = "LZBAnfangF";
-constexpr const char* const CTC_END_FALLING = "LZBEndeF";
+constexpr const char* const ETCS_BLOCK_SIGN_RISING = "ETCSBlockkennzeichenS";
+constexpr const char* const ETCS_BLOCK_SIGN_FALLING = "ETCSBlockkennzeichenF";
 
-constexpr const char* const CTC_START_RISING = "LZBAnfangS";
-constexpr const char* const CTC_END_RISING = "LZBEndeS";
+constexpr const char* const LZB_START_FALLING = "LZBAnfangF";
+constexpr const char* const LZB_END_FALLING = "LZBEndeF";
 
-constexpr const char* const CTC_BLOCK_SIGN_RISING = "LZBBlockkennzeichenS";
-constexpr const char* const CTC_BLOCK_SIGN_FALLING = "LZBBlockkennzeichenF";
+constexpr const char* const LZB_START_RISING = "LZBAnfangS";
+constexpr const char* const LZB_END_RISING = "LZBEndeS";
+
+constexpr const char* const LZB_BLOCK_SIGN_RISING = "LZBBlockkennzeichenS";
+constexpr const char* const LZB_BLOCK_SIGN_FALLING = "LZBBlockkennzeichenF";
 
 constexpr const char* const SPEED_LIMIT_RISING = "GeschwZulaessigS";
 constexpr const char* const SPEED_LIMIT_FALLING = "GeschwZulaessigF";

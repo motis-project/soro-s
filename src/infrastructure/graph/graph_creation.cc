@@ -48,13 +48,13 @@ element* get_or_create_element(graph& network, station& station,
 }
 
 void set_km_point_and_line(end_element& e, std::string const&,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   e.km_ = km_point;
   e.line_ = line;
 }
 
 void set_km_point_and_line(simple_element& e, std::string const& node_name,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   switch (str_hash(node_name)) {
     case str_hash(KM_JUMP_START):
     case str_hash(LINE_SWITCH_ZERO): {
@@ -83,19 +83,19 @@ void set_km_point_and_line(simple_element& e, std::string const& node_name,
 }
 
 void set_km_point_and_line(track_element& e, std::string const&,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   e.km_ = km_point;
   e.line_ = line;
 }
 
 void set_km_point_and_line(undirected_track_element& e, std::string const&,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   e.km_ = km_point;
   e.line_ = line;
 }
 
 void set_km_point_and_line(simple_switch& e, std::string const& node_name,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   switch (str_hash(node_name)) {
     case str_hash(SWITCH_START): {
       e.start_km_ = km_point;
@@ -119,7 +119,7 @@ void set_km_point_and_line(simple_switch& e, std::string const& node_name,
 }
 
 void set_km_point_and_line(cross& e, std::string const& node_name,
-                           kilometrage const km_point, line_id const line) {
+                           kilometrage const km_point, line::id const line) {
   switch (str_hash(node_name)) {
     case str_hash(CROSS_SWITCH_START_LEFT):
     case str_hash(CROSS_START_LEFT): {
@@ -150,7 +150,7 @@ void set_km_point_and_line(cross& e, std::string const& node_name,
 }
 
 void set_km_point_and_line(element& e, std::string const& node_name,
-                           kilometrage km_point, line_id line) {
+                           kilometrage km_point, line::id line) {
   e.apply(
       [&](auto&& x) { set_km_point_and_line(x, node_name, km_point, line); });
 }
