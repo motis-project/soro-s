@@ -48,7 +48,7 @@ struct section {
   soro::vector<element::ptr> falling_order_;
 
   si::length length_{si::ZERO<si::length>};
-  line_id line_id_{INVALID_LINE_ID};
+  line::id line_id_{INVALID_LINE_ID};
 };
 
 }  // namespace soro::infra

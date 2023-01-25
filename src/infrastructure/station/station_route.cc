@@ -54,6 +54,17 @@ bool station_route::is_contained_route() const {
   return !starts_at_boundary(*this) && !ends_at_boundary(*this);
 }
 
+bool station_route::requires_etcs(lines const& lines) const {
+  if (!path_->etcs_starts_.empty()) {
+    auto const& etcs_start =
+        nodes(path_->etcs_starts_.back())->element_->as<track_element>();
+    auto const& line = lines.at(etcs_start.line_);
+    return !line.has_signalling(etcs_start.km_);
+  }
+
+  return false;
+}
+
 bool station_route::can_start_an_interlocking(
     station_route_graph const& srg) const {
   return !this->path_->main_signals_.empty() || srg.predeccesors_[id_].empty();

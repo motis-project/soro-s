@@ -156,8 +156,8 @@ inline void append_move(C1& dest, C2&& src) {
 }
 
 template <typename Iteratable, typename Pred>
-inline auto any_of(Iteratable const& i, Pred&& p) {
-  return std::any_of(std::cbegin(i), std::cend(i), p);
+inline auto any_of(Iteratable&& i, Pred&& p) {
+  return std::any_of(std::begin(i), std::end(i), p);
 }
 
 template <typename Iteratable, typename Pred>

@@ -29,7 +29,12 @@ enum class type : type_id {
   SPEED_LIMIT,
   POINT_SPEED,
   BRAKE_PATH,
-  CTC,
+  LZB_START,
+  LZB_END,
+  LZB_BLOCK_SIGN,
+  ETCS_START,
+  ETCS_END,
+  ETCS_BLOCK_SIGN,
   FORCED_HALT,
   HALT,
   // undirected track elements
@@ -102,5 +107,13 @@ constexpr bool is_runtime_checkpoint(type const type) {
 }
 
 constexpr bool is_halt(type const type) { return type == type::HALT; }
+
+constexpr bool is_lzb(type const type) {
+  return type >= type::LZB_START && type <= type::LZB_BLOCK_SIGN;
+}
+
+constexpr bool is_etcs(type const type) {
+  return type >= type::ETCS_START && type <= type::ETCS_BLOCK_SIGN;
+}
 
 }  // namespace soro::infra

@@ -7,7 +7,7 @@
 
 namespace soro::infra {
 
-kilometrage parse_kilometrage(pugi::xml_node const& node);
+kilometrage parse_kilometrage(std::string_view const kmp);
 
 rail_plan_node_id parse_rp_node_id(pugi::xml_node const& node);
 

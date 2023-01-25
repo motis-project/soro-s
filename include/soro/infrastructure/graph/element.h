@@ -10,6 +10,8 @@
 #include "soro/si/units.h"
 
 #include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/kilometrage.h"
+#include "soro/infrastructure/line.h"
 
 namespace soro::infra {
 
@@ -29,8 +31,7 @@ auto const INVALID_ELEMENT_ID = std::numeric_limits<element_id>::max();
 
 using kilometrage = si::length;
 
-using line_id = uint32_t;
-constexpr auto const INVALID_LINE_ID = std::numeric_limits<line_id>::max();
+constexpr auto const INVALID_LINE_ID = std::numeric_limits<line::id>::max();
 
 struct end_element {
 #if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
@@ -66,7 +67,7 @@ struct end_element {
   soro::array<element_ptr, 2> neighbours_{nullptr, nullptr};
 
   kilometrage km_{si::INVALID<kilometrage>};
-  line_id line_{INVALID_LINE_ID};
+  line::id line_{INVALID_LINE_ID};
 };
 
 struct simple_element {
@@ -108,8 +109,8 @@ struct simple_element {
 
   kilometrage end_km_{si::INVALID<kilometrage>};
   kilometrage start_km_{si::INVALID<kilometrage>};
-  line_id end_line_{INVALID_LINE_ID};
-  line_id start_line_{INVALID_LINE_ID};
+  line::id end_line_{INVALID_LINE_ID};
+  line::id start_line_{INVALID_LINE_ID};
 
   bool end_rising_{false};
 };
@@ -144,7 +145,7 @@ struct track_element {
   soro::array<element_ptr, 2> neighbours_{nullptr, nullptr};
 
   kilometrage km_{si::INVALID<kilometrage>};
-  line_id line_{INVALID_LINE_ID};
+  line::id line_{INVALID_LINE_ID};
 };
 
 struct undirected_track_element {
@@ -185,7 +186,7 @@ struct undirected_track_element {
   soro::array<element_ptr, 4> neighbours_{nullptr, nullptr, nullptr, nullptr};
 
   kilometrage km_{si::INVALID<kilometrage>};
-  line_id line_{INVALID_LINE_ID};
+  line::id line_{INVALID_LINE_ID};
 };
 
 struct simple_switch {
@@ -230,7 +231,7 @@ struct simple_switch {
   soro::array<element_ptr, 6> neighbours_{nullptr, nullptr, nullptr,
                                           nullptr, nullptr, nullptr};
 
-  line_id start_line_{INVALID_LINE_ID}, stem_line_{INVALID_LINE_ID},
+  line::id start_line_{INVALID_LINE_ID}, stem_line_{INVALID_LINE_ID},
       branch_line_{INVALID_LINE_ID};
   kilometrage start_km_{si::INVALID<kilometrage>},
       stem_km_{si::INVALID<kilometrage>}, branch_km_{si::INVALID<kilometrage>};
@@ -291,8 +292,8 @@ struct cross {
   bool start_left_end_right_arc_{false};
   bool start_right_end_left_arc_{false};
 
-  line_id start_left_line_{INVALID_LINE_ID}, end_left_line_{INVALID_LINE_ID};
-  line_id start_right_line_{INVALID_LINE_ID}, end_right_line_{INVALID_LINE_ID};
+  line::id start_left_line_{INVALID_LINE_ID}, end_left_line_{INVALID_LINE_ID};
+  line::id start_right_line_{INVALID_LINE_ID}, end_right_line_{INVALID_LINE_ID};
   kilometrage start_left_km_{si::INVALID<kilometrage>},
       end_left_km_{si::INVALID<kilometrage>};
   kilometrage start_right_km_{si::INVALID<kilometrage>},
