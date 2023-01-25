@@ -5,6 +5,7 @@
 #include "soro/infrastructure/graph/graph.h"
 #include "soro/infrastructure/infrastructure_options.h"
 #include "soro/infrastructure/interlocking/interlocking_subsystem.h"
+#include "soro/infrastructure/line.h"
 #include "soro/infrastructure/station/station.h"
 #include "soro/infrastructure/station/station_route_graph.h"
 #include "soro/rolling_stock/rolling_stock.h"
@@ -41,6 +42,8 @@ struct infrastructure_t {
 
   soro::vector<utls::gps> station_positions_{};
   soro::vector<utls::gps> element_positions_{};
+
+  lines lines_{};
 
   soro::vector<soro::unique_ptr<station>> station_store_{};
   soro::vector<soro::unique_ptr<station_route>> station_route_store_{};

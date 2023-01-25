@@ -16,6 +16,7 @@
 
 #include "soro/utls/execute_if.h"
 #include "soro/utls/parse_fp.h"
+#include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/string.h"
 
@@ -45,14 +46,16 @@ using namespace soro::utls;
 
 length get_section_length(xml_node const& section_start,
                           xml_node const& section_end) {
-  auto const start_km = parse_kilometrage(section_start);
-  auto const end_km = parse_kilometrage(section_end);
+  auto const start_km =
+      parse_kilometrage(section_start.child_value(KILOMETER_POINT));
+  auto const end_km =
+      parse_kilometrage(section_end.child_value(KILOMETER_POINT));
 
   return abs(start_km - end_km);
 }
 
 border parse_border(xml_node const& xml_rp_border, element* border_element,
-                    line_id const line, bool const is_start) {
+                    line::id const line, bool const is_start) {
   border b;
 
   b.neighbour_name_ = xml_rp_border.child_value(PARTNER_STATION);
@@ -104,12 +107,17 @@ constexpr type_order_key get_type_order_key(type const t, bool const rising) {
     case type::APPROACH_SIGNAL: return rising ? 130 : 131;
     case type::PROTECTION_SIGNAL: return rising ? 140 : 141;
     case type::EOTD: return rising ? 150 : 151;
-    case type::CTC: return rising ? 160 : 161;
-    case type::SPEED_LIMIT: return rising ? 170 : 171;
-    case type::FORCED_HALT: return rising ? 180 : 181;
-    case type::POINT_SPEED: return rising ? 190 : 191;
+    case type::LZB_START: return rising ? 160 : 161;
+    case type::LZB_BLOCK_SIGN: return rising ? 170 : 171;
+    case type::LZB_END: return rising ? 180 : 181;
+    case type::ETCS_START: return rising ? 190 : 191;
+    case type::ETCS_BLOCK_SIGN: return rising ? 200 : 201;
+    case type::ETCS_END: return rising ? 210 : 211;
+    case type::SPEED_LIMIT: return rising ? 220 : 221;
+    case type::FORCED_HALT: return rising ? 230 : 231;
+    case type::POINT_SPEED: return rising ? 240 : 241;
     case type::BRAKE_PATH:
-      return rising ? 200 : 201;
+      return rising ? 250 : 251;
 
       // undirected track elements part 2
     case type::TRACK_NAME: return 300;
@@ -158,8 +166,8 @@ bool order_impl(kilometrage const km1, type const t1, bool const r1,
 
 template <typename Comparator>
 bool element_order_from_nodes(xml_node const n1, xml_node const n2) {
-  auto const km1 = parse_kilometrage(n1);
-  auto const km2 = parse_kilometrage(n2);
+  auto const km1 = parse_kilometrage(n1.child_value(KILOMETER_POINT));
+  auto const km2 = parse_kilometrage(n2.child_value(KILOMETER_POINT));
 
   auto const r1 = has_rising_name(n1);
   auto const r2 = has_rising_name(n2);
@@ -197,8 +205,8 @@ bool element_order(element::ptr e1, element::ptr e2) {
 section::id parse_section_into_network(xml_node const& xml_rp_section,
                                        station& station, graph& network,
                                        construction_materials& mats) {
-  line_id const line =
-      static_cast<uint32_t>(std::stoul(xml_rp_section.child_value(LINE)));
+  auto const line_id =
+      utls::parse_int<line::id>(xml_rp_section.child_value(LINE));
   auto const& section_start =
       xml_rp_section.child(RAIL_PLAN_NODE).children().begin();
   auto const& section_end =
@@ -207,7 +215,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   auto const section_id = create_section(network);
   auto& sec = network.sections_[section_id];
   sec.length_ = get_section_length(*section_start, *section_end);
-  sec.line_id_ = line;
+  sec.line_id_ = line_id;
 
   auto get_main_rp_node_id = [](auto const& node) -> rail_plan_node_id {
     switch (str_hash(node.name())) {
@@ -309,20 +317,23 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
     }
 
     if (utls::equal(node.name(), BORDER)) {
-      station.borders_.push_back(parse_border(node, element, line, is_start));
+      station.borders_.push_back(
+          parse_border(node, element, line_id, is_start));
     }
 
     return element;
   };
 
   auto start_element = emplace_into_network(*section_start, true);
-  set_km_point_and_line(*start_element, section_start->name(),
-                        parse_kilometrage(*section_start), line);
+  set_km_point_and_line(
+      *start_element, section_start->name(),
+      parse_kilometrage(section_start->child_value(KILOMETER_POINT)), line_id);
   network.element_id_to_section_ids_[start_element->id()].push_back(section_id);
 
   auto end_element = emplace_into_network(*section_end, false);
-  set_km_point_and_line(*end_element, section_end->name(),
-                        parse_kilometrage(*section_end), line);
+  set_km_point_and_line(
+      *end_element, section_end->name(),
+      parse_kilometrage(section_end->child_value(KILOMETER_POINT)), line_id);
   network.element_id_to_section_ids_[end_element->id()].push_back(section_id);
 
   std::map<xml_node, element*> undirected_track_elements;
@@ -335,7 +346,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
         auto const rising_element = has_rising_name(node);
 
         auto const track_element = parse_track_element(
-            node, type, rising_element, line, network, station, mats);
+            node, type, rising_element, line_id, network, station, mats);
 
         if (dir || prev_element->is_track_element()) {
           set_neighbour(*prev_element, prev_node.name(), track_element, true);
@@ -361,7 +372,7 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
 
         auto const track_element =
             utl::get_or_create(undirected_track_elements, node, [&]() {
-              return parse_track_element(node, type, false, line, network,
+              return parse_track_element(node, type, false, line_id, network,
                                          station, mats);
             });
 
@@ -582,6 +593,24 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     return main_signals;
   };
 
+  auto const get_etcs = [&](soro::vector<node::ptr> const& nodes)
+      -> std::pair<soro::vector<node::idx>, soro::vector<node::idx>> {
+    soro::vector<node::idx> etcs_starts, etcs_ends;
+
+    for (node::idx idx = 0; idx < static_cast<node::idx>(nodes.size()); ++idx) {
+      auto const& node = nodes[idx];
+      if (node->is(type::ETCS_START)) {
+        etcs_starts.emplace_back(idx);
+      }
+
+      if (node->is(type::ETCS_END)) {
+        etcs_ends.emplace_back(idx);
+      }
+    }
+
+    return {etcs_starts, etcs_ends};
+  };
+
   auto const& graph = infra.graph_;
 
   deduplicated_paths result;
@@ -613,6 +642,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     auto nodes =
         get_path(i_sr, get_node(start, true), get_node(end, false)->id_);
     auto main_signals = get_main_signals(i_sr, nodes);
+    auto [etcs_starts, etcs_ends] = get_etcs(nodes);
 
     result.path_store_.emplace_back();
     result.path_store_.back() = soro::make_unique<station_route::path>(
@@ -620,7 +650,9 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
                             .end_ = end,
                             .course_ = i_sr.course_,
                             .nodes_ = std::move(nodes),
-                            .main_signals_ = std::move(main_signals)});
+                            .main_signals_ = std::move(main_signals),
+                            .etcs_starts_ = std::move(etcs_starts),
+                            .etcs_ends_ = std::move(etcs_ends)});
     auto const path_ptr = result.path_store_.back().get();
     result.paths_.emplace_back(path_ptr);
 
@@ -1150,6 +1182,8 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
       parse_regulatory_stations(iss_files.regulatory_station_files_);
   iss.full_station_names_ =
       get_full_station_names(iss, regulatory_station_data);
+
+  iss.lines_ = parse_lines(iss_files.regulatory_line_files_);
 
   iss.station_route_graph_ =
       get_station_route_graph(iss.station_routes_, iss.graph_);

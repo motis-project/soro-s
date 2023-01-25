@@ -44,7 +44,7 @@ struct border {
       std::numeric_limits<track_sign>::max();
 
   // minimum information to uniquely identify a border pair
-  using id_tuple = std::tuple<station::id, station::id, line_id, track_sign>;
+  using id_tuple = std::tuple<station::id, station::id, line::id, track_sign>;
 
   auto get_id_tuple() const {
     return id_tuple{std::min(station_->id_, neighbour_->id_),
@@ -62,7 +62,7 @@ struct border {
   station::ptr neighbour_{nullptr};
   element::ptr neighbour_element_{nullptr};
 
-  line_id line_{INVALID_LINE_ID};
+  line::id line_{INVALID_LINE_ID};
   track_sign track_sign_{INVALID_TRACK_SIGN};
 
   bool low_border_{false};

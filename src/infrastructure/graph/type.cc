@@ -80,18 +80,19 @@ type get_type(const char* const str) {
     case str_hash(CROSS_SWITCH_END_LEFT):
     case str_hash(CROSS_SWITCH_START_RIGHT):
     case str_hash(CROSS_SWITCH_END_RIGHT): return type::CROSS;
-    case str_hash(CTC_BLOCK_SIGN_RISING):
-      // ct
-    case str_hash(CTC_BLOCK_SIGN_FALLING):
-    case str_hash(CTC_START_FALLING):
-    case str_hash(CTC_END_FALLING):
-    case str_hash(CTC_START_RISING):
-    case str_hash(CTC_END_RISING):
-    case str_hash(ETCS_END_RISING):
-    case str_hash(ETCS_END_FALLING):
+    case str_hash(LZB_START_RISING):
+    case str_hash(LZB_START_FALLING): return type::LZB_START;
+    case str_hash(LZB_END_RISING):
+    case str_hash(LZB_END_FALLING): return type::LZB_END;
+    case str_hash(LZB_BLOCK_SIGN_RISING):
+    case str_hash(LZB_BLOCK_SIGN_FALLING): return type::LZB_BLOCK_SIGN;
     case str_hash(ETCS_START_RISING):
-    case str_hash(ETCS_START_FALLING):
-      return type::CTC;
+    case str_hash(ETCS_START_FALLING): return type::ETCS_START;
+    case str_hash(ETCS_END_RISING):
+    case str_hash(ETCS_END_FALLING): return type::ETCS_END;
+    case str_hash(ETCS_BLOCK_SIGN_RISING):
+    case str_hash(ETCS_BLOCK_SIGN_FALLING):
+      return type::ETCS_BLOCK_SIGN;
       // ignore these  for the moment
     default:
     case str_hash(PICTURE_POINT):
@@ -127,7 +128,12 @@ std::string get_type_str(type const& t) {
     case type::SLOPE: return "slope";
     case type::LEVEL_CROSSING: return "level_crossing";
     case type::CROSS: return "cross";
-    case type::CTC: return "ctc";
+    case type::LZB_END: return "lzb_end";
+    case type::LZB_START: return "lzb_start";
+    case type::LZB_BLOCK_SIGN: return "lzb_block_sign";
+    case type::ETCS_END: return "etcs_end";
+    case type::ETCS_START: return "etcs_start";
+    case type::ETCS_BLOCK_SIGN: return "etcs_block_sign";
   }
   throw utl::fail("No type string found in infrastructure element");
 }
