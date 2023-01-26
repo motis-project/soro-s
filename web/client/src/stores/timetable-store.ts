@@ -8,6 +8,7 @@
 // } from "../utl/IDBFSHelper.js";
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import type { Module } from 'vuex';
+import { sendRequest } from '@/api/api-client';
 
 // import { Module } from "../soro-client.js";
 
@@ -68,7 +69,7 @@ export const TimetableStore: Module<TimetableState, undefined> = {
 
     actions: {
         initialLoad({ commit }) {
-            fetch(window.origin + '/timetable/')
+            sendRequest({ url: 'timetable' })
                 .then(response => response.json())
                 .then(dir => {
                     commit('setTimetables', dir.dirs);
@@ -88,7 +89,7 @@ export const TimetableStore: Module<TimetableState, undefined> = {
                 this._current = loadTimetableFromIDBFS(timetablePath, currentInfrastructure);
             } else {
                 console.log('Fetching', timetableFilename, 'from server.');
-                fetch(window.origin + '/timetable/' + timetableFilename)
+                sendRequest({ url: `timetable/${timetableFilename}` })
                     .then(response => response.arrayBuffer())
                     .then(buf => saveFileToIDBFS(timetableFilename, buf))
                     .then(filePath => this._current = loadTimetableFromIDBFS(filePath, currentInfrastructure))

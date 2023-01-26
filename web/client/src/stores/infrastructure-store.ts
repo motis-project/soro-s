@@ -1,4 +1,5 @@
 import { Module } from 'vuex';
+import { sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
@@ -43,7 +44,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
     actions: {
         initialLoad({ commit }) {
-            fetch(window.origin + '/infrastructure/')
+            sendRequest({ url: 'infrastructure' })
                 .then(response => response.json())
                 .then((dir: InfrastructureFetchResponse) => {
                     commit('setInfrastructures', dir.dirs.filter((option: string) => option !== '.' && option !== '..'));
