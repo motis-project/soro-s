@@ -101,6 +101,7 @@ function process_way(way)
       way:set_target_layer("rail")
       way:set_approved_min(5)
       way:add_string("rail", "primary")
+      way:add_tag_as_string("color")
     end
 
   elseif way:has_any_tag("waterway") then

@@ -55,7 +55,11 @@ export const infrastructureMapStyle = (() => {
                 'source-layer': 'rail',
                 'filter': ['==', 'rail', 'primary'],
                 'paint': {
-                    'line-color': '#444',
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
                     'line-width': 2.0
                 }
             },
