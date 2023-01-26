@@ -25,7 +25,7 @@
 [tiles]
   url=git@github.com:motis-project/tiles.git
   branch=master
-  commit=653637bd3fb595eaaca71d9a153ddfcc59930a8b
+  commit=6dc60472ba6b3270c2afb50f9905e86c8db7bff5
 [rapidjson]
   url=git@github.com:motis-project/rapidjson.git
   branch=master
