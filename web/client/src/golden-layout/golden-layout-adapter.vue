@@ -1,5 +1,5 @@
 <template>
-    <div style="position: relative;">
+    <div style="position: absolute; height: 100%;">
         <div
             ref="GLRoot"
             style="position: absolute; width: 100%; height: 100%;"

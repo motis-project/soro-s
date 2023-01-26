@@ -1,10 +1,11 @@
 <template>
-    <button
-        class="matter-button-contained soro-button"
+    <v-btn
+        class="soro-button"
+        :color="type"
         @click="(event: Event) => $emit('click', event)"
     >
         {{ label }}
-    </button>
+    </v-btn>
 </template>
 
 <script lang="ts">
@@ -17,6 +18,11 @@ export default defineComponent({
         label: {
             type: String as PropType<string>,
             required: true,
+        },
+        type: {
+            type: String as PropType<'primary' | 'secondary'>,
+            required: false,
+            default: 'primary',
         },
     },
 

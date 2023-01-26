@@ -1,23 +1,19 @@
 <template>
-    <div class="material-select">
-        <select
-            class="material-select-text"
-            @change="emitChange"
-        >
-            <option
-                v-for="option in extendedOptions"
-                :key="option"
-                :value="option"
-                :selected="option === value"
-                :label="option ?? ''"
-            >
-                {{ option }}
-            </option>
-        </select>
-        <span class="material-select-highlight" />
-        <span class="material-select-bar" />
-        <label class="material-select-label">{{ label }}</label>
-    </div>
+    <v-select
+        v-bind="$attrs"
+        v-model="currentValue"
+        :label="label"
+        :items="options"
+        @update:model-value="emitChange"
+    >
+        <template #prepend-item>
+            <v-list-item
+                title="Clear selection"
+                @click="() => { currentValue = null; emitChange(); }"
+            />
+            <v-divider class="mt-2" />
+        </template>
+    </v-select>
 </template>
 
 <script lang="ts">
@@ -45,23 +41,21 @@ export default defineComponent({
 
     emits: ['select'],
 
-    data() {
+    data(): { currentValue: string | null } {
         return {
-            extendedOptions: new Array<string>(),
+            currentValue: null,
         };
     },
 
     watch: {
-        options() {
-            this.extendedOptions.push('');
-            this.extendedOptions.push(...this.options as string[]);
+        value(newValue) {
+            this.currentValue = newValue; 
         },
     },
 
     methods: {
-        emitChange(event: Event) {
-            event.preventDefault();
-            this.$emit('select', (event.target as HTMLInputElement).value);
+        emitChange() {
+            this.$emit('select', this.currentValue);
         },
     },
 });

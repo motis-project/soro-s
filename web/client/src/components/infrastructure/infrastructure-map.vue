@@ -4,7 +4,7 @@
             ref="map"
             class="map infrastructure-map"
         />
-        <div
+        <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
         >
@@ -12,30 +12,29 @@
                 v-for="(elementType, index) in legendControlTypes"
                 :key="index"
             >
-                <input
-                    :id="elementType"
+                <v-checkbox
                     :ref="elementType"
+                    v-model="checkedControls"
+                    :name="elementType"
                     :value="elementType"
-                    :checked="initiallyCheckedControls.includes(elementType)"
-                    type="checkbox"
-                    @input="onLegendControlClicked"
-                >
-                <label
                     class="legend-key"
-                    :for="elementType"
+                    color="primary"
+                    density="compact"
+                    min-height="0px"
+                    hide-details
                 >
-                    <img
-                        v-if="hasImage(elementType)"
-                        class="legend-key-icon"
-                        :src="iconUrl + elementType + iconExtension"
-                        alt=""
-                    >
-                    {{ elementTypeLabels[elementType] ?? elementType }}
-                </label>
-                <br>
+                    <template #label>
+                        <img
+                            v-if="hasImage(elementType)"
+                            class="legend-key-icon"
+                            :src="iconUrl + elementType + iconExtension"
+                            alt=""
+                        >
+                        {{ elementTypeLabels[elementType] ?? elementType }}
+                    </template>
+                </v-checkbox>
             </template>
-        </div>
-
+        </v-sheet>
         <div
             ref="infrastructureTooltip"
             class="infrastructureTooltip infrastructure-tooltip"
@@ -88,7 +87,7 @@ export default defineComponent({
         return {
             libreGLMap: null as (Map | null),
             legendControlTypes,
-            initiallyCheckedControls,
+            checkedControls: Array.from(initiallyCheckedControls),
             iconUrl,
             iconExtension,
             elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
@@ -109,6 +108,35 @@ export default defineComponent({
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+        },
+
+        checkedControls(newCheckedControls: string[], oldCheckedControls: string[]) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            const controlsToDeactivate = oldCheckedControls.filter((control) => !newCheckedControls.includes(control));
+            const controlsToActivate = newCheckedControls.filter((control) => !oldCheckedControls.includes(control));
+
+            controlsToDeactivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, false);
+            });
+
+            controlsToActivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, true);
+            });
         },
 
         highlightedSignalStationRouteID(newID, oldID) {
@@ -149,28 +177,20 @@ export default defineComponent({
             return !specialLayoutControls.includes(elementType);
         },
 
-        onLegendControlClicked(event: Event) {
-            if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
-                this.evaluateSpecialLegendControls();
-
-                return;
+        setElementTypeVisibility(elementType: string, visible: boolean) {
+            if (elementType !== 'station') {
+                this.libreGLMap?.setLayoutProperty(
+                    `circle-${elementType}-layer`,
+                    'visibility',
+                    visible ? 'visible': 'none',
+                );
             }
 
-            this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
-        },
-
-        evaluateLegendControlForControlType(type: string) {
-            if (!this.libreGLMap) {
-                return;
-            }
-
-            // @ts-ignore
-            this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
-
-            if (type !== 'station') {
-                // @ts-ignore
-                this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
-            }
+            this.libreGLMap?.setLayoutProperty(
+                `${elementType}-layer`,
+                'visibility',
+                visible ? 'visible': 'none',
+            );
         },
 
         evaluateSpecialLegendControls() {
@@ -216,7 +236,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
+                elementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({
@@ -254,31 +274,25 @@ export default defineComponent({
     position: absolute;
     bottom: 0;
     right: 0;
-    background: var(--overlay-color);
     margin-right: 20px;
-    font-family: var(--main-font-family);
-    overflow: auto;
-    border-radius: var(--border-radius);
 }
 
 .infrastructure-map-legend {
-    padding: 10px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
-    line-height: 18px;
+    padding: 10px 10px 20px;
     height: fit-content;
     margin-bottom: 40px;
     width: fit-content;
-    background: var(--overlay-color);
 }
 
 .legend-key {
-    height: 1em;
+    height: 1.5em;
     margin-right: 5px;
     margin-left: 5px;
 }
 
 .legend-key-icon {
     margin-right: 7px;
+    margin-left: 7px;
     display: inline-block;
     height: 1em;
 }
