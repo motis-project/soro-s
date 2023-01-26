@@ -105,6 +105,7 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
+            this.libreGLMap?.remove();
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
