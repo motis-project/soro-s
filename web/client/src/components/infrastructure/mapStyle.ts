@@ -38,6 +38,17 @@ export const infrastructureMapStyle = (() => {
                 }
             },
             {
+                'id': 'yards',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'detail'],
+                'paint': {
+                    'line-color': '#ccc',
+                    'line-width': 2.0
+                }
+            },
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
