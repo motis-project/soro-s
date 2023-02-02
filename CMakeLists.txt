@@ -142,7 +142,7 @@ target_compile_options(soro-lib PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_features(soro-lib PRIVATE ${SORO_COMPILE_FEATURES})
 target_compile_definitions(soro-lib PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_include_directories(soro-lib PUBLIC include)
-target_link_libraries(soro-lib PRIVATE utl cista date pugixml Threads::Threads)
+target_link_libraries(soro-lib PRIVATE utl cista date pugixml Threads::Threads rapidjson)
 
 if (SORO_CUDA)
     target_link_libraries(soro-lib PUBLIC infrastructure-cuda)

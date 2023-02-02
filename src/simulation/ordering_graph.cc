@@ -6,6 +6,8 @@
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
 #include <random>
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 #include "soro/runtime/runtime.h"
 
 namespace soro::simulation {
@@ -13,12 +15,36 @@ namespace soro::simulation {
 using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
+using namespace std;
+using namespace rapidjson;
 
 struct route_usage {
   utls::unixtime from_{utls::INVALID_TIME};
   utls::unixtime to_{utls::INVALID_TIME};
   ordering_node::id node_id_{ordering_node::INVALID};
 };
+
+template <typename Writer>
+void ordering_node::serialize(Writer& writer) {
+  writer.StartObject();
+  writer.Key("key");
+  writer.String(std::to_string(id_).c_str());
+
+  writer.Key("attributes");
+  writer.StartObject();
+
+  writer.Key("id");
+  writer.Uint(id_);
+
+  writer.Key("route_id");
+  writer.Uint(ir_id_);
+
+  writer.Key("train_id");
+  writer.Uint(train_id_);
+
+  writer.EndObject();
+  writer.EndObject();
+}
 
 using usage_idx = uint32_t;
 constexpr auto const INVALID_USAGE_IDX = std::numeric_limits<usage_idx>::max();
@@ -155,19 +181,20 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
   // get random number generator
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<> distr(1, 6);
+  std::uniform_int_distribution<> distr_node(min, max);
+  std::uniform_int_distribution<> distr_track(0, track_amnt - 1);
 
   // generate nodes for each train and connect them
   for (auto train = 0; train < train_amnt; train++) {
     // amount of tracks this train will use for now
-    const auto node_amnt = min + (distr(mt) % (max - min));
+    const auto node_amnt = distr_node(mt);
 
     for (auto n = 0; n < node_amnt; n++) {
       // choose a random new track that this train will use
       std::vector<int> chosen_ids;
       int track_id = 0;
       while (true) {
-        track_id = distr(mt) % track_amnt;
+        track_id = distr_track(mt);
         // track must not already be used by this train
         if (!utls::contains(chosen_ids, track_id)) {
           chosen_ids.emplace_back(track_id);
@@ -179,10 +206,8 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
                                 train);
       // connect the node before this one with the new one
       if (n != 0) {
-        graph.nodes_[size - 1].out_.emplace_back(
-            static_cast<ordering_node::id>(size));
-        graph.nodes_[size].in_.emplace_back(
-            static_cast<ordering_node::id>(size - 1));
+        ordering_graph::emplace_edge(graph.nodes_[size - 1],
+                                     graph.nodes_[size]);
       }
     }
   }
@@ -199,10 +224,8 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
       if (graph.nodes_[first_index].ir_id_ != graph.nodes_[second_index].ir_id_)
         continue;
       // connect first train with problematic second
-      graph.nodes_[first_index].out_.emplace_back(
-          graph.nodes_[second_index].id_);
-      graph.nodes_[second_index].in_.emplace_back(
-          graph.nodes_[first_index].id_);
+      ordering_graph::emplace_edge(graph.nodes_[first_index],
+                                   graph.nodes_[second_index]);
       // to prevent unnecessary edges (will be added transivitely): move
       // firstIndex further
       break;
@@ -210,6 +233,57 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
   }
 
   return graph;
+}
+
+string ordering_graph::to_json() {
+  StringBuffer sb;
+  PrettyWriter<StringBuffer> writer(sb);
+  Serialize(writer);
+
+  return sb.GetString();
+}
+
+void ordering_graph::emplace_edge(ordering_node& from, ordering_node& to) {
+  from.out_.emplace_back(to.id_);
+  to.in_.emplace_back(from.id_);
+}
+
+template <typename Writer>
+void ordering_graph::Serialize(Writer& writer) {
+  writer.StartObject();
+
+  writer.Key("attributes");
+  writer.StartObject();
+  writer.EndObject();
+
+  writer.Key("nodes");
+  writer.StartArray();
+  for (ordering_node node : nodes_) {
+    node.serialize(writer);
+  }
+  writer.EndArray();
+
+  writer.Key("edges");
+  writer.StartArray();
+  for (const ordering_node& node : nodes_) {
+    for (const uint32_t to_id : node.out_) {
+      writer.StartObject();
+
+      writer.Key("source");
+      writer.String(std::to_string(node.id_).c_str());
+
+      writer.Key("target");
+      writer.String(std::to_string(to_id).c_str());
+
+      writer.Key("attributes");
+      writer.StartObject();
+      writer.EndObject();
+
+      writer.EndObject();
+    }
+  }
+  writer.EndArray();
+  writer.EndObject();
 }
 
 }  // namespace soro::simulation

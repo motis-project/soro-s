@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rapidjson/document.h"
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/timetable/timetable.h"
 #include "soro/utls/unixtime.h"
@@ -20,12 +21,20 @@ struct ordering_node {
 
   std::vector<id> in_;
   std::vector<id> out_;
+
+  template <typename Writer>
+  void serialize(Writer& writer);
 };
 
 struct ordering_graph {
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
   ordering_graph();
   std::vector<ordering_node> nodes_;
+  string to_json();
+  static void emplace_edge(ordering_node& from, ordering_node& to);
+
+  template <typename Writer>
+  void Serialize(Writer& writer);
 };
 
 ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
