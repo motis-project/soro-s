@@ -59,14 +59,20 @@ import {
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { elementTypes, elementTypeLabels } from './elementTypes';
+import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 
 const specialLayoutControls = ['Rising', 'Falling'];
-const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
+const initiallyCheckedControls = [
+    ElementType.STATION,
+    ElementType.MAIN_SIGNAL,
+    ElementType.APPROACH_SIGNAL,
+    ElementType.END_OF_TRAIN_DETECTOR,
+    ...specialLayoutControls,
+];
 const legendControlTypes = [
-    ...elementTypes,
+    ...ElementTypes,
     ...specialLayoutControls
 ];
 
@@ -90,7 +96,7 @@ export default defineComponent({
             checkedControls: Array.from(initiallyCheckedControls),
             iconUrl,
             iconExtension,
-            elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
+            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
@@ -210,8 +216,8 @@ export default defineComponent({
                 filter = ['boolean', false];
             }
 
-            elementTypes.forEach((elementType) => {
-                if (elementType === 'station') {
+            ElementTypes.forEach((elementType) => {
+                if (elementType === ElementType.STATION) {
                     return;
                 }
 
@@ -236,7 +242,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({

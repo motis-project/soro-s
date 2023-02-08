@@ -1,4 +1,4 @@
-import { elementTypes } from './elementTypes.js';
+import { ElementTypes } from './elementTypes.js';
 import { Map } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 
@@ -6,7 +6,7 @@ export const iconUrl = transformUrl('/icons/');
 export const iconExtension = '.png';
 
 export function addIcons(map: Map) {
-    return Promise.all(elementTypes.map((elementType) => {
+    return Promise.all(ElementTypes.map((elementType) => {
         const iconName = 'icon-' + elementType;
 
         return new Promise<void>((resolve: () => void, reject) => {

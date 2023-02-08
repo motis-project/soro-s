@@ -21,6 +21,7 @@ function process_node(node)
     if node:has_any_tag("subtype") then
         node:set_target_layer(node:get_tag("subtype"))
         node:add_tag_as_integer("id")
+        node:add_tag_as_string("name")
         if (node:has_tag("direction", "rising")) then
             node:add_bool("rising", true)
         else
