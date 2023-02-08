@@ -27,6 +27,6 @@ ninja
 
 Then simply execute
 ```shell
-ninja soro-client-production
+ninja soro-client
 ```
 This target has also been added to the `soro-server-client` target for convenience.
