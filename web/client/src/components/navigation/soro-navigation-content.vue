@@ -54,10 +54,13 @@
                         mandatory
                         @update:model-value="setDarkLightModePreference"
                     >
-                        <v-btn value="light">
+                        <v-btn :value="DarkLightModes.OS">
+                            OS
+                        </v-btn>
+                        <v-btn :value="DarkLightModes.LIGHT">
                             Light
                         </v-btn>
-                        <v-btn value="dark">
+                        <v-btn :value="DarkLightModes.DARK">
                             Dark
                         </v-btn>
                     </v-btn-toggle>
@@ -114,7 +117,7 @@ import { mapActions, mapMutations, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
-import { SettingsNamespace } from '@/stores/settings-store';
+import { DarkLightModes, SettingsNamespace } from '@/stores/settings-store';
 
 export default defineComponent({
     name: 'SoroNavigationContent',
@@ -125,6 +128,7 @@ export default defineComponent({
         return {
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
+            DarkLightModes,
         };
     },
 
@@ -151,7 +155,7 @@ export default defineComponent({
             );
         },
 
-        ...mapMutations(SettingsNamespace, ['setDarkLightModePreference']),
+        ...mapActions(SettingsNamespace, ['setDarkLightModePreference']),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }

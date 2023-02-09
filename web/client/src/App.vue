@@ -1,6 +1,6 @@
 <template>
     <div class="full-height">
-        <v-theme-provider :theme="darkLightModePreference">
+        <v-theme-provider :theme="theme">
             <v-layout>
                 <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
             </v-layout>
@@ -57,10 +57,11 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
-        ...mapState(SettingsNamespace, ['darkLightModePreference']),
+        ...mapState(SettingsNamespace, ['theme']),
     },
 
     mounted() {
+        this.loadSettings();
         this.loadInfrastructures();
         this.loadTimetables();
         GLayoutRoot.value.loadGLLayout(initLayout);
@@ -80,6 +81,8 @@ export default defineComponent({
             loadTimetables: 'initialLoad',
             loadTimetable: 'load',
         }),
+
+        ...mapActions(SettingsNamespace, ['loadSettings']),
     },
 });
 </script>
