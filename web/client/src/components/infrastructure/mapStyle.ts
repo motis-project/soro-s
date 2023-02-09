@@ -3,7 +3,7 @@ import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 import { ThemeDefinition } from 'vuetify';
 
-export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof elementTypes }) => {
+export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof ElementTypes }) => {
     const style: StyleSpecification = {
         version: 8,
         sources: {
@@ -166,8 +166,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'minzoom': type === ElementType.HALT ? 10 : 15,
                 'maxzoom': 24,
                 'paint': {
-                    'text-halo-width': 1,
-                    'text-halo-color': '#ffffff',
+                    'icon-color': '#ffffff',
+                    'text-color': currentTheme.colors?.['on-surface'],
                 },
                 'layout': {
                     'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
@@ -177,9 +177,6 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'text-font': ['Noto Sans Display Regular'],
                     'icon-image': 'icon-' + type,
                     'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4]
-                },
-                paint: {
-                    'icon-color': '#ffffff',
                 },
                 // "filter": ['==', 'direction', 'rising']
             });
