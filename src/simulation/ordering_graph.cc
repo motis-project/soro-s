@@ -188,10 +188,10 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
   for (auto train = 0; train < train_amnt; train++) {
     // amount of tracks this train will use for now
     const auto node_amnt = distr_node(mt);
+    std::vector<int> chosen_ids;
 
     for (auto n = 0; n < node_amnt; n++) {
       // choose a random new track that this train will use
-      std::vector<int> chosen_ids;
       int track_id = 0;
       while (true) {
         track_id = distr_track(mt);
