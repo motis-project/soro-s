@@ -40,4 +40,7 @@ struct ordering_graph {
 ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
                                   int max_nodes);
 
+ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
+                                  int max_nodes, unsigned int seed);
+
 }  // namespace soro::simulation
