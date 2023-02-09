@@ -34,10 +34,14 @@ foreach (file ${soro-server-resources})
     configure_file(${file} ${SORO_SERVER_DIR}/${relative-path} COPYONLY)
 endforeach ()
 
-configure_file(../../resources/misc/btrs_geo.csv ${SORO_SERVER_DIR}/server_resources/misc/btrs_geo.csv COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/resources/misc/btrs_geo.csv ${SORO_SERVER_DIR}/server_resources/misc/btrs_geo.csv COPYONLY)
 file(MAKE_DIRECTORY ${SORO_SERVER_DIR}/server_resources/resources/)
-file(MAKE_DIRECTORY ${SORO_SERVER_DIR}/server_resources/resources/infrastructure)
-file(MAKE_DIRECTORY ${SORO_SERVER_DIR}/server_resources/resources/timetable)
+file(GLOB_RECURSE soro-resources ${CMAKE_SOURCE_DIR}/resources/*.xml ${CMAKE_SOURCE_DIR}/resources/*.osm ${CMAKE_SOURCE_DIR}/resources/*.txt)
+foreach (file ${soro-resources})
+    set(path ${file})
+    cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE relative-path)
+    configure_file(${file} ${SORO_SERVER_DIR}/server_resources/${relative-path} COPYONLY)
+endforeach ()
 
 # Disable warnings for tiles dependency by configuring it as a systems dependency
 set_target_properties(tiles PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:tiles,INTERFACE_INCLUDE_DIRECTORIES>)
