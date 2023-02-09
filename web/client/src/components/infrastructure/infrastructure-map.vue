@@ -7,6 +7,7 @@
         <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
+            :elevation="5"
         >
             <template
                 v-for="(elementType, index) in legendControlTypes"
@@ -57,11 +58,12 @@ import {
     highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { infrastructureMapStyle } from './mapStyle';
+import { createInfrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
+import { ThemeInstance, useTheme } from 'vuetify';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = [
@@ -77,7 +79,6 @@ const legendControlTypes = [
 ];
 
 const mapDefaults = {
-    style: infrastructureMapStyle,
     attributionControl: false,
     zoom: 18,
     hash: 'location',
@@ -88,6 +89,10 @@ const mapDefaults = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+
+    setup() {
+        return { currentTheme: useTheme().global };
+    },
 
     data() {
         return {
@@ -110,7 +115,6 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
-            this.libreGLMap?.remove();
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
@@ -143,6 +147,20 @@ export default defineComponent({
 
                 this.setElementTypeVisibility(control, true);
             });
+        },
+
+        currentTheme: {
+            handler(newTheme: ThemeInstance) {
+                if (!this.libreGLMap) {
+                    return;
+                }
+
+                this.libreGLMap.setStyle(createInfrastructureMapStyle({
+                    currentTheme: newTheme.current.value,
+                    activatedElements: this.checkedControls,
+                }));
+            },
+            deep: true,
         },
 
         highlightedSignalStationRouteID(newID, oldID) {
@@ -237,7 +255,11 @@ export default defineComponent({
                     if (relative_url.startsWith('/')) {
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
-                }
+                },
+                style: createInfrastructureMapStyle({
+                    currentTheme: this.$vuetify.theme.current,
+                    activatedElements: this.checkedControls,
+                }),
             });
 
             map.on('load', async () => {
