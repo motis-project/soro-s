@@ -4,6 +4,7 @@ import { VuetifyExtension } from '@/vuetify';
 type SettingsState = {
     darkLightModePreference: typeof DarkLightModes[keyof typeof DarkLightModes],
     theme: typeof DarkLightModes.DARK | typeof DarkLightModes.LIGHT,
+    primaryColor: string | null,
 }
 
 export const DarkLightModes = {
@@ -21,6 +22,7 @@ export const SettingsStore: Module<SettingsState, undefined> = {
         return {
             darkLightModePreference: DarkLightModes.OS,
             theme: DarkLightModes.DARK,
+            primaryColor: null,
         };
     },
 
@@ -28,11 +30,23 @@ export const SettingsStore: Module<SettingsState, undefined> = {
         setDarkLightModePreference(state, darkLightModePreference) {
             state.darkLightModePreference = darkLightModePreference;
         },
-        
+
         setTheme(this: VuetifyExtension, state, theme) {
             state.theme = theme;
             // We need to set the theme globally in vuetify to access its properties in components
             this.$vuetify.theme.global.name.value = theme;
+        },
+
+        setPrimaryColor(this: VuetifyExtension, state, primaryColor) {
+            state.primaryColor = primaryColor;
+            // We need to set the primary color globally in vuetify to access its properties in components
+            const themes = this.$vuetify.theme.themes.value;
+            Object.keys(themes).forEach((themeKey) => themes[themeKey].colors.primary = primaryColor);
+        },
+
+        restoreVuetifyThemePrimaryColor(this: VuetifyExtension, state) {
+            console.log(this.$vuetify);
+            state.primaryColor = this.$vuetify.theme.global.current.value.colors.primary;
         }
     },
 
@@ -46,10 +60,20 @@ export const SettingsStore: Module<SettingsState, undefined> = {
 
             dispatch('initThemeListener');
             dispatch('applyTheme');
+
+            const primaryColor = storage.getItem('primaryColor');
+            if (primaryColor) {
+                commit('setPrimaryColor', primaryColor);
+            } else {
+                commit('restoreVuetifyThemePrimaryColor');
+            }
         },
 
         saveSettings({ state }) {
             window.localStorage.setItem('darkLightModePreference', state.darkLightModePreference);
+            if (state.primaryColor) {
+                window.localStorage.setItem('primaryColor', state.primaryColor);
+            }
         },
 
         setDarkLightModePreference({ commit, dispatch }, preference) {
@@ -79,6 +103,11 @@ export const SettingsStore: Module<SettingsState, undefined> = {
             }
 
             commit('setTheme', state.darkLightModePreference);
+        },
+
+        setPrimaryColor({ commit, dispatch }, primaryColor) {
+            commit('setPrimaryColor', primaryColor);
+            dispatch('saveSettings');
         }
-    }
+    },
 };

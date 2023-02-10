@@ -64,6 +64,29 @@
                             Dark
                         </v-btn>
                     </v-btn-toggle>
+
+                    <v-sheet
+                        title="some"
+                        class="d-flex accent-color-picker"
+                    >
+                        <div class="flex-grow-0 accent-color-display" />
+                        <v-btn class="flex-grow-1 ms-2">
+                            Select color
+                            <v-menu
+                                activator="parent"
+                                :close-on-content-click="false"
+                            >
+                                <v-color-picker
+                                    style="overflow: unset;"
+                                    :model-value="colorSelection"
+                                    min-width="300"
+                                    hide-inputs
+                                    show-swatches
+                                    @update:model-value="onUpdateColorSelection"
+                                />
+                            </v-menu>
+                        </v-btn>
+                    </v-sheet>
                 </soro-collapsible>
 
                 <soro-collapsible
@@ -113,7 +136,7 @@ import SoroCollapsible from '@/components/soro-collapsible.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapMutations, mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
@@ -126,6 +149,8 @@ export default defineComponent({
 
     data() {
         return {
+            colorSelection: null as (null | string),
+            showColorSelector: false,
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
             DarkLightModes,
@@ -141,7 +166,14 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
-        ...mapState(SettingsNamespace, ['darkLightModePreference']),
+        ...mapState(SettingsNamespace, [
+            'darkLightModePreference',
+            'primaryColor',
+        ]),
+    },
+
+    mounted() {
+        this.colorSelection = this.primaryColor;
     },
 
     methods: {
@@ -155,7 +187,15 @@ export default defineComponent({
             );
         },
 
-        ...mapActions(SettingsNamespace, ['setDarkLightModePreference']),
+        onUpdateColorSelection(newColor: string) {
+            this.setPrimaryColor(newColor);
+            this.colorSelection = newColor;
+        },
+
+        ...mapActions(SettingsNamespace, [
+            'setDarkLightModePreference',
+            'setPrimaryColor',
+        ]),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }
@@ -242,5 +282,18 @@ export default defineComponent({
 
 .settings {
     padding: 3%;
+}
+
+.accent-color-picker {
+    margin-top: 20px;
+    max-width: 100%;
+    justify-self: center;
+}
+
+.accent-color-display {
+    height: auto;
+    width: 50px;
+    background: rgb(var(--v-theme-primary));
+    border-radius: 5px;
 }
 </style>
