@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
 
 #include "tiles/db/pack_file.h"
 #include "tiles/db/tile_database.h"
@@ -10,6 +11,7 @@
 #include "tiles/util.h"
 
 #include "soro/server/http_server.h"
+#include "soro/server/osm_util.h"
 
 namespace soro::server {
 
@@ -35,7 +37,8 @@ struct server {
   using serve_contexts = std::unordered_map<std::string, serve_context>;
 
   server(std::string const& address, port_t const port,
-         fs::path const& server_resource_dir, bool const test);
+         fs::path const& server_resource_dir, bool const test,
+         const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts);
 
   static void serve_forever(std::string const& address, port_t const port,
                             callback_t&& cb, bool const test);

@@ -13,6 +13,8 @@
 #include "tiles/parse_tile_url.h"
 #include "tiles/perf_counter.h"
 #include "tiles/util.h"
+#include "soro/utls/string.h"
+
 
 #include "soro/server/http_server.h"
 
@@ -175,8 +177,68 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
+std::string to_lower(std::string str) {
+  std::transform(str.begin(), str.end(), str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return str;
+}
+
+std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
+    std::vector<soro::server::osm_halt> matches;
+
+    for (const auto& halt : osm_halts) {
+        if (to_lower(halt.name_).starts_with(to_lower(name))) {
+            matches.push_back(halt);
+        }
+    }
+
+    // exact match?
+    for (const auto& match : matches) 
+        if (match.name_.length() == name.length()) return match;
+
+    if (!matches.empty()) return matches[0];
+
+    return {};
+}
+
+void serve_search(
+    std::string const& decoded_url, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
+  const auto index = decoded_url.find('?') + 1;
+  const auto msg = decoded_url.substr(index, decoded_url.length() - index);
+
+  const auto params = utls::split(msg, "&");
+
+  const auto halt_name = params[0].substr(6);  // len("query=") = 6
+  const auto infra_name = params[1].substr(15);  // len("infrastructure=") = 15
+
+  const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
+
+  if (!info.has_value()) {
+    res.result(http::status::no_content);
+
+    return;
+  }
+
+  rapidjson::Document doc;
+  doc.SetObject();
+  doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
+  doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+
+  buffer.Clear();
+
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+
+  res.body() = buffer.GetString();
+  res.result(http::status::ok);
+}
+
 server::server(std::string const& address, port_t const port,
-               fs::path const& server_resource_dir, bool const test) {
+               fs::path const& server_resource_dir, bool const test,
+    const std::unordered_map<std::string,
+    std::vector<soro::server::osm_halt>>&osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
   serve_forever(
@@ -193,6 +255,7 @@ server::server(std::string const& address, port_t const port,
 
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
+        bool const should_send_pos = url.find("/search?") != std::string::npos;
 
         switch (req.method()) {
           case http::verb::options: {
@@ -210,6 +273,8 @@ server::server(std::string const& address, port_t const port,
               }
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
+            } else if (should_send_pos) {
+              serve_search(url, res, osm_halts);
             } else {
               serve_file(url, server_resource_dir, res);
             }

@@ -42,6 +42,8 @@
                     />
                 </div>
 
+                <station-search class="station-search-field" />
+
                 <soro-collapsible
                     label="Settings"
                     class="settings"
@@ -128,10 +130,11 @@
 </template>
 
 <script setup lang="ts">
-import DisruptionDetail from '../disruption-detail.vue';
-import SoroSelect from '../soro-select.vue';
-import SoroButton from '../soro-button.vue';
+import DisruptionDetail from '@/components/disruption-detail.vue';
+import SoroSelect from '@/components/soro-select.vue';
+import SoroButton from '@/components/soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
+import StationSearch from '@/components/station-search.vue';
 </script>
 
 <script lang="ts">
@@ -261,14 +264,18 @@ export default defineComponent({
     cursor: pointer;
 }
 
-.window-controls,
-.dev-tools {
+.window-controls {
     display: flex;
     flex-flow: column wrap;
     justify-content: space-around;
     padding: 3%;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.window-controls > .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 
 .data-selects {
@@ -280,8 +287,18 @@ export default defineComponent({
     margin-bottom: 0.5em;
 }
 
-.settings {
+.station-search-field {
     padding: 3%;
+}
+
+.settings,
+.dev-tools {
+    padding: 3%;
+}
+
+.dev-tools > .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 
 .accent-color-picker {

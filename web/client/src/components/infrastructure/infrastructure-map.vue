@@ -87,6 +87,11 @@ const mapDefaults = {
     bearing: 0,
 };
 
+export type MapPosition = {
+    lat: number,
+    lon: number,
+};
+
 export default defineComponent({
     name: 'InfrastructureMap',
 
@@ -108,6 +113,7 @@ export default defineComponent({
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
+            'currentSearchedMapPosition',
             'highlightedSignalStationRouteID',
             'highlightedStationRouteID',
         ]),
@@ -146,6 +152,18 @@ export default defineComponent({
                 }
 
                 this.setElementTypeVisibility(control, true);
+            });
+        },
+
+        currentSearchedMapPosition(mapPosition: MapPosition) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            console.log('Jumping to: ' + JSON.stringify(mapPosition));
+            this.libreGLMap.jumpTo({
+                center: mapPosition,
+                zoom: 14,
             });
         },
 

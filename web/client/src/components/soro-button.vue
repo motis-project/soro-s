@@ -29,10 +29,3 @@ export default defineComponent({
     emits: ['click'],
 });
 </script>
-
-<style scoped>
-.soro-button {
-    margin-top: 0.2em;
-    margin-bottom: 0.2em;
-}
-</style>

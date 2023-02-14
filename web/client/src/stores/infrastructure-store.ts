@@ -1,9 +1,12 @@
 import { Module } from 'vuex';
-import { sendRequest } from '@/api/api-client';
+import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
+import { sendRequest, transformUrl } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
+    currentSearchedMapPosition?: MapPosition,
+    currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
 }
@@ -19,6 +22,8 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         return {
             infrastructures: [],
             currentInfrastructure: undefined,
+            currentSearchedMapPosition: undefined,
+            currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
         };
@@ -31,6 +36,14 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentInfrastructure(state, currentInfrastructure) {
             state.currentInfrastructure = currentInfrastructure;
+        },
+
+        setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
+            state.currentSearchedMapPosition = currentSearchedMapPosition;
+        },
+
+        setCurrentSearchError(state, currentSearchError) {
+            state.currentSearchError = currentSearchError;
         },
 
         setHighlightedSignalStationRouteID(state, highlightedSignalStationRouteID) {
@@ -59,5 +72,31 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         unload({ commit }) {
             commit('setCurrentInfrastructure', null);
         },
+
+        searchPositionFromName({ commit, state }, query) {
+            if (!state.currentInfrastructure) {
+                console.error('Tried search with no selected infrastructure');
+
+                return;
+            }
+
+            if (!query) {
+                commit('setCurrentSearchedMapPosition', null);
+
+                return;
+            }
+
+            fetch(transformUrl(`search?query=${query}&infrastructure=${state.currentInfrastructure}`))
+                .then(response => response.json())
+                .then(position => {
+                    commit('setCurrentSearchedMapPosition', position);
+                    commit('setCurrentSearchError', undefined);
+                })
+                .catch(() => {
+                    commit('setCurrentSearchError', 'Not found!');
+
+                    return;
+                });
+        }
     },
 };
