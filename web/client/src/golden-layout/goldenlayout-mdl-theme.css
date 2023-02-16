@@ -65,7 +65,7 @@ body {
 }
 
 .lm_header .lm_tab {
-    background: #fff;
+    background: rgb(var(--v-theme-surface));
     color: rgb(var(--v-theme-on-background));
     font-family: Roboto, sans-serif;
     margin-right: 2px;
@@ -84,7 +84,7 @@ body {
 .lm_tab.lm_active,
 .lm_tab:hover {
     color: rgb(var(--v-theme-on-background));
-    background: rgb(var(--v-theme-surface) 0.75) !important;
+    background: rgb(var(--v-theme-surface)) !important;
 }
 
 .lm_tab:hover {
