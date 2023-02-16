@@ -96,6 +96,10 @@
                     class="dev-tools"
                 >
                     <soro-button
+                        label="Clear local storage"
+                        @click="clearLocalStorage"
+                    />
+                    <soro-button
                         disabled
                         label="Clear Cache"
                     />
@@ -193,6 +197,10 @@ export default defineComponent({
         onUpdateColorSelection(newColor: string) {
             this.setPrimaryColor(newColor);
             this.colorSelection = newColor;
+        },
+
+        clearLocalStorage() {
+            window.localStorage.clear();
         },
 
         ...mapActions(SettingsNamespace, [
@@ -296,7 +304,7 @@ export default defineComponent({
     padding: 3%;
 }
 
-.dev-tools > .soro-button {
+.dev-tools .soro-button {
     margin-top: 0.2em;
     margin-bottom: 0.2em;
 }
