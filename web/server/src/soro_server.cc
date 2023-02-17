@@ -183,7 +183,7 @@ std::string to_lower(std::string str) {
   return str;
 }
 
-std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
+std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
     std::vector<soro::server::osm_halt> matches;
 
     for (const auto& halt : osm_halts) {
@@ -192,44 +192,56 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
         }
     }
 
-    // exact match?
-    for (const auto& match : matches) 
-        if (match.name_.length() == name.length()) return match;
-
-    if (!matches.empty()) return matches[0];
-
-    return {};
+    return matches;
 }
 
 void serve_search(
-    std::string const& decoded_url, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
-  const auto index = decoded_url.find('?') + 1;
-  const auto msg = decoded_url.substr(index, decoded_url.length() - index);
+    request_t const& req, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
+  
+  std::string body;
 
-  const auto params = utls::split(msg, "&");
+  auto m_buffer = req.body();
 
-  const auto halt_name = params[0].substr(6);  // len("query=") = 6
-  const auto infra_name = params[1].substr(15);  // len("infrastructure=") = 15
+  for (auto seq : m_buffer.data()) {
+      auto* cbuf = boost::asio::buffer_cast<const char*>(seq);
+      body.append(cbuf, boost::asio::buffer_size(seq));
+  }
+
+  rapidjson::Document req_body;
+  req_body.Parse(body.c_str());
+
+  std::string const infra_name = req_body["infrastructure"].GetString();
+  std::string const halt_name = req_body["query"].GetString();
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
-  if (!info.has_value()) {
-    res.result(http::status::no_content);
+ 
+  rapidjson::Document ret;
+  ret.SetArray();
 
-    return;
+  for (const auto& elem : info) {
+      rapidjson::Value pos;
+      pos.SetObject();
+      pos.AddMember("lat", elem.lat_, ret.GetAllocator());
+      pos.AddMember("lon", elem.lon_, ret.GetAllocator());
+
+      rapidjson::Value name;
+      name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()));
+
+      rapidjson::Value entry;
+      entry.SetObject();
+      entry.AddMember("name", name, ret.GetAllocator());
+      entry.AddMember("position", pos, ret.GetAllocator());
+
+      ret.PushBack(entry, ret.GetAllocator());
   }
-
-  rapidjson::Document doc;
-  doc.SetObject();
-  doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
-  doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
 
   rapidjson::StringBuffer buffer;
 
   buffer.Clear();
 
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  doc.Accept(writer);
+  ret.Accept(writer);
 
   res.body() = buffer.GetString();
   res.result(http::status::ok);
@@ -255,7 +267,7 @@ server::server(std::string const& address, port_t const port,
 
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
-        bool const should_send_pos = url.find("/search?") != std::string::npos;
+        bool const should_send_pos = url.find("/search") != std::string::npos;
 
         switch (req.method()) {
           case http::verb::options: {
@@ -273,11 +285,14 @@ server::server(std::string const& address, port_t const port,
               }
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
-            } else if (should_send_pos) {
-              serve_search(url, res, osm_halts);
             } else {
               serve_file(url, server_resource_dir, res);
             }
+            break;
+          }
+          case http::verb::post: {
+            if (should_send_pos) serve_search(req, res, osm_halts);
+
             break;
           }
 

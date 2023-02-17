@@ -1,11 +1,15 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
-import { sendRequest, transformUrl } from '@/api/api-client';
+import { sendPostData, sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
     currentSearchedMapPosition?: MapPosition,
+    currentSearchedMapPositions: {
+        name: string,
+        position: MapPosition,
+    }[],
     currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
@@ -23,6 +27,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             infrastructures: [],
             currentInfrastructure: undefined,
             currentSearchedMapPosition: undefined,
+            currentSearchedMapPositions: [],
             currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
@@ -40,6 +45,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
             state.currentSearchedMapPosition = currentSearchedMapPosition;
+        },
+
+        setCurrentSearchedMapPositions(state, currentSearchedMapPositions) {
+            state.currentSearchedMapPositions = currentSearchedMapPositions;
         },
 
         setCurrentSearchError(state, currentSearchError) {
@@ -86,14 +95,28 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 return;
             }
 
-            fetch(transformUrl(`search?query=${query}&infrastructure=${state.currentInfrastructure}`))
+            sendPostData({
+                url: 'search',
+                data: {
+                    query,
+                    infrastructure: state.currentInfrastructure,
+                },
+            })
                 .then(response => response.json())
-                .then(position => {
-                    commit('setCurrentSearchedMapPosition', position);
+                .then(positions => {
+                    commit('setCurrentSearchedMapPositions', positions);
+
+                    if (positions.length === 0) {
+                        commit('setCurrentSearchError', 'Not found!');
+
+                        return;
+                    }
+
+                    commit('setCurrentSearchedMapPosition', positions[0]?.position);
                     commit('setCurrentSearchError', undefined);
                 })
                 .catch(() => {
-                    commit('setCurrentSearchError', 'Not found!');
+                    commit('setCurrentSearchError', 'An error occurred!');
 
                     return;
                 });
