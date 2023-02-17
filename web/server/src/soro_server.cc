@@ -14,9 +14,12 @@
 #include "tiles/perf_counter.h"
 #include "tiles/util.h"
 
+#include "soro/simulation/ordering_graph.h"
+
 #include "soro/server/http_server.h"
 
 namespace soro::server {
+    using namespace soro::simulation;
 
 std::string url_decode(request_t const& req) {
   auto const& in = req.target();
@@ -161,6 +164,14 @@ bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
   return true;
 }
 
+void serve_graph([[maybe_unused]] std::string const& url, [[maybe_unused]] auto const& req, auto& res) {
+  const string ordering_graph_json = generate_testgraph(10, 10, 5, 20, 23).to_json();
+
+  res.body() = std::string(ordering_graph_json);
+  res.set(http::field::content_type, "application/json");
+  res.result(http::status::ok);
+}
+
 void initialize_serve_contexts(server::serve_contexts& contexts,
                                fs::path const& server_resource_dir) {
   fs::path const infra_dir = server_resource_dir / "infrastructure";
@@ -194,6 +205,9 @@ server::server(std::string const& address, port_t const port,
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
 
+        auto const graph_req = url.find("/api/ordering_graph/");
+        bool const should_serve_graph = graph_req != std::string::npos;
+
         switch (req.method()) {
           case http::verb::options: {
             res.result(http::status::no_content);
@@ -210,6 +224,8 @@ server::server(std::string const& address, port_t const port,
               }
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
+            } else if (should_serve_graph) {
+              serve_graph(url, req, res);
             } else {
               serve_file(url, server_resource_dir, res);
             }
