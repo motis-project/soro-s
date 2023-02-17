@@ -30,7 +30,9 @@
                 @click="setCurrentSearchedMapPosition(mapPosition.position)"
             >
                 <v-list-item-title>
-                    {{ mapPosition.name }}
+                    {{ getSearchResultLabelParts(mapPosition.name).before }}<strong class="search-match">
+                        {{ currentSearchTerm }}
+                    </strong>{{ getSearchResultLabelParts(mapPosition.name).after }}
                 </v-list-item-title>
             </v-list-item>
         </v-list>
@@ -58,6 +60,7 @@ export default defineComponent({
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
+            'currentSearchTerm',
             'currentSearchError',
             'currentSearchedMapPositions',
         ]),
@@ -82,6 +85,15 @@ export default defineComponent({
             this.searchPositionFromName(this.currentQuery);
         },
 
+        getSearchResultLabelParts(searchResult: string): { before: string, after: string } {
+            const beginIndex = searchResult.indexOf(this.currentSearchTerm);
+
+            return {
+                before: searchResult.substring(0, beginIndex),
+                after: searchResult.substring(beginIndex + this.currentSearchTerm.length),
+            };
+        },
+
         ...mapMutations(InfrastructureNamespace, ['setCurrentSearchedMapPosition']),
         ...mapActions(InfrastructureNamespace, ['searchPositionFromName']),
     },
@@ -97,5 +109,9 @@ export default defineComponent({
 .search-button {
     margin-left: 10px;
     height: auto;
+}
+
+.search-match {
+    color: rgb(var(--v-theme-primary));
 }
 </style>
