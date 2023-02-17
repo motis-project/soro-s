@@ -187,7 +187,7 @@ std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server
     std::vector<soro::server::osm_halt> matches;
 
     for (const auto& halt : osm_halts) {
-        if (to_lower(halt.name_).starts_with(to_lower(name))) {
+        if (to_lower(halt.name_).find(to_lower(name)) != std::string::npos) {
             matches.push_back(halt);
         }
     }

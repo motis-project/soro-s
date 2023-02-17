@@ -48,6 +48,8 @@ import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { mapActions, mapMutations, mapState } from 'vuex';
 
+const minSearchQueryLimit = 3;
+
 export default defineComponent({
     name: 'StationSearch',
 
@@ -77,7 +79,7 @@ export default defineComponent({
         },
 
         searchName() {
-            if (!this.currentQuery) {
+            if (!this.currentQuery || this.currentQuery.length < minSearchQueryLimit) {
                 return;
             }
 
