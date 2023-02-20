@@ -10,10 +10,10 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "types": ["glsl", "node", "svg"],
+    "types": ["glsl", "node"],
     "typeRoots": [
       "./node_modules/@types",
-      "./types",
+      "./components/ordering_graph/types",
     ],
   }
 }

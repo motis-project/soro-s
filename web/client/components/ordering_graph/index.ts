@@ -1,4 +1,4 @@
 //entry point for the webpack frontend library
-import { SigmaGraphCreator } from "./sigma_graph";
+import { SigmaGraphCreator } from "./graph/sigma_graph";
 
 export { SigmaGraphCreator };
