@@ -1,29 +1,41 @@
 import Graph from "graphology";
 import Sigma from "sigma";
-import data from "./data2.json";
+import { getGeneratedGraph } from "../api/api_graph";
 
 export class SigmaGraphCreator {
-    //the ordering graph html
     rootelement: HTMLElement;
     //the div element, where the graph will be
-    sigmaContainer:HTMLElement;
+    sigmaContainer: HTMLElement;
     //the canvas elements which make up the graph
     renderer: Sigma;
+    url: string;
+    serverRequest: Promise<any>;
 
     constructor(rootelement: HTMLElement) {
         this.rootelement = rootelement;
         this.sigmaContainer = rootelement.querySelector('#sigma-container') as HTMLElement;
+        this.url = window.origin + '/api/ordering_graph/';
+        this.serverRequest = getGeneratedGraph({ url: this.url });
     };
 
     public createSigmaGraph() {
-        const graph = new Graph();
-        graph.import(data);
-        var trainIdDummy;
+        this.serverRequest
+            .then(json => {
+                const graph = new Graph();
+                graph.import(json);
+                this.setGraphAttributes(graph);
+                this.renderer = new Sigma(graph, this.sigmaContainer, { allowInvalidContainer: true });
+            })
+
+    }
+
+    private setGraphAttributes(graph) {
+        var trainIdDummy: number;
         var nodeXValue = 0;
 
-        //nodes
         graph.forEachNode((node, i) => {
-            let currrentTrainId = graph.getNodeAttribute(node, "train_id")
+            const currrentTrainId = graph.getNodeAttribute(node, "train_id");
+            const labelName = "Train:" + currrentTrainId + " Route:" + graph.getNodeAttribute(node, "route_id");
             if (trainIdDummy === currrentTrainId) {
                 nodeXValue++
             }
@@ -31,23 +43,15 @@ export class SigmaGraphCreator {
                 trainIdDummy = currrentTrainId
                 nodeXValue = 0
             }
-            //coordinates of each node
-            graph.setNodeAttribute(node, "x", nodeXValue / 2);
-            graph.setNodeAttribute(node, "y", currrentTrainId / 2);
-
-            //style elements
-            let labelName = "Train:" + currrentTrainId + " Route:" + graph.getNodeAttribute(node, "route_id")
-            graph.mergeNodeAttributes(node, { "label": labelName })
-            graph.setNodeAttribute(node, "color", "#000000")
+            graph.setNodeAttribute(node, "x", nodeXValue / 2)
+                .setNodeAttribute(node, "y", currrentTrainId / 2)
+                .setNodeAttribute(node, "label", labelName)
+                .setNodeAttribute(node, "color", "#0000FF");
         });
 
-
-        //edges
         graph.forEachEdge((edge) => {
-            //style elements
             graph.setEdgeAttribute(edge, "type", "arrow")
         });
-        this.renderer = new Sigma(graph, this.sigmaContainer, { allowInvalidContainer: true });
     }
 
     public resizeSigmaGraph() {
@@ -59,7 +63,6 @@ export class SigmaGraphCreator {
         }
     }
 
-    //used to close the canvas to not run into errors when opening to many windows
     public destroySigmaGraph() {
         if (this.renderer !== undefined) {
             this.renderer.clear();

@@ -7,10 +7,6 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.svg/,
-        type: 'asset/inline'
-      },
-      {
         test: /\.(glsl|vs|fs)$/,
         use: 'ts-shader-loader',
         exclude: /node_modules/,
