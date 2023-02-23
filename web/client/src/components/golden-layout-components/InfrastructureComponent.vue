@@ -34,7 +34,7 @@ export default defineComponent({
             }
 
             this.container.on('resize', () => (this.$refs.infrastructureMap as { resize: () => void }).resize());
-        }
-    }
+        },
+    },
 });
 </script>

@@ -46,7 +46,7 @@ export const SettingsStore: Module<SettingsState, undefined> = {
 
         restoreVuetifyThemePrimaryColor(this: VuetifyExtension, state) {
             state.primaryColor = this.$vuetify.theme.global.current.value.colors.primary;
-        }
+        },
     },
 
     actions: {
@@ -107,6 +107,6 @@ export const SettingsStore: Module<SettingsState, undefined> = {
         setPrimaryColor({ commit, dispatch }, primaryColor) {
             commit('setPrimaryColor', primaryColor);
             dispatch('saveSettings');
-        }
+        },
     },
 };

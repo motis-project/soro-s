@@ -85,10 +85,10 @@ export const TimetableStore: Module<TimetableState, undefined> = {
 
             const timetablePath = timetableFileExists(timetableFilename);
             if (timetablePath) {
-                console.log('Reading', timetablePath, 'from IDBFS.');
+                // console.log('Reading', timetablePath, 'from IDBFS.');
                 this._current = loadTimetableFromIDBFS(timetablePath, currentInfrastructure);
             } else {
-                console.log('Fetching', timetableFilename, 'from server.');
+                // console.log('Fetching', timetableFilename, 'from server.');
                 sendRequest({ url: `timetable/${timetableFilename}` })
                     .then(response => response.arrayBuffer())
                     .then(buf => saveFileToIDBFS(timetableFilename, buf))

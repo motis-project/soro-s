@@ -95,7 +95,10 @@ export default defineComponent({
                 const key = station.station_routes.keys().get(i);
                 const sr = station.station_routes.get(key);
 
-                this.stationRoutes.push({ key, sr });
+                this.stationRoutes.push({
+                    key,
+                    sr, 
+                });
             }
 
             this.signalStationRoutes = [];
@@ -111,7 +114,7 @@ export default defineComponent({
             'setHighlightedStationRouteID',
             'setHighlightedSignalStationRouteID',
         ]),
-    }
+    },
 });
 </script>
 

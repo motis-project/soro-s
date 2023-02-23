@@ -20,7 +20,7 @@ const setPosAndSize = (
     left: number,
     top: number,
     width: number,
-    height: number
+    height: number,
 ): void => {
     if (GLComponent.value) {
         const el = GLComponent.value as HTMLElement;

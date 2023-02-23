@@ -206,7 +206,7 @@ export default defineComponent({
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
         ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab']),
-    }
+    },
 });
 </script>
 

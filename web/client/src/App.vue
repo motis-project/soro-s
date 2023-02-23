@@ -41,10 +41,10 @@ const initLayout: LayoutConfig = {
                         type: 'component',
                         componentType: GLComponentNames[ComponentTechnicalName.INFRASTRUCTURE],
                     },
-                ]
-            }
-        ]
-    }
+                ],
+            },
+        ],
+    },
 };
 
 const GLayoutRoot = ref();

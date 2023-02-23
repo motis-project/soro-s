@@ -39,5 +39,5 @@ export const ElementTypeLabels = {
     [ElementType.SLOPE]: 'Slope',
     [ElementType.CROSS]: 'Cross',
     [ElementType.CTC]: 'CTC',
-    [ElementType.STATION]: 'Station'
+    [ElementType.STATION]: 'Station',
 };

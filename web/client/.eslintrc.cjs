@@ -53,7 +53,7 @@ module.exports = {
         ],
         'comma-dangle': [
             'error',
-            'only-multiline',
+            'always-multiline',
         ],
         'object-curly-spacing': [
             'error',
@@ -70,5 +70,9 @@ module.exports = {
         ],
         '@typescript-eslint/no-explicit-any': 0,
         '@typescript-eslint/ban-ts-comment': 0,
+        '@typescript-eslint/no-unused-vars': ['error'],
+        'no-console': ['error', { allow: ['warn', 'error'] }],
+        'object-curly-newline': ['error', { multiline: true, consistent: true }],
+        'object-property-newline': ['error'],
     }
 };

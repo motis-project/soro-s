@@ -8,8 +8,8 @@ function highlightPath(mapSource: Source, infrastructure: string, nodeID: string
         properties: { id: nodeID },
         geometry: {
             coordinates: [],
-            type: 'LineString'
-        }
+            type: 'LineString',
+        },
     };
 
     for (const node of iterate(nodePath)) {
@@ -38,7 +38,7 @@ export function highlightSignalStationRoute(map: Map, infrastructure: string, si
         map.getSource('signal-station-routes'),
         infrastructure,
         signalStationRouteID,
-        infrastructure.signal_station_routes.get(signalStationRouteID).nodes
+        infrastructure.signal_station_routes.get(signalStationRouteID).nodes,
     );
 }
 
@@ -51,7 +51,7 @@ export function highlightStationRoute(map: Map, infrastructure: string, stationR
         map.getSource('station-routes'),
         infrastructure,
         stationRouteID,
-        infrastructure.station_routes.get(stationRouteID).nodes
+        infrastructure.station_routes.get(stationRouteID).nodes,
     );
 }
 

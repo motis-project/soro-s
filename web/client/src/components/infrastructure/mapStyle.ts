@@ -10,22 +10,22 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
             'osm': {
                 'type': 'vector',
                 'tiles': ['/tiles/{z}/{x}/{y}.mvt'],
-                'maxzoom': 20
+                'maxzoom': 20,
             },
             'station-routes': {
                 'type': 'geojson',
                 'data': {
                     type: 'FeatureCollection',
                     features: [],
-                }
+                },
             },
             'signal-station-routes': {
                 'type': 'geojson',
                 'data': {
                     type: 'FeatureCollection',
                     features: [],
-                }
-            }
+                },
+            },
         },
         'glyphs': transformUrl('/font/{fontstack}/{range}.pbf'),
         'layers': [
@@ -34,7 +34,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'type': 'background',
                 'paint': {
                     'background-color': currentTheme.colors?.background,
-                }
+                },
             },
             {
                 'id': 'yards',
@@ -44,8 +44,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'filter': ['==', 'rail', 'detail'],
                 'paint': {
                     'line-color': '#ccc',
-                    'line-width': 2.0
-                }
+                    'line-width': 2.0,
+                },
             },
             {
                 'id': 'rail',
@@ -57,10 +57,10 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'line-color': [
                         'case',
                         ['has', 'color'], ['get', 'color'],
-                        '#444'
+                        '#444',
                     ],
-                    'line-width': 2.0
-                }
+                    'line-width': 2.0,
+                },
             },
             {
                 'id': 'station-route-layer',
@@ -68,12 +68,12 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'source': 'station-routes',
                 'layout': {
                     'line-join': 'round',
-                    'line-cap': 'round'
+                    'line-cap': 'round',
                 },
                 'paint': {
                     'line-color': '#ff0000',
-                    'line-width': 6
-                }
+                    'line-width': 6,
+                },
             },
             {
                 'id': 'station-route-element-layer',
@@ -83,8 +83,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'maxzoom': 24,
                 'paint': {
                     'circle-color': '#ff0000',
-                    'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 20, 19]
-                }
+                    'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 20, 19],
+                },
             },
             {
                 'id': 'signal-station-route-layer',
@@ -92,12 +92,12 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'source': 'signal-station-routes',
                 'layout': {
                     'line-join': 'round',
-                    'line-cap': 'round'
+                    'line-cap': 'round',
                 },
                 'paint': {
                     'line-color': '#ff0000',
-                    'line-width': 6
-                }
+                    'line-width': 6,
+                },
             },
             {
                 'id': 'signal-station-route-element-layer',
@@ -107,10 +107,10 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'maxzoom': 24,
                 'paint': {
                     'circle-color': '#ff0000',
-                    'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 20, 19]
-                }
+                    'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 20, 19],
+                },
             },
-        ]
+        ],
     };
 
     ElementTypes.forEach(type => {
@@ -134,8 +134,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Bold'],
                     'icon-image': 'icon-' + type,
-                    'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 20, 1.0]
-                }
+                    'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 20, 1.0],
+                },
             });
         } else {
             // gives us the small black dots for icon stand-ins
@@ -150,7 +150,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'circle-radius': 3,
                     'circle-color': '#000000',
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#FFFFFF'
+                    'circle-stroke-color': '#FFFFFF',
                 },
                 'layout': {
                     'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
@@ -176,7 +176,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Regular'],
                     'icon-image': 'icon-' + type,
-                    'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4]
+                    'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4],
                 },
                 // "filter": ['==', 'direction', 'rising']
             });

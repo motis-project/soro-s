@@ -80,7 +80,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         },
 
         load({ commit }, infrastructureFilename) {
-            console.log('Switching to infrastructure to', infrastructureFilename);
             commit('setCurrentInfrastructure', infrastructureFilename);
         },
 
@@ -127,6 +126,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
                     return;
                 });
-        }
+        },
     },
 };

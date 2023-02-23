@@ -10,5 +10,5 @@ export const createGlobalStore = () => createStore({
         [TimetableNamespace]: TimetableStore,
         [SettingsNamespace]: SettingsStore,
         [GoldenLayoutNamespace]: GoldenLayoutStore,
-    }
+    },
 });

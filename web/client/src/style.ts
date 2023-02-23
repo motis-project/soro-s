@@ -12,7 +12,7 @@ export const customLightTheme: ThemeDefinition = {
     variables: {
         highEmphasisOpacity: 1,
         mediumEmphasisOpacity: 1,
-    }
+    },
 };
 
 export const customDarkTheme: ThemeDefinition = {
@@ -23,5 +23,5 @@ export const customDarkTheme: ThemeDefinition = {
     variables: {
         highEmphasisOpacity: 1,
         mediumEmphasisOpacity: 1,
-    }
+    },
 };

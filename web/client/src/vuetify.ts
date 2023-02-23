@@ -17,6 +17,6 @@ export const vuetify =  createVuetify({
         aliases,
         sets: {
             md,
-        }
+        },
     },
 });

@@ -55,7 +55,7 @@ export default defineComponent({
 
     data(): { currentQuery: string | null } {
         return {
-            currentQuery: null
+            currentQuery: null,
         };
     },
 
@@ -83,7 +83,6 @@ export default defineComponent({
                 return;
             }
 
-            console.log(`Will now try searching for ${this.currentQuery}`);
             this.searchPositionFromName(this.currentQuery);
         },
 
