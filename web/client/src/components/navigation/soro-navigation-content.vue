@@ -148,11 +148,10 @@ import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { DarkLightModes, SettingsNamespace } from '@/stores/settings-store';
+import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 export default defineComponent({
     name: 'SoroNavigationContent',
-
-    emits: ['add-golden-layout-tab'],
 
     data() {
         return {
@@ -185,13 +184,10 @@ export default defineComponent({
 
     methods: {
         addTab(componentTechnicalName: ComponentTechnicalName) {
-            this.$emit(
-                'add-golden-layout-tab',
-                {
-                    componentTechnicalName,
-                    title: GLComponentTitles[componentTechnicalName],
-                },
-            );
+            this.addGoldenLayoutTab({
+                componentTechnicalName,
+                title: GLComponentTitles[componentTechnicalName],
+            });
         },
 
         onUpdateColorSelection(newColor: string) {
@@ -209,6 +205,7 @@ export default defineComponent({
         ]),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
+        ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab']),
     }
 });
 </script>

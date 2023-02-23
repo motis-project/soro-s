@@ -1,18 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import { InfrastructureStore, InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { TimetableStore, TimetableNamespace } from '@/stores/timetable-store';
-import { createStore, Store } from 'vuex';
-import { SettingsNamespace, SettingsStore } from '@/stores/settings-store';
+import { Store } from 'vuex';
 import { vuetify, VuetifyExtension } from '@/vuetify';
+import { createGlobalStore } from '@/stores/stores';
 
-const store = createStore({
-    modules: {
-        [InfrastructureNamespace]: InfrastructureStore,
-        [TimetableNamespace]: TimetableStore,
-        [SettingsNamespace]: SettingsStore,
-    }
-}) as Store<undefined> & VuetifyExtension;
+const store = createGlobalStore() as Store<undefined> & VuetifyExtension;
 // Make vuetify accessible in stores with this.$vuetify just like in components
 store.$vuetify = vuetify;
 
