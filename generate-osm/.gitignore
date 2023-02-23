@@ -1,4 +1,6 @@
 # Ignore the file produced by osm data generation
 temp/*
 output/*
+
 *.exe
+

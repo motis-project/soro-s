@@ -11,15 +11,19 @@ import (
 
 var ErrLinesDirNotFound = errors.New("lines directory not found")
 
-func CombineAllLines() (osmData osmUtils.Osm, err error) {
-	files, err := os.ReadDir("./temp/lines")
+func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
+	files, err := os.ReadDir(tempLineDir)
+
 	if err != nil {
 		return osmUtils.Osm{}, ErrLinesDirNotFound
 	}
 
+	var osmData osmUtils.Osm
+
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
-		data, _ := os.ReadFile("./temp/lines/" + file.Name())
+		data, _ := os.ReadFile(tempLineDir+"/" + file.Name())
+    
 		var fileOsmData osmUtils.Osm
 		if err := xml.Unmarshal([]byte(data), &fileOsmData); err != nil {
 			panic(err)

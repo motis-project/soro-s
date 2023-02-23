@@ -9,7 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
+	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
+
+	// Mapper "transform-osm/map-db"
 
 	"github.com/urfave/cli/v2"
 )
@@ -76,16 +79,22 @@ func generateOsm(generateLines bool, inputFile string) error {
 		"--overwrite",
 	})
 
+	tempLinesDir, _ := filepath.Abs(tempFolderPath + "/lines")
+	tempDBLinesDir, _ := filepath.Abs(tempFolderPath + "/DBLines")
+	tempDBResoucesDir, _ := filepath.Abs(tempFolderPath + "/DBResources")
 	if generateLines {
-		if err = os.RemoveAll("./temp/lines"); err != nil {
+		if err = os.RemoveAll(tempLinesDir); err != nil {
 			return errors.New("Failed to remove lines folder: " + err.Error())
 		}
-		if err = os.Mkdir("./temp/lines", 0755); err != nil {
+		if err = os.RemoveAll(tempDBLinesDir); err != nil {
+			return errors.New("Failed to remove DBLines folder: " + err.Error())
+		}
+		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
 
 		for _, refId := range refs {
-			lineOsmFile, err := filepath.Abs("./temp/lines/" + refId + ".xml")
+			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.New("Failed to get line file path: " + err.Error())
 			}
@@ -98,11 +107,19 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 
+		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
+
+		print(relevant_refs)
+		print("\n")
+
+		// Mapper.MapDB(relevant_refs, lineDir, db_lineDir)
+
 		fmt.Println("Generated all lines")
 	}
 
 	// Combine all the lines into one file
-	osmData, err := combineLines.CombineAllLines()
+	osmData, err := combineLines.CombineAllLines(tempLinesDir)
+
 	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
 		return errors.New("you need to generate lines first")
 	} else if err != nil {
