@@ -164,13 +164,26 @@ bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
   return true;
 }
 
-void serve_graph([[maybe_unused]] std::string const& url, [[maybe_unused]] auto const& req, auto& res) {
+/*
+Base:           api/ordering_graph/...
+initialization: .../init
+Invertion:      /invert?from=[node_id]&to=[node_id]
+*/
+ void serve_graph([[maybe_unused]] std::string const& url, [[maybe_unused]] auto const& req, auto& res) {
   const string ordering_graph_json = generate_testgraph(10, 10, 5, 20, 23).to_json();
 
-  res.body() = std::string(ordering_graph_json);
+  if (req[http::field::accept_encoding]  //
+           .find("deflate") ==
+       std::string_view::npos) {
+    res.body() = std::string(ordering_graph_json);
+  }
+  else {
+    res.body() = tiles::compress_deflate(ordering_graph_json);
+    res.set(http::field::content_encoding, "deflate");
+  }
   res.set(http::field::content_type, "application/json");
   res.result(http::status::ok);
-}
+ }
 
 void initialize_serve_contexts(server::serve_contexts& contexts,
                                fs::path const& server_resource_dir) {
