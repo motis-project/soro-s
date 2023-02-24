@@ -3,4 +3,4 @@ temp/*
 output/*
 
 *.exe
-
+transform-osm
