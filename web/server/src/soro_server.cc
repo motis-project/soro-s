@@ -192,6 +192,15 @@ std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server
         }
     }
 
+   std::sort(matches.begin(), matches.end(),
+        [](const soro::server::osm_halt& a, const soro::server::osm_halt& b) {
+            // Primary ordering by length
+            if (a.name_.length() < b.name_.length()) return true;
+            if (a.name_.length() > b.name_.length()) return false;
+            // Secondary ordering by lexicographical order
+            return a.name_ < b.name_;
+        });
+
     return matches;
 }
 
