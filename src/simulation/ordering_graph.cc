@@ -243,7 +243,7 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
 
 string ordering_graph::to_json() {
   StringBuffer sb;
-  PrettyWriter<StringBuffer> writer(sb);
+  Writer<StringBuffer> writer(sb);
   Serialize(writer);
 
   return sb.GetString();
