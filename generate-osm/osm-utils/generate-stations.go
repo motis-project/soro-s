@@ -7,8 +7,8 @@ import (
 )
 
 func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (searchFile SearchFile, stationHaltOsm Osm) {
-	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "./stationsUnfiltered.osm.pbf")
-	stationsFile, _ := filepath.Abs(tempFolderPath + "./stations.xml")
+	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "/stationsUnfiltered.osm.pbf")
+	stationsFile, _ := filepath.Abs(tempFolderPath + "/stations.xml")
 
 	ExecuteOsmFilterCommand([]string{
 		inputFilePath,
