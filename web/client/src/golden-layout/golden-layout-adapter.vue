@@ -13,6 +13,7 @@
             >
                 <component
                     :is="pair[1].glc"
+                    :golden-layout-key="GlcKeyPrefix + pair[0]"
                     :container="pair[1].container"
                 />
             </golden-layout-component>
