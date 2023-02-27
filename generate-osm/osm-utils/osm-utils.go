@@ -20,32 +20,18 @@ type Nd struct {
 }
 
 type Way struct {
-	XMLName   xml.Name `xml:"way"`
-	Tag       []*Tag   `xml:"tag"`
-	Id        string   `xml:"id,attr"`
-	Version   string   `xml:"version,attr"`
-	Timestamp string   `xml:"timestamp,attr"`
-	Nd        []*Nd    `xml:"nd"`
+	XMLName xml.Name `xml:"way"`
+	Tag     []*Tag   `xml:"tag"`
+	Id      string   `xml:"id,attr"`
+	Nd      []*Nd    `xml:"nd"`
 }
 
 type Node struct {
-	XMLName   xml.Name `xml:"node"`
-	Tag       []*Tag   `xml:"tag"`
-	Id        string   `xml:"id,attr"`
-	Version   string   `xml:"version,attr"`
-	Timestamp string   `xml:"timestamp,attr"`
-	Lat       string   `xml:"lat,attr"`
-	Lon       string   `xml:"lon,attr"`
-}
-
-func FindTagOnNode(node *Node, key string) (bool, string) {
-	for _, tag := range node.Tag {
-		if tag.K == key {
-			return true, tag.V
-		}
-	}
-
-	return false, ""
+	XMLName xml.Name `xml:"node"`
+	Tag     []*Tag   `xml:"tag"`
+	Id      string   `xml:"id,attr"`
+	Lat     string   `xml:"lat,attr"`
+	Lon     string   `xml:"lon,attr"`
 }
 
 type Member struct {
@@ -56,12 +42,10 @@ type Member struct {
 }
 
 type Relation struct {
-	XMLName   xml.Name  `xml:"relation"`
-	Member    []*Member `xml:"member"`
-	Tag       []*Tag    `xml:"tag"`
-	Id        string    `xml:"id,attr"`
-	Version   string    `xml:"version,attr"`
-	Timestamp string    `xml:"timestamp,attr"`
+	XMLName xml.Name  `xml:"relation"`
+	Member  []*Member `xml:"member"`
+	Tag     []*Tag    `xml:"tag"`
+	Id      string    `xml:"id,attr"`
 }
 
 type Osm struct {

@@ -8,11 +8,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
 	combineLines "transform-osm/combine-lines"
 	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
-
-	// Mapper "transform-osm/map-db"
 
 	"github.com/urfave/cli/v2"
 )
@@ -93,9 +92,9 @@ func generateOsm(generateLines bool, inputFile string) error {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
 		if _, err := os.Stat(tempDBResoucesDir); os.IsNotExist(err) {
-		    if err = os.Mkdir(tempDBResoucesDir, 0755); err != nil {
-                return errors.New("Failed to create DBResources folder: " + err.Error())
-            }
+			if err = os.Mkdir(tempDBResoucesDir, 0755); err != nil {
+				return errors.New("Failed to create DBResources folder: " + err.Error())
+			}
 		}
 
 		for _, refId := range refs {
@@ -113,11 +112,9 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
+		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
-		print(relevant_refs)
-		print("\n")
-
-		// Mapper.MapDB(relevant_refs, lineDir, db_lineDir)
+		_ = relevant_refs
 
 		fmt.Println("Generated all lines")
 	}
@@ -138,9 +135,9 @@ func generateOsm(generateLines bool, inputFile string) error {
 	saveSearchFile(searchFile, searchFileJsonPath)
 
 	for i, node := range osmData.Node {
-		found, value := osmUtils.FindTagOnNode(node, "railway")
+		value, found := osmUtils.FindTagOnNode(node, "railway")
 
-		if found {
+		if found == nil {
 			if value == "station" || value == "halt" {
 				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
 			}

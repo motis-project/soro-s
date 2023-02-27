@@ -34,7 +34,8 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 func getRefIds(trackRefOsm Osm) (refs []string, err error) {
 	for _, s := range trackRefOsm.Relation {
 		for _, m := range s.Tag {
-			if m.K == "ref" && len(m.V) == 4 {
+			if m.K == "ref" &&
+				len(m.V) == 4 {
 				refs = append(refs, m.V)
 			}
 		}
