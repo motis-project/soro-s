@@ -27,19 +27,16 @@ struct route_usage {
 template <typename Writer>
 void ordering_node::serialize(Writer& writer) {
   writer.StartObject();
-  writer.Key("key");
+  writer.Key("k");
   writer.String(std::to_string(id_).c_str());
 
-  writer.Key("attributes");
+  writer.Key("a");
   writer.StartObject();
 
-  writer.Key("id");
-  writer.Uint(id_);
-
-  writer.Key("route_id");
+  writer.Key("r");
   writer.Uint(ir_id_);
 
-  writer.Key("train_id");
+  writer.Key("t");
   writer.Uint(train_id_);
 
   writer.EndObject();
@@ -275,15 +272,11 @@ void ordering_graph::Serialize(Writer& writer) {
     for (const uint32_t to_id : node.out_) {
       writer.StartObject();
 
-      writer.Key("source");
+      writer.Key("s");
       writer.String(std::to_string(node.id_).c_str());
 
-      writer.Key("target");
+      writer.Key("t");
       writer.String(std::to_string(to_id).c_str());
-
-      writer.Key("attributes");
-      writer.StartObject();
-      writer.EndObject();
 
       writer.EndObject();
     }
