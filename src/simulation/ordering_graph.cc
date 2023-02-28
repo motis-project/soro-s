@@ -5,6 +5,7 @@
 #include "soro/utls/container/priority_queue.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
+#include <algorithm>
 #include <random>
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
@@ -238,10 +239,146 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
   return graph;
 }
 
+ordering_node* ordering_graph::node_by_id(const ordering_node::id id) {
+  auto node = find_if(nodes_.begin(), nodes_.end(),
+                      [id](const ordering_node& n) { return n.id_ == id; });
+
+  if (node == nodes_.end()) {
+    return nullptr;
+  } else {
+    return &(*node);
+  }
+}
+
+/**
+ * Flips a single edge in the graph that orignates at from and end at to. It
+ * does not propagate chages to parallel edges, but changes incoming/outgoing
+ * edges as needed.
+ */
+bool ordering_graph::invert_single_edge(ordering_node& from,
+                                        ordering_node& to) {
+  if (!utls::contains(from.out_, to.id_)) {
+    return false;
+  }
+
+  std::vector<ordering_node::id> from_in, from_out, to_in, to_out;
+
+  // re-oranize the incoming and outgoing edges of to and from
+  for (const ordering_node::id id : from.in_) {
+    auto node = node_by_id(id);
+    // edges ending in from that belong to another train need to be ending in to
+    // after the inversion
+    if (node == nullptr || node->train_id_ == from.train_id_) {
+      from_in.emplace_back(id);
+    } else {
+      to_in.emplace_back(id);
+      // the out_ vector of the other node in this edge also needs adjusting
+      replace(node->out_.begin(), node->out_.end(), from.id_, to.id_);
+    }
+  }
+  for (const ordering_node::id id : from.out_) {
+    // filter out the edge to flip
+    if (id != to.id_) {
+      from_out.emplace_back(id);
+    }
+  }
+  for (const ordering_node::id id : to.in_) {
+    // filter out the edge to flip
+    if (id != from.id_) {
+      to_in.emplace_back(id);
+    }
+  }
+  for (const ordering_node::id id : to.out_) {
+    auto node = node_by_id(id);
+    // edges originating in to that belong to another train need to be
+    // originating in to after the inversion
+    if (node == nullptr || node->train_id_ == to.train_id_) {
+      to_out.emplace_back(id);
+    } else {
+      from_out.emplace_back(id);
+      // the in_ vector of the other node in this edge also needs adjusting
+      replace(node->in_.begin(), node->in_.end(), to.id_, from.id_);
+    }
+  }
+
+  // re-insert the flip edge
+  from_in.emplace_back(to.id_);
+  to_out.emplace_back(from.id_);
+
+  // finalization
+  from.in_ = from_in;
+  from.out_ = from_in;
+  to.in_ = to_in;
+  to.out_ = to_in;
+
+  return true;
+}
+
+/**
+ * Returns the first ordering_node in node.out_ which belongs to the same train
+ * as node. Returns nullptr if no such node exists.
+ */
+ordering_node* ordering_graph::next_train_node(const ordering_node& node) {
+  for (const ordering_node::id id : node.out_) {
+    auto candidate = node_by_id(id);
+    if (candidate != nullptr && node.train_id_ == candidate->train_id_) {
+      return candidate;
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * Returns the first ordering_node in node.in_ which belongs to the same train
+ * as node. Returns nullptr if no such node exists.
+ */
+ordering_node* ordering_graph::prev_train_node(const ordering_node& node) {
+  for (const ordering_node::id id : node.in_) {
+    auto candidate = node_by_id(id);
+    if (candidate != nullptr && node.train_id_ == candidate->train_id_) {
+      return candidate;
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * Flips the edge in the graph that orignates at from and end at to, propagating
+ * changes to parallel edges that need to be flipped as well.
+ */
+void ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
+  if (!invert_single_edge(from, to)) {
+    // if there was no edge to flip, we also don't need to look for parallel
+    // edges.
+    return;
+  }
+
+  // walk the pointers forward along the train until there is no paralell edge
+  // to flip
+  auto from_ptr = next_train_node(*&from);
+  auto to_ptr = next_train_node(*&to);
+  while (from_ptr != nullptr && to_ptr != nullptr &&
+         invert_single_edge(*from_ptr, *to_ptr)) {
+    from_ptr = next_train_node(*from_ptr);
+    to_ptr = next_train_node(*to_ptr);
+  }
+
+  // and walk back the pointers backwards along the train until there is no
+  // parallel edge to flip
+  from_ptr = prev_train_node(*&from);
+  to_ptr = prev_train_node(*&to);
+
+  while (from_ptr != nullptr && to_ptr != nullptr &&
+         invert_single_edge(*from_ptr, *to_ptr)) {
+    from_ptr = prev_train_node(*from_ptr);
+    to_ptr = prev_train_node(*to_ptr);
+  }
+}
+
 string ordering_graph::to_json() {
   StringBuffer sb;
   Writer<StringBuffer> writer(sb);
-  Serialize(writer);
+  serialize(writer);
 
   return sb.GetString();
 }
@@ -252,7 +389,7 @@ void ordering_graph::emplace_edge(ordering_node& from, ordering_node& to) {
 }
 
 template <typename Writer>
-void ordering_graph::Serialize(Writer& writer) {
+void ordering_graph::serialize(Writer& writer) {
   writer.StartObject();
 
   writer.Key("attributes");
