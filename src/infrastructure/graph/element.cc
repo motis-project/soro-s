@@ -58,6 +58,10 @@ bool element::is_switch() const {
   return is(type::SIMPLE_SWITCH) || is_cross_switch();
 }
 
+bool element::joins_tracks() const {
+  return type() == type::SIMPLE_SWITCH || type() == type::CROSS;
+}
+
 kilometrage get_km(end_element const& e, element_ptr) { return e.km_; }
 
 kilometrage get_km(simple_element const& e, element_ptr neigh) {

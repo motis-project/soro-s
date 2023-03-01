@@ -1,12 +1,24 @@
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 
+#include "utl/erase.h"
+#include "utl/erase_duplicates.h"
 #include "utl/pipes.h"
-
-#include "soro/utls/algo/overlap.h"
 
 #include "soro/infrastructure/path/length.h"
 
 namespace soro::infra {
+
+bool interlocking_route::starts_on_section(infrastructure const& infra) const {
+  return this->first_node(infra)->element_->is_section_element();
+}
+
+bool interlocking_route::ends_on_section(infrastructure const& infra) const {
+  return this->last_node(infra)->element_->is_section_element();
+}
+
+bool interlocking_route::valid_end(type const t) {
+  return interlocking_route::valid_ends().contains(t);
+}
 
 type_set interlocking_route::valid_ends() {
   return type_set{{type::MAIN_SIGNAL, type::HALT, type::BORDER, type::BUMPER,
@@ -167,11 +179,11 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
     infrastructure const& infra) const {
 
   if (this->station_routes_.size() == 1) {
-    utls::sassert(
-        from_sr == to_sr,
-        "Only one station route in interlocking route {}, but while iterating "
-        "got from {} and to {}.",
-        this->id_, from_sr, to_sr);
+    utls::sassert(from_sr == to_sr,
+                  "Only one station route in interlocking route {}, but "
+                  "while iterating "
+                  "got from {} and to {}.",
+                  this->id_, from_sr, to_sr);
 
     co_yield this->first_sr(infra)->from_to(from, to);
   } else {
@@ -225,24 +237,29 @@ utls::recursive_generator<route_node> interlocking_route::iterate(
 
 utls::generator<sub_path> interlocking_route::iterate_station_routes(
     infrastructure_t const& infra) const {
+  sub_path sp;
+
   if (station_routes_.size() == 1) {
     auto const sr = infra.station_routes_[station_routes_.front()];
-    co_yield sub_path{
-        .station_route_ = sr, .from_ = start_offset_, .to_ = end_offset_};
+    sp = {.station_route_ = sr, .from_ = start_offset_, .to_ = end_offset_};
+    co_yield sp;
   } else {
     auto const first_sr = infra.station_routes_[station_routes_.front()];
-    co_yield sub_path{.station_route_ = first_sr,
-                      .from_ = start_offset_,
-                      .to_ = first_sr->size()};
+
+    sp = {.station_route_ = first_sr,
+          .from_ = start_offset_,
+          .to_ = first_sr->size()};
+    co_yield sp;
 
     for (soro::size_t i = 1; i < station_routes_.size() - 1; ++i) {
       auto const sr = infra.station_routes_[station_routes_[i]];
-      co_yield sub_path{.station_route_ = sr, .from_ = 0, .to_ = sr->size()};
+      sp = {.station_route_ = sr, .from_ = 0, .to_ = sr->size()};
+      co_yield sp;
     }
 
     auto const last_sr = infra.station_routes_[station_routes_.back()];
-    co_yield sub_path{
-        .station_route_ = last_sr, .from_ = 0, .to_ = end_offset_};
+    sp = {.station_route_ = last_sr, .from_ = 0, .to_ = end_offset_};
+    co_yield sp;
   }
 }
 

@@ -4,7 +4,7 @@
 #include "soro/utls/coordinates/cartesian.h"
 #include "soro/utls/coordinates/gps.h"
 
-#include "soro/server/osm_export/interpolation.h"
+#include "soro/server/modules/tiles/osm_export/interpolation.h"
 
 #include "test/file_paths.h"
 

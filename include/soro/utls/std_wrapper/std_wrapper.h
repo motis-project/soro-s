@@ -201,4 +201,11 @@ constexpr bool is_sorted(Iterable const& i, Comp&& cmp) {
   return std::is_sorted(std::begin(i), std::end(i), cmp);
 }
 
+template <typename Container, typename OutputIt>
+OutputIt set_difference(Container const& c1, Container const& c2,
+                        OutputIt&& out) {
+  return std::set_difference(std::begin(c1), std::end(c1), std::begin(c2),
+                             std::end(c2), out);
+}
+
 }  // namespace soro::utls

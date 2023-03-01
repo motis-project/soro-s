@@ -20,7 +20,7 @@ struct station {
   static constexpr id INVALID = std::numeric_limits<id>::max();
   static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
-  using optional_ptr = utls::optional<ptr, nullptr>;
+  using optional_ptr = soro::optional<ptr>;
 
   soro::vector<station::ptr> neighbours() const;
 

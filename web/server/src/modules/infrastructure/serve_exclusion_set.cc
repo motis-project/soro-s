@@ -1,0 +1,34 @@
+#include "soro/server/modules/infrastructure/infrastructure.h"
+
+#include "cereal/types/vector.hpp"
+
+#include "net/web_server/responses.h"
+
+#include "soro/server/cereal/cereal_extern.h"
+#include "soro/server/cereal/json_archive.h"
+#include "soro/utls/parse_int.h"
+#include "soro/utls/std_wrapper/std_wrapper.h"
+
+namespace soro::server {
+
+net::web_server::string_res_t infra_state::serve_exclusion_set(
+    net::query_router::route_request const& req) const {
+  using namespace soro::infra;
+
+  auto const infra = get_infra(req.path_params_.front());
+  if (!infra.has_value()) {
+    return net::not_found_response(req);
+  }
+
+  auto const es_id = utls::parse_int<exclusion_set::id>(req.path_params_[1]);
+  auto const& es = *utls::find_if((**infra)->exclusion_.exclusion_sets_,
+                                  [&](auto&& e) { return e.id_ == es_id; });
+
+  json_archive archive;
+  archive.add()(cereal::make_nvp("id", es.id_),
+                cereal::make_nvp("size", es.count()),
+                cereal::make_nvp("interlocking_routes", es.expanded_set()));
+  return json_response(req, archive);
+}
+
+}  // namespace soro::server

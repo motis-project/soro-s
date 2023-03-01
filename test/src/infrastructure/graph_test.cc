@@ -36,6 +36,7 @@ constexpr std::array<std::pair<type, size_t>,
                         {type::ETCS_END, 1},
                         {type::ETCS_BLOCK_SIGN, 1},
                         {type::FORCED_HALT, 1},
+                        {type::META, 1},
                         {type::HALT, 1},
                         // undirected track elements
                         {type::TUNNEL, 2},

@@ -9,7 +9,10 @@ using namespace soro::infra;
 
 train_node::train_node(soro::infra::route_node const& rn,
                        sequence_point::optional_ptr sp)
-    : infra::route_node{rn}, sequence_point_{sp} {}
+    : infra::route_node{rn},
+      sequence_point_{sp.has_value()
+                          ? sequence_point::optional_ptr(*sp)
+                          : sequence_point::optional_ptr(std::nullopt)} {}
 
 bool train_node::omitted() const {
   return omitted_ || (node_->is(type::HALT) && !sequence_point_.has_value());
@@ -168,7 +171,8 @@ utls::recursive_generator<train_node> train::iterate(
     if (sp_idx < sequence_points_.size() &&
         *sequence_points_[sp_idx].get_node(freight(), infra) == rn.node_) {
 
-      co_yield train_node(rn, {&sequence_points_[sp_idx]});
+      co_yield train_node(
+          rn, sequence_point::optional_ptr(&sequence_points_[sp_idx]));
       ++sp_idx;
     } else {
       co_yield train_node(rn, {});

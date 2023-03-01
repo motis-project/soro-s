@@ -4,7 +4,6 @@
 
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/sassert.h"
-#include "soro/utls/serror.h"
 #include "soro/utls/string.h"
 
 #include "soro/infrastructure/graph/graph_creation.h"

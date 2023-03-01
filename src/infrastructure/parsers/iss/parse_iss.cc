@@ -20,8 +20,9 @@
 #include "soro/utls/sassert.h"
 #include "soro/utls/string.h"
 
+#include "soro/infrastructure/exclusion/get_exclusion.h"
 #include "soro/infrastructure/graph/graph_creation.h"
-#include "soro/infrastructure/interlocking/get_interlocking_subsystem.h"
+#include "soro/infrastructure/interlocking/get_interlocking.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/infrastructure/layout/layout.h"
 #include "soro/infrastructure/layout/layout_to_gps.h"
@@ -124,26 +125,16 @@ constexpr type_order_key get_type_order_key(type const t, bool const rising) {
     case type::LEVEL_CROSSING:
       return 310;
 
+      // meta
+    case type::META:
+      return 999;
+
       // invalid
     case type::INVALID: return std::numeric_limits<type_order_key>::max();
   }
 
   throw utl::fail("Could not find type {} in get_type_order_key",
                   get_type_str(t));
-}
-
-std::vector<xml_node> get_sorted_track_elements(xml_node const xml_rp_section) {
-  std::vector<xml_node> result;
-
-  for (auto const& node : xml_rp_section.child(RAIL_PLAN_NODE).children()) {
-    auto const type = get_type(node.name());
-
-    if (is_directed_track_element(type) || is_undirected_track_element(type)) {
-      result.emplace_back(node);
-    }
-  }
-
-  return result;
 }
 
 template <typename Comparator>
@@ -338,6 +329,31 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
 
   std::map<xml_node, element*> undirected_track_elements;
 
+  auto const insert_meta_in_empty = [&](element* e1, element* e2,
+                                        bool const rising) {
+    utls::sassert(utls::contains(e1->neighbours(), e2), "not neighbours");
+    utls::sassert(utls::contains(e2->neighbours(), e1), "not neighbours");
+
+    auto meta = create_element_t<track_element>(
+        network, station, mats, type::META,
+        std::numeric_limits<rail_plan_node_id>::max(), rising);
+
+    meta->as<track_element>().km_ = e1->get_km(e2);
+    meta->as<track_element>().line_ = line_id;
+    meta->as<track_element>().ahead() = e2;
+    meta->as<track_element>().behind() = e1;
+
+    network.element_id_to_section_ids_[meta->id()].push_back(section_id);
+
+    auto e1_neighbours = e1->neighbours();
+    std::replace(std::begin(e1_neighbours), std::end(e1_neighbours), e2, meta);
+
+    auto e2_neighbours = e2->neighbours();
+    std::replace(std::begin(e2_neighbours), std::end(e2_neighbours), e1, meta);
+
+    return meta;
+  };
+
   auto const create_directed_track_element =
       [&](xml_node const node, xml_node& prev_node, element*& prev_element,
           bool const dir) {
@@ -384,8 +400,10 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
 
         set_neighbour(*track_element, node.name(), prev_element, !dir);
 
-        network.element_id_to_section_ids_[track_element->id()].push_back(
-            section_id);
+        if (network.element_id_to_section_ids_[track_element->id()].empty()) {
+          network.element_id_to_section_ids_[track_element->id()].push_back(
+              section_id);
+        }
 
         prev_element = track_element;
         prev_node = node;
@@ -446,6 +464,12 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
                 true);
   set_neighbour(*end_element, section_end->name(), prev_rising_element, true);
 
+  if (prev_rising_element == start_element) {
+    // section is empty in rising direction
+    auto meta = insert_meta_in_empty(start_element, end_element, true);
+    all_track_elements.insert(meta);
+  }
+
   // scan the section in falling direction and add all falling and undirected
   // elements
   auto prev_falling_element = end_element;
@@ -463,6 +487,12 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
   } else {
     set_neighbour(*prev_falling_element, prev_falling_rp_node.name(),
                   start_element, false);
+  }
+
+  if (prev_falling_element == end_element) {
+    // section is empty in falling direction
+    auto meta = insert_meta_in_empty(end_element, start_element, false);
+    all_track_elements.insert(meta);
   }
 
   // don't sort the first section element, since when a section has length 0
@@ -714,13 +744,17 @@ void calculate_station_routes(infrastructure_t& infra,
     if (auto next = sr->path_->nodes_.back()->next_node_; next != nullptr) {
       auto const next_station =
           infra.element_to_station_.at(next->element_->id());
-      sr->to_station_ = next_station != sr->station_ ? next_station : nullptr;
+      sr->to_station_ = next_station != sr->station_
+                            ? station::optional_ptr(next_station)
+                            : station::optional_ptr(std::nullopt);
     }
 
     if (auto inc = sr->path_->nodes_.front()->reverse_edges_; !inc.empty()) {
       auto const prev_station =
           infra.element_to_station_.at(inc.front()->element_->id());
-      sr->from_station_ = prev_station != sr->station_ ? prev_station : nullptr;
+      sr->from_station_ = prev_station != sr->station_
+                              ? station::optional_ptr(prev_station)
+                              : station::optional_ptr(std::nullopt);
     }
 
     auto const rp_id_to_element = [&](auto&& rp_id) -> element::ptr {
@@ -752,15 +786,15 @@ void calculate_station_routes(infrastructure_t& infra,
       }
 
       if (node->element_ == runtime_check_e) {
-        sr->runtime_checkpoint_ = idx;
+        sr->runtime_checkpoint_ = node::optional_idx(idx);
       }
 
       if (node->element_ == passenger_element) {
-        sr->passenger_halt_ = idx;
+        sr->passenger_halt_ = node::optional_idx(idx);
       }
 
       if (node->element_ == freight_element) {
-        sr->freight_halt_ = idx;
+        sr->freight_halt_ = node::optional_idx(idx);
       }
 
       if (omitted_nodes_set.contains(node)) {
@@ -893,7 +927,7 @@ void complete_borders(infrastructure_t& iss) {
 
         from_border.neighbour_element_ = to_border.element_;
 
-#if defined(SERIALIZE)
+#if defined(SERIALIZE) && !defined(USE_CISTA_RAW)
         auto& non_const_border =
             static_cast<non_const_element_ptr>(from_border.element_)
                 ->as<simple_element>();
@@ -1169,10 +1203,10 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   iss.element_to_station_ = get_element_to_station_map(iss);
   calculate_station_routes(iss, mats);
 
-  auto const station_positions =
-      parse_station_coords(options.gps_coord_path_, iss.ds100_to_station_);
+  if (options.layout_) {
+    auto const station_positions =
+        parse_station_coords(options.gps_coord_path_, iss.ds100_to_station_);
 
-  if (options.determine_layout_) {
     std::tie(iss.station_positions_, iss.element_positions_) =
         get_layouted_positions(iss, iss_files, station_positions,
                                mats.rp_id_to_element_id_);
@@ -1191,9 +1225,12 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
 
-  if (options.determine_interlocking_) {
-    iss.interlocking_ =
-        get_interlocking_subsystem(iss, options.determine_conflicts_);
+  if (options.interlocking_) {
+    iss.interlocking_ = get_interlocking(iss);
+  }
+
+  if (options.interlocking_ && options.exclusions_) {
+    iss.exclusion_ = get_exclusion(iss, options.exclusion_graph_);
   }
 
   log_stats(iss);

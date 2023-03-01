@@ -12,7 +12,7 @@ struct sequence_point {
 
   using ptr = soro::ptr<sequence_point>;
 
-  using optional_ptr = utls::optional<ptr, nullptr>;
+  using optional_ptr = soro::optional<ptr>;
 
   enum struct type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
 

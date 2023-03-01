@@ -139,7 +139,7 @@ void check_infra(infrastructure const& infra) {
 
 TEST_CASE("parse infrastructure") {
   for (auto const& not_serialized :
-       soro::test::get_infrastructure_scenarios(soro::test::DE_ISS_OPTS)) {
+       soro::test::get_infrastructure_scenarios()) {
 #if defined(SERIALIZE)
     not_serialized.save("test.raw");
     infrastructure const infra("test.raw");

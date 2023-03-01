@@ -29,14 +29,10 @@ auto const SMALL_FOLDER = BASE_PATH / "infrastructure/small/";
 auto const DE_ISS_FOLDER = BASE_PATH / "infrastructure/de_iss/";
 
 infra::infrastructure_options const SMALL_OPTS = {
-    .gps_coord_path_ = SORO_COORD_PATH,
-    .infrastructure_path_ = SMALL_FOLDER,
-};
+    .infrastructure_path_ = SMALL_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
 
 infra::infrastructure_options const DE_ISS_OPTS = {
-    .gps_coord_path_ = SORO_COORD_PATH,
-    .infrastructure_path_ = DE_ISS_FOLDER,
-};
+    .infrastructure_path_ = DE_ISS_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
 
 std::vector<infra::infrastructure_options> const ALL_INFRA_OPTS = {SMALL_OPTS,
                                                                    DE_ISS_OPTS};

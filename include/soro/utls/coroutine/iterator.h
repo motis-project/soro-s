@@ -1,18 +1,8 @@
 #pragma once
 
-#if defined(__clang__)
-#include <experimental/coroutine>
-#else
-#include <coroutine>
-#endif
+#include "soro/utls/coroutine/coro_namespace.h"
 
 namespace soro::utls {
-
-#if defined(__clang__)
-namespace coro = std::experimental;
-#else
-namespace coro = std;
-#endif
 
 namespace detail {
 

@@ -38,6 +38,10 @@
                         id="addOrderingGraphComponentButton">
                     Ordering Graph
                 </button>
+                <button class="matter-button-contained window-button"
+                        id="addExclusionComponentButton">
+                    Exclusion
+                </button>
             </div>
             <div class="data-selects">
                 <div class="material-select data-select">
@@ -62,10 +66,6 @@
                 </div>
             </div>
             <div class="dev-tools">
-                <button class="matter-button-contained window-button"
-                        id="clearCacheButton">Clear
-                    Cache
-                </button>
                 <button class="matter-button-contained window-button"
                         id="simulateButton">Simulate
                 </button>
@@ -97,235 +97,198 @@
 </div>
 
 <script type="module">
-  // import { Module, FS, IDBFS } from "./soro-client.js";
-  import { GoldenLayout } from "./deps/GoldenLayout/GoldenLayout.js";
+    import {GoldenLayout} from "./deps/GoldenLayout/GoldenLayout.js";
 
-  // import {
-  //   saveToPersistent,
-  //   loadFromPersistent,
-  //   exists,
-  //   saveFileToIDBFS,
-  //   createFolders,
-  //   deleteAllFiles,
-  //   getStationCoordPath
-  // } from "./utl/IDBFSHelper.js";
+    import {getControlComponent} from "./utl/goldenLayoutHelper.js";
+    import {InfrastructureManager} from "./model/InfrastructureManager.js";
+    import {
+        InfrastructureComponent
+    } from "./components/infrastructure/InfrastructureComponent.js";
+    import {
+        SimulationComponent
+    } from "./components/simulation/SimulationComponent.js";
+    import {
+        TimetableComponent
+    } from "./components/timetable/TimetableComponent.js";
+    import {
+        OrderingGraphComponent
+    } from "./components/ordering_graph/OrderingGraphComponent.js"
+    import {
+        ExclusionComponent
+    } from "./components/exclusion/ExclusionComponent.js";
+    import {TimetableManager} from "./model/TimetableManager.js";
+    import {getSimulationComponent} from "./utl/goldenLayoutHelper.js";
 
-  import { getControlComponent } from "./utl/goldenLayoutHelper.js";
-  import { InfrastructureManager } from "./model/InfrastructureManager.js";
-  import {
-    InfrastructureComponent
-  } from "./components/infrastructure/InfrastructureComponent.js";
-  import {
-    SimulationComponent
-  } from "./components/simulation/SimulationComponent.js";
-  import {
-    TimetableComponent
-  } from "./components/timetable/TimetableComponent.js";
-  import {
-    OrderingGraphComponent
-  } from "./components/ordering_graph/OrderingGraphComponent.js"
-  import { TimetableManager } from "./model/TimetableManager.js";
-  import { getSimulationComponent } from "./utl/goldenLayoutHelper.js";
-
-  // function mountIDBFS(callback) {
-  //   FS.mkdir('/idbfs');
-  //   FS.mount(IDBFS, {}, '/idbfs');
-  //
-  //   loadFromPersistent(function () {
-  //     createFolders();
-  //     callback();
-  //     saveToPersistent();
-  //   });
-  // }
-
-  const initLayout = {
-    root: {
-      type: 'row',
-      content: [
-        {
-          type: 'column',
-          content: [
-            {
-              title: 'Infrastructure',
-              type: 'component',
-              componentType: 'InfrastructureComponent',
-              componentState: {
-                getCurrentInfrastructure: () => {
-                  return undefined
-                }
-              }
-            },
-            {
-              title: 'Simulation',
-              type: 'component',
-              componentType: 'SimulationComponent',
-            },
-          ]
+    const initLayout = {
+        root: {
+            type: 'row',
+            content: [
+                {
+                    title: 'Infrastructure',
+                    type: 'component',
+                    componentType: 'InfrastructureComponent',
+                    componentState: {
+                        getCurrentInfrastructure: () => {
+                            return undefined
+                        }
+                    }
+                },
+                {
+                    title: 'Exclusion',
+                    type: 'component',
+                    componentType: 'ExclusionComponent',
+                },
+            ]
+        },
+        /* If these are not shown it is not possible to rearrange GoldenLayout windows.
+           Instead of disabling them the images in goldenlayout-mdl-theme.css are removed
+           and all click events disabled ..
+        settings: {
+          showPopoutIcon: false,
+          showMaximiseIcon: false,
+          showCloseIcon: false
         }
-      ]
-    },
-    /* If these are not shown it is not possible to rearrange GoldenLayout windows.
-       Instead of disabling them the images in goldenlayout-mdl-theme.css are removed
-       and all click events disabled ..
-    settings: {
-      showPopoutIcon: false,
-      showMaximiseIcon: false,
-      showCloseIcon: false
-    }
-    */
-  };
+        */
+    };
 
-  /*
-    Run the setup routines after emscripten has done all of its own initialization
-   */
-  // Module.onRuntimeInitialized = async function () {
-  //   mountIDBFS(() => {
-  //
-  //     fetch(window.origin + '/misc/btrs_geo.csv')
-  //       .then(response => response.arrayBuffer())
-  //       .then(buf => saveFileToIDBFS('btrs_geo.csv', buf))
-  //       .catch(e => console.error(e));
-  //   })
-  //
-  // }
+    const c = {
+        settings: {
+            showPopoutIcon: false,
+            showMaximiseIcon: false,
+            showCloseIcon: false
+        }
+    };
 
-  const c = {
-    settings: {
-      showPopoutIcon: false,
-      showMaximiseIcon: false,
-      showCloseIcon: false
-    }
-  };
+    window.goldenLayout = new GoldenLayout();
+    window.goldenLayout.registerComponentConstructor('InfrastructureComponent', InfrastructureComponent);
+    window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
+    window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
+    window.goldenLayout.registerComponentConstructor('OrderingGraphComponent', OrderingGraphComponent);
+    window.goldenLayout.registerComponentConstructor('ExclusionComponent', ExclusionComponent);
+    window.goldenLayout.loadLayout(initLayout);
 
-  window.goldenLayout = new GoldenLayout();
-  window.goldenLayout.registerComponentConstructor('InfrastructureComponent', InfrastructureComponent);
-  window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
-  window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
-  window.goldenLayout.registerComponentConstructor('OrderingGraphComponent', OrderingGraphComponent);
-  window.goldenLayout.loadLayout(initLayout);
+    window.infrastructureManager = new InfrastructureManager();
+    window.timetableManager = new TimetableManager();
 
-  window.infrastructureManager = new InfrastructureManager();
-  window.timetableManager = new TimetableManager();
+    const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
+    addInfrastructureComponent.addEventListener('click', () => {
+        window.infrastructureManager.addInfrastructureComponent();
+    });
 
-  const addInfrastructureComponent = document.getElementById('addInfrastructureComponentButton');
-  addInfrastructureComponent.addEventListener('click', () => {
-    window.infrastructureManager.addInfrastructureComponent();
-  });
+    const addSimulationComponent = document.getElementById('addSimulationComponentButton');
+    addSimulationComponent.addEventListener('click', () => {
+        window.goldenLayout.addComponent('SimulationComponent', undefined, 'Simulation');
+    });
 
-  const addSimulationComponent = document.getElementById('addSimulationComponentButton');
-  addSimulationComponent.addEventListener('click', () => {
-    window.goldenLayout.addComponent('SimulationComponent', undefined, 'Simulation');
-  });
+    const addTimetableComponent = document.getElementById('addTimetableComponentButton');
+    addTimetableComponent.addEventListener('click', () => {
+        window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
+    });
 
-  const addTimetableComponent = document.getElementById('addTimetableComponentButton');
-  addTimetableComponent.addEventListener('click', () => {
-    window.timetableManager.addTimetableComponent('TimetableComponent', undefined, 'Timetable');
-  });
+    const addOrderingGraphComponent = document.getElementById('addOrderingGraphComponentButton');
+    addOrderingGraphComponent.addEventListener('click', () => {
+        window.goldenLayout.addComponent('OrderingGraphComponent', undefined, 'Ordering Graph');
+    });
 
-  const addOrderingGraphComponent = document.getElementById('addOrderingGraphComponentButton');
-  addOrderingGraphComponent.addEventListener('click', () => {
-      window.goldenLayout.addComponent('OrderingGraphComponent', undefined, 'Ordering Graph');
-  });
+    const addExclusionComponent = document.getElementById('addExclusionComponentButton');
+    addExclusionComponent.addEventListener('click', () => {
+        window.goldenLayout.addComponent('ExclusionComponent', undefined, 'Exclusion');
+    });
 
-  const simulateButton = document.getElementById('simulateButton');
-  simulateButton.addEventListener('click', () => {
-    getSimulationComponent().forEach(simComp => simComp.simulate());
-  });
+    const simulateButton = document.getElementById('simulateButton');
+    simulateButton.addEventListener('click', () => {
+        getSimulationComponent().forEach(simComp => simComp.simulate());
+    });
 
-  function fillOptions(selectElement, optionNames) {
-    selectElement.length = 1;
+    function fillOptions(selectElement, optionNames) {
+        selectElement.length = 1;
 
-    for (const name of optionNames) {
-      if (name === '.' || name === '..') continue;
+        for (const name of optionNames) {
+            if (name === '.' || name === '..') continue;
 
-      let option = document.createElement("option");
-      option.label = name;
-      option.value = name;
-      selectElement.add(option);
+            let option = document.createElement("option");
+            option.label = name;
+            option.value = name;
+            selectElement.add(option);
+        }
+
     }
 
-  }
+    const getSelectedOption = select => {
+        if (select.selectedIndex === -1) {
+            return '';
+        }
 
-  const getSelectedOption = select => {
-    if (select.selectedIndex === -1) {
-      return '';
+        return select.options[select.selectedIndex].value;
     }
 
-    return select.options[select.selectedIndex].value;
-  }
+    const infrastructureSelect = document.getElementById('infrastructureSelect');
+    fetch(window.origin + '/infrastructure/')
+        .then(response => response.json())
+        .then(json => fillOptions(infrastructureSelect, json.infrastructures));
 
-  const infrastructureSelect = document.getElementById('infrastructureSelect');
-  fetch(window.origin + '/infrastructure/')
-    .then(response => response.json())
-    .then(dir => fillOptions(infrastructureSelect, dir['dirs']));
+    infrastructureSelect.addEventListener('change', () => {
+        const currentInfrastructureName = getSelectedOption(infrastructureSelect);
+        window.infrastructureManager.load(currentInfrastructureName);
+    });
 
-  infrastructureSelect.addEventListener('change', () => {
-    const currentInfrastructureName = getSelectedOption(infrastructureSelect);
-    window.infrastructureManager.load(currentInfrastructureName);
-  });
+    const timetableSelect = document.getElementById('timetableSelect');
+    fetch(window.origin + '/timetable/')
+        .then(response => response.json())
+        .then(json => fillOptions(timetableSelect, json['timetables']));
 
-  const timetableSelect = document.getElementById('timetableSelect');
-  fetch(window.origin + '/timetable/')
-    .then(response => response.json())
-    .then(dir => fillOptions(timetableSelect, dir['dirs']));
+    timetableSelect.addEventListener('change', () => {
+        const currenTimetableName = getSelectedOption(timetableSelect);
+        window.timetableManager.load(currenTimetableName, window.infrastructureManager.get());
+    });
 
-  timetableSelect.addEventListener('change', () => {
-    const currenTimetableName = getSelectedOption(timetableSelect);
-    window.timetableManager.load(currenTimetableName, window.infrastructureManager.get());
-  });
+    let stationDetailButton = document.getElementById('stationDetailButton');
+    stationDetailButton.addEventListener('click', e => {
+        stationDetailButton.classList.toggle('enabled');
+        showSubOverlay();
+    });
 
-  const clearCacheButton = document.getElementById('clearCacheButton');
-  clearCacheButton.addEventListener('click', _ => {
-    deleteAllFiles();
-  });
+    import {showDisruptionDetail} from "./components/disruption/disruption.js";
 
-  let stationDetailButton = document.getElementById('stationDetailButton');
-  stationDetailButton.addEventListener('click', e => {
-    stationDetailButton.classList.toggle('enabled');
-    showSubOverlay();
-  });
-
-  import { showDisruptionDetail } from "./components/disruption/disruption.js";
-
-  let disruptionDetailButton = document.getElementById('disruptionDetailButton');
-  disruptionDetailButton.addEventListener('click', e => {
-    disruptionDetailButton.classList.add('enabled');
-    showDisruptionDetail(window.timetableManager.get());
-    showSubOverlay();
-  });
+    let disruptionDetailButton = document.getElementById('disruptionDetailButton');
+    disruptionDetailButton.addEventListener('click', e => {
+        disruptionDetailButton.classList.add('enabled');
+        showDisruptionDetail(window.timetableManager.get());
+        showSubOverlay();
+    });
 </script>
 
 <script>
-  // Define global functions
-  let overlayContainer = document.getElementById('overlayContainer');
-  let overlayToggleButton = document.getElementById('overlayToggleButton');
+    // Define global functions
+    let overlayContainer = document.getElementById('overlayContainer');
+    let overlayToggleButton = document.getElementById('overlayToggleButton');
 
-  var showOverlay = () => overlayContainer.classList.remove('hidden');
-  var hideOverlay = () => overlayContainer.classList.add('hidden');
-  var toggleOverlay = () => overlayContainer.classList.toggle('hidden');
+    var showOverlay = () => overlayContainer.classList.remove('hidden');
+    var hideOverlay = () => overlayContainer.classList.add('hidden');
+    var toggleOverlay = () => overlayContainer.classList.toggle('hidden');
 
-  let subOverlay = document.getElementById('subOverlay');
-  var showSubOverlay = () => {
-    showOverlay(), subOverlay.classList.remove('hidden');
-  }
-  var hideSubOverlay = () => subOverlay.classList.add('hidden');
-  var toggleSubOverlay = () => subOverlay.classList.toggle('hidden');
-
-  overlayToggleButton.addEventListener('click', toggleOverlay);
-
-  var disruptionMap = new Map();
-  disruptionMap.set('1', 80);
-  disruptionMap.set('2', 120);
-  var disruptionDists = false;
-
-  let subOverlayClose = document.getElementById('subOverlayClose');
-  subOverlayClose.addEventListener('click', _ => {
-    subOverlay.classList.add('hidden');
-
-    for (let overlayTab of document.getElementById('subOverlayTabs').children) {
-      overlayTab.classList.remove('enabled');
+    let subOverlay = document.getElementById('subOverlay');
+    var showSubOverlay = () => {
+        showOverlay(), subOverlay.classList.remove('hidden');
     }
-  });
+    var hideSubOverlay = () => subOverlay.classList.add('hidden');
+    var toggleSubOverlay = () => subOverlay.classList.toggle('hidden');
+
+    overlayToggleButton.addEventListener('click', toggleOverlay);
+
+    var disruptionMap = new Map();
+    disruptionMap.set('1', 80);
+    disruptionMap.set('2', 120);
+    var disruptionDists = false;
+
+    let subOverlayClose = document.getElementById('subOverlayClose');
+    subOverlayClose.addEventListener('click', _ => {
+        subOverlay.classList.add('hidden');
+
+        for (let overlayTab of document.getElementById('subOverlayTabs').children) {
+            overlayTab.classList.remove('enabled');
+        }
+    });
 
 </script>
 

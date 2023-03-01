@@ -217,6 +217,31 @@ void check_track_elements_are_ordered_correctly(section const& section) {
   check_order.operator()<direction::Falling>(section);
 }
 
+void check_section_is_not_empty(section const& sec) {
+  // sections between two borders can be empty
+  if (sec.first_rising()->is(type::BORDER) &&
+      sec.last_rising()->is(type::BORDER) &&
+      neighbours(sec.first_rising(), sec.last_rising()) &&
+      sec.first_rising()->get_km(sec.last_rising()) ==
+          sec.last_rising()->get_km(sec.first_rising())) {
+    return;
+  }
+
+  std::size_t rising_elements = 0;
+  for (auto const e : sec.iterate<direction::Rising>()) {
+    std::ignore = e;
+    ++rising_elements;
+  }
+  CHECK_GT(rising_elements, 2);
+
+  std::size_t falling_elements = 0;
+  for (auto const e : sec.iterate<direction::Falling>()) {
+    std::ignore = e;
+    ++falling_elements;
+  }
+  CHECK_GT(falling_elements, 2);
+}
+
 void check_section(section const& sec) {
   sections_are_paths(sec);
   section_iterators_have_all_elements(sec);
@@ -225,6 +250,7 @@ void check_section(section const& sec) {
   check_section_length(sec);
   check_section_iteration_direction(sec);
   check_track_elements_are_ordered_correctly(sec);
+  check_section_is_not_empty(sec);
 }
 
 void do_section_tests(soro::vector<section> const& sections) {

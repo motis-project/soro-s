@@ -2,8 +2,10 @@
 
 #include "cista/containers/array.h"
 #include "cista/containers/hash_set.h"
+#include "cista/containers/optional.h"
 #include "cista/containers/variant.h"
 
+#include "soro/utls/container/optional.h"
 #include "soro/utls/function_alias.h"
 
 #if defined(SERIALIZE)
@@ -70,7 +72,16 @@ using array = data::array<T, Size>;
 template <typename... T>
 using variant = data::variant<T...>;
 
+#if defined(__clang__)
+template <typename T>
+using optional = utls::optional<T>;
+#else
+template <typename T>
+using optional = cista::optional<T>;
+#endif
+
 using string = data::string;
+
 using string_view = data::string_view;
 
 template <typename T, typename... Args>
@@ -126,9 +137,10 @@ using array = data::array<ValueType, Size>;
 template <typename... T>
 using variant = data::variant<T...>;
 
-using string = std::string;
+template <typename T>
+using optional = utls::optional<T>;
 
-inline const char* c_str(std::string const& s) { return s.c_str(); }
+using string = std::string;
 
 template <typename T, typename... Args>
 soro::unique_ptr<T> make_unique(Args&&... args) {

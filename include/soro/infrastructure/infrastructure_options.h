@@ -2,26 +2,40 @@
 
 #include "cista/reflection/comparable.h"
 
+#include "soro/infrastructure/exclusion/exclusion.h"
+#include "soro/infrastructure/exclusion/exclusion_graph.h"
+#include "soro/infrastructure/interlocking/interlocking.h"
+
 #include <filesystem>
 
 namespace soro::infra {
 
-// Parse an infrastructure from the following:
-//   - ISS 'Index.xml', which references all other ISS-Xid_ML files
-//   - ISS 'Spurplanbtrs.xml', which only contains station information
-//   - ISS 'infra.base_infrastructure', file, which is a .tar.zst file
-//   containing ISS-XML files
-//   - ISS 'example/', a folder which contains an 'Index.xml'
+template <typename Tag>
+struct option {
+  option(bool const b) : b_{b} {}  // NOLINT
+  operator bool() const { return b_; }  // NOLINT
+  bool b_;
+};
+
+struct layout_tag;
 
 struct infrastructure_options {
   CISTA_COMPARABLE()
 
-  bool determine_interlocking_{true};
-  bool determine_conflicts_{true};
-  bool determine_layout_{true};
+  option<interlocking> interlocking_{true};
+  option<exclusion> exclusions_{true};
+  option<exclusion_graph> exclusion_graph_{false};
+  option<layout_tag> layout_{true};
 
-  std::filesystem::path gps_coord_path_{""};
   std::filesystem::path infrastructure_path_{""};
+  std::filesystem::path gps_coord_path_{""};
 };
+
+inline infrastructure_options make_infra_opts(
+    std::filesystem::path const& infrastructure_path,
+    std::filesystem::path const& coord_path) {
+  return infrastructure_options{.infrastructure_path_ = infrastructure_path,
+                                .gps_coord_path_ = coord_path};
+}
 
 }  // namespace soro::infra

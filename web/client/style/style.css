@@ -191,7 +191,8 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    align-content: flex-start;
     opacity: 1;
     transition: all 0.2s ease;
     flex-direction: column;
@@ -216,7 +217,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 90%;
+    height: 4em;
 }
 
 .station-detail-route {
@@ -235,7 +236,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 90%;
+    height: 4em;
 }
 
 .station-detail-signal-route {
@@ -248,4 +249,28 @@
     background: var(--overlay-color);
     border: 0.4em solid var(--overlay-color);
     border-right: 0;
+}
+
+.exclusion-sets {
+    overflow: scroll;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 100%;
+    height: 90%;
+}
+
+.exclusion-set {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    width: calc(100% - 1em);
+    background: var(--dialog-color);
+    border: 0.4em solid var(--dialog-color);
+}
+
+.exclusion-set-interlocking-route {
+    width: calc(100% - 1em);
+    background: var(--dialog-color);
+    border: 0.4em solid var(--dialog-color);
 }

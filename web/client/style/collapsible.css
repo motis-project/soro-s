@@ -70,7 +70,7 @@ input[type=checkbox].hidden {
 }
 
 .collapsible-toggle:checked + .collapsible-toggle + .collapsible-content {
-    max-height: 65%;
+    max-height: 45%;
 }
 
 .collapsible-toggle:checked + .collapsible-toggle::after {
