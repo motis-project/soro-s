@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,13 +12,16 @@ import (
 	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 	os.Mkdir("./temp", 0755)
 	var generateLines bool
+	var mapDB bool
 	var inputFile string
+	var outputFile string
 
 	app := &cli.App{
 		Name:  "generate-osm",
@@ -31,6 +33,12 @@ func main() {
 				Usage:       "Generate lines all lines new",
 				Destination: &generateLines,
 			},
+			&cli.BoolFlag{
+				Name:        "map-DB",
+				Aliases:     []string{"mdb"},
+				Usage:       "Generate lines all lines new and map DB data",
+				Destination: &mapDB,
+			},
 			&cli.StringFlag{
 				Name:        "input",
 				Aliases:     []string{"i"},
@@ -38,9 +46,16 @@ func main() {
 				Usage:       "The input file to read as OSM PBF file",
 				Destination: &inputFile,
 			},
+			&cli.StringFlag{
+				Name:        "output",
+				Aliases:     []string{"o"},
+				Value:       "./finalOsm.xml",
+				Usage:       "The output file to write result to as XML file",
+				Destination: &outputFile,
+			},
 		},
 		Action: func(cCtx *cli.Context) error {
-			if err := generateOsm(generateLines, inputFile); err != nil {
+			if err := generateOsm(generateLines, mapDB, inputFile, outputFile); err != nil {
 				return err
 			}
 
@@ -53,7 +68,7 @@ func main() {
 	}
 }
 
-func generateOsm(generateLines bool, inputFile string) error {
+func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile string) error {
 	if !filepath.IsAbs(inputFile) {
 		inputFile, _ = filepath.Abs(inputFile)
 	}
@@ -81,7 +96,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 	tempLinesDir, _ := filepath.Abs(tempFolderPath + "/lines")
 	tempDBLinesDir, _ := filepath.Abs(tempFolderPath + "/DBLines")
 	tempDBResoucesDir, _ := filepath.Abs(tempFolderPath + "/DBResources")
-	if generateLines {
+	if generateLines || mapDB {
 		if err = os.RemoveAll(tempLinesDir); err != nil {
 			return errors.New("Failed to remove lines folder: " + err.Error())
 		}
@@ -90,11 +105,6 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
 			return errors.New("Failed to create lines folder: " + err.Error())
-		}
-		if _, err := os.Stat(tempDBResoucesDir); os.IsNotExist(err) {
-			if err = os.Mkdir(tempDBResoucesDir, 0755); err != nil {
-				return errors.New("Failed to create DBResources folder: " + err.Error())
-			}
 		}
 
 		for _, refId := range refs {
@@ -111,10 +121,15 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 
-		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
-		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+		if mapDB {
+			if _, err := os.Stat("./temp/DBResources"); errors.Is(err, os.ErrNotExist) {
+				return errors.Wrap(err, "DBResource-director does not exists, please first create temp/DBResources")
+			}
+			relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
+			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
-		_ = relevant_refs
+			_ = relevant_refs
+		}
 
 		fmt.Println("Generated all lines")
 	}
@@ -151,7 +166,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		fmt.Printf("error: %v\n", err)
 	}
 	output = []byte(xml.Header + string(output))
-	os.WriteFile("./temp/finalOsm.xml", output, 0644)
+	os.WriteFile(outputFile, output, 0644)
 
 	return nil
 }
