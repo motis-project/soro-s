@@ -89,7 +89,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		inputFile,
 		"-o",
 		tracksFilePath,
-		"r/route=tracks",
+		"r/route=tracks,railway",
 		"--overwrite",
 	})
 

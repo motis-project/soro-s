@@ -15,7 +15,7 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 		inputFilePath,
 		"-o",
 		refsPath,
-		"r/route=tracks",
+		"r/route=tracks,railway",
 		"--overwrite",
 	})
 
