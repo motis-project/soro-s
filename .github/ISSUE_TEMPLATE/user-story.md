@@ -1,7 +1,7 @@
 ---
 name: User Story
 about: Request a user story damn
-title: ''
+title: "[--] Some user story"
 labels: user-story
 assignees: ''
 
