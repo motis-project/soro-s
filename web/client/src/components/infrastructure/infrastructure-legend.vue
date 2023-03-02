@@ -1,37 +1,47 @@
 <template>
-    <v-sheet
-        ref="mapLegend"
-        class="infrastructure-map-legend"
-        :elevation="5"
-    >
-        <template
-            v-for="(elementType, index) in legendControlTypes"
-            :key="index"
+    <div class="infrastructure-legend">
+        <v-btn
+            class="infrastructure-legend-collapse-button"
+            color="primary"
+            @click="() => isExpanded = !isExpanded"
         >
-            <v-checkbox
-                :ref="elementType"
-                :model-value="checkedControls"
-                :name="elementType"
-                :value="elementType"
-                class="legend-key"
-                color="primary"
-                density="compact"
-                min-height="0px"
-                hide-details
-                @input="emitChange"
+            <i class="material-icons">{{ collapseIcon }}</i>
+        </v-btn>
+        <v-sheet
+            ref="mapLegend"
+            class="infrastructure-map-legend"
+            :class="isExpanded ? '' : 'infrastructure-map-legend-collapsed'"
+            :elevation="5"
+        >
+            <template
+                v-for="(elementType, index) in legendControlTypes"
+                :key="index"
             >
-                <template #label>
-                    <img
-                        v-if="hasImage(elementType)"
-                        class="legend-key-icon"
-                        :src="iconUrl + elementType + iconExtension"
-                        alt=""
-                    >
-                    {{ getElementLabel(elementType) }}
-                </template>
-            </v-checkbox>
-        </template>
-    </v-sheet>
+                <v-checkbox
+                    :ref="elementType"
+                    :model-value="checkedControls"
+                    :name="elementType"
+                    :value="elementType"
+                    class="legend-key"
+                    color="primary"
+                    density="compact"
+                    min-height="0px"
+                    hide-details
+                    @input="emitChange"
+                >
+                    <template #label>
+                        <img
+                            v-if="hasImage(elementType)"
+                            class="legend-key-icon"
+                            :src="iconUrl + elementType + iconExtension"
+                            alt=""
+                        >
+                        {{ getElementLabel(elementType) }}
+                    </template>
+                </v-checkbox>
+            </template>
+        </v-sheet>
+    </div>
 </template>
 
 <script lang="ts">
@@ -69,7 +79,14 @@ export default defineComponent({
             legendControlTypes,
             iconUrl,
             iconExtension,
+            isExpanded: true,
         };
+    },
+
+    computed: {
+        collapseIcon() {
+            return this.isExpanded ? 'chevron_right' : 'legend_toggle';
+        },
     },
 
     methods: {
@@ -94,11 +111,23 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.infrastructure-legend {
+    display: flex;
+    margin-bottom: 40px;
+}
+
+.infrastructure-legend-collapse-button {
+    align-self: end;
+}
+
 .infrastructure-map-legend {
     padding: 10px 10px 20px;
     height: fit-content;
-    margin-bottom: 40px;
     width: fit-content;
+}
+
+.infrastructure-map-legend-collapsed {
+    display: none;
 }
 
 .legend-key {
