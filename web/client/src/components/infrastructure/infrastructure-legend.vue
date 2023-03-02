@@ -13,6 +13,15 @@
             :class="isExpanded ? '' : 'infrastructure-map-legend-collapsed'"
             :elevation="5"
         >
+            <div class="infrastructure-map-reset">
+                <a
+                    href="/"
+                    @click="onReset"
+                >
+                    Reset
+                </a>
+            </div>
+
             <template
                 v-for="(elementType, index) in legendControlTypes"
                 :key="index"
@@ -72,6 +81,7 @@ export default defineComponent({
     emits: [
         'checked',
         'unchecked',
+        'reset',
     ],
 
     data() {
@@ -96,6 +106,11 @@ export default defineComponent({
 
         getElementLabel(elementType: string) {
             return ElementTypeLabels[elementType] ?? elementType;
+        },
+
+        onReset(event: Event) {
+            event.preventDefault();
+            this.$emit('reset');
         },
 
         emitChange(event: Event) {
@@ -128,6 +143,21 @@ export default defineComponent({
 
 .infrastructure-map-legend-collapsed {
     display: none;
+}
+
+.infrastructure-map-reset {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    width: 100%;
+    color: rgb(var(--v-theme-primary));
+}
+
+a,
+a:visited,
+a:hover,
+a:active {
+    color: inherit;
 }
 
 .legend-key {

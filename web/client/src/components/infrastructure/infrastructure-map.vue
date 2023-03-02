@@ -9,6 +9,7 @@
             :checked-controls="checkedControls"
             @checked="(name) => onLegendControlChanged(name, true)"
             @unchecked="(name) => onLegendControlChanged(name, false)"
+            @reset="resetLegend"
         />
         <div
             ref="infrastructureTooltip"
@@ -179,7 +180,7 @@ export default defineComponent({
                 this.checkedControls = this.checkedControls.filter((control) => control !== legendControl);
             }
 
-            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
+            this.saveControls();
 
             if (!this.libreGLMap) {
                 return;
@@ -192,6 +193,20 @@ export default defineComponent({
             }
 
             this.setElementTypeVisibility(legendControl, checked);
+        },
+
+        resetLegend() {
+            this.checkedControls = initiallyCheckedControls;
+            this.saveControls();
+            this.setVisibilityOfAllControls();
+        },
+
+        saveControls() {
+            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
+        },
+
+        setVisibilityOfAllControls() {
+            ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
         },
 
         setElementTypeVisibility(elementType: string, visible: boolean) {
@@ -257,7 +272,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                this.setVisibilityOfAllControls();
             });
 
             map.dragPan.enable({
