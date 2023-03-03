@@ -77,6 +77,18 @@ bool is_kss_timetable(timetable_options const& opts) {
       });
 }
 
+std::size_t distance(date::year_month_day const from,
+                     date::year_month_day const to) {
+  utls::sassert(from.ok(), "Date from {} is not ok.", from);
+  utls::sassert(to.ok(), "Date to {} is not ok.", to);
+  utls::sassert(from <= to,
+                "Call distance for year_month_date with ascending dates, "
+                "got called with {} and {}",
+                from, to);
+
+  return (date::sys_days{from} - date::sys_days{to}).count();
+}
+
 bitfield parse_services(xml_node const services_xml) {
   std::size_t total_service_days = 0;
 
@@ -471,7 +483,7 @@ void set_ids(soro::vector<train>& trains) {
 
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
-  utl::scoped_timer const timetable_timer("Parsing Timetable");
+  utl::scoped_timer const timetable_timer("parsing timetable");
 
   base_timetable bt;
 

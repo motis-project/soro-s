@@ -7,7 +7,6 @@
 
 #include "soro/infrastructure/exclusion/exclusion_elements.h"
 #include "soro/infrastructure/exclusion/get_exclusion_graph.h"
-#include "soro/infrastructure/exclusion/get_exclusion_sets.h"
 #include "soro/infrastructure/exclusion/read_cliques.h"
 #include "soro/infrastructure/infrastructure.h"
 
@@ -97,6 +96,7 @@ soro::vector<interlocking_route::ids> get_closed_element_used_by(
 }
 
 exclusion get_exclusion(infrastructure_t const& infra_t,
+                        std::filesystem::path const& clique_path,
                         option<exclusion_graph> const exclusion_graph) {
   infrastructure const infra(&infra_t);
 
@@ -106,16 +106,15 @@ exclusion get_exclusion(infrastructure_t const& infra_t,
   ex.open_exclusion_elements_ =
       get_open_exclusion_elements(ex.closed_exclusion_elements_, infra);
 
-  auto const closed_element_used_by = get_closed_element_used_by(
-      ex.closed_exclusion_elements_, infra->graph_.elements_.size());
-
   if (exclusion_graph) {
+    auto const closed_element_used_by = get_closed_element_used_by(
+        ex.closed_exclusion_elements_, infra->graph_.elements_.size());
+
     ex.exclusion_graph_ = get_exclusion_graph(ex.closed_exclusion_elements_,
                                               closed_element_used_by, infra);
   }
 
-  ex.exclusion_sets_ = get_exclusion_sets(infra, closed_element_used_by,
-                                          ex.open_exclusion_elements_);
+  ex.exclusion_sets_ = read_cliques(clique_path);
 
   ex.irs_to_exclusion_sets_ = get_irs_to_exclusion_sets(
       ex.exclusion_sets_, infra->interlocking_.routes_.size());

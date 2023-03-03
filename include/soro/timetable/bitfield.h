@@ -16,7 +16,34 @@ struct bitfield {
     return t != anchor_time ::max();
   }
 
-  std::vector<date::year_month_day> get_set_days() const;
+  struct iterator {
+    using iterator_category = typename std::input_iterator_tag;
+    using value_type = anchor_time;
+    using difference_type = value_type;
+    using pointer = value_type*;
+    using reference = value_type;
+
+    using idx_t = uint16_t;
+
+    iterator(bitfield const* bitfield, idx_t const idx);
+
+    iterator& operator++();
+    value_type operator*() const;
+
+    bool operator==(iterator const& other) const = default;
+    bool operator!=(iterator const& other) const = default;
+
+    bitfield const* bitfield_{nullptr};
+    idx_t idx_{0};
+  };
+
+  iterator begin() const;
+  iterator end() const;
+
+  iterator from(absolute_time const t) const;
+  iterator to(absolute_time const t) const;
+
+  std::vector<anchor_time> get_set_days() const;
 
   bool ok() const noexcept;
 
@@ -24,7 +51,7 @@ struct bitfield {
 
   bool operator[](anchor_time const ymd) const;
 
-  void set(date::year_month_day const ymd, bool const new_value);
+  void set(anchor_time const ymd, bool const new_value);
 
   bool equivalent(bitfield const& o) const noexcept;
 
@@ -33,9 +60,6 @@ struct bitfield {
   bitfield operator|=(bitfield const& o) noexcept;
   friend bitfield operator|(bitfield const& lhs, bitfield const& rhs) noexcept;
 
-  // with BITSIZE the bitfield can cover a range of [first_date_, end())
-  anchor_time end() const noexcept;
-
   std::size_t count() const noexcept;
 
   anchor_time first_date_{anchor_time::max()};
@@ -43,11 +67,9 @@ struct bitfield {
   bitset bitset_{};
 };
 
-bitfield make_bitfield(date::year_month_day first_date,
-                       date::year_month_day last_date,
+bitfield make_bitfield(bitfield::anchor_time const first_date,
+                       bitfield::anchor_time const last_date,
                        const char* const bitmask);
-
-std::size_t distance(date::year_month_day from, date::year_month_day to);
 
 }  // namespace soro::tt
 

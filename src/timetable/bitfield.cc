@@ -20,16 +20,9 @@ std::size_t distance(bitfield::anchor_time const from,
   return static_cast<std::size_t>((to - from).count());
 }
 
-std::size_t distance(date::year_month_day const from,
-                     date::year_month_day const to) {
-  utls::sassert(from.ok(), "Date from {} is not ok.", from);
-  utls::sassert(to.ok(), "Date to {} is not ok.", to);
-  utls::sassert(from <= to,
-                "Call distance for year_month_date with ascending dates, "
-                "got called with {} and {}",
-                from, to);
-
-  return distance(bitfield::anchor_time{from}, bitfield::anchor_time{to});
+bitfield::iterator::idx_t get_end_idx(bitfield const* bf) {
+  return static_cast<bitfield::iterator::idx_t>(
+      distance(bf->first_date_, bf->last_date_) + 1);
 }
 
 std::size_t get_idx(bitfield::anchor_time const first_date,
@@ -43,19 +36,83 @@ std::size_t get_idx(bitfield::anchor_time const first_date,
   return distance(first_date, ymd);
 }
 
-date::year_month_day idx_to_date(bitfield::anchor_time const first_date,
-                                 std::size_t const idx) {
+bitfield::anchor_time idx_to_date(bitfield::anchor_time const first_date,
+                                  std::size_t const idx) {
   utls::sassert(bitfield::valid(first_date), "First date {} is not ok.",
                 first_date);
   return {first_date + days(idx)};
+}
+
+bitfield::iterator::iterator(bitfield const* bitfield, idx_t const idx)
+    : bitfield_{bitfield}, idx_{idx} {
+  utls::expects(idx_ <= get_end_idx(bitfield), "got invalid idx");
+
+  if (idx_ != get_end_idx(bitfield) &&
+      !bitfield_->at(idx_to_date(bitfield_->first_date_, idx_))) {
+    this->operator++();
+  }
+
+  utls::ensure(idx_ <= get_end_idx(bitfield), "created invalid idx");
+}
+
+bitfield::iterator& bitfield::iterator::operator++() {
+  utls::expects(idx_ < get_end_idx(bitfield_), "incrementing end iterator");
+  ++idx_;
+
+  while (idx_ < get_end_idx(bitfield_) && !bitfield_->bitset_[idx_]) {
+    ++idx_;
+  }
+
+  utls::ensure(idx_ <= get_end_idx(bitfield_), "created invalid iterator");
+  utls::ensure(idx_ == get_end_idx(bitfield_) || bitfield_->bitset_[idx_],
+               "pointing to non set day");
+
+  return *this;
+}
+
+bitfield::iterator::value_type bitfield::iterator::operator*() const {
+  utls::sassert(bitfield_->at(bitfield_->first_date_ + days{idx_}),
+                "returning non set day");
+  return bitfield_->first_date_ + days{idx_};
+}
+
+bitfield::iterator bitfield::begin() const {
+  return bitfield::iterator{this, 0};
+}
+
+bitfield::iterator bitfield::end() const {
+  return bitfield::iterator{this, get_end_idx(this)};
+}
+
+bitfield::iterator bitfield::from(absolute_time const t) const {
+  auto const at = sc::time_point_cast<anchor_time::duration>(midnight(t));
+
+  if (at <= first_date_) {
+    return iterator{this, 0};
+  } else {
+    auto const dist = distance(first_date_, at);
+    auto const max_dist = get_end_idx(this);
+
+    return dist >= max_dist
+               ? iterator{this, max_dist}
+               : iterator{this, static_cast<bitfield::iterator::idx_t>(dist)};
+  }
+}
+
+bitfield::iterator bitfield::to(absolute_time const t) const {
+  auto const at = sc::time_point_cast<anchor_time::duration>(midnight(t));
+  return at >= last_date_
+             ? iterator{this, get_end_idx(this)}
+             : iterator{this, static_cast<bitfield::iterator::idx_t>(
+                                  distance(first_date_, at) + 1)};
 }
 
 bool bitfield::ok() const noexcept {
   return valid(this->first_date_) && valid(this->last_date_);
 }
 
-std::vector<date::year_month_day> bitfield::get_set_days() const {
-  std::vector<date::year_month_day> result;
+std::vector<bitfield::anchor_time> bitfield::get_set_days() const {
+  std::vector<bitfield::anchor_time> result;
 
   for (auto i = 0UL; i < BITSIZE; ++i) {
     if (this->bitset_.test(i)) {
@@ -99,13 +156,13 @@ int8_t in_range(bitfield::anchor_time const ymd,
   return 1;
 }
 
-void bitfield::set(date::year_month_day const ymd, bool const new_value) {
+void bitfield::set(bitfield::anchor_time const ymd, bool const new_value) {
   auto const pos = in_range(ymd, this->first_date_, this->last_date_);
 
-  anchor_time const ymd_anchor{ymd};
+  anchor_time const anchor{ymd};
 
   if (pos < 0) {
-    this->bitset_ <<= distance(ymd_anchor, this->first_date_);
+    this->bitset_ <<= distance(anchor, this->first_date_);
     this->first_date_ = ymd;
   } else if (pos > 0) {
     this->last_date_ = ymd;
@@ -113,7 +170,7 @@ void bitfield::set(date::year_month_day const ymd, bool const new_value) {
 
   utls::sassert(
       distance(this->first_date_, this->last_date_) < BITSIZE,
-      "Covering from start date {} to last date {} impossible with BITSIZE {}.",
+      "Covering from start date {} to last date {} impossible with {} bits.",
       this->first_date_, this->last_date_, BITSIZE);
 
   bitset_.set(get_idx(first_date_, last_date_, ymd), new_value);
@@ -160,14 +217,10 @@ bitfield bitfield::operator|=(bitfield const& o) noexcept {
   return *this;
 }
 
-bitfield::anchor_time bitfield::end() const noexcept {
-  return {static_cast<date::sys_days>(this->first_date_) + date::days{BITSIZE}};
-}
-
 std::size_t bitfield::count() const noexcept { return this->bitset_.count(); }
 
-bitfield make_bitfield(date::year_month_day const first_date,
-                       date::year_month_day const last_date,
+bitfield make_bitfield(bitfield::anchor_time const first_date,
+                       bitfield::anchor_time const last_date,
                        const char* const bitmask) {
   auto const bitmask_length = distance(first_date, last_date) + 1;
 

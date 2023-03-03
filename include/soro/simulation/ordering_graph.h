@@ -24,7 +24,10 @@ struct ordering_node {
 
 struct ordering_graph {
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
+  ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt,
+                 tt::interval const& interval);
   ordering_graph();
+
   std::vector<ordering_node> nodes_;
 };
 

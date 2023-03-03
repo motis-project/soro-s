@@ -12,6 +12,7 @@
 #include "soro/rolling_stock/freight.h"
 #include "soro/rolling_stock/train_physics.h"
 #include "soro/timetable/bitfield.h"
+#include "soro/timetable/interval.h"
 #include "soro/timetable/sequence_point.h"
 
 namespace soro::tt {
@@ -50,6 +51,36 @@ struct train {
     sub_t sub_{std::numeric_limits<sub_t>::max()};
   };
 
+  struct iterator {
+    using iterator_category = typename std::input_iterator_tag;
+    using value_type = absolute_time;
+    using difference_type = value_type;
+    using pointer = value_type*;
+    using reference = value_type;
+
+    iterator(train const* train, interval const& interval, bool const end);
+
+    void advance();
+
+    iterator& operator++();
+
+    value_type operator*() const;
+
+    bool operator==(iterator const& other) const = default;
+    bool operator!=(iterator const& other) const = default;
+
+    train const* train_;
+    bitfield::iterator bitfield_it_;
+    interval interval_;
+  };
+
+  utls::it_range<iterator> departures(interval const& interval) const {
+    return utls::make_range(iterator{this, interval, false},
+                            iterator{this, interval, true});
+  }
+
+  utls::it_range<iterator> departures() const { return departures(interval{}); }
+
   rs::FreightTrain freight() const;
   bool is_freight() const;
 
@@ -59,7 +90,8 @@ struct train {
   si::length path_length(infra::infrastructure const& infra) const;
 
   relative_time first_departure() const;
-  //  relative_time last_arrival() const;
+  relative_time last_arrival() const;
+  interval event_interval(absolute_time const midnight) const;
 
   std::size_t total_halts() const;
 

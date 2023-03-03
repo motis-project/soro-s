@@ -17,9 +17,6 @@ struct interlocking {
 
   soro::vector<interlocking_route::ids> sr_to_participating_irs_;
   soro::vector<interlocking_route::ids> station_to_irs_;
-
-  // deprecated
-  soro::vector<interlocking_route::ids> exclusions_;
 };
 
 }  // namespace soro::infra
