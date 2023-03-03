@@ -38,7 +38,8 @@ struct server {
 
   server(std::string const& address, port_t const port,
          fs::path const& server_resource_dir, bool const test,
-         const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts);
+         const std::unordered_map<
+             std::string, std::vector<osm_object>>& osm_halts);
 
   static void serve_forever(std::string const& address, port_t const port,
                             callback_t&& cb, bool const test);

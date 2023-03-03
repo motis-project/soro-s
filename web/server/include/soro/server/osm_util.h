@@ -5,17 +5,35 @@
 
 namespace soro::server {
 
-struct osm_halt {
-public:
-    osm_halt() = default;
-    osm_halt(const std::string& name, const bool is_station, const double lon,
-           const double lat)
-      : name_(name), is_station_(is_station), lon_(lon), lat_(lat) {}
+    enum class osm_type {
+        HALT,
+        STATION,
+        MAIN_SIGNAL,
 
-    std::string name_;
-    bool is_station_; // true if halt is a station, false if halt is a stop
-    double lon_;
-    double lat_;
-};
+        UNDEFINED,
+    };
+
+    struct osm_object {
+        public:
+        osm_object() = default;
+          osm_object(const std::string& name, const osm_type type,
+                   const double lon,
+           const double lat)
+           : name_(name), type_(type), lon_(lon), lat_(lat) {}
+
+        std::string name_;
+        osm_type type_; 
+        double lon_;
+        double lat_;
+    };
+
+
+    struct search_filter {
+    public:
+        search_filter() = default;
+        bool station_ = false;
+        bool halt_ = false;
+        bool main_signal_ = false;
+    };
 
 }  // namespace soro::server

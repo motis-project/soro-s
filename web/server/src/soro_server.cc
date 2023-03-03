@@ -183,17 +183,26 @@ std::string to_lower(std::string str) {
   return str;
 }
 
-std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
-    std::vector<soro::server::osm_halt> matches;
+std::vector<soro::server::osm_object> get_object_info(
+    const std::vector<soro::server::osm_object>& osm_objects,
+    const std::string& name,
+    const soro::server::search_filter& filter) {
+    std::vector<soro::server::osm_object> matches;
 
-    for (const auto& halt : osm_halts) {
-        if (to_lower(halt.name_).find(to_lower(name)) != std::string::npos) {
-            matches.push_back(halt);
+    using ot = soro::server::osm_type;
+
+    for (const auto& object : osm_objects) {
+        if (!filter.halt_ && object.type_ == ot::HALT) continue;
+        if (!filter.station_ && object.type_ == ot::STATION) continue;
+        if (!filter.main_signal_ && object.type_ == ot::MAIN_SIGNAL) continue;
+
+        if (to_lower(object.name_).find(to_lower(name)) != std::string::npos) {
+            matches.push_back(object);
         }
     }
 
    std::sort(matches.begin(), matches.end(),
-        [](const soro::server::osm_halt& a, const soro::server::osm_halt& b) {
+        [](const soro::server::osm_object& a, const soro::server::osm_object& b) {
             // Primary ordering by length
             if (a.name_.length() < b.name_.length()) return true;
             if (a.name_.length() > b.name_.length()) return false;
@@ -205,8 +214,11 @@ std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server
 }
 
 void serve_search(
-    request_t const& req, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
-  
+    request_t const& req, response_t& res,
+    const std::unordered_map<
+        std::string, std::vector<soro::server::osm_object>>& osm_objects) {
+  namespace rj = rapidjson;
+
   std::string body;
 
   auto m_buffer = req.body();
@@ -216,28 +228,44 @@ void serve_search(
       body.append(cbuf, boost::asio::buffer_size(seq));
   }
 
-  rapidjson::Document req_body;
+  rj::Document req_body;
   req_body.Parse(body.c_str());
 
   std::string const infra_name = req_body["infrastructure"].GetString();
-  std::string const halt_name = req_body["query"].GetString();
+  std::string const object_name = req_body["query"].GetString();
 
-  const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
+  soro::server::search_filter filter;
+  filter.halt_ = true;
+  filter.station_ = true;
+
+  if (req_body.HasMember("options")) {
+      auto const options = req_body["options"].GetObject();
+      if (options.HasMember("includedTypes")) {
+          auto const include_types = options["includedTypes"].GetObject();
+          filter.halt_ = include_types["hlt"].GetBool();
+          filter.station_ = include_types["station"].GetBool();
+          filter.main_signal_ = include_types["ms"].GetBool();
+      }
+  }
+
+
+  const auto info = get_object_info(osm_objects.at(infra_name), object_name, filter);
 
  
   rapidjson::Document ret;
   ret.SetArray();
 
   for (const auto& elem : info) {
-      rapidjson::Value pos;
+      rj::Value pos;
       pos.SetObject();
       pos.AddMember("lat", elem.lat_, ret.GetAllocator());
       pos.AddMember("lon", elem.lon_, ret.GetAllocator());
 
-      rapidjson::Value name;
+
+      rj::Value name;
       name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()));
 
-      rapidjson::Value entry;
+      rj::Value entry;
       entry.SetObject();
       entry.AddMember("name", name, ret.GetAllocator());
       entry.AddMember("position", pos, ret.GetAllocator());
@@ -252,14 +280,14 @@ void serve_search(
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   ret.Accept(writer);
 
-  res.body() = buffer.GetString();
+  auto const ret_body = buffer.GetString();
+  res.body() = ret_body;
   res.result(http::status::ok);
 }
 
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test,
-    const std::unordered_map<std::string,
-    std::vector<soro::server::osm_halt>>&osm_halts) {
+    const std::unordered_map<std::string, std::vector<soro::server::osm_object>>& osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
   serve_forever(

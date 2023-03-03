@@ -1,7 +1,7 @@
 <template>
     <div>
         <v-navigation-drawer
-            v-model="overlay"
+            v-model="showOverlay"
             permanent
             width="auto"
         >
@@ -10,13 +10,16 @@
                 class="overlay-tabs"
             >
                 <v-btn
+                    v-for="item in overlayTypes"
+                    :key="item"
+                    :color="selectedOverlay !== item ? '' : 'primary'"
                     class="overlay-tab-button"
-                    color="primary"
                     flat
-                    @click="overlay = !overlay"
+                    @click="onOverlayButtonClicked(item)"
                 >
-                    <i class="material-icons">menu</i>
+                    <i class="material-icons">{{ item }}</i>
                 </v-btn>
+
                 <v-btn
                     ref="stationDetailButton"
                     class="overlay-tab-button sub-overlay-tab-button"
@@ -34,25 +37,59 @@
                     <i class="material-icons">train</i>
                 </v-btn>
             </div>
-            <soro-navigation-content />
+            <div
+                ref="overlayContainer"
+                class="overlay-container"
+            >
+                <soro-navigation-menu-content
+                    v-if="selectedOverlay === 'menu'"
+                    class="overlay"
+                    @change-overlay="overlay => selectedOverlay = overlay"
+                />
+                <soro-navigation-search-content
+                    v-if="selectedOverlay === 'search'"
+                    class="overlay"
+                />
+            </div>
         </v-navigation-drawer>
     </div>
 </template>
 
 <script setup lang="ts">
-import SoroNavigationContent from '@/components/navigation/soro-navigation-content.vue';
+import SoroNavigationMenuContent from '@/components/navigation/soro-navigation-menu-content.vue';
+import SoroNavigationSearchContent from '@/components/navigation/station-search/soro-navigation-search-content.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+
+const overlayTypes = ['menu', 'search'];
 
 export default defineComponent({
     name: 'SoroNavigation',
     
     data() {
         return {
-            overlay: false,
+            overlayTypes,
+            showOverlay: false,
+            selectedOverlay: 'menu',
         };
+    },
+
+    methods: {
+        onOverlayButtonClicked(selectedItem: string) {
+            if (this.selectedOverlay === selectedItem) {
+                this.showOverlay = !this.showOverlay;
+
+                return;
+            }
+
+            if (!this.showOverlay) {
+                this.showOverlay = true;
+            }
+
+            this.selectedOverlay = selectedItem;
+        },
     },
 });
 </script>
@@ -76,14 +113,13 @@ nav:not(.v-navigation-drawer--active) .overlay-tabs { /* stylelint-disable-line 
 .overlay-tab-button {
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
+    margin-bottom: 10px;
+    color: rgb(var(--v-theme-on-surface));
 }
 
 .sub-overlay-tab-button {
     width: 30px;
     height: 40px;
-    margin-top: 10px;
-    background: var(--dialog-color);
-    color: rgb(var(--v-theme-on-surface));
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -92,8 +128,15 @@ nav:not(.v-navigation-drawer--active) .overlay-tabs { /* stylelint-disable-line 
     transition: all 0.2s ease;
 }
 
-.sub-overlay-tab-button.enabled {
-    color: white;
-    background: var(--highlight-color);
+.overlay {
+    width: var(--overlay-width);
+    height: 95%;
+}
+
+.overlay-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    transition: all 0.4s ease;
 }
 </style>
