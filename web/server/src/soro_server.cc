@@ -263,11 +263,16 @@ void serve_search(
 
 
       rj::Value name;
-      name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()));
+      name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()), ret.GetAllocator());
 
+      auto const type_str = soro::server::map_type(elem.type_);
+      rj::Value type;
+      type.SetString(type_str.c_str(), static_cast<unsigned int>(type_str.length()), ret.GetAllocator());
+      
       rj::Value entry;
       entry.SetObject();
       entry.AddMember("name", name, ret.GetAllocator());
+      entry.AddMember("type", type, ret.GetAllocator());
       entry.AddMember("position", pos, ret.GetAllocator());
 
       ret.PushBack(entry, ret.GetAllocator());

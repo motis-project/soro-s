@@ -36,4 +36,7 @@ namespace soro::server {
         bool main_signal_ = false;
     };
 
+
+    std::string map_type(const osm_type type);
+
 }  // namespace soro::server
