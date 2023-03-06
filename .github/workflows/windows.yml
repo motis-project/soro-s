@@ -45,6 +45,7 @@ jobs:
           Import-Module $devShell
           Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64 -vcvars_ver=14.34"
           cmake --preset=${{ matrix.config.preset }}
+          cmake --build build\${{ matrix.config.preset }} --target soro-client
           cmake --build build\${{ matrix.config.preset }} --target soro-server
           cmake --build build\${{ matrix.config.preset }} --target soro-test
 

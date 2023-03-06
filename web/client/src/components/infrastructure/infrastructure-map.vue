@@ -23,10 +23,6 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
-</script>
-
 <script lang="ts">
 import { mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
@@ -44,6 +40,7 @@ import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 import { ThemeInstance, useTheme } from 'vuetify';
 import { SpecialLegendControls, SpecialLegendControl } from '@/components/infrastructure/infrastructure-legend.vue';
+import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
 
 const initiallyCheckedControls = [
     ElementType.STATION,
@@ -70,6 +67,7 @@ export type MapPosition = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+    components: { InfrastructureLegend },
     inject: {
         goldenLayoutKeyInjection: {
             default: '',
@@ -80,9 +78,12 @@ export default defineComponent({
         return { currentTheme: useTheme().global };
     },
 
-    data() {
+    data(): {
+        libreGLMap?: Map,
+        checkedControls: typeof initiallyCheckedControls,
+        } {
         return {
-            libreGLMap: null as (Map | null),
+            libreGLMap: undefined,
             checkedControls: Array.from(initiallyCheckedControls),
         };
     },
@@ -102,9 +103,18 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
+            if (this.libreGLMap) {
+                this.libreGLMap.remove();
+                this.libreGLMap = undefined;
+            }
+
+            if (!newInfrastructure) {
+                return;
+            }
+
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
-            this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+            this.libreGLMap = this.createMap(newInfrastructure);
         },
 
         currentSearchedMapPosition(mapPosition: MapPosition) {
@@ -254,7 +264,7 @@ export default defineComponent({
             });
         },
 
-        createMap(infrastructure: string) {
+        createMap(infrastructure: string): Map {
             const map = new Map({
                 ...mapDefaults,
                 container: this.$refs.map as HTMLElement,
