@@ -129,8 +129,6 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			}
 			relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
 			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
-
-			_ = relevant_refs
 		}
 
 		fmt.Println("Generated all lines")

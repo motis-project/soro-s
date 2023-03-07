@@ -2,6 +2,7 @@ package osmUtils
 
 import (
 	"errors"
+	"fmt"
 )
 
 func nodeNotFound(id string) error       { return errors.New("Could not find node: " + id) }
@@ -50,4 +51,28 @@ func FindWaysByNodeId(osm *Osm, id string) ([]Way, error) {
 		return []Way{}, wayNotFound(id)
 	}
 	return ways, nil
+}
+
+func InsertNewNodeWithReferenceNode(
+	osm *Osm,
+	newNode *Node,
+	referenceNode *Node,
+) {
+	foundWay := false
+	for _, way := range osm.Way {
+		index, err := GetNodeIndexInWay(way, referenceNode.Id)
+		if err == nil {
+			foundWay = true
+			if index == len(way.Nd)-1 {
+				way.Nd = append(way.Nd[:index], []*Nd{{Ref: newNode.Id}, {Ref: referenceNode.Id}}...)
+			} else {
+				way.Nd = append(way.Nd[:index+1], append([]*Nd{{Ref: newNode.Id}}, way.Nd[(index+1):]...)...)
+			}
+		}
+	}
+
+	if !foundWay {
+		fmt.Printf("Cound not find way for node %s \n", referenceNode.Id)
+	}
+	osm.Node = append(osm.Node, newNode)
 }

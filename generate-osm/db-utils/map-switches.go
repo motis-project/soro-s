@@ -8,7 +8,7 @@ import (
 func findAndMapAnchorSwitches(
 	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
-	anchors map[string][]*OSMUtil.Node,
+	anchors map[float64][]*OSMUtil.Node,
 	foundAnchorCount *int,
 	optionalNewId *int,
 ) {
@@ -25,7 +25,13 @@ func findAndMapAnchorSwitches(
 
 				if railwayTag == "switch" &&
 					(refTag == switchBegin.Name.Value || name == switchBegin.Name.Value) {
-					anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
+
+					kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
+					if err != nil {
+						panic(err)
+					}
+
+					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
 					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
 					osm.Node = append(osm.Node, &newSwitchNode)
 					*foundAnchorCount++
@@ -50,9 +56,14 @@ func findAndMapAnchorSwitches(
 				if railwayTag == "switch" {
 					partnerName := switchBegin.Partner.Name
 
+					kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
+					if err != nil {
+						panic(err)
+					}
+
 					if (partnerName == refTag || partnerName == name) &&
-						anchors[switchBegin.Kilometrierung.Value] == nil {
-						anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
+						anchors[kilometrageFloat] == nil {
+						anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
 						*foundAnchorCount++
 					}
 				}
