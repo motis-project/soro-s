@@ -12,7 +12,6 @@ export class OrderingGraphComponent {
                 this.rootElement.innerHTML = html;
             }).then(() => {
                 const graph = new webpackSigmaGraph.SigmaGraphCreator(this.rootElement);
-                graph.createSigmaGraph();
 
                 container.on('resize', () => {
                     graph.resizeSigmaGraph();
