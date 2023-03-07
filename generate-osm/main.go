@@ -110,8 +110,9 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
-				return errors.New("Failed to get line file path: " + err.Error())
+				return errors.Wrap(err, "failed to get line xml file path for ref: "+refId)
 			}
+
 			osmUtils.ExecuteOsmFilterCommand([]string{
 				tracksFilePath,
 				"-o",
@@ -119,6 +120,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 				"ref=" + refId,
 				"--overwrite",
 			})
+
 		}
 
 		if mapDB {

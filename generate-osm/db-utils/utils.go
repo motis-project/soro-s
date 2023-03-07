@@ -19,23 +19,26 @@ type Abzweig struct {
 }
 type Partner struct {
 	XMLName xml.Name
+	Name    string `xml:",chardata"`
 	ID      string `xml:",attr"`
 }
 
 type KnotenTyp struct {
 	XMLName        xml.Name
-	ID             []*Wert `xml:"ID"`
-	Kilometrierung []*Wert `xml:"Kilometrierung"`
+	ID             Wert `xml:"ID"`
+	Kilometrierung Wert `xml:"Kilometrierung"`
 }
 
 type Weichenanfang struct {
 	KnotenTyp
+	Name    Wert       `xml:"Name"`
 	Stamm   []*Stamm   `xml:"Stamm"`
 	Abzweig []*Abzweig `xml:"Abzweig"`
 }
+
 type Weichenknoten struct {
 	KnotenTyp
-	Partner []*Partner `xml:"Partner"`
+	Partner Partner `xml:"Partner"`
 }
 
 type Kreuzungsknoten struct {
@@ -45,7 +48,7 @@ type Kreuzungsknoten struct {
 
 type KreuzungsweicheAnfangLinks struct {
 	KnotenTyp
-	Name             []*Wert            `xml:"NameAnfang"`
+	Name             Wert               `xml:"NameAnfang"`
 	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
 	NachbarAbzweig   []*Kreuzungsknoten `xml:"NachbarAbzweig"`
 }
@@ -87,16 +90,16 @@ type Streckenwechsel1 struct {
 
 type MaxGeschwindigkeit struct {
 	KnotenTyp
-	Geschwindigkeit []*Wert `xml:"Geschw"`
+	Geschwindigkeit Wert `xml:"Geschw"`
 }
 
 type Betriebsstellengrenze struct {
 	KnotenTyp
-	Partner []*Wert `xml:"PartnerBtrst"`
+	Partner Wert `xml:"PartnerBtrst"`
 }
 type Gleisende struct {
 	KnotenTyp
-	Name []*Wert `xml:"Name"`
+	Name Wert `xml:"Name"`
 }
 type Prellbock struct {
 	KnotenTyp
@@ -104,12 +107,12 @@ type Prellbock struct {
 
 type Signal struct {
 	KnotenTyp
-	Name []*Wert `xml:"Name"`
+	Name Wert `xml:"Name"`
 }
 
 type Halteplatz struct {
 	KnotenTyp
-	Name []*Wert `xml:"Name"`
+	Name Wert `xml:"Name"`
 }
 
 type Zugschlussstelle struct {
@@ -118,12 +121,12 @@ type Zugschlussstelle struct {
 
 type Neigung struct {
 	KnotenTyp
-	Rising  []*Wert `xml:"Steigend"`
-	Falling []*Wert `xml:"Fallend"`
+	Rising  Wert `xml:"Steigend"`
+	Falling Wert `xml:"Fallend"`
 }
 type Tunnel struct {
 	KnotenTyp
-	Name []*Wert `xml:"Name"`
+	Name Wert `xml:"Name"`
 }
 
 type Spurplanknoten struct {
@@ -135,7 +138,7 @@ type Spurplanknoten struct {
 
 	WeichenAbzwLinks  []*Weichenknoten `xml:"WeichenabzweigLinks"`
 	WeichenAbzwRechts []*Weichenknoten `xml:"WeichenabzweigRechts"`
-	WeichenStamm      []*Weichenknoten `xml:"WeichenStamm"`
+	WeichenStamm      []*Weichenknoten `xml:"Weichenstamm"`
 	WeichenAnf        []*Weichenanfang `xml:"Weichenanfang"`
 
 	KreuzungsweicheAnfangLinks  []*KreuzungsweicheAnfangLinks  `xml:"KreuzungsweicheAnfangLinks"`
