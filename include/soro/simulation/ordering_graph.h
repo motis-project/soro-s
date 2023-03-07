@@ -33,8 +33,16 @@ struct ordering_graph {
   string to_json();
   static void emplace_edge(ordering_node& from, ordering_node& to);
 
+  void invert_edge(ordering_node& from, ordering_node& to);
+  ordering_node* node_by_id(const ordering_node::id id);
+
   template <typename Writer>
-  void Serialize(Writer& writer);
+  void serialize(Writer& writer);
+
+private:
+  bool invert_single_edge(ordering_node& from, ordering_node& to);
+  ordering_node* next_train_node(const ordering_node& node);
+  ordering_node* prev_train_node(const ordering_node& node);
 };
 
 ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
