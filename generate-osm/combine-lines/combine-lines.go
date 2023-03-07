@@ -4,8 +4,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	osmUtils "transform-osm/osm-utils"
 )
 
@@ -48,10 +50,70 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 }
 
 func getRandomColor() string {
-	letters := "0123456789ABCDEF"
-	color := "#"
-	for i := 0; i < 6; i++ {
-		color += string(letters[rand.Intn(len(letters))])
+
+	var h, s, v float64
+
+	//s=1 and v=1 leads to bright and saturated colors
+	h = (float64)(rand.Intn((360)))
+	s = 1
+	v = 1
+
+	return hsvToHexRgb(h, s, v)
+}
+
+func hsvToHexRgb(h float64, s float64, v float64) string {
+
+	var r, g, b int64
+
+	//convert HSV to RGB using the standart formula
+	h_i := math.Floor(h / 60)
+
+	f := (h / 60) - h_i
+
+	p := v * (1 - s)
+	q := v * (1 - s*f)
+	t := v * (1 - s*(1-f))
+
+	switch {
+	case h_i == 0 || h_i == 6:
+		r = int64(math.Floor(v * 255))
+		g = int64(math.Floor(t * 255))
+		b = int64(math.Floor(p * 255))
+	case h_i == 1:
+		r = int64(math.Floor(q * 255))
+		g = int64(math.Floor(v * 255))
+		b = int64(math.Floor(p * 255))
+	case h_i == 2:
+		r = int64(math.Floor(p * 255))
+		g = int64(math.Floor(v * 255))
+		b = int64(math.Floor(t * 255))
+	case h_i == 3:
+		r = int64(math.Floor(p * 255))
+		g = int64(math.Floor(q * 255))
+		b = int64(math.Floor(v * 255))
+	case h_i == 4:
+		r = int64(math.Floor(t * 255))
+		g = int64(math.Floor(p * 255))
+		b = int64(math.Floor(v * 255))
+	case h_i == 5:
+		r = int64(math.Floor(v * 255))
+		g = int64(math.Floor(p * 255))
+		b = int64(math.Floor(q * 255))
+
 	}
+
+	color := "#"
+
+	//translate rgb values to hex
+	//this is done by translating the int64 to a hexadecimal string and padding it to a length of two if needed  (11 -> "b" -> "0b")
+	color += leftPad(strconv.FormatInt((r), 16), 2, "0") + leftPad(strconv.FormatInt((g), 16), 2, "0") + leftPad(strconv.FormatInt((b), 16), 2, "0")
+
 	return color
+}
+
+func leftPad(stringToPad string, length int, padding string) string {
+	for len(stringToPad) < length {
+		stringToPad = padding + stringToPad
+	}
+	return stringToPad
 }
