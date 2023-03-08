@@ -205,18 +205,23 @@ int main(int argc, char const** argv) {
 
   // Create paths for osm files
   std::vector<fs::path> osm_paths;
+  // Create paths for osm files to extracts halt information from
+  std::vector<fs::path> osm_info_paths;
 
   //All real osm files are collected from folder /resources/osm
   auto osm_path = s.resource_dir_ / "osm";
   if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
-      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
-          osm_paths.emplace_back(dir_entry);
+      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) { //if the files already exist in server_resources\infrastructure\"Name Of OSM"\\"Name Of OSM".osm  they are not marked to be recomputed
+          if (!std::filesystem::exists(infra_dir / dir_entry.path().filename().replace_extension("") / dir_entry.path().filename()) || s.regenerate_) {
+              osm_paths.emplace_back(dir_entry);
+          }
+          osm_info_paths.emplace_back(dir_entry);
       }
   }
 
   // Copy every osm file to server
   std::unordered_map<std::string, std::vector<soro::server::osm_object>> halts;
-  for (const auto& osm_file : osm_paths) {
+  for (const auto& osm_file : osm_info_paths) {
       auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
       exists_or_create_dir(infra_res_dir);
 
@@ -238,8 +243,12 @@ int main(int argc, char const** argv) {
           continue;
       }
 
-      osm_data.save_file(osm_server_file.c_str());
-      all_osm_paths.push_back(osm_server_file);
+      // if an element from osm_info_paths is also present in osm_paths, it is either new and no tiles for it exist or everything is being regenerated
+      // if that is the case, it is copied and added to all_osm_paths to be generated tiles for
+      if (std::find(osm_paths.begin(), osm_paths.end(), osm_file) != osm_paths.end()) {
+          osm_data.save_file(osm_server_file.c_str());
+          all_osm_paths.push_back(osm_server_file);
+      }
   }
 
 
