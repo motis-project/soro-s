@@ -47,7 +47,7 @@ type TimetableState = {
 
 export const TimetableNamespace = 'timetable';
 
-export const TimetableStore: Module<TimetableState, undefined> = {
+export const TimetableStore: Module<TimetableState, unknown> = {
     namespaced: true,
 
     state() {

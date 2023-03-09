@@ -10,7 +10,7 @@ type GoldenLayoutState = {
 
 export const GoldenLayoutNamespace = 'goldenLayout';
 
-export const GoldenLayoutStore: Module<GoldenLayoutState, undefined> = {
+export const GoldenLayoutStore: Module<GoldenLayoutState, unknown> = {
     namespaced: true,
 
     state() {

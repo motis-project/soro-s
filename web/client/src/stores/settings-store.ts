@@ -15,7 +15,7 @@ export const DarkLightModes = {
 
 export const SettingsNamespace = 'settings';
 
-export const SettingsStore: Module<SettingsState, undefined> = {
+export const SettingsStore: Module<SettingsState, unknown> = {
     namespaced: true,
 
     state() {

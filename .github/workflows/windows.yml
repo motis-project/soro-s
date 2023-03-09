@@ -49,9 +49,15 @@ jobs:
           cmake --build build\${{ matrix.config.preset }} --target soro-server
           cmake --build build\${{ matrix.config.preset }} --target soro-test
 
+      - name: Install Webclient
+        run: npm clean-install --prefix web/client
+
       # ==== TESTS ====
       - name: Run Tests
         run: .\build\${{ matrix.config.preset }}\soro-test.exe
+
+      - name: Run Webclient Tests
+        run: npm run test --prefix web/client
 
       # ==== WEB TESTS ====
       - name: Run Server

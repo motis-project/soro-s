@@ -14,12 +14,13 @@
 
         <div class="station-search">
             <v-text-field
+                ref="searchTextField"
+                v-model="currentQuery"
                 :disabled="!currentInfrastructure"
                 label="Search for item by name:"
                 :error-messages="currentSearchError"
                 hide-details="auto"
-                @change="updateQuery"
-                @keydown.enter.prevent="updateQueryAndSearch"
+                @keydown.enter.prevent="searchName"
             />
 
             <soro-button
@@ -29,7 +30,10 @@
             />
         </div>
 
-        <div v-if="showExtendedOptions">
+        <div
+            v-if="showExtendedOptions"
+            class="station-search-extended-options"
+        >
             <v-checkbox
                 v-for="searchType in validSearchTypes"
                 :key="searchType"
@@ -66,14 +70,14 @@
             >
                 <v-list-item-title>
                     <img
-                        v-if="mapPosition.type !== 'undefined'"
+                        v-if="validSearchTypes.includes(mapPosition.type)"
                         class="station-search-search-type-icon"
                         :src="iconUrl + mapPosition.type + iconExtension"
                         alt=""
                     >
-                    {{ getSearchResultLabelParts(mapPosition.name).before }}<strong class="search-match">
-                        {{ currentSearchTerm }}
-                    </strong>{{ getSearchResultLabelParts(mapPosition.name).after }}
+                    <span> {{ getSearchResultLabelParts(mapPosition.name).before }}</span>
+                    <strong class="search-match">{{ currentSearchTerm }}</strong>
+                    <span>{{ getSearchResultLabelParts(mapPosition.name).after }}</span>
                 </v-list-item-title>
             </v-list-item>
         </v-list>
@@ -141,15 +145,6 @@ export default defineComponent({
     },
 
     methods: {
-        updateQuery(event: { target: HTMLInputElement }) {
-            this.currentQuery = event.target?.value;
-        },
-
-        updateQueryAndSearch(event: never) {
-            this.updateQuery(event);
-            this.searchName();
-        },
-
         searchName() {
             if (!this.currentQuery) {
                 return;

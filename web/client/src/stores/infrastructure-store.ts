@@ -20,7 +20,7 @@ type InfrastructureFetchResponse = { dirs: string[] }
 
 export const InfrastructureNamespace = 'infrastructure';
 
-export const InfrastructureStore: Module<InfrastructureState, undefined> = {
+export const InfrastructureStore: Module<InfrastructureState, unknown> = {
     namespaced: true,
 
     state() {
