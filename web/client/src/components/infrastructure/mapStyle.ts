@@ -48,6 +48,21 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 },
             },
             {
+                'id': 'tunnel',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'underground'],
+                'paint': {
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444',
+                    ],
+                    'line-width': 3.5,
+                },
+            },
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
