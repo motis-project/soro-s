@@ -27,21 +27,14 @@ struct route_usage {
 
 template <typename Writer>
 void ordering_node::serialize(Writer& writer) {
-  writer.StartObject();
-  writer.Key("k");
+  writer.StartArray();
   writer.String(std::to_string(id_).c_str());
 
-  writer.Key("a");
-  writer.StartObject();
-
-  writer.Key("r");
   writer.Uint(ir_id_);
 
-  writer.Key("t");
   writer.Uint(train_id_);
 
-  writer.EndObject();
-  writer.EndObject();
+  writer.EndArray();
 }
 
 using usage_idx = uint32_t;
@@ -180,8 +173,8 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
   ordering_graph graph;
 
   // are min and max valid?
-  const int min = min_nodes >= 0 ? min_nodes : 0;
   const int max = max_nodes <= track_amnt ? max_nodes : track_amnt;
+  const int min = min_nodes >= 0 ? min_nodes > max ? max : min_nodes : 0;
 
   // get random number generator
   std::mt19937 mt(seed);
@@ -392,34 +385,56 @@ template <typename Writer>
 void ordering_graph::serialize(Writer& writer) {
   writer.StartObject();
 
-  writer.Key("attributes");
+  writer.Key("a");
   writer.StartObject();
   writer.EndObject();
 
-  writer.Key("nodes");
+  writer.Key("n");
   writer.StartArray();
   for (ordering_node node : nodes_) {
     node.serialize(writer);
   }
   writer.EndArray();
 
-  writer.Key("edges");
+  writer.Key("e");
   writer.StartArray();
   for (const ordering_node& node : nodes_) {
     for (const uint32_t to_id : node.out_) {
-      writer.StartObject();
+      writer.StartArray();
 
-      writer.Key("s");
       writer.String(std::to_string(node.id_).c_str());
 
-      writer.Key("t");
       writer.String(std::to_string(to_id).c_str());
 
-      writer.EndObject();
+      writer.EndArray();
     }
   }
   writer.EndArray();
   writer.EndObject();
+}
+
+ordering_graph from_json(const string& json) {
+  ordering_graph graph;
+
+  Document d;
+  d.Parse(json.c_str());
+
+  // Generate nodes
+  for (const Value& node : d["n"].GetArray()) {
+    graph.nodes_.emplace_back(static_cast<ordering_node::id>(
+                                  std::stoul(node.GetArray()[0].GetString())),
+                              node.GetArray()[1].GetUint(),
+                              node.GetArray()[2].GetUint());
+  }
+
+  // Generate edges
+  for (const Value& edge : d["e"].GetArray()) {
+    ordering_graph::emplace_edge(
+        graph.nodes_[std::stoul(edge.GetArray()[0].GetString())],
+        graph.nodes_[std::stoul(edge.GetArray()[1].GetString())]);
+  }
+
+  return graph;
 }
 
 }  // namespace soro::simulation
