@@ -45,10 +45,13 @@ private:
   ordering_node* prev_train_node(const ordering_node& node);
 };
 
-ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
-                                  int max_nodes);
+ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
+                                  const int min_nodes, const int max_nodes);
 
-ordering_graph generate_testgraph(int train_amnt, int track_amnt, int min_nodes,
-                                  int max_nodes, unsigned int seed);
+ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
+                                  const int min_nodes, const int max_nodes,
+                                  const unsigned int seed);
+
+ordering_graph from_json(const string& json);
 
 }  // namespace soro::simulation
