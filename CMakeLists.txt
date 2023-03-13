@@ -10,8 +10,6 @@ option(USE_CISTA_RAW "Use cista::raw instead of cista::offset." OFF)
 
 if(SERIALIZE)
   set(SORO_COMPILE_DEFINITIONS SERIALIZE ${SORO_COMPILE_DEFINITIONS})
-  # rename the cereal serialization function to avoid naming conflicts with cista
-  set(SORO_COMPILE_DEFINITIONS CEREAL_SERIALIZE_FUNCTION_NAME=cereal_serialize ${SORO_COMPILE_DEFINITIONS})
 else()
   set(SORO_COMPILE_DEFINITIONS STD ${SORO_COMPILE_DEFINITIONS})
 endif()
@@ -19,6 +17,9 @@ endif()
 if(USE_CISTA_RAW)
   set(SORO_COMPILE_DEFINITIONS USE_CISTA_RAW ${SORO_COMPILE_DEFINITIONS})
 endif()
+
+# rename the cereal serialization function to avoid naming conflicts with cista
+set(SORO_COMPILE_DEFINITIONS CEREAL_SERIALIZE_FUNCTION_NAME=cereal_serialize ${SORO_COMPILE_DEFINITIONS})
 
 # --- CLANG SUITE OPTIONS --- #
 option(SORO_SAN "Run clang with sanitizers." OFF)
