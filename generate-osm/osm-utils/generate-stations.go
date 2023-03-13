@@ -4,9 +4,13 @@ import (
 	"encoding/xml"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
-func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (searchFile SearchFile, stationHaltOsm Osm) {
+// GenerateStationsAndHalts curates a list of all stations and halts in the OSM-file unter 'inputFilePath.
+// It generates both OSM-data (a list of Nodes) and a seperate JSON-structure stored.
+func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (SearchFile, Osm, error) {
 	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "/stationsUnfiltered.osm.pbf")
 	stationsFile, _ := filepath.Abs(tempFolderPath + "/stations.xml")
 
@@ -30,12 +34,15 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (sear
 	data, _ := os.ReadFile(stationsFile)
 	var osm Osm
 	if err := xml.Unmarshal([]byte(data), &osm); err != nil {
-		panic(err)
+		return SearchFile{}, Osm{}, errors.Wrap(err, "failed unmarshalling osm: "+stationsFile)
 	}
 
-	return generateSearchFile(osm)
+	searchFile, stationHaltOsm := generateSearchFile(osm)
+
+	return searchFile, stationHaltOsm, nil
 }
 
+// generateSerachFile does all th heavy lifting for GenerateStationsAndHalts, doing all the curating.
 func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
 	halts := make(map[string]Halt)

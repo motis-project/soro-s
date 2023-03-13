@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	combineLines "transform-osm/combine-lines"
 	dbUtils "transform-osm/db-utils"
@@ -73,15 +74,15 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		inputFile, _ = filepath.Abs(inputFile)
 	}
 	if _, err := os.Stat(inputFile); err != nil {
-		return errors.New("Input file does not exist: " + inputFile)
+		return errors.Wrap(err, "input file does not exist: "+inputFile)
 	}
 	if filepath.Ext(inputFile) != ".pbf" {
-		return errors.New("Input file is not a PBF file: " + inputFile)
+		return errors.New("input file is not a PBF file: " + inputFile)
 	}
 	tempFolderPath, _ := filepath.Abs("./temp")
 	refs, err := osmUtils.GenerateOsmTrackRefs(inputFile, tempFolderPath)
 	if err != nil {
-		return errors.New("Failed to get ref ids: " + err.Error())
+		return errors.Wrap(err, "failed to get ref ids")
 	}
 
 	tracksFilePath, _ := filepath.Abs(tempFolderPath + "/tracks.osm.pbf")
@@ -98,13 +99,13 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	tempDBResoucesDir, _ := filepath.Abs(tempFolderPath + "/DBResources")
 	if generateLines || mapDB {
 		if err = os.RemoveAll(tempLinesDir); err != nil {
-			return errors.New("Failed to remove lines folder: " + err.Error())
+			return errors.Wrap(err, "failed to remove lines folder")
 		}
 		if err = os.RemoveAll(tempDBLinesDir); err != nil {
-			return errors.New("Failed to remove DBLines folder: " + err.Error())
+			return errors.Wrap(err, "failed to remove DBLines folder")
 		}
 		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
-			return errors.New("Failed to create lines folder: " + err.Error())
+			return errors.Wrap(err, "failed to create lines folder")
 		}
 
 		for _, refId := range refs {
@@ -127,7 +128,10 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			if _, err := os.Stat("./temp/DBResources"); errors.Is(err, os.ErrNotExist) {
 				return errors.Wrap(err, "DBResource-director does not exists, please first create temp/DBResources")
 			}
-			relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
+			relevant_refs, err := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
+			if err != nil {
+				return errors.Wrap(err, "failed parsing DB data")
+			}
 			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 		}
 
@@ -137,17 +141,27 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	// Combine all the lines into one file
 	osmData, err := combineLines.CombineAllLines(tempLinesDir)
 
-	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
-		return errors.New("you need to generate lines first")
-	} else if err != nil {
-		return errors.New("failed to combine lines: " + err.Error())
+	if err != nil {
+		errorMessageSplit := strings.Split(err.Error(), ":")
+		if errorMessageSplit[0] == combineLines.ErrLinesDirNotFound.Error() {
+			return errors.New("you need to generate lines first")
+		}
+
+		return errors.Wrap(err, "failed to combine lines")
 	}
+
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
-	searchFile, stationHaltOsm := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
+	searchFile, stationHaltOsm, err := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
+	if err != nil {
+		return errors.Wrap(err, "failed generating stations and halts")
+	}
 	searchFileJsonPath, _ := filepath.Abs(tempFolderPath + "/searchFile.json")
-	saveSearchFile(searchFile, searchFileJsonPath)
+	err = saveSearchFile(searchFile, searchFileJsonPath)
+	if err != nil {
+		return errors.Wrap(err, "failed writing stations JSON")
+	}
 
 	for i, node := range osmData.Node {
 		value, found := osmUtils.FindTagOnNode(node, "railway")
@@ -163,18 +177,24 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		return errors.Wrap(err, "failed marshalling final data")
 	}
 	output = []byte(xml.Header + string(output))
-	os.WriteFile(outputFile, output, 0644)
-
+	err = os.WriteFile(outputFile, output, 0644)
+	if err != nil {
+		return errors.Wrap(err, "failed writing final osm file: "+outputFile)
+	}
 	return nil
 }
 
-func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) {
+func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) error {
 	output, err := json.MarshalIndent(searchFile, "", "     ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		return errors.Wrap(err, "failed marshalling stations JSON file")
 	}
-	os.WriteFile(searchFileJsonPath, output, 0644)
+	err = os.WriteFile(searchFileJsonPath, output, 0644)
+	if err != nil {
+		return errors.Wrap(err, "failed writing stations JSON file: "+searchFileJsonPath)
+	}
+	return nil
 }

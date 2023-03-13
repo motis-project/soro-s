@@ -14,6 +14,10 @@ import (
 
 var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
 
+// findAndMapAnchorMainSignals identifies Hauptsignal(S/F)-Node pairs, that match up.
+// Matching up in this context means, that the Node has the tags 'railway:signal' and 'name:...' where ... is the same
+// (excluding spaces) as the Signal-name.
+// In notFoundSignals... all signals that could not be identified will be returned.
 func findAndMapAnchorMainSignals(
 	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
@@ -22,10 +26,10 @@ func findAndMapAnchorMainSignals(
 	notFoundSignalsRising *[]*Signal,
 	foundAnchorCount *int,
 	optionalNewId *int,
-) {
+) error {
 	conflictingSignalNames := map[string]bool{}
 	for _, knoten := range abschnitt.Knoten {
-		processHauptsignal(
+		err := processHauptsignal(
 			*knoten,
 			notFoundSignalsFalling,
 			anchors,
@@ -35,7 +39,10 @@ func findAndMapAnchorMainSignals(
 			foundAnchorCount,
 			optionalNewId,
 		)
-		processHauptsignal(
+		if err != nil {
+			return errors.Wrap(err, "failed processing falling main signals")
+		}
+		err = processHauptsignal(
 			*knoten,
 			notFoundSignalsRising,
 			anchors,
@@ -45,9 +52,15 @@ func findAndMapAnchorMainSignals(
 			foundAnchorCount,
 			optionalNewId,
 		)
+		if err != nil {
+			return errors.Wrap(err, "failed processing rising main signals")
+		}
 	}
+	return nil
 }
 
+// processHauptsignal iterates over all Hautpsignal[S/F] (depending on 'is Falling')
+// and does all the identification.
 func processHauptsignal(
 	knoten Spurplanknoten,
 	notFoundSignals *[]*Signal,
@@ -57,14 +70,13 @@ func processHauptsignal(
 	isFalling bool,
 	foundAnchorCount *int,
 	optionalNewId *int,
-) {
+) error {
 	signals := knoten.HauptsigF
 	if !isFalling {
 		signals = knoten.HauptsigS
 	}
 
 	for _, signal := range signals {
-		conflictFreeSignal := false
 		matchingSignalNodes := []*OSMUtil.Node{}
 
 		for _, node := range osm.Node {
@@ -82,7 +94,7 @@ func processHauptsignal(
 		if len(matchingSignalNodes) > 1 {
 			(*conflictingSignalNames)[signal.Name.Value] = true
 		} else if len(matchingSignalNodes) == 1 {
-			conflictFreeSignal = insertNewHauptsignal(
+			conflictFreeSignal, err := insertNewHauptsignal(
 				optionalNewId,
 				matchingSignalNodes[0],
 				signal,
@@ -93,16 +105,24 @@ func processHauptsignal(
 				osm,
 				foundAnchorCount,
 			)
+			if err != nil {
+				return errors.Wrap(err, "failed to insert signal")
+			}
 			if conflictFreeSignal {
 				*foundAnchorCount++
-				return
+				return nil
 			}
 			(*conflictingSignalNames)[signal.Name.Value] = true
 		}
 		*notFoundSignals = append(*notFoundSignals, signal)
 	}
+	return nil
 }
 
+// insertNewHauptsignal tries to insert a new main signal.
+// Inserting is prohibited, if the signal name is already conflicting or a conflict could be found.
+// A conflict exists, when there are either multiple Signals with the same name but different kilometrages,
+// or when there exists more than one node, that could be identified as a certian Signal (i.e. with the same name).
 func insertNewHauptsignal(
 	newId *int,
 	signalNode *OSMUtil.Node,
@@ -113,13 +133,13 @@ func insertNewHauptsignal(
 	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
 	foundAnchorCount *int,
-) bool {
+) (bool, error) {
 	if conflictingSignalNames[signal.Name.Value] {
-		return false
+		return false, nil
 	}
 	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 	if err != nil {
-		panic(err)
+		return false, errors.Wrap(err, "failed to format kilometrage")
 	}
 	for anchorKilometrage, currentAnchors := range anchors {
 		for _, possibleAnchor := range currentAnchors {
@@ -140,7 +160,7 @@ func insertNewHauptsignal(
 					errorAnchor.Tag = errorAnchor.Tag[:(len(errorAnchor.Tag) - 4)]
 				}
 				delete(anchors, anchorKilometrage)
-				return false
+				return false, nil
 			}
 		}
 	}
@@ -156,9 +176,11 @@ func insertNewHauptsignal(
 	} else {
 		anchors[signalKilometrage] = append(anchors[signalKilometrage], &newSignalNode)
 	}
-	return true
+	return true, nil
 }
 
+// createNewHauptsignal creates a new OSM-Node with the following tags:
+// 'type:element', 'subtype:ms', 'id:(Signal name)' and 'direction:...' where ... depends on 'isFalling'.
 func createNewHauptsignal(
 	id *int,
 	node *OSMUtil.Node,
@@ -184,32 +206,32 @@ func createNewHauptsignal(
 	}
 }
 
+// mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
 func mapUnanchoredMainSignals(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
-	dbData XmlIssDaten,
+	abschnitt Spurplanabschnitt,
 ) {
-	for _, stelle := range dbData.Betriebsstellen {
-		for _, abschnitt := range stelle.Abschnitte {
-			for _, knoten := range abschnitt.Knoten {
-				searchUnanchoredMainSignal(
-					osmData,
-					anchors,
-					nodeIdCounter,
-					*knoten,
-					true)
-				searchUnanchoredMainSignal(
-					osmData,
-					anchors,
-					nodeIdCounter,
-					*knoten,
-					false)
-			}
-		}
+	for _, knoten := range abschnitt.Knoten {
+		searchUnanchoredMainSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			true)
+		searchUnanchoredMainSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			false)
 	}
 }
 
+// serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchUnanchoredMainSignal(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
@@ -239,12 +261,8 @@ func searchUnanchoredMainSignal(
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			fmt.Printf("Error: %s \n", err.Error())
+			fmt.Printf("Error with finding node for signal %s: %s \n", signal.Name.Value, err.Error())
 			continue
-		}
-
-		if maxNode == nil {
-			print("Hello")
 		}
 
 		*nodeIdCounter++
@@ -263,6 +281,8 @@ func searchUnanchoredMainSignal(
 	}
 }
 
+// findBestOSMNode determines a pair of anchors based on which a new Node is searched.
+// Based on those, a new Node is then determined.
 func findBestOSMNode(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
@@ -294,7 +314,7 @@ func findBestOSMNode(
 		innerError := errors.Unwrap(err)
 		errorParts := strings.Split(innerError.Error(), ": ")
 		if errorParts[0] != "insufficient anchor" {
-			return nil, errors.Wrap(err, "could not find OSM-node")
+			return nil, errors.Wrap(err, "failed to find OSM-node")
 		}
 
 		faultyNodeID := strings.ReplaceAll(errorParts[1], " ", "")
@@ -320,12 +340,14 @@ func findBestOSMNode(
 	}
 
 	if newAnchorCounter == len(sortedAnchors) {
-		return nil, errors.New("could not find OSM-node")
+		return nil, errors.New("failed to find suitable anchors")
 	}
 
 	return newNode, nil
 }
 
+// sortAnchors sorts the kilometrage-keys of the anchor-map.
+// The sort is based on least distance to the provided 'kilometrage'.
 func sortAnchors(
 	anchors *map[float64]([]*OSMUtil.Node),
 	kilometrage float64,
@@ -343,6 +365,9 @@ func sortAnchors(
 	return anchorKeys
 }
 
+// formatKilometrageStringInFloat formats the kilometrage and parses them to a float64.
+// Kilometrages in the DB-data always use a comma for decimal separation and sometimes, a plus sign is present.
+// This plus sign is parsed in a way, that e.g. '5,000+0,150' becomes '5.15'.
 func formatKilometrageStringInFloat(
 	in string,
 ) (float64, error) {
@@ -359,7 +384,7 @@ func formatKilometrageStringInFloat(
 			strings.ReplaceAll(splitPart, ",", "."),
 			64)
 		if err != nil {
-			return 0, errors.Wrap(err, "could not parse kilometrage: "+in)
+			return 0, errors.Wrap(err, "failed to parse kilometrage: "+in)
 		}
 		out += floatPart
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"golang.org/x/net/html/charset"
 )
 
@@ -16,10 +17,11 @@ type XmlIssBookeeping struct {
 	Used               bool
 }
 
-func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []string {
+// Parse reads all provided DB data and seperates it by line number
+func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) ([]string, error) {
 	combinedDBIss, err := readDBFiles(dbResourcesPath)
 	if err != nil {
-		panic(err)
+		return []string{}, errors.Wrap(err, "failed to read DB data")
 	}
 
 	lineMap := make(map[string]*XmlIssBookeeping)
@@ -28,7 +30,7 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 
 	// all datastructures are being intialized
 	for _, line := range refs {
-		lineMap[line] = &XmlIssBookeeping{&XmlIssDaten{xml.Name{" ", "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
+		lineMap[line] = &XmlIssBookeeping{&XmlIssDaten{xml.Name{Space: " ", Local: "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
 	}
 
 	// main work-loop: For all "Betriebsstellen" and for all "Spurplanabschnitte" of these, we check, whether the respective line
@@ -73,27 +75,28 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 
 		newIssBytes, err := xml.MarshalIndent(*lineInfo.XmlIssData, "", "	")
 		if err != nil {
-			panic(err)
+			return []string{}, errors.Wrap(err, "failed marshalling line "+line)
 		}
 
 		tempLinePath := filepath.Join(tempDBLinesPath, line+"_DB.xml")
 		err = os.WriteFile(tempLinePath, []byte(xml.Header+string(newIssBytes)), 0644)
 		if err != nil {
-			panic(err)
+			return []string{}, errors.Wrap(err, "failed writing file "+tempLinePath)
 		}
 
 		relevantRefs = append(relevantRefs, line)
 	}
 
-	return relevantRefs
+	return relevantRefs, nil
 }
 
+// readDBFiles reads all DB files and returns the unmarshalled combined data.
 func readDBFiles(dbResourcesPath string) (XmlIssDaten, error) {
 
 	// read all files and unmarshal them into one XmlIssDaten-struct
 	files, err := os.ReadDir(dbResourcesPath)
 	if err != nil {
-		return XmlIssDaten{}, err
+		return XmlIssDaten{}, errors.Wrap(err, "failed to find dir: "+dbResourcesPath)
 	}
 	var xmlIssComplete XmlIssDaten
 
@@ -105,7 +108,7 @@ func readDBFiles(dbResourcesPath string) (XmlIssDaten, error) {
 		decoder.CharsetReader = charset.NewReaderLabel
 		err = decoder.Decode(&xmlIssComplete)
 		if err != nil {
-			return XmlIssDaten{}, err
+			return XmlIssDaten{}, errors.Wrap(err, "failed unmarshalling "+file.Name())
 		}
 	}
 

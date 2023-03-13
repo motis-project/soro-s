@@ -2,10 +2,6 @@ package osmUtils
 
 import (
 	"encoding/xml"
-	"errors"
-	"fmt"
-	"os"
-	"os/exec"
 )
 
 type Tag struct {
@@ -55,26 +51,4 @@ type Osm struct {
 	Node      []*Node     `xml:"node"`
 	Way       []*Way      `xml:"way"`
 	Relation  []*Relation `xml:"relation"`
-}
-
-func ExecuteOsmFilterCommand(args []string) error {
-	osmExecutable, _ := exec.LookPath("osmium")
-	argsArray := []string{
-		osmExecutable,
-		"tags-filter",
-	}
-	argsArray = append(argsArray, args...)
-
-	cmd := &exec.Cmd{
-		Path:   osmExecutable,
-		Args:   argsArray,
-		Stdout: os.Stdout,
-		Stderr: os.Stdout,
-	}
-
-	if err := cmd.Run(); err != nil {
-		return errors.New(fmt.Errorf("osmium command failed: %w", err).Error())
-	}
-
-	return nil
 }

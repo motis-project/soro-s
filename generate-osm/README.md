@@ -5,6 +5,7 @@ To setup generate-osm for developing purposes please follow one of these instruc
 Needed dependencies:
 - [Golang](https://golang.org/doc/install)
 - [Osmium](https://osmcode.org/osmium-tool/) (Need to be in PATH variable as osmium)
+- For documentation: run `go install golang.org/x/tools/cmd/godoc@latest` in the GO root directory
 
 You need to add the osm file from [Geofabrik](https://download.geofabrik.de/europe/germany.html) to the folder `generate-osm/temp` and rename it to `base.osm.pbf`. If you want to map any data in the DB-XMLIss format, you need to add all files to the folder `generate-osm/temp/DBResources`. Then you can run the following command to generate the osm file:
 
@@ -23,3 +24,9 @@ CLI-Flags
 --output value, -o value  The output file to write result to as XML file (default: "./temp/finalOsm")
 --help, -h               show help
 ```
+
+To access comprehensible documention for all public methods, run 
+```bash
+godoc -http=:6060
+```
+in the `generate-osm` directory and access it via the browser under `localhost:6060/`. You will find it under the tab `standard library / transform-osm`

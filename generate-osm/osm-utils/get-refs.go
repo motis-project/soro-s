@@ -2,11 +2,13 @@ package osmUtils
 
 import (
 	"encoding/xml"
-	"errors"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
+// GenerateOSMTrackRefs generates separate files for every line existent in the OSM-file under 'inputFilePath'.
 func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []string, err error) {
 	refsPath, _ := filepath.Abs(tempFilePath + "/refs.xml")
 
@@ -21,17 +23,18 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 
 	var data []byte
 	if data, err = os.ReadFile(refsPath); err != nil {
-		return nil, errors.New("Failed to read track ref file: " + err.Error())
+		return nil, errors.Wrap(err, "failed reading track ref file")
 	}
 	var osmData Osm
 	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed unmarshalling osm file: "+refsPath)
 	}
 
-	return getRefIds(osmData)
+	return getRefIds(osmData), nil
 }
 
-func getRefIds(trackRefOsm Osm) (refs []string, err error) {
+// getRefIds extracts the line-names from all line-relations in the 'trackRefOsm'.
+func getRefIds(trackRefOsm Osm) (refs []string) {
 	for _, s := range trackRefOsm.Relation {
 		for _, m := range s.Tag {
 			if m.K == "ref" &&
@@ -41,5 +44,5 @@ func getRefIds(trackRefOsm Osm) (refs []string, err error) {
 		}
 	}
 
-	return refs, nil
+	return refs
 }

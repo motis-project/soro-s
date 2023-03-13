@@ -5,6 +5,9 @@ import (
 	"strconv"
 )
 
+// SortOsm takes arbitrarily built OSM-data and ensures a consistent set of OSM-data as output.
+// This is done by first sorting the lists of Nodes, Ways and Relations according to their ID.
+// Then, all duplicate Nodes, Ways and Relations are removed and only the first occurence is kept.
 func SortOsm(osmData Osm) Osm {
 	sort.Slice(osmData.Way, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Way[i].Id)
@@ -77,6 +80,8 @@ func SortOsm(osmData Osm) Osm {
 	return osmData
 }
 
+// search implements a binary search over arr.
+// Therefore, all strings in arr must be integers and arr must be sorted.
 func search(id int, arr []string, start, end int) (bool, int) {
 	if end < 0 || start < 0 {
 		return false, -1
