@@ -364,7 +364,7 @@ string ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
   if (!invert_single_edge(from, to)) {
     // if there was no edge to flip, we also don't need to look for parallel
     // edges.
-    return "{\"a\":{},\"c\":[],\"d\":[],\"a\":[]}";
+    return R"({"a":{},"c":[],"d":[],"a":[]})";
   }
 
   // walk the pointers forward along the train until there is no paralell edge
