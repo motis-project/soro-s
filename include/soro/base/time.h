@@ -43,6 +43,10 @@ constexpr absolute_time midnight(absolute_time const t) {
   return sc::floor<days>(t);
 }
 
+constexpr absolute_time ymd_to_abs(date::year_month_day const ymd) {
+  return sc::time_point_cast<absolute_time::duration>(date::sys_days{ymd});
+}
+
 template <typename T>
 concept soro_time = utls::is_any_of<T, absolute_time, relative_time, duration2>;
 
