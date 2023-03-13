@@ -20,7 +20,12 @@ TEST_CASE("ordering graph - follow" * doctest::skip()) {
 }  // namespace soro::simulation::test
 
 TEST_CASE("o") {
-  auto opts = soro::test::SMALL_OPTS;
+  using namespace date;
+  //  auto opts = soro::test::SMALL_OPTS;
+  //  auto tt_opts = soro::test::FOLLOW_OPTS;
+  auto opts = soro::test::DE_ISS_OPTS;
+  auto tt_opts = soro::test::DE_KSS_OPTS;
+
   opts.exclusions_ = true;
   opts.interlocking_ = true;
   opts.exclusion_graph_ = false;
@@ -28,18 +33,25 @@ TEST_CASE("o") {
 
   infrastructure const infra(opts);
 
-  auto tt_opts = soro::test::FOLLOW_OPTS;
-
   timetable const tt(tt_opts, infra);
 
-  for (auto const& train : tt->trains_) {
-    for (auto const midnight : train.departures()) {
-      //      fmt::print(std::cout, "midnight {}", midnight);
-      std::cout << "midnidhgt " << midnight.time_since_epoch().count() << '\n';
-    }
-  }
+  interval const one_week = {.start_ = ymd_to_abs(2021_y / August / 1),
+                             .end_ = ymd_to_abs(2021_y / August / 8)};
 
-  //  ordering_graph const og(infra, tt);
+  ordering_graph const og1(infra, tt, one_week);
+
+  interval const one_day = {.start_ = ymd_to_abs(2021_y / August / 1),
+                            .end_ = ymd_to_abs(2021_y / August / 2)};
+
+  ordering_graph const og2(infra, tt, one_day);
+
+  interval const two_hours = {
+      .start_ = ymd_to_abs(2021_y / August / 1) + hours{10},
+      .end_ = ymd_to_abs(2021_y / August / 1) + hours{12}};
+
+  ordering_graph const og3(infra, tt, two_hours);
+ 
+  ordering_graph const og4(infra, tt, interval{});
 
   //  std::ignore = og;
 }
