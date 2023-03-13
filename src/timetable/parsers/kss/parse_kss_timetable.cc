@@ -86,7 +86,8 @@ std::size_t distance(date::year_month_day const from,
                 "got called with {} and {}",
                 from, to);
 
-  return (date::sys_days{from} - date::sys_days{to}).count();
+  return static_cast<std::size_t>(
+      (date::sys_days{to} - date::sys_days{from}).count());
 }
 
 bitfield parse_services(xml_node const services_xml) {
