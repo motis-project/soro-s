@@ -21,13 +21,12 @@ net::web_server::string_res_t infra_state::serve_exclusion_set(
   }
 
   auto const es_id = utls::parse_int<exclusion_set::id>(req.path_params_[1]);
-  auto const& es = *utls::find_if((**infra)->exclusion_.exclusion_sets_,
-                                  [&](auto&& e) { return e.id_ == es_id; });
+  auto const& es = (**infra)->exclusion_.exclusion_sets_[es_id];
 
   json_archive archive;
-  archive.add()(cereal::make_nvp("id", es.id_),
-                cereal::make_nvp("size", es.count()),
-                cereal::make_nvp("interlocking_routes", es.expanded_set()));
+  archive.add()(cereal::make_nvp("id", es_id),
+                cereal::make_nvp("size", es.size()),
+                cereal::make_nvp("interlocking_routes", es));
   return json_response(req, archive);
 }
 

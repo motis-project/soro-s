@@ -4,14 +4,12 @@
 
 #include "net/web_server/responses.h"
 
-#include "soro/server/cereal/cereal_extern.h"
 #include "soro/server/cereal/json_archive.h"
 
 namespace soro::infra {
 
 template <typename Archive>
-static void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive,
-                                           exclusion_set const& es) {
+void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive, exclusion_set const& es) {
   archive(cereal::make_nvp("id", es.id_), cereal::make_nvp("size", es.count()));
 }
 
