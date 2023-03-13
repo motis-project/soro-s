@@ -101,10 +101,17 @@ bitfield::iterator bitfield::from(absolute_time const t) const {
 
 bitfield::iterator bitfield::to(absolute_time const t) const {
   auto const at = sc::time_point_cast<anchor_time::duration>(midnight(t));
-  return at >= last_date_
-             ? iterator{this, get_end_idx(this)}
-             : iterator{this, static_cast<bitfield::iterator::idx_t>(
-                                  distance(first_date_, at) + 1)};
+
+  if (at >= last_date_) {
+    return iterator{this, get_end_idx(this)};
+  }
+
+  if (at < first_date_) {
+    return iterator{this, 0};
+  }
+
+  return iterator{this, static_cast<bitfield::iterator::idx_t>(
+                            distance(first_date_, at) + 1)};
 }
 
 bool bitfield::ok() const noexcept {
