@@ -1,20 +1,24 @@
 #include "soro/server/modules/infrastructure/infrastructure.h"
 
-// #include "cereal/cereal.hpp"
 #include "cereal/types/vector.hpp"
 
 #include "net/web_server/responses.h"
 
-#include "soro/server/cereal/cereal_extern.h"
-#include "soro/server/cereal/json_archive.h"
 #include "soro/utls/parse_int.h"
+
+#include "soro/server/cereal/json_archive.h"
 
 namespace soro::infra {
 
 template <typename Archive>
 void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive,
                                     station_route::ptr const s) {
-  archive(cereal::make_nvp("id", s->id_), cereal::make_nvp("name", s->name_));
+  auto const from = s->nodes().front()->element_->id();
+  auto const to = s->nodes().back()->element_->id();
+
+  archive(cereal::make_nvp("id", s->id_), cereal::make_nvp("name", s->name_),
+          cereal::make_nvp("from_element", from),
+          cereal::make_nvp("to_element", to));
 }
 
 template <typename Archive>
