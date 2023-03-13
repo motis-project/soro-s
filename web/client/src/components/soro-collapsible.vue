@@ -1,7 +1,7 @@
 <template>
     <v-expansion-panels>
         <v-expansion-panel :title="label">
-            <v-expansion-panel-text>
+            <v-expansion-panel-text eager>
                 <div class="soro-collapsible-content">
                     <slot />
                 </div>

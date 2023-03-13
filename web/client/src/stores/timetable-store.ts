@@ -40,7 +40,7 @@ function loadTimetableFromIDBFS(filePath, currentInfrastructure) {
      */
 }
 
-type TimetableState = {
+export type TimetableState = {
     timetables: string[],
     currentTimetable?: string,
 }

@@ -37,10 +37,7 @@
                     <i class="material-icons">train</i>
                 </v-btn>
             </div>
-            <div
-                ref="overlayContainer"
-                class="overlay-container"
-            >
+            <div class="overlay-container">
                 <soro-navigation-menu-content
                     v-if="selectedOverlay === 'menu'"
                     class="overlay"
@@ -56,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import SoroNavigationMenuContent from '@/components/navigation/soro-navigation-menu-content.vue';
+import SoroNavigationMenuContent from '@/components/navigation/menu/soro-navigation-menu-content.vue';
 import SoroNavigationSearchContent from '@/components/navigation/station-search/soro-navigation-search-content.vue';
 </script>
 

@@ -44,52 +44,7 @@
                 @change-to-extended="changeToSearchOverlay"
             />
 
-            <soro-collapsible
-                label="Settings"
-                class="settings"
-            >
-                <v-btn-toggle
-                    :model-value="darkLightModePreference"
-                    tile
-                    color="secondary"
-                    group
-                    mandatory
-                    @update:model-value="setDarkLightModePreference"
-                >
-                    <v-btn :value="DarkLightModes.OS">
-                        OS
-                    </v-btn>
-                    <v-btn :value="DarkLightModes.LIGHT">
-                        Light
-                    </v-btn>
-                    <v-btn :value="DarkLightModes.DARK">
-                        Dark
-                    </v-btn>
-                </v-btn-toggle>
-
-                <v-sheet
-                    title="some"
-                    class="d-flex accent-color-picker"
-                >
-                    <div class="flex-grow-0 accent-color-display" />
-                    <v-btn class="flex-grow-1 ms-2">
-                        Select color
-                        <v-menu
-                            activator="parent"
-                            :close-on-content-click="false"
-                        >
-                            <v-color-picker
-                                style="overflow: unset;"
-                                :model-value="colorSelection"
-                                min-width="300"
-                                hide-inputs
-                                show-swatches
-                                @update:model-value="onUpdateColorSelection"
-                            />
-                        </v-menu>
-                    </v-btn>
-                </v-sheet>
-            </soro-collapsible>
+            <menu-settings class="settings" />
 
             <soro-collapsible
                 label="Dev Tools"
@@ -138,6 +93,7 @@ import SoroSelect from '@/components/soro-select.vue';
 import SoroButton from '@/components/soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
 import StationSearch from '@/components/navigation/station-search/station-search.vue';
+import MenuSettings from './menu-settings.vue';
 </script>
 
 <script lang="ts">
@@ -146,7 +102,6 @@ import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
-import { DarkLightModes, SettingsNamespace } from '@/stores/settings-store';
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 export default defineComponent({
@@ -155,11 +110,8 @@ export default defineComponent({
 
     data() {
         return {
-            colorSelection: null as (null | string),
-            showColorSelector: false,
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
-            DarkLightModes,
         };
     },
 
@@ -172,14 +124,6 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
-        ...mapState(SettingsNamespace, [
-            'darkLightModePreference',
-            'primaryColor',
-        ]),
-    },
-
-    mounted() {
-        this.colorSelection = this.primaryColor;
     },
 
     methods: {
@@ -190,11 +134,6 @@ export default defineComponent({
             });
         },
 
-        onUpdateColorSelection(newColor: string) {
-            this.setPrimaryColor(newColor);
-            this.colorSelection = newColor;
-        },
-
         clearLocalStorage() {
             window.localStorage.clear();
         },
@@ -203,10 +142,6 @@ export default defineComponent({
             this.$emit('change-overlay', 'search');
         },
 
-        ...mapActions(SettingsNamespace, [
-            'setDarkLightModePreference',
-            'setPrimaryColor',
-        ]),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
         ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab']),
@@ -296,18 +231,5 @@ export default defineComponent({
 .dev-tools .soro-button {
     margin-top: 0.2em;
     margin-bottom: 0.2em;
-}
-
-.accent-color-picker {
-    margin-top: 20px;
-    max-width: 100%;
-    justify-self: center;
-}
-
-.accent-color-display {
-    height: auto;
-    width: 50px;
-    background: rgb(var(--v-theme-primary));
-    border-radius: 5px;
 }
 </style>

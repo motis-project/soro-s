@@ -2,7 +2,7 @@ import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
 import { sendPostData, sendRequest } from '@/api/api-client';
 
-type InfrastructureState = {
+export type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
     currentSearchedMapPosition?: MapPosition,

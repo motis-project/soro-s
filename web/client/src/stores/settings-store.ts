@@ -1,7 +1,7 @@
 import { Module } from 'vuex';
 import { VuetifyExtension } from '@/vuetify';
 
-type SettingsState = {
+export type SettingsState = {
     darkLightModePreference: typeof DarkLightModes[keyof typeof DarkLightModes],
     theme: typeof DarkLightModes.DARK | typeof DarkLightModes.LIGHT,
     primaryColor: string | null,
