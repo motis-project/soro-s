@@ -44,6 +44,9 @@ struct infra_state {
   net::web_server::string_res_t serve_exclusion_sets(
       net::query_router::route_request const& req) const;
 
+  net::web_server::string_res_t serve_element(
+      net::query_router::route_request const& req) const;
+
   std::unordered_map<std::string_view,
                      std::unique_ptr<soro::infra::infrastructure>>
       infrastructures_;

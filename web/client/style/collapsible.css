@@ -37,8 +37,7 @@ input[type=checkbox].hidden {
     content: '\e5cc';
 
     vertical-align: middle;
-    horiz-align: center;
-    padding-left: calc(100% - 8.5em);
+    horiz-align: right;
 }
 
 .collapsible-toggle:hover {

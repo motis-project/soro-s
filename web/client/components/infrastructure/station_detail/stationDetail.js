@@ -34,7 +34,7 @@ function fillStation(station, highlightedStationRoutes, highlightedInterlockingR
         input.addEventListener('input', stationRouteSwitchCallback);
 
         let span = document.createElement('span');
-        span.innerHTML = stationRoute.name;
+        span.innerHTML = stationRoute.name + ' ' + stationRoute.from_element + ' -> ' + stationRoute.to_element;
 
         route.appendChild(input);
         route.appendChild(span);
@@ -43,10 +43,10 @@ function fillStation(station, highlightedStationRoutes, highlightedInterlockingR
 
     routeContent.replaceChildren(...newRoutes);
 
-    let newSignalStationRoutes = [];
+    let newInterlockingRoutes = [];
     for (const interlockingRouteId of station.interlocking_routes) {
         let route = document.createElement('label');
-        route.classList.add('matter-switch', 'station-detail-signal-route');
+        route.classList.add('matter-switch', 'station-detail-route');
 
         let input = document.createElement('input');
         input.type = 'checkbox';
@@ -59,11 +59,11 @@ function fillStation(station, highlightedStationRoutes, highlightedInterlockingR
 
         route.appendChild(input);
         route.appendChild(span);
-        newSignalStationRoutes.push(route);
+        newInterlockingRoutes.push(route);
     }
 
-    let signalStationRouteContent = document.getElementById('signalStationRouteCollapsibleContent');
-    signalStationRouteContent.replaceChildren(...newSignalStationRoutes);
+    let interlockingRouteContent = document.getElementById('interlockingRouteCollapsibleContent');
+    interlockingRouteContent.replaceChildren(...newInterlockingRoutes);
 
     showSubOverlay();
 }

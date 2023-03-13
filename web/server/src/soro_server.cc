@@ -79,6 +79,12 @@ void soro_server::set_up_routes() {
                     web_server::http_res_cb_t const& cb,
                     bool const) { cb(infra_state_.serve_exclusion_set(req)); });
 
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/element/{id}
+  router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/element/(\d+)$)",
+                [&](net::query_router::route_request const& req,
+                    web_server::http_res_cb_t const& cb,
+                    bool const) { cb(infra_state_.serve_element(req)); });
+
   // if nothing matches: match all and try to serve static file
   router_.route("GET", ".*",
                 [&](net::query_router::route_request const& req,

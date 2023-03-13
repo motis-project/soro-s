@@ -157,22 +157,20 @@ export function createMap(rootElement, infrastructureName, tooltip) {
         if (clickedFeature.layer['source-layer'] === 'station') {
             fetchStation(infrastructureName, clickedID).then(station => showStation(station, map.getSource('station-routes')._data.features, map.getSource('interlocking-routes')._data.features));
         } else {
-            //   console.log("clicked", clickedFeature);
-            //
-            //   const element = infrastructure.element(clickedFeature.properties.id);
-            //
-            //   if (element.is_track_element()) {
-            //     const km = element.as_track_element().km;
-            //     tooltip.select('#kilometerPoint').text((km * 1000).toFixed(0) + 'm');
-            //     const rising = element.as_track_element().rising;
-            //     tooltip.select('#risingOrFalling').text(rising ? 'Rising' : 'Falling');
-            //   }
-            //
-            //   tooltip.click(e, e => e.point.x, e => e.point.y);
+            fetchElement(infrastructureName, clickedFeature.properties.id).then(element => {
+                tooltip.select('#kilometerPoint').text(element.kilometrage + 'm');
+                tooltip.select('#risingOrFalling').text(element.rising ? 'Rising' : 'Falling');
+                tooltip.click(e, e => e.point.x, e => e.point.y);
+            });
         }
     });
 
     return map;
+}
+
+function fetchElement(infrastructureName, elementId) {
+    const url = window.origin + '/infrastructure/' + infrastructureName + '/element/' + elementId;
+    return fetch(url).then(response => response.json());
 }
 
 function highlightPath(mapSource, pathID, path) {
