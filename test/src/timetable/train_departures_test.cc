@@ -7,16 +7,12 @@ using namespace soro::tt;
 
 using namespace date;
 
-absolute_time ymd_to_abs(year_month_day const ymd) {
-  return sc::time_point_cast<absolute_time::duration>(sys_days{ymd});
-}
-
 std::vector<absolute_time> gather_midnights(std::vector<train> const& trains,
                                             interval const& interval) {
   std::vector<absolute_time> result;
 
   for (auto const& train : trains) {
-    for (auto const& midnight : train.departures(interval)) {
+    for (auto const midnight : train.departures(interval)) {
       result.emplace_back(midnight);
     }
   }
@@ -128,17 +124,27 @@ TEST_SUITE("iterate train departures 1") {
         ymd_to_abs(2022_y / March / 9),
     };
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval{})) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval{});
 
     CHECK_EQ(result, expected);
   }
 
-  TEST_CASE("iterate train departures, none") {
+  TEST_CASE("iterate train departures, none before") {
+    std::vector<train> const trains = {test_train1()};
+
+    std::vector<absolute_time> const expected = {};
+
+    interval const interval = {.start_ = ymd_to_abs(2022_y / February / 10),
+                               .end_ = ymd_to_abs(2022_y / February / 12)};
+
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
+
+    CHECK_EQ(result, expected);
+  }
+
+  TEST_CASE("iterate train departures, none after") {
     std::vector<train> const trains = {test_train1()};
 
     std::vector<absolute_time> const expected = {};
@@ -146,12 +152,8 @@ TEST_SUITE("iterate train departures 1") {
     interval const interval = {.start_ = ymd_to_abs(2022_y / March / 10),
                                .end_ = ymd_to_abs(2022_y / March / 12)};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -166,12 +168,8 @@ TEST_SUITE("iterate train departures 1") {
     interval const interval = {.start_ = ymd_to_abs(2022_y / February / 15),
                                .end_ = ymd_to_abs(2022_y / March / 4)};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -188,12 +186,8 @@ TEST_SUITE("iterate train departures 1") {
     interval const interval = {.start_ = ymd_to_abs(2022_y / March / 4),
                                .end_ = ymd_to_abs(2022_y / March / 14)};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -209,12 +203,8 @@ TEST_SUITE("iterate train departures 1") {
         .start_ = ymd_to_abs(2022_y / March / 6) + hours{7},
         .end_ = ymd_to_abs(2022_y / March / 6) + hours{9}};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -229,12 +219,8 @@ TEST_SUITE("iterate train departures 1") {
         .start_ = ymd_to_abs(2022_y / March / 6) + hours{10},
         .end_ = ymd_to_abs(2022_y / March / 6) + hours{12}};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -250,12 +236,8 @@ TEST_SUITE("iterate train departures 1") {
         .start_ = ymd_to_abs(2022_y / March / 6) + hours{15},
         .end_ = ymd_to_abs(2022_y / March / 6) + hours{17}};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -269,12 +251,8 @@ TEST_SUITE("iterate train departures 1") {
         .start_ = ymd_to_abs(2022_y / March / 6) + hours{16} + seconds{1},
         .end_ = ymd_to_abs(2022_y / March / 7) + hours{8} - seconds{1}};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -292,12 +270,8 @@ TEST_SUITE("iterate train departures 1") {
         .start_ = ymd_to_abs(2022_y / March / 6) + hours{16},
         .end_ = ymd_to_abs(2022_y / March / 8) + hours{8}};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
@@ -311,12 +285,8 @@ TEST_SUITE("iterate train departures 1") {
     interval const interval = {.start_ = ymd_to_abs(2022_y / March / 6),
                                .end_ = ymd_to_abs(2022_y / March / 7)};
 
-    std::vector<absolute_time> result;
-    for (auto const& train : trains) {
-      for (auto const& midnight : train.departures(interval)) {
-        result.emplace_back(midnight);
-      }
-    }
+    std::vector<absolute_time> const result =
+        gather_midnights(trains, interval);
 
     CHECK_EQ(result, expected);
   }
