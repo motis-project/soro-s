@@ -1232,7 +1232,7 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   if (options.interlocking_ && options.exclusions_) {
     iss.exclusion_ =
         get_exclusion(iss, options.infrastructure_path_ / "exclusion_sets",
-                      options.exclusion_graph_);
+                      options.exclusion_elements_, options.exclusion_graph_);
   }
 
   log_stats(iss);

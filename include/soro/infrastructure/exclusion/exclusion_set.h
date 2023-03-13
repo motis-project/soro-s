@@ -106,6 +106,10 @@ struct exclusion_set {
 };
 
 exclusion_set make_exclusion_set(
+    exclusion_set::id const id,
+    soro::vector<exclusion_set::value_type> const& sorted_ids);
+
+exclusion_set make_exclusion_set(
     soro::vector<exclusion_set::value_type> const& sorted_ids);
 
 }  // namespace soro::infra

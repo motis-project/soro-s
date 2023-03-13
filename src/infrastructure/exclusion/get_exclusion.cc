@@ -1,6 +1,7 @@
 #include "soro/infrastructure/exclusion/get_exclusion.h"
 
 #include "utl/concat.h"
+#include "utl/enumerate.h"
 #include "utl/erase_duplicates.h"
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
@@ -13,16 +14,16 @@
 namespace soro::infra {
 
 soro::vector<soro::vector<exclusion_set::id>> get_irs_to_exclusion_sets(
-    soro::vector<exclusion_set> const& exclusion_sets,
+    soro::vector<interlocking_route::ids> const& exclusion_sets,
     soro::size_t const interlocking_route_count) {
   utl::scoped_timer const timer("generating irs to exclusion sets mapping");
 
   soro::vector<soro::vector<exclusion_set::id>> irs_to_exclusion_sets(
       interlocking_route_count);
 
-  for (auto const& exclusion_set : exclusion_sets) {
+  for (auto const [id, exclusion_set] : utl::enumerate(exclusion_sets)) {
     for (auto const ir_id : exclusion_set) {
-      irs_to_exclusion_sets[ir_id].emplace_back(exclusion_set.id_);
+      irs_to_exclusion_sets[ir_id].emplace_back(id);
     }
   }
 
@@ -97,20 +98,23 @@ soro::vector<interlocking_route::ids> get_closed_element_used_by(
 
 exclusion get_exclusion(infrastructure_t const& infra_t,
                         std::filesystem::path const& clique_path,
+                        option<exclusion_elements> const exclusion_elements,
                         option<exclusion_graph> const exclusion_graph) {
   infrastructure const infra(&infra_t);
 
   exclusion ex;
 
-  ex.closed_exclusion_elements_ = get_closed_exclusion_elements(infra);
-  ex.open_exclusion_elements_ =
-      get_open_exclusion_elements(ex.closed_exclusion_elements_, infra);
+  if (exclusion_elements) {
+    ex.exclusion_elements_.closed_ = get_closed_exclusion_elements(infra);
+    ex.exclusion_elements_.open_ =
+        get_open_exclusion_elements(ex.exclusion_elements_.closed_, infra);
+  }
 
-  if (exclusion_graph) {
+  if (exclusion_elements && exclusion_graph) {
     auto const closed_element_used_by = get_closed_element_used_by(
-        ex.closed_exclusion_elements_, infra->graph_.elements_.size());
+        ex.exclusion_elements_.closed_, infra->graph_.elements_.size());
 
-    ex.exclusion_graph_ = get_exclusion_graph(ex.closed_exclusion_elements_,
+    ex.exclusion_graph_ = get_exclusion_graph(ex.exclusion_elements_.closed_,
                                               closed_element_used_by, infra);
   }
 

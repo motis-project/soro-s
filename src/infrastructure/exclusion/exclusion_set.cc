@@ -407,14 +407,18 @@ bool exclusion_set::ok() const {
 }
 
 exclusion_set make_exclusion_set(
+    exclusion_set::id const id,
     soro::vector<exclusion_set::value_type> const& sorted_ids) {
   utls::expects(utls::is_sorted(sorted_ids), "IDs not sorted.");
 
   if (sorted_ids.empty()) {
-    return {};
+    exclusion_set result;
+    result.id_ = id;
+    return result;
   }
 
   exclusion_set es;
+  es.id_ = id;
 
   es.first_bit_set_ = sorted_ids.front();
   es.last_bit_set_ = sorted_ids.back();
@@ -437,6 +441,10 @@ exclusion_set make_exclusion_set(
   utls::ensure(es.ok(), "exclusion set invariant violated");
 
   return es;
+}
+exclusion_set make_exclusion_set(
+    soro::vector<exclusion_set::value_type> const& sorted_ids) {
+  return make_exclusion_set(exclusion_set::INVALID_ID, sorted_ids);
 }
 
 }  // namespace soro::infra

@@ -5,7 +5,7 @@
 
 namespace soro::infra {
 
-soro::vector<exclusion_set> read_cliques(
+soro::vector<interlocking_route::ids> read_cliques(
     std::filesystem::path const& clique_fp);
 
 }  // namespace soro::infra

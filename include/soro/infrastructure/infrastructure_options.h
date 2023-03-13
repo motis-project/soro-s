@@ -25,6 +25,7 @@ struct infrastructure_options {
   option<interlocking> interlocking_{true};
   option<exclusion> exclusions_{true};
   option<exclusion_graph> exclusion_graph_{false};
+  option<exclusion_elements> exclusion_elements_{false};
   option<layout_tag> layout_{true};
 
   std::filesystem::path infrastructure_path_{""};

@@ -2,15 +2,19 @@
 
 #include <fstream>
 
+#include "utl/timer.h"
+
 #include "soro/utls/parse_int.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 #include "soro/utls/string.h"
 
 namespace soro::infra {
 
-soro::vector<exclusion_set> read_cliques(
+soro::vector<interlocking_route::ids> read_cliques(
     std::filesystem::path const& clique_fp) {
-  soro::vector<soro::vector<interlocking_route::id>> cliques;
+  utl::scoped_timer const timer("reading cliques");
+
+  soro::vector<interlocking_route::ids> cliques;
 
   std::ifstream in(clique_fp);
 
@@ -28,7 +32,7 @@ soro::vector<exclusion_set> read_cliques(
 
   utls::sort(cliques);
 
-  return soro::to_vec(cliques, [](auto&& c) { return make_exclusion_set(c); });
+  return cliques;
 }
 
 }  // namespace soro::infra
