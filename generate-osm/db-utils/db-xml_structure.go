@@ -31,9 +31,9 @@ type KnotenTyp struct {
 
 type Weichenanfang struct {
 	KnotenTyp
-	Name    Wert       `xml:"Name"`
-	Stamm   []*Stamm   `xml:"Stamm"`
-	Abzweig []*Abzweig `xml:"Abzweig"`
+	Name    Wert    `xml:"Name"`
+	Stamm   Stamm   `xml:"Stamm"`
+	Abzweig Abzweig `xml:"Abzweig"`
 }
 
 type Weichenknoten struct {
@@ -48,44 +48,44 @@ type Kreuzungsknoten struct {
 
 type KreuzungsweicheAnfangLinks struct {
 	KnotenTyp
-	Name             Wert               `xml:"NameAnfang"`
-	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	NachbarAbzweig   []*Kreuzungsknoten `xml:"NachbarAbzweig"`
+	Name             Wert            `xml:"NameAnfang"`
+	NachbarGeradeaus Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	NachbarAbzweig   Kreuzungsknoten `xml:"NachbarAbzweig"`
 }
 type KreuzungsweicheAnfangRechts struct {
 	KnotenTyp
-	NachbarGeradeaus  []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	HauptknotenAnfang []*Kreuzungsknoten `xml:"HauptknotenAnfang"`
-	HauptknotenEnde   []*Kreuzungsknoten `xml:"HauptknotenEnde"`
+	NachbarGeradeaus  Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	HauptknotenAnfang Kreuzungsknoten `xml:"HauptknotenAnfang"`
+	HauptknotenEnde   Kreuzungsknoten `xml:"HauptknotenEnde"`
 }
 type KreuzungsweicheEndeLinks struct {
 	KnotenTyp
-	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	NachbarAbzweig   []*Kreuzungsknoten `xml:"NachbarAbzweig"`
+	NachbarGeradeaus Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	NachbarAbzweig   Kreuzungsknoten `xml:"NachbarAbzweig"`
 }
 type KreuzungsweicheEndeRechts struct {
 	KnotenTyp
-	NachbarGeradeaus  []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	HauptknotenAnfang []*Kreuzungsknoten `xml:"HauptknotenAnfang"`
-	HauptknotenEnde   []*Kreuzungsknoten `xml:"HauptknotenEnde"`
+	NachbarGeradeaus  Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	HauptknotenAnfang Kreuzungsknoten `xml:"HauptknotenAnfang"`
+	HauptknotenEnde   Kreuzungsknoten `xml:"HauptknotenEnde"`
 }
 
 type KmSprungAnfang struct {
 	KnotenTyp
-	Partner []*Partner `xml:"Partnerknoten"`
+	Partner Partner `xml:"Partnerknoten"`
 }
 type KmSprungEnde struct {
 	KnotenTyp
-	Partner []*Partner `xml:"Partnerknoten"`
+	Partner Partner `xml:"Partnerknoten"`
 }
 
 type Streckenwechsel0 struct {
 	KnotenTyp
-	Partner []*Partner `xml:"Partnerknoten"`
+	Partner Partner `xml:"Partnerknoten"`
 }
 type Streckenwechsel1 struct {
 	KnotenTyp
-	Partner []*Partner `xml:"Partnerknoten"`
+	Partner Partner `xml:"Partnerknoten"`
 }
 
 type MaxGeschwindigkeit struct {
@@ -188,7 +188,7 @@ type Betriebsstelle struct {
 
 type Spurplanabschnitt struct {
 	XMLName    xml.Name          `xml:"Spurplanabschnitt"`
-	StreckenNr []*Strecke        `xml:"Strecke"`
+	StreckenNr Strecke           `xml:"Strecke"`
 	Knoten     []*Spurplanknoten `xml:"Spurplanknoten"`
 }
 

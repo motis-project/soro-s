@@ -152,7 +152,7 @@ func findNodes(
 		runningWayUp = startWay[0]
 		runningWayDown = startWay[1]
 	} else {
-		return "", 0, "", 0, errors.New("error with finding nodes")
+		return "", 0, "", 0, errors.New("error with finding runningWays for Node: " + node.Id)
 	}
 
 	upId, upDist, err = goDir(osmData, runningWayUp, len(runningWayUp.Nd)-1, dist, true)

@@ -46,6 +46,7 @@ func MapDB(
 
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
+		var notFoundSwitches []*Weichenanfang = []*Weichenanfang{}
 		var foundAnchorCount = 0
 		for _, stelle := range dbIss.Betriebsstellen {
 			for _, abschnitt := range stelle.Abschnitte {
@@ -65,6 +66,7 @@ func MapDB(
 					abschnitt,
 					&osm,
 					anchors,
+					&notFoundSwitches,
 					&foundAnchorCount,
 					&newNodeIdCounter,
 				)
@@ -82,17 +84,36 @@ func MapDB(
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
 					Knoten: []*Spurplanknoten{{
-						HauptsigF: notFoundSignalsFalling,
-						HauptsigS: notFoundSignalsRising,
+						HauptsigF:  notFoundSignalsFalling,
+						HauptsigS:  notFoundSignalsRising,
+						WeichenAnf: notFoundSwitches,
 					}},
 				}},
 			}},
 		}
 
-		for _, stelle := range issWithMappedSignals.Betriebsstellen {
-			for _, abschnitt := range stelle.Abschnitte {
-				mapUnanchoredMainSignals(&osm, &anchors,
-					&newNodeIdCounter, *abschnitt)
+		if len(anchors) == 0 {
+			fmt.Print("Could not find anchors! \n")
+			continue
+		}
+		if len(anchors) == 1 {
+			fmt.Print("Could not find enough anchors! \n")
+			// TODO: Node not found, find closest mapped Node and work from there
+		} else {
+			for _, stelle := range issWithMappedSignals.Betriebsstellen {
+				for _, abschnitt := range stelle.Abschnitte {
+					mapUnanchoredMainSignals(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+					)
+					mapUnanchoredSwitches(&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+					)
+				}
 			}
 		}
 

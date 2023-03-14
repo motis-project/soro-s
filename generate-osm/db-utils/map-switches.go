@@ -1,7 +1,7 @@
 package dbUtils
 
 import (
-	"strconv"
+	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -16,10 +16,12 @@ func findAndMapAnchorSwitches(
 	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
 	anchors map[float64][]*OSMUtil.Node,
+	notFoundSwitches *[]*Weichenanfang,
 	foundAnchorCount *int,
 	optionalNewId *int,
 ) error {
 	for _, knoten := range abschnitt.Knoten {
+		foundSwitch := false
 		for _, switchBegin := range knoten.WeichenAnf {
 			for _, node := range osm.Node {
 				if len(node.Tag) == 0 {
@@ -39,10 +41,23 @@ func findAndMapAnchorSwitches(
 					}
 
 					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
-					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
-					osm.Node = append(osm.Node, &newSwitchNode)
+					newSwitchNode := createNewSwitch(
+						optionalNewId,
+						node,
+						switchBegin,
+					)
+					OSMUtil.InsertNewNodeWithReferenceNode(
+						osm,
+						&newSwitchNode,
+						node,
+					)
 					*foundAnchorCount++
+					foundSwitch = true
+					break
 				}
+			}
+			if !foundSwitch {
+				*notFoundSwitches = append(*notFoundSwitches, switchBegin)
 			}
 		}
 
@@ -80,23 +95,34 @@ func findAndMapAnchorSwitches(
 	return nil
 }
 
-// createNewSwitch creates a new node with the tags 'type:element', 'subtype:simple_switch' and 'id:...' where ... is the name of the provided switch.
-// It also increments the "global" NodeIDCounter provided in 'id'.
-func createNewSwitch(
-	id *int,
-	node *OSMUtil.Node,
-	switchBegin *Weichenanfang,
-) OSMUtil.Node {
-	*id++
+// mapUnanchoredSwitches processes all switches for which no unique Node could be determined.
+func mapUnanchoredSwitches(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+) {
 
-	return OSMUtil.Node{
-		Id:  strconv.Itoa(*id),
-		Lat: node.Lat,
-		Lon: node.Lon,
-		Tag: []*OSMUtil.Tag{
-			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "simple_switch"},
-			{XMLName: XML_TAG_NAME_CONST, K: "id", V: switchBegin.Name.Value},
-		},
+	for _, knoten := range abschnitt.Knoten {
+		for _, simple_switch := range knoten.WeichenAnf {
+			kilometrage, _ := formatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)
+
+			maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+			if err != nil {
+				fmt.Printf("Error with finding node for switch %s: %s \n", simple_switch.Name.Value, err.Error())
+				continue
+			}
+
+			newSignalNode := createNewSwitch(
+				nodeIdCounter,
+				maxNode,
+				simple_switch,
+			)
+			OSMUtil.InsertNewNodeWithReferenceNode(
+				osmData,
+				&newSignalNode,
+				maxNode,
+			)
+		}
 	}
 }

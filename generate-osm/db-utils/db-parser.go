@@ -37,7 +37,7 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) ([]str
 	// appears in refs and if so add the "Abschnitt" to the "Betriebsstelle" in the respective line
 	for _, stelle := range combinedDBIss.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
-			streckenNummer := (*abschnitt.StreckenNr[0]).Nummer
+			streckenNummer := abschnitt.StreckenNr.Nummer
 			lineInfo, lineExists := lineMap[streckenNummer]
 
 			if !lineExists {
