@@ -23,7 +23,8 @@ soro::vector<soro::vector<exclusion_set::id>> get_irs_to_exclusion_sets(
 
   for (auto const [id, exclusion_set] : utl::enumerate(exclusion_sets)) {
     for (auto const ir_id : exclusion_set) {
-      irs_to_exclusion_sets[ir_id].emplace_back(id);
+      irs_to_exclusion_sets[ir_id].emplace_back(
+          static_cast<exclusion_set::id>(id));
     }
   }
 
