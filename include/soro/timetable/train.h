@@ -42,9 +42,7 @@ struct train {
   };
 
   struct trip {
-    auto operator<(trip const& other) const {
-      return train_id_ < other.train_id_ && anchor_ < other.anchor_;
-    }
+    CISTA_COMPARABLE()
 
     id train_id_{tt::train::INVALID};
     absolute_time anchor_{soro::INVALID<absolute_time>};
