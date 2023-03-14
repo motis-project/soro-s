@@ -60,8 +60,10 @@ constexpr bool valid(T const t) {
 
 }  // namespace soro
 
+namespace fmt {
+
 template <>
-struct fmt::formatter<soro::absolute_time> {
+struct formatter<soro::absolute_time> {
   constexpr auto parse(format_parse_context& ctx)  // NOLINT
       -> decltype(ctx.begin()) {
     if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
@@ -74,6 +76,8 @@ struct fmt::formatter<soro::absolute_time> {
   template <typename FormatContext>
   auto format(soro::absolute_time const at, FormatContext& ctx) const
       -> decltype(ctx.out()) {
-    return fmt::format_to(ctx.out(), date::format("%FT%T", at));
+    return format_to(ctx.out(), date::format("%FT%T", at));
   }
 };
+
+}  // namespace fmt
