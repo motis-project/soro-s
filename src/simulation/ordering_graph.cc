@@ -102,7 +102,8 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
         nodes_.resize(nodes_.size() + train.path_.size());
         trip_to_nodes_.emplace(
             train::trip{.train_id_ = train.id_, .anchor_ = anchor},
-            std::pair{curr_node_id, curr_node_id + train.path_.size()});
+            std::pair{curr_node_id, static_cast<ordering_node::id>(
+                                        curr_node_id + train.path_.size())});
       }
 
       {  // add first halt -> first ms
