@@ -44,5 +44,5 @@
   commit=4178d8359d76e3ba612d40a980bc0e5711073ca8
 [cereal]
   url=git@github.com:motis-project/cereal.git
-  branch=sync2
-  commit=58de6dab04d54833332ef70b05047b3d8c49f0c2
+  branch=master
+  commit=9e4b49437bc3d47b628a271edd38c1cd7266c669
