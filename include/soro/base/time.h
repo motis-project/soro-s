@@ -58,13 +58,6 @@ constexpr bool valid(T const t) {
   return t != INVALID<T>;
 }
 
-constexpr std::strong_ordering operator<=>(absolute_time const t1,
-                                           absolute_time const t2) {
-  return t1 == t2  ? std::strong_ordering::equal
-         : t1 < t2 ? std::strong_ordering::less
-                   : std::strong_ordering::greater;
-}
-
 }  // namespace soro
 
 namespace fmt {
