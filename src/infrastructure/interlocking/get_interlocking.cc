@@ -176,8 +176,8 @@ interlocking_route get_trailing_interlocking_route(
 
 soro::vector<interlocking_route> get_interlocking_routes_from_sr(
     station_route::ptr sr, station_route_graph const& srg, lines const& lines) {
-  utls::expects(sr->can_start_an_interlocking(srg),
-                "SR {} cannot start an interlocking route.", sr->id_);
+  utls::expect(sr->can_start_an_interlocking(srg),
+               "SR {} cannot start an interlocking route.", sr->id_);
 
   soro::vector<interlocking_route> routes;
 

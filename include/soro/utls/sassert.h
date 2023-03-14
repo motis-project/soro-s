@@ -91,9 +91,17 @@ inline void sassert(bool_with_loc assert_this, Msg&& msg, Args... args) {
   sassert_impl(assert_this, "ASSERT", msg, args...);
 }
 
+inline void sassert(bool_with_loc const assert_this) {
+  sassert_impl(assert_this, "Unknown", "I didn't specify a error message :(");
+}
+
 template <typename Msg, typename... Args>
-inline void expects(bool_with_loc assert_this, Msg&& msg, Args... args) {
+inline void expect(bool_with_loc assert_this, Msg&& msg, Args... args) {
   sassert_impl(assert_this, "PRECONDITION", msg, args...);
+}
+
+inline void expect(bool_with_loc assert_this) {
+  sassert_impl(assert_this, "PRECONDITION", "Unknown");
 }
 
 template <typename Msg, typename... Args>
@@ -103,10 +111,6 @@ inline void ensure(bool_with_loc assert_this, Msg&& msg, Args... args) {
 
 inline void ensure(bool_with_loc assert_this) {
   sassert_impl(assert_this, "POSTCONDITION", "Unknown");
-}
-
-inline void sassert(bool_with_loc const assert_this) {
-  sassert_impl(assert_this, "Unknown", "I didn't specify a error message :(");
 }
 
 #if !defined(NDEBUG)
