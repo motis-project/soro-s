@@ -23,7 +23,11 @@ struct ordering_graph {
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt,
                  tt::interval const& interval);
 
+  std::span<const ordering_node> trip_nodes(tt::train::trip const trip) const;
+
   std::vector<ordering_node> nodes_;
+  std::map<tt::train::trip, std::pair<ordering_node::id, ordering_node::id>>
+      trip_to_nodes_;
 };
 
 }  // namespace soro::simulation

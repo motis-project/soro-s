@@ -7,6 +7,17 @@ namespace soro::tt {
 using namespace soro::rs;
 using namespace soro::infra;
 
+train_node::train_node(soro::infra::route_node const& rn,
+                       sequence_point::optional_ptr sp)
+    : infra::route_node{rn},
+      sequence_point_{sp.has_value()
+                          ? sequence_point::optional_ptr(*sp)
+                          : sequence_point::optional_ptr(std::nullopt)} {}
+
+bool train_node::omitted() const {
+  return omitted_ || (node_->is(type::HALT) && !sequence_point_.has_value());
+}
+
 train::iterator::iterator(train const* train, interval const& interval,
                           bool const end)
     : train_{train},
@@ -36,24 +47,14 @@ train::iterator::value_type train::iterator::operator*() const {
   return absolute_time{*bitfield_it_};
 }
 
-train_node::train_node(soro::infra::route_node const& rn,
-                       sequence_point::optional_ptr sp)
-    : infra::route_node{rn},
-      sequence_point_{sp.has_value()
-                          ? sequence_point::optional_ptr(*sp)
-                          : sequence_point::optional_ptr(std::nullopt)} {}
-
-bool train_node::omitted() const {
-  return omitted_ || (node_->is(type::HALT) && !sequence_point_.has_value());
+utls::it_range<train::iterator> train::departures(
+    interval const& interval) const {
+  return utls::make_range(train::iterator{this, interval, false},
+                          train::iterator{this, interval, true});
 }
 
-bool is_halt(utls::unixtime arrival, utls::unixtime departure) {
-  return arrival != departure &&
-         (arrival != utls::INVALID_TIME || departure != utls::INVALID_TIME);
-}
-
-bool stop_time::is_halt() const noexcept {
-  return soro::tt::is_halt(arrival_, departure_);
+utls::it_range<train::iterator> train::departures() const {
+  return departures(interval{});
 }
 
 FreightTrain train::freight() const { return this->physics_.freight(); }
@@ -96,6 +97,19 @@ interval train::event_interval(absolute_time const midnight) const {
 std::size_t train::total_halts() const {
   return utls::count_if(sequence_points_,
                         [](auto&& sp) { return sp.is_halt(); });
+}
+
+std::size_t train::trip_count() const { return service_days_.count(); }
+
+std::vector<train::trip> train::trips() const {
+  std::vector<train::trip> result;
+  result.reserve(trip_count());
+
+  for (auto const anchor : departures()) {
+    result.emplace_back(trip{.train_id_ = id_, .anchor_ = anchor});
+  }
+
+  return result;
 }
 
 bool train::effected_by(speed_limit const& spl) const {

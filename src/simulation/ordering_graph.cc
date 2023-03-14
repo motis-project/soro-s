@@ -7,7 +7,6 @@
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
-#include "soro/utls/container/priority_queue.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
 #include "soro/runtime/runtime.h"
@@ -74,6 +73,9 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
         curr_node_id = glob_current_node_id;
         glob_current_node_id += train.path_.size();
         nodes_.resize(nodes_.size() + train.path_.size());
+        trip_to_nodes_.emplace(
+            train::trip{.train_id_ = train.id_, .anchor_ = anchor},
+            std::pair{curr_node_id, curr_node_id + train.path_.size()});
       }
 
       {  // add first halt -> first ms
@@ -128,7 +130,6 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
 
         ++curr_node_id;
       }
-
       utls::sassert(path_idx == train.path_.size() - 1);
     }
   };
@@ -165,6 +166,16 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   uLOG(utl::info) << "ordering graph node count: " << nodes_.size();
   uLOG(utl::info) << "ordering graph edge count: " << edge_count;
   uLOG(utl::info) << "ordering graph max edge per node: " << max_edge_per_node;
+}
+
+std::span<const ordering_node> ordering_graph::trip_nodes(
+    tt::train::trip const trip) const {
+  auto const it = trip_to_nodes_.find(trip);
+
+  utls::sassert(it != std::end(trip_to_nodes_),
+                "could not find nodes for trip {}", trip);
+
+  return {&nodes_[it->second.first], it->second.second - it->second.first};
 }
 
 }  // namespace soro::simulation

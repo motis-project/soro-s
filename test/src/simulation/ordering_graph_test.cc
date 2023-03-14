@@ -11,20 +11,9 @@ using namespace soro::simulation;
 
 namespace soro::simulation::test {
 
-TEST_CASE("ordering graph - follow" * doctest::skip()) {
-  for (auto const& scenario : soro::test::get_timetable_scenarios()) {
-    ordering_graph const og(*scenario->infra_, scenario->timetable_);
-  }
-}
-
-}  // namespace soro::simulation::test
-
-TEST_CASE("o") {
-  using namespace date;
-  //  auto opts = soro::test::SMALL_OPTS;
-  //  auto tt_opts = soro::test::FOLLOW_OPTS;
-  auto opts = soro::test::DE_ISS_OPTS;
-  auto tt_opts = soro::test::DE_KSS_OPTS;
+TEST_CASE("ordering graph, follow") {
+  auto opts = soro::test::SMALL_OPTS;
+  auto tt_opts = soro::test::FOLLOW_OPTS;
 
   opts.exclusions_ = true;
   opts.interlocking_ = true;
@@ -35,23 +24,45 @@ TEST_CASE("o") {
 
   timetable const tt(tt_opts, infra);
 
-  interval const one_week = {.start_ = ymd_to_abs(2021_y / August / 1),
-                             .end_ = ymd_to_abs(2021_y / August / 8)};
+  // we have two trains, with one trip each
+  CHECK_EQ(tt->trains_.size(), 2);
+  CHECK_EQ(tt->trains_.front().trip_count(), 1);
+  CHECK_EQ(tt->trains_.back().trip_count(), 1);
 
-  ordering_graph const og1(infra, tt, one_week);
+  auto const& [earlier, later] =
+      tt->trains_.front().first_departure() <=
+              tt->trains_.back().first_departure()
+          ? std::pair{tt->trains_.front(), tt->trains_.back()}
+          : std::pair{tt->trains_.back(), tt->trains_.front()};
 
-  interval const one_day = {.start_ = ymd_to_abs(2021_y / August / 1),
-                            .end_ = ymd_to_abs(2021_y / August / 2)};
+  // both take the same path
+  CHECK_EQ(earlier.path_, later.path_);
 
-  ordering_graph const og2(infra, tt, one_day);
+  ordering_graph const og(infra, tt, interval{});
 
-  interval const two_hours = {
-      .start_ = ymd_to_abs(2021_y / August / 1) + hours{10},
-      .end_ = ymd_to_abs(2021_y / August / 1) + hours{12}};
+  // the ordering graph has a node for every {train, interlocking route} pair
+  CHECK_EQ(earlier.path_.size() + later.path_.size(), og.nodes_.size());
 
-  ordering_graph const og3(infra, tt, two_hours);
- 
-  ordering_graph const og4(infra, tt, interval{});
+  auto const earlier_trip = earlier.trips().front();
+  auto const later_trip = later.trips().front();
 
-  //  std::ignore = og;
+  auto const earlier_nodes = og.trip_nodes(earlier_trip);
+  auto const later_nodes = og.trip_nodes(later_trip);
+
+  // check train edges
+  for (auto const [from, to] : utl::pairwise(earlier_nodes)) {
+    CHECK(utls::contains(from.out_, to.id_));
+    CHECK(utls::contains(to.in_, from.id_));
+  }
+
+  // check ordering edges
+  for (auto idx = 0U; idx < earlier_nodes.size(); ++idx) {
+    auto const& from = earlier_nodes[idx];
+    auto const& to = later_nodes[idx];
+
+    CHECK(utls::contains(from.out_, to.id_));
+    CHECK(utls::contains(to.in_, from.id_));
+  }
 }
+
+}  // namespace soro::simulation::test

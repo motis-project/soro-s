@@ -4,7 +4,6 @@
 
 #include "soro/utls/container/id_iterator.h"
 #include "soro/utls/coroutine/iterator.h"
-#include "soro/utls/unixtime.h"
 
 #include "soro/base/time.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
@@ -17,16 +16,7 @@
 
 namespace soro::tt {
 
-bool is_halt(utls::unixtime arrival, utls::unixtime departure);
-
-struct stop_time {
-  bool is_halt() const noexcept;
-
-  utls::unixtime arrival_;
-  utls::unixtime departure_;
-  utls::duration min_stop_time_;
-};
-
+// yielded when iterating a train
 struct train_node : infra::route_node {
   train_node(route_node const& rn, sequence_point::optional_ptr sp);
 
@@ -49,6 +39,13 @@ struct train {
 
     main_t main_{std::numeric_limits<main_t>::max()};
     sub_t sub_{std::numeric_limits<sub_t>::max()};
+  };
+
+  struct trip {
+    auto operator<=>(trip const& other) const = default;
+
+    id train_id_{tt::train::INVALID};
+    absolute_time anchor_{soro::INVALID<absolute_time>};
   };
 
   struct iterator {
@@ -74,12 +71,8 @@ struct train {
     interval interval_;
   };
 
-  utls::it_range<iterator> departures(interval const& interval) const {
-    return utls::make_range(iterator{this, interval, false},
-                            iterator{this, interval, true});
-  }
-
-  utls::it_range<iterator> departures() const { return departures(interval{}); }
+  utls::it_range<iterator> departures(interval const& interval) const;
+  utls::it_range<iterator> departures() const;
 
   rs::FreightTrain freight() const;
   bool is_freight() const;
@@ -94,6 +87,9 @@ struct train {
   interval event_interval(absolute_time const midnight) const;
 
   std::size_t total_halts() const;
+  std::size_t trip_count() const;
+
+  std::vector<trip> trips() const;
 
   bool effected_by(infra::speed_limit const& spl) const;
 
@@ -130,9 +126,29 @@ struct train {
 
   bitfield service_days_;
   rs::train_physics physics_;
-
-  // deprecated
-  soro::vector<stop_time> stop_times_;
 };
 
 }  // namespace soro::tt
+
+namespace fmt {
+
+template <>
+struct formatter<soro::tt::train::trip> {
+  constexpr auto parse(format_parse_context& ctx)  // NOLINT
+      -> decltype(ctx.begin()) {
+    if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
+      throw format_error("invalid format for train::trip");
+    }
+
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(soro::tt::train::trip const& trip, FormatContext& ctx) const
+      -> decltype(ctx.out()) {
+    return format_to(ctx.out(), "[train {} @ {}]", trip.train_id_,
+                     date::format("%F", trip.anchor_));
+  }
+};
+
+}  // namespace fmt
