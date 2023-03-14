@@ -5,3 +5,9 @@
     height: 100%;
     width: 100%;
 }
+#search {
+    position: absolute;
+    right: 1em;
+    top: 1em;
+    width: 10em;
+}

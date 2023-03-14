@@ -10,10 +10,9 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "types": ["glsl", "node"],
+    "types": ["node"],
     "typeRoots": [
       "./node_modules/@types",
-      "./components/ordering_graph/types",
     ],
   }
 }

@@ -8,5 +8,10 @@
 
 <body style="overflow:hidden">
     <div id="sigma-container" style="height: 100%;"></div>
+    <div id="search">
+        <input type="number" id="search-input" min="0" max="10000" placeholder="Train ID pls" size="10"/>
+        <input type="range" id="neighbor-input" value="0" min="0" max="15" oninput="this.nextElementSibling.value = this.value">
+        <output>0</output>
+      </div>
 </body>
 </html>

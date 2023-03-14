@@ -170,7 +170,7 @@ initialization: .../init
 Invertion:      /invert?from=[node_id]&to=[node_id]
 */
  void serve_graph([[maybe_unused]] std::string const& url, [[maybe_unused]] auto const& req, auto& res) {
-  const string ordering_graph_json = generate_testgraph(1000, 60, 5, 60, 23).to_json();
+  const string ordering_graph_json = generate_testgraph(100000, 60, 5, 60, 23).to_json();
 
   if (req[http::field::accept_encoding]  //
            .find("deflate") ==
