@@ -4,7 +4,6 @@
 
 #include "net/web_server/responses.h"
 
-#include "soro/server/cereal/cereal_extern.h"
 #include "soro/server/cereal/json_archive.h"
 
 namespace soro::infra {
