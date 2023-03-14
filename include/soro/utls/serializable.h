@@ -20,7 +20,7 @@ struct serializable {
   serializable() = default;
 
   explicit serializable(std::filesystem::path const& fp)
-      : mem_{cista::mmap{fp.c_str(), cista::mmap::protection::READ}},
+      : mem_{cista::mmap{fp.string().c_str(), cista::mmap::protection::READ}},
         access_{cista::deserialize<T, MODE>(mem_.template as<cista::mmap>())} {}
 
   ~serializable() = default;
