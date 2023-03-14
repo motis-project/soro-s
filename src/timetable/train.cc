@@ -36,8 +36,8 @@ void train::iterator::advance() {
 }
 
 train::iterator& train::iterator::operator++() {
-  utls::expects(bitfield_it_ != std::end(train_->service_days_),
-                "incrementing end bitfield iterator");
+  utls::expect(bitfield_it_ != std::end(train_->service_days_),
+               "incrementing end bitfield iterator");
   ++bitfield_it_;
   advance();
   return *this;

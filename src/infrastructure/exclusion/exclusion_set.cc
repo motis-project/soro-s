@@ -40,9 +40,9 @@ exclusion_set::value_type get_last_set(exclusion_set const& set) {
 
 void lower_first(exclusion_set* set,
                  exclusion_set::value_type const new_first) {
-  utls::expects(set->first_ > new_first, "New first le than current.");
-  utls::expects(new_first % exclusion_set::bitvec_t::bits_per_block == 0,
-                "New first not divisible by bits per block.");
+  utls::expect(set->first_ > new_first, "New first le than current.");
+  utls::expect(new_first % exclusion_set::bitvec_t::bits_per_block == 0,
+               "New first not divisible by bits per block.");
 
   auto const dist = set->first_ - new_first;
   set->bits_.resize(set->bits_.size() + dist);
@@ -52,9 +52,9 @@ void lower_first(exclusion_set* set,
 
 void increase_last(exclusion_set* set,
                    exclusion_set::value_type const new_last) {
-  utls::expects(set->last_ < new_last, "New last ge than current.");
-  utls::expects((new_last + 1) % exclusion_set::bitvec_t::bits_per_block == 0,
-                "New last not divisible by bits per block.");
+  utls::expect(set->last_ < new_last, "New last ge than current.");
+  utls::expect((new_last + 1) % exclusion_set::bitvec_t::bits_per_block == 0,
+               "New last not divisible by bits per block.");
 
   auto const dist = new_last - set->last_;
   set->bits_.resize(set->bits_.size() + dist);
@@ -62,8 +62,8 @@ void increase_last(exclusion_set* set,
 }
 
 bool contains_impl(exclusion_set const& a, exclusion_set const& b) {
-  utls::expects(a.first_ <= b.first_ && a.last_ >= b.last_,
-                "b is not fully contained in a, it can't be a subset");
+  utls::expect(a.first_ <= b.first_ && a.last_ >= b.last_,
+               "b is not fully contained in a, it can't be a subset");
 
   auto constexpr bits_per_block = exclusion_set::bitvec_t::bits_per_block;
 
@@ -97,8 +97,8 @@ bool contains_impl(exclusion_set const& a, exclusion_set const& b) {
 
 std::partial_ordering contains_impl_same_size(exclusion_set const& a,
                                               exclusion_set const& b) {
-  utls::expects(a.first_ == b.first_ && a.last_ == b.last_,
-                "a and b must be the same size");
+  utls::expect(a.first_ == b.first_ && a.last_ == b.last_,
+               "a and b must be the same size");
 
   auto constexpr bits_per_block = exclusion_set::bitvec_t::bits_per_block;
 
@@ -409,7 +409,7 @@ bool exclusion_set::ok() const {
 exclusion_set make_exclusion_set(
     exclusion_set::id const id,
     soro::vector<exclusion_set::value_type> const& sorted_ids) {
-  utls::expects(utls::is_sorted(sorted_ids), "IDs not sorted.");
+  utls::expect(utls::is_sorted(sorted_ids), "IDs not sorted.");
 
   if (sorted_ids.empty()) {
     exclusion_set result;

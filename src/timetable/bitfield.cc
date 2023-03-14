@@ -45,7 +45,7 @@ bitfield::anchor_time idx_to_date(bitfield::anchor_time const first_date,
 
 bitfield::iterator::iterator(bitfield const* bitfield, idx_t const idx)
     : bitfield_{bitfield}, idx_{idx} {
-  utls::expects(idx_ <= get_end_idx(bitfield), "got invalid idx");
+  utls::expect(idx_ <= get_end_idx(bitfield), "got invalid idx");
 
   if (idx_ != get_end_idx(bitfield) &&
       !bitfield_->at(idx_to_date(bitfield_->first_date_, idx_))) {
@@ -56,7 +56,7 @@ bitfield::iterator::iterator(bitfield const* bitfield, idx_t const idx)
 }
 
 bitfield::iterator& bitfield::iterator::operator++() {
-  utls::expects(idx_ < get_end_idx(bitfield_), "incrementing end iterator");
+  utls::expect(idx_ < get_end_idx(bitfield_), "incrementing end iterator");
   ++idx_;
 
   while (idx_ < get_end_idx(bitfield_) && !bitfield_->bitset_[idx_]) {

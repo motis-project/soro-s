@@ -29,8 +29,8 @@ struct exclusion_set {
 
     iterator(exclusion_set const* const set, bitvec_t::size_type const idx)
         : set_{set}, idx_{idx} {
-      utls::expects(idx_ <= set_->bits_.size(),
-                    "initializing idx larger than size");
+      utls::expect(idx_ <= set_->bits_.size(),
+                   "initializing idx larger than size");
     }
 
     iterator operator+(std::size_t n) {
