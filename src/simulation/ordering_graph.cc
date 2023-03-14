@@ -265,8 +265,12 @@ bool ordering_graph::invert_single_edge(ordering_node& from,
       from_in.emplace_back(id);
     } else {
       to_in.emplace_back(id);
+      // edge added id -> to
+      write_edge(added_edges, id, to.id_);
       // the out_ vector of the other node in this edge also needs adjusting
       replace(node->out_.begin(), node->out_.end(), from.id_, to.id_);
+      // edge deleted id -> from
+      write_edge(deleted_edges, id, from.id_);
     }
   }
   for (const ordering_node::id id : from.out_) {
@@ -284,25 +288,31 @@ bool ordering_graph::invert_single_edge(ordering_node& from,
   for (const ordering_node::id id : to.out_) {
     auto node = node_by_id(id);
     // edges originating in to that belong to another train need to be
-    // originating in to after the inversion
+    // originating in from after the inversion
     if (node == nullptr || node->train_id_ == to.train_id_) {
       to_out.emplace_back(id);
     } else {
       from_out.emplace_back(id);
+      // edge added from -> id
+      write_edge(added_edges, from.id_, id);
       // the in_ vector of the other node in this edge also needs adjusting
       replace(node->in_.begin(), node->in_.end(), to.id_, from.id_);
+      // edge deleted to -> id
+      write_edge(deleted_edges, to.id_, id);
     }
   }
 
   // re-insert the flip edge
   from_in.emplace_back(to.id_);
   to_out.emplace_back(from.id_);
+  // edge changed from -> to
+  write_edge(changed_edges, from.id_, to.id_);
 
   // finalization
   from.in_ = from_in;
-  from.out_ = from_in;
+  from.out_ = from_out;
   to.in_ = to_in;
-  to.out_ = to_in;
+  to.out_ = to_out;
 
   return true;
 }
@@ -339,11 +349,22 @@ ordering_node* ordering_graph::prev_train_node(const ordering_node& node) {
  * Flips the edge in the graph that orignates at from and end at to, propagating
  * changes to parallel edges that need to be flipped as well.
  */
-void ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
+string ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
+  // add writer to document edge changes, additions and deletions in sub-methods
+  StringBuffer c, d, a;
+  changed_edges.Reset(c);
+  deleted_edges.Reset(d);
+  added_edges.Reset(a);
+
+  // changed, deleted and added edges
+  changed_edges.StartArray();
+  deleted_edges.StartArray();
+  added_edges.StartArray();
+
   if (!invert_single_edge(from, to)) {
     // if there was no edge to flip, we also don't need to look for parallel
     // edges.
-    return;
+    return R"({"a":{},"c":[],"d":[],"a":[]})";
   }
 
   // walk the pointers forward along the train until there is no paralell edge
@@ -366,6 +387,25 @@ void ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
     from_ptr = prev_train_node(*from_ptr);
     to_ptr = prev_train_node(*to_ptr);
   }
+
+  changed_edges.EndArray();
+  deleted_edges.EndArray();
+  added_edges.EndArray();
+
+  std::stringstream result;
+  result << "{\"at\":{},"
+         << "\"c\":" << c.GetString() << ",\"d\":" << d.GetString()
+         << ",\"a\":" << a.GetString() << "}";
+  return result.str();
+}
+
+template <typename Writer>
+void ordering_graph::write_edge(Writer& writer, ordering_node::id from,
+                                ordering_node::id to) {
+  writer.StartArray();
+  writer.String(std::to_string(from).c_str());
+  writer.String(std::to_string(to).c_str());
+  writer.EndArray();
 }
 
 string ordering_graph::to_json() {
