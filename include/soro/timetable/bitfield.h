@@ -12,8 +12,10 @@ struct bitfield {
   using bitset = cista::bitset<BITSIZE>;
   using anchor_time = date::sys_days;
 
+  static constexpr auto INVALID_ANCHOR = anchor_time::max();
+
   static constexpr bool valid(anchor_time const t) {
-    return t != anchor_time ::max();
+    return t != anchor_time::max();
   }
 
   struct iterator {
