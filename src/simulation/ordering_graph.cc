@@ -17,6 +17,33 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
 
+void print_ordering_graph_stats(ordering_graph const& og) {
+  std::size_t edges = 0;
+
+  // edge count e -> node count with edge count e
+  std::map<std::size_t, std::size_t> in_edge_counts;
+  std::map<std::size_t, std::size_t> out_edge_counts;
+
+  for (auto const& n : og.nodes_) {
+    edges += n.out_.size();
+    ++in_edge_counts[n.in_.size()];
+    ++out_edge_counts[n.out_.size()];
+  }
+
+  uLOG(utl::info) << "ordering graph node count: " << og.nodes_.size();
+  uLOG(utl::info) << "ordering graph edge count: " << edges;
+
+  uLOG(utl::info) << "incoming edges distribution:";
+  for (auto const [edge_count, nodes] : in_edge_counts) {
+    uLOG(utl::info) << "nodes with " << edge_count << " in edges: " << nodes;
+  }
+
+  uLOG(utl::info) << "outgoing edges distribution:";
+  for (auto const [edge_count, nodes] : out_edge_counts) {
+    uLOG(utl::info) << "nodes with " << edge_count << " out edges: " << nodes;
+  }
+}
+
 struct route_usage {
   soro::absolute_time from_{};
   soro::absolute_time to_{};
@@ -153,19 +180,12 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
     }
   }
 
-  std::size_t edge_count = 0;
-  std::size_t max_edge_per_node = 0;
   for (auto& node : nodes_) {
     utl::erase_duplicates(node.out_);
     utl::erase_duplicates(node.in_);
-
-    edge_count += node.out_.size();
-    max_edge_per_node = std::max(node.out_.size(), max_edge_per_node);
   }
 
-  uLOG(utl::info) << "ordering graph node count: " << nodes_.size();
-  uLOG(utl::info) << "ordering graph edge count: " << edge_count;
-  uLOG(utl::info) << "ordering graph max edge per node: " << max_edge_per_node;
+  print_ordering_graph_stats(*this);
 }
 
 std::span<const ordering_node> ordering_graph::trip_nodes(
