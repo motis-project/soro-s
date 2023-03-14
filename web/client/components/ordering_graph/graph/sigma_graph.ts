@@ -261,10 +261,39 @@ export class SigmaGraphCreator {
      * @param graph 
      */
     private getUpdatedGraph(edgeInformation: Array<string>, graph: DirectedGraph) {
-        sendPostData({ url: '/api/ordering_graph/invert', data: graph, values: edgeInformation })
+        const data = this.exportGraphAsJson(graph);
+        sendPostData({ url: '/api/ordering_graph/invert', data: data, values: edgeInformation })
             .then(response => response.json())
             .then(json =>
                 this.unsafeImport(json, graph));
+    }
+
+    /**
+     * returns the same format which the unsafeImport method uses as an input
+     * @param graph 
+     */
+    private exportGraphAsJson(graph: DirectedGraph) {
+        const nodes = new Array(graph._nodes.size);
+
+        let i = 0;
+
+        graph.forEachNode((node, attr) => {
+            nodes[i++] = [node, attr.r, attr.t];
+        });
+
+        const edges = new Array(graph._edges.size);
+
+        i = 0;
+
+        graph.forEachEdge((edge) => {
+            edges[i++] = [graph.source(edge), graph.target(edge)];
+        })
+
+        return {
+            "a":{},
+            "n":nodes,
+            "e":edges
+        };
     }
 
 
