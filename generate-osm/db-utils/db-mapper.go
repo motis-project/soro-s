@@ -18,7 +18,10 @@ func MapDB(
 	DBDir string,
 ) error {
 	newNodeIdCounter := 0
-	linesWithNoAnchors := 0
+	totalNumberOfAnchors, totalElementsNotFound := 0, 0
+	linesWithNoAnchors := []string{}
+	linesWithOneAnchor := []string{}
+
 	for _, line := range refs {
 		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -42,7 +45,7 @@ func MapDB(
 			return errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
 		}
 
-		fmt.Printf("Processing line %s \n", line)
+		fmt.Printf("Mapping line %s \n", line)
 
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
@@ -76,9 +79,12 @@ func MapDB(
 			}
 		}
 
-		numSignalsNotFound := (float64)(len(notFoundSignalsFalling) + len(notFoundSignalsRising))
-		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + numSignalsNotFound)) * 100.0
-		fmt.Printf("Could anchor %f %% of signals. \n", percentAnchored)
+		numElementsNotFound := len(notFoundSignalsFalling) + len(notFoundSignalsRising) + len(notFoundSwitches)
+		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + (float64)(numElementsNotFound))) * 100.0
+		fmt.Printf("Could anchor %d/%d (%f %%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
+
+		totalNumberOfAnchors += foundAnchorCount
+		totalElementsNotFound += numElementsNotFound
 
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
@@ -93,27 +99,41 @@ func MapDB(
 		}
 
 		if len(anchors) == 0 {
-			fmt.Print("Could not find anchors! \n")
+			linesWithNoAnchors = append(linesWithNoAnchors, line)
 			continue
 		}
 		if len(anchors) == 1 {
-			fmt.Print("Could not find enough anchors! \n")
+			linesWithOneAnchor = append(linesWithOneAnchor, line)
 			// TODO: Node not found, find closest mapped Node and work from there
 		} else {
+			elementsNotFound := make(map[string]([]string))
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
-					mapUnanchoredMainSignals(
+					err = mapUnanchoredMainSignals(
 						&osm,
 						&anchors,
 						&newNodeIdCounter,
 						*abschnitt,
+						elementsNotFound,
 					)
-					mapUnanchoredSwitches(&osm,
+					if err != nil {
+						return errors.Wrap(err, "failed finding main signals")
+					}
+					err = mapUnanchoredSwitches(
+						&osm,
 						&anchors,
 						&newNodeIdCounter,
 						*abschnitt,
+						elementsNotFound,
 					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding switches")
+					}
 				}
+			}
+
+			for elementType, nameList := range elementsNotFound {
+				fmt.Printf("Could not find %s: %v \n", elementType, nameList)
 			}
 		}
 
@@ -127,6 +147,9 @@ func MapDB(
 		}
 	}
 
-	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
+	totalPercentAnchored := ((float64)(totalNumberOfAnchors) / ((float64)(totalNumberOfAnchors) + (float64)(totalElementsNotFound))) * 100.0
+	fmt.Printf("Could in total anchor %d/%d (%f %%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
+	fmt.Printf("Lines with no anchors: %d out of %d (%v)\n", len(linesWithNoAnchors), len(refs), linesWithNoAnchors)
+	fmt.Printf("Lines with only one anchor: %d out of %d (%v)\n", len(linesWithOneAnchor), len(refs), linesWithOneAnchor)
 	return nil
 }

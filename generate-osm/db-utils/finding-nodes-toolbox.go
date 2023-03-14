@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var errNoSuitableAnchors = errors.New("failed to find suitable anchors")
+
 // findBestOSMNode determines a pair of anchors based on which a new Node is searched.
 // Based on those, a new Node is then determined.
 func findBestOSMNode(
@@ -70,7 +72,7 @@ func findBestOSMNode(
 	}
 
 	if newAnchorCounter == len(sortedAnchors) {
-		return nil, errors.New("failed to find suitable anchors")
+		return nil, errNoSuitableAnchors
 	}
 
 	return newNode, nil

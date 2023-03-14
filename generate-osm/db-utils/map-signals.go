@@ -2,7 +2,6 @@ package dbUtils
 
 import (
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
@@ -187,21 +186,31 @@ func mapUnanchoredMainSignals(
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	abschnitt Spurplanabschnitt,
-) {
+	elementsNotFound map[string]([]string),
+) error {
 	for _, knoten := range abschnitt.Knoten {
-		searchUnanchoredMainSignal(
+		err := searchUnanchoredMainSignal(
 			osmData,
 			anchors,
 			nodeIdCounter,
 			*knoten,
+			elementsNotFound,
 			true)
-		searchUnanchoredMainSignal(
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling main signal")
+		}
+		err = searchUnanchoredMainSignal(
 			osmData,
 			anchors,
 			nodeIdCounter,
 			*knoten,
+			elementsNotFound,
 			false)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling main signal")
+		}
 	}
+	return nil
 }
 
 // serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
@@ -212,8 +221,9 @@ func searchUnanchoredMainSignal(
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
+	elementsNotFound map[string]([]string),
 	isFalling bool,
-) {
+) error {
 	signals := knoten.HauptsigF
 	if !isFalling {
 		signals = knoten.HauptsigS
@@ -224,8 +234,11 @@ func searchUnanchoredMainSignal(
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			fmt.Printf("Error with finding node for signal %s: %s \n", signal.Name.Value, err.Error())
-			continue
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound["main signals"] = append(elementsNotFound["main signals"], signal.Name.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map switch "+signal.Name.Value)
 		}
 
 		newSignalNode := createNewHauptsignal(
@@ -240,4 +253,5 @@ func searchUnanchoredMainSignal(
 			maxNode,
 		)
 	}
+	return nil
 }

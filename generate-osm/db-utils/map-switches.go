@@ -1,7 +1,6 @@
 package dbUtils
 
 import (
-	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -101,7 +100,8 @@ func mapUnanchoredSwitches(
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	abschnitt Spurplanabschnitt,
-) {
+	elementsNotFound map[string]([]string),
+) error {
 
 	for _, knoten := range abschnitt.Knoten {
 		for _, simple_switch := range knoten.WeichenAnf {
@@ -109,8 +109,11 @@ func mapUnanchoredSwitches(
 
 			maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 			if err != nil {
-				fmt.Printf("Error with finding node for switch %s: %s \n", simple_switch.Name.Value, err.Error())
-				continue
+				if errors.Cause(err) == errNoSuitableAnchors {
+					elementsNotFound["switches"] = append(elementsNotFound["switches"], simple_switch.Name.Value)
+					continue
+				}
+				return errors.Wrap(err, "failed to map switch "+simple_switch.Name.Value)
 			}
 
 			newSignalNode := createNewSwitch(
@@ -125,4 +128,5 @@ func mapUnanchoredSwitches(
 			)
 		}
 	}
+	return nil
 }
