@@ -18,7 +18,7 @@ TEST_SUITE("optional") {
     opt = optional{t{400}};
 
     CHECK(opt.has_value());
-    CHECK_EQ(*opt , t{400});
+    CHECK_EQ(*opt, t{400});
 
     if (opt) {
       CHECK(opt.has_value());
@@ -40,7 +40,7 @@ TEST_SUITE("optional") {
     opt = optional{t{401}};
 
     CHECK(opt.has_value());
-    CHECK_EQ(*opt , t{401});
+    CHECK_EQ(*opt, t{401});
   }
 
   TEST_CASE("optional value_or") {
@@ -53,8 +53,8 @@ TEST_SUITE("optional") {
     auto const result1 = opt.value_or(42);
     auto const result2 = empty.value_or(42);
 
-    CHECK_EQ(result1,  400);
-    CHECK_EQ(result2,  42);
+    CHECK_EQ(result1, 400);
+    CHECK_EQ(result2, 42);
   }
 
   TEST_CASE("optional or_else") {
@@ -87,7 +87,7 @@ TEST_SUITE("optional") {
         [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
 
     CHECK(result1.has_value());
-    CHECK_EQ(*result1 , int{400});
+    CHECK_EQ(*result1, int{400});
 
     CHECK(!result2.has_value());
   }
