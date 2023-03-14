@@ -19,7 +19,8 @@
 #include "soro/server/http_server.h"
 
 namespace soro::server {
-    using namespace soro::simulation;
+using namespace soro::simulation;
+using namespace boost::beast;
 
 std::string url_decode(request_t const& req) {
   auto const& in = req.target();
@@ -165,25 +166,51 @@ bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
 }
 
 /*
-Base:           api/ordering_graph/...
-initialization: .../init
-Invertion:      /invert?from=[node_id]&to=[node_id]
+Base/initialization:    api/ordering_graph/
+Invertion:              /invert?from=[node_id]&to=[node_id]
 */
- void serve_graph([[maybe_unused]] std::string const& url, [[maybe_unused]] auto const& req, auto& res) {
-  const string ordering_graph_json = generate_testgraph(100000, 60, 5, 60, 23).to_json();
+void serve_graph(std::string const& url, auto const& req, auto& res) {
+  string ordering_graph_json;
+  bool const should_invert = url.find("/invert") != std::string::npos;
+
+  if (should_invert) {
+    const string from_str = "from=";
+    const string to_str = "to=";
+
+    const string json = buffers_to_string(req.body().data());
+
+    ordering_graph graph_to_invert = from_json(json);
+
+    const auto from_id_ulong =
+        stoul(url.substr(url.find(from_str) + from_str.length()));
+    const auto to_id_ulong =
+        stoul(url.substr(url.find(to_str) + to_str.length()));
+
+    const auto from_id = static_cast<unsigned int>(from_id_ulong);
+    const auto to_id = static_cast<unsigned int>(to_id_ulong);
+
+    ordering_graph_json =
+        graph_to_invert.invert_edge(*graph_to_invert.node_by_id(from_id),
+                                    *graph_to_invert.node_by_id(to_id));
+
+    uLOG(utl::info) << "inverted edge from: " << from_id << " to: " << to_id;
+  } else {
+    ordering_graph random_graph = generate_testgraph(10, 10, 5, 20, 23);
+
+    ordering_graph_json = random_graph.to_json();
+    uLOG(utl::info) << "initial graph sent";
+  }
 
   if (req[http::field::accept_encoding]  //
-           .find("deflate") ==
-       std::string_view::npos) {
+          .find("deflate") == std::string_view::npos) {
     res.body() = std::string(ordering_graph_json);
-  }
-  else {
+  } else {
     res.body() = tiles::compress_deflate(ordering_graph_json);
     res.set(http::field::content_encoding, "deflate");
   }
   res.set(http::field::content_type, "application/json");
   res.result(http::status::ok);
- }
+}
 
 void initialize_serve_contexts(server::serve_contexts& contexts,
                                fs::path const& server_resource_dir) {
