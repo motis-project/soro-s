@@ -46,6 +46,7 @@ import {
 import GoldenLayoutComponent from './golden-layout-component.vue';
 import { useStore } from 'vuex';
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
+import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from './golden-layout-constants';
 
 /*******************
  * Data
@@ -54,7 +55,8 @@ const GLRoot = ref<null | HTMLElement>(null);
 let GLayout: VirtualLayout;
 const GlcKeyPrefix = readonly(ref('glc_'));
 
-const MapComponents = new Map<ComponentContainer, { refId: number; glc: typeof GoldenLayoutComponent }>();
+type mappedComponent = { refId: number; glc: typeof GoldenLayoutComponent };
+const MapComponents = new Map<ComponentContainer, mappedComponent>();
 const AllComponents = ref(new Map<number, { glc: any; container?: ComponentContainer }>());
 const UnusedIndexes: number[] = [];
 let CurIndex = 0;
@@ -68,7 +70,7 @@ const store = useStore();
  *******************/
 /** @internal */
 const addComponent = (componentType: string, alreadyUsedIndex?: number) => {
-    const glc = markRaw(defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`)));
+    const glc = markRaw(defineAsyncComponent(() => import(`./components/${componentType}.vue`)));
 
     let index;
     if (alreadyUsedIndex) {
@@ -88,16 +90,15 @@ const addComponent = (componentType: string, alreadyUsedIndex?: number) => {
     return index;
 };
 
-const addGLComponent = async (componentType: string, title: string) => {
-    if (componentType.length == 0) {
-        throw new Error('addGLComponent: Component\'s type is empty');
-    }
-
-    const index = addComponent(componentType);
-
+const addGLComponent = async (componentTechnicalName: ComponentTechnicalName, title?: string) => {
+    const index = addComponent(GLComponentNames[componentTechnicalName]);
     await nextTick(); // wait 1 tick for vue to add the dom
 
-    GLayout.addComponent(componentType, { refId: index }, title);
+    GLayout.addComponent(
+        GLComponentNames[componentTechnicalName],
+        { refId: index },
+        title ?? GLComponentTitles[componentTechnicalName],
+    );
 };
 
 type ValidItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
@@ -116,7 +117,7 @@ const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) =
 
     let index = 0;
     while (contents.length > 0) {
-        const content = contents.shift() ?? [];
+        const content = contents.shift() as ValidItemConfig[];
 
         content.forEach((itemConfig) => {
             if (itemConfig.type !== 'component') {
@@ -148,15 +149,9 @@ const getLayoutConfig = () => {
  * Mount
  *******************/
 onMounted(() => {
-    if (GLRoot.value == null) {
-        throw new Error('Golden Layout can\'t find the root DOM!');
-    }
-
     const onResize = () => {
-        const dom = GLRoot.value;
-        const width = dom ? dom.offsetWidth : 0;
-        const height = dom ? dom.offsetHeight : 0;
-        GLayout.setSize(width, height);
+        const dom = GLRoot.value as HTMLElement;
+        GLayout.setSize(dom.offsetWidth, dom.offsetHeight);
     };
 
     window.addEventListener('resize', onResize, { passive: true });
@@ -170,15 +165,10 @@ onMounted(() => {
         width: number,
         height: number,
     ): void => {
-        const component = MapComponents.get(container);
-        if (!component || !component?.glc) {
-            throw new Error('handleContainerVirtualRectingRequiredEvent: Component not found');
-        }
+        const component = MapComponents.get(container) as mappedComponent;
 
-        const containerBoundingClientRect =
-        container.element.getBoundingClientRect();
-        const left =
-        containerBoundingClientRect.left - GlBoundingClientRect.left;
+        const containerBoundingClientRect = container.element.getBoundingClientRect();
+        const left = containerBoundingClientRect.left - GlBoundingClientRect.left;
         const top = containerBoundingClientRect.top - GlBoundingClientRect.top;
         component.glc.setPosAndSize(left, top, width, height);
     };
@@ -187,11 +177,7 @@ onMounted(() => {
         container: ComponentContainer,
         visible: boolean,
     ): void => {
-        const component = MapComponents.get(container);
-        if (!component || !component?.glc) {
-            throw new Error('handleContainerVirtualVisibilityChangeRequiredEvent: Component not found');
-        }
-
+        const component = MapComponents.get(container) as mappedComponent;
         component.glc.setVisibility(visible);
     };
 
@@ -200,11 +186,7 @@ onMounted(() => {
         logicalZIndex: LogicalZIndex,
         defaultZIndex: string,
     ): void => {
-        const component = MapComponents.get(container);
-        if (!component || !component?.glc) {
-            throw new Error('handleContainerVirtualZIndexChangeRequiredEvent: Component not found');
-        }
-
+        const component = MapComponents.get(container) as mappedComponent;
         component.glc.setZIndex(defaultZIndex);
     };
 
@@ -212,16 +194,9 @@ onMounted(() => {
         container: ComponentContainer,
         itemConfig: ResolvedComponentItemConfig,
     ): ComponentContainer.BindableComponent => {
-        let refId = -1;
-        if (itemConfig && itemConfig.componentState) {
-            refId = (itemConfig.componentState as Json).refId as number;
-        } else {
-            throw new Error('bindComponentEventListener: component\'s ref id is required');
-        }
-
+        const refId = (itemConfig.componentState as Json).refId as number;
         const ref = GlcKeyPrefix.value + refId;
-        // @ts-ignore
-        const component = instance?.refs[ref][0] as typeof GoldenLayoutComponent;
+        const component = (instance?.refs[ref] as typeof GoldenLayoutComponent[])[0];
 
         MapComponents.set(container, {
             refId,
@@ -241,11 +216,7 @@ onMounted(() => {
     };
 
     const unbindComponentEventListener = (container: ComponentContainer): void => {
-        const component = MapComponents.get(container);
-        if (!component || !component?.glc) {
-            throw new Error('handleUnbindComponentEvent: Component not found');
-        }
-
+        const component = MapComponents.get(container) as mappedComponent;
         MapComponents.delete(container);
         AllComponents.value.delete(component.refId);
         UnusedIndexes.push(component.refId);

@@ -101,7 +101,7 @@ import { defineComponent } from 'vue';
 import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
-import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
+import { ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 export default defineComponent({
@@ -128,10 +128,7 @@ export default defineComponent({
 
     methods: {
         addTab(componentTechnicalName: ComponentTechnicalName) {
-            this.addGoldenLayoutTab({
-                componentTechnicalName,
-                title: GLComponentTitles[componentTechnicalName],
-            });
+            this.addGoldenLayoutTab({ componentTechnicalName });
         },
 
         clearLocalStorage() {

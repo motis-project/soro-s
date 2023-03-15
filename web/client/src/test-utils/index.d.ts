@@ -1,3 +1,5 @@
+import { Module } from 'vuex';
+
 export type Configuration = {
     props?: any,
     data?: any,
@@ -7,5 +9,7 @@ export type Configuration = {
     filters?: any,
     injections?: any,
     stubs?: any,
-    store?: any,
+    store?: StoreConfiguration,
 };
+
+export type StoreConfiguration = Record<string, Module<any, any>>;

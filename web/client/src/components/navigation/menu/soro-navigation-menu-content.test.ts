@@ -2,21 +2,10 @@ import { mountWithDefaults } from '@/test-utils/mount-with-defaults';
 import SoroNavigationMenuContent from './soro-navigation-menu-content.vue';
 import { VueWrapper } from '@vue/test-utils';
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
-import { ComponentTechnicalName, GLComponentTitles } from '@/golden-layout/golden-layout-constants';
+import { ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { VExpansionPanels } from 'vuetify/components';
 import { InfrastructureNamespace, InfrastructureState } from '@/stores/infrastructure-store';
 import { TimetableNamespace, TimetableState } from '@/stores/timetable-store';
-
-vi.mock('@/golden-layout/golden-layout-constants', () => ({
-    ComponentTechnicalName: {
-        INFRASTRUCTURE: 'infrastructure',
-        ORDERING_GRAPH: 'ordering_graph',
-    },
-    GLComponentTitles: {
-        infrastructure: 'some-infrastructure-title',
-        ordering_graph: 'some-ordering-graph-title',
-    },
-}));
 
 describe('soro-navigation-menu-content', async () => {
     let soroNavigationMenuContent: VueWrapper<any>;
@@ -70,18 +59,12 @@ describe('soro-navigation-menu-content', async () => {
         expect(goldenLayoutActions.addGoldenLayoutTab).toHaveBeenNthCalledWith(
             1,
             expect.any(Object),
-            {
-                componentTechnicalName: ComponentTechnicalName.INFRASTRUCTURE,
-                title: GLComponentTitles[ComponentTechnicalName.INFRASTRUCTURE],
-            },
+            { componentTechnicalName: ComponentTechnicalName.INFRASTRUCTURE },
         );
         expect(goldenLayoutActions.addGoldenLayoutTab).toHaveBeenNthCalledWith(
             2,
             expect.any(Object),
-            {
-                componentTechnicalName: ComponentTechnicalName.ORDERING_GRAPH,
-                title: GLComponentTitles[ComponentTechnicalName.ORDERING_GRAPH],
-            },
+            { componentTechnicalName: ComponentTechnicalName.ORDERING_GRAPH },
         );
     });
 
