@@ -70,8 +70,7 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 						Lat:  node.Lat,
 						Lon:  node.Lon,
 					}
-					node.Tag = append(node.Tag, &Tag{K: "type", V: "element"})
-					node.Tag = append(node.Tag, &Tag{K: "subtype", V: "hlt"})
+					node.Tag = append(node.Tag, &Tag{K: "type", V: "station"})
 				}
 				stationHaltsNodes = append(stationHaltsNodes, node)
 			}
