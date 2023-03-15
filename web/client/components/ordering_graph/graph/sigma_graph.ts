@@ -2,7 +2,7 @@
 import { DirectedGraph } from "graphology";
 import Sigma from "sigma";
 import { sendRequest, sendPostData } from "../api/api_graph";
-import { rendererSettings, edgeSettings, nodeColor, edgeColor, edgeOnHoverColor } from "./settings";
+import { rendererSettings, edgeSettings, nodeColor, edgeColor, edgeOnHoverColor, edgeOnReverseColor } from "./settings";
 import { subgraph } from "graphology-operators";
 import $ from "jquery";
 import { NodeDisplayData } from "sigma/types";
@@ -27,6 +27,7 @@ export class SigmaGraphCreator {
     sigmaContainer: HTMLElement;
     graph: DirectedGraph;
     subGraph: DirectedGraph;
+    dataGraph: DirectedGraph;
     renderer: Sigma<DirectedGraph>;
 
     //input variables
@@ -43,6 +44,7 @@ export class SigmaGraphCreator {
         this.nodesForGivenTrainId = new Map<number, Array<string>>();
         this.subGraph = new DirectedGraph();
         this.graph = new DirectedGraph();
+        this.dataGraph = new DirectedGraph();
         // This function populates the data for this.graph, but does not yet display it.
         this.getInitGraph(this.graph);
 
@@ -142,10 +144,15 @@ export class SigmaGraphCreator {
      * 
      * @returns a set with all relevant Train IDs for the subGraph.
      */
-    private getRelevantTrainIds(): Set<number> {
+    private getRelevantTrainIds(shouldDisplay?: boolean): Set<number> {
+        let loopCount = this.inputNeighbor;
+        // If we send a request to invert an edge, we need to send a larger graph for consistency
+        if(shouldDisplay !== undefined) {
+            loopCount++;
+        } 
         let result = new Set<number>();
         result.add(this.inputTrainID);
-        for (let i = 0; i < this.inputNeighbor; i++) {
+        for (let i = 0; i < loopCount; i++) {
             result = new Set([...result, ...this.getNeighborTrainIds(result)]);
         }
         return result;
@@ -177,15 +184,18 @@ export class SigmaGraphCreator {
      * @param relevantTrainIds The set of all Train IDs that need to be displayed.
      * @returns The set of all relevant nodes for the given input of Train ID and neighborhood degree.
      */
-    private getRelevantNodes(relevantTrainIds: Set<number>): Set<string> {
+    private getRelevantNodes(relevantTrainIds: Set<number>, shouldDisplay?: boolean): Set<string> {
         let allNodes = new Set<string>();
         relevantTrainIds.forEach(trainId => {
             const nodesOfCurrentTrainId = this.nodesForGivenTrainId.get(trainId);
-            this.maxTrainLength = this.maxTrainLength < nodesOfCurrentTrainId!.length ? nodesOfCurrentTrainId!.length : this.maxTrainLength;
-
+            if (shouldDisplay === undefined) {
+                this.maxTrainLength = this.maxTrainLength < nodesOfCurrentTrainId!.length ? nodesOfCurrentTrainId!.length : this.maxTrainLength;
+            }
             nodesOfCurrentTrainId!.forEach((node) => {
-                const route_id = this.graph.getNodeAttribute(node, "r");
-                this.intializeRouteInfo(route_id, node);
+                if (shouldDisplay === undefined) {
+                    const route_id = this.graph.getNodeAttribute(node, "r");
+                    this.intializeRouteInfo(route_id, node);
+                }
                 allNodes.add(node);
             });
         });
@@ -214,20 +224,22 @@ export class SigmaGraphCreator {
     /**
      * Creates and displays the subGraph.
      */
-    private createSubGraph() {
-        let allTrainIds = this.getRelevantTrainIds();
+    private createSubGraph(shouldDisplay?: boolean) {
+        let allTrainIds = this.getRelevantTrainIds(shouldDisplay);
         const numberOfTrains = allTrainIds.size;
         allTrainIds = [...allTrainIds].sort((a, b) => a - b);
+        if (shouldDisplay === undefined) {
+            this.nodesForGivenRouteId = new Map<number, Array<string>>();
+            this.subGraph = subgraph(this.graph, this.getRelevantNodes(allTrainIds));
+            this.subGraphRouteIds = [...this.subGraphRouteIds].sort((a, b) => a - b);
+            this.setGraphAttributes(this.subGraph, numberOfTrains, this.inputScaling);
+            this.renderer = new Sigma(this.subGraph, this.sigmaContainer, rendererSettings);
+            this.bindRendererEvents(this.subGraph);
+        }
+        else {
+            this.dataGraph = subgraph(this.graph, this.getRelevantNodes(allTrainIds, shouldDisplay));
+        }
 
-        this.nodesForGivenRouteId = new Map<number, Array<string>>();
-
-
-        this.subGraph = subgraph(this.graph, this.getRelevantNodes(allTrainIds));
-        this.subGraphRouteIds = [...this.subGraphRouteIds].sort((a, b) => a - b);
-
-        this.setGraphAttributes(this.subGraph, numberOfTrains, this.inputScaling);
-        this.renderer = new Sigma(this.subGraph, this.sigmaContainer, rendererSettings);
-        this.bindRendererEvents(this.subGraph);
     }
 
     private setGraphAttributes(graph: DirectedGraph, numberOfTrains: number, Scaling: number) {
@@ -290,7 +302,14 @@ export class SigmaGraphCreator {
     }
 
     private edgeAttributes(graph: DirectedGraph, edge) {
+        const weight = graph.getEdgeAttribute(edge, "weight");
         graph.mergeEdgeAttributes(edge, edgeSettings);
+        if (weight === undefined) {
+            graph.setEdgeAttribute(edge, "color", edgeColor);
+        }
+        else {
+            graph.setEdgeAttribute(edge, "color", edgeOnReverseColor);
+        }
     }
 
 
@@ -349,7 +368,7 @@ export class SigmaGraphCreator {
             if (this.state.selectedNodes && !(this.state.selectedNodes.has(node) && this.stateEdgeValidation(graph, node))) {
                 nodeData.label = null;
                 nodeData.color = "#f6f6f6";
-            } else if(this.state.selectedNodes && this.state.selectedNodes.has(node)) {
+            } else if (this.state.selectedNodes && this.state.selectedNodes.has(node)) {
                 nodeData.highlighted = true;
             }
             return nodeData;
@@ -399,7 +418,7 @@ export class SigmaGraphCreator {
      */
     private highlightRoute(graph: DirectedGraph, routeId: number) {
         this.state.selectedNodes = new Set(this.nodesForGivenRouteId.get(routeId));
-        this.rendererNodeReducer(graph, routeId); 
+        this.rendererNodeReducer(graph, routeId);
         this.rendererEdgeReducer(graph);
         this.renderer.refresh();
 
@@ -426,7 +445,12 @@ export class SigmaGraphCreator {
             graph.setEdgeAttribute(edge, "color", edgeOnHoverColor);
         });
         this.renderer.on("leaveEdge", ({ edge }) => {
-            graph.setEdgeAttribute(edge, "color", edgeColor);
+            if (graph.getEdgeAttribute(edge, "weight") === undefined) {
+                graph.setEdgeAttribute(edge, "color", edgeColor);
+            }
+            else {
+                graph.setEdgeAttribute(edge, "color", edgeOnReverseColor);
+            }
         })
     }
 
@@ -460,11 +484,93 @@ export class SigmaGraphCreator {
      * @param graph 
      */
     private getUpdatedGraph(edgeInformation: Array<string>, graph: DirectedGraph) {
-        const data = this.exportGraphAsJson(graph);
+        // Creates the Data Graph without displaying it (neighboorhood + 1)
+        this.createSubGraph(false);
+        const data: string = this.exportGraphAsJson(this.dataGraph);
         sendPostData({ url: '/api/ordering_graph/invert', data: data, values: edgeInformation })
             .then(response => response.json())
-            .then(json =>
-                this.unsafeImport(json, graph));
+            .then(json => {
+                this.processGraphDelta(json);
+            });
+    }
+
+
+    /**
+     * This method changes the direction of an edge aswell as changing the color.
+     * @param graph 
+     * @param edge 
+     */
+    private changeEdgeDirection(graph: DirectedGraph, edge) {
+        const oldEdgeSource = graph.source(edge);
+        const oldEdgeTarget = graph.target(edge);
+        const oldWeight = graph.getEdgeAttribute(edge, "weight");
+
+        graph.dropEdge(oldEdgeSource, oldEdgeTarget);
+        const newEdge = graph.addDirectedEdgeWithKey(edge, oldEdgeTarget, oldEdgeSource);
+        this.edgeAttributes(graph, newEdge);
+
+        if (oldWeight === undefined) {
+            graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor)
+                .setEdgeAttribute(newEdge, "weight", 1);
+        }
+
+    }
+
+    /**
+     * This method replaces an edge with another one aswell as changing the color.
+     * @param graph 
+     * @param oldSource 
+     * @param oldTarget 
+     * @param newSource 
+     * @param newTarget 
+     */
+    private replaceEdge(graph: DirectedGraph, oldSource, oldTarget, newSource, newTarget) {
+        const edgeID = graph.edge(oldSource, oldTarget);
+        const oldWeight = graph.getEdgeAttribute(edgeID, "weight");
+        graph.dropDirectedEdge(oldSource, oldTarget);
+
+        const newEdge = graph.addDirectedEdgeWithKey(edgeID, newSource, newTarget);
+        this.edgeAttributes(graph, newEdge);
+
+        if (oldWeight === undefined) {
+            graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor)
+                .setEdgeAttribute(newEdge, "weight", 1);
+        }
+
+    }
+
+    /**
+     * This method processes the changes and adjusts the edges in the graph.
+     * @param data The delta recieved from the server when inverting an edge
+     */
+    private processGraphDelta(data) {
+        if (data.at) {
+            this.subGraph.replaceAttributes(data.at);
+        }
+        let i, l;
+
+        if (data.c) {
+            for (i = 0, l = data.c.length; i < l; i++) {
+                const source = data.c[i][0];
+                const target = data.c[i][1];
+                const edge = this.subGraph.edge(source, target);
+                this.changeEdgeDirection(this.subGraph, edge);
+                this.changeEdgeDirection(this.graph, edge);
+            }
+        }
+        if (data.d && data.a) {
+            for (i = 0, l = data.d.length; i < l; i++) {
+                const oldSource = data.d[i][0];
+                const oldTarget = data.d[i][1];
+                const newSource = data.a[i][0];
+                const newTarget = data.a[i][1];
+                if (this.subGraph.hasEdge(oldSource, oldTarget)) {
+                    this.replaceEdge(this.subGraph, oldSource, oldTarget, newSource, newTarget);
+                }
+                this.replaceEdge(this.graph, oldSource, oldTarget, newSource, newTarget);
+            }
+        }
+
     }
 
     /**
