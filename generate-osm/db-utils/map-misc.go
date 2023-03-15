@@ -9,7 +9,7 @@ import (
 // mapSpeedLimits processes all speed limits.
 func mapSpeedLimits(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -43,7 +43,7 @@ func mapSpeedLimits(
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchSpeedLimit(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -85,7 +85,7 @@ func searchSpeedLimit(
 // mapSlopes processes all slopes.
 func mapSlopes(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -121,7 +121,7 @@ func mapSlopes(
 // mapEoTDs processes all speed limits.
 func mapEoTDs(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -155,7 +155,7 @@ func mapEoTDs(
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchEoTD(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -219,7 +219,7 @@ func mapSimpleElement(
 	for _, element := range elements {
 		kilometrage, _ := formatKilometrageStringInFloat(element.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == errNoSuitableAnchors {
 				elementsNotFound[elementTypeLong+"s"] = append(elementsNotFound[elementTypeLong+"s"], element.Kilometrierung.Value)
@@ -261,7 +261,7 @@ func mapNamedSimpleElement(
 	for _, element := range elements {
 		kilometrage, _ := formatKilometrageStringInFloat(element.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == errNoSuitableAnchors {
 				elementsNotFound[elementTypeLong+"s"] = append(elementsNotFound[elementTypeLong+"s"], element.Name.Value)

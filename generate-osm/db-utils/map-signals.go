@@ -21,6 +21,7 @@ func findAndMapAnchorMainSignals(
 	anchors map[float64][]*OSMUtil.Node,
 	notFoundSignalsFalling *[]*NamedSimpleElement,
 	notFoundSignalsRising *[]*NamedSimpleElement,
+	signalList map[string]OSMUtil.Signal,
 	foundAnchorCount *int,
 	nodeIdCounter *int,
 ) error {
@@ -29,7 +30,8 @@ func findAndMapAnchorMainSignals(
 		knoten,
 		notFoundSignalsFalling,
 		anchors,
-		&conflictingSignalNames,
+		signalList,
+		conflictingSignalNames,
 		osm,
 		true,
 		foundAnchorCount,
@@ -43,7 +45,8 @@ func findAndMapAnchorMainSignals(
 		knoten,
 		notFoundSignalsRising,
 		anchors,
-		&conflictingSignalNames,
+		signalList,
+		conflictingSignalNames,
 		osm,
 		false,
 		foundAnchorCount,
@@ -61,7 +64,8 @@ func processHauptsignal(
 	knoten Spurplanknoten,
 	notFoundSignals *[]*NamedSimpleElement,
 	anchors map[float64][]*OSMUtil.Node,
-	conflictingSignalNames *map[string]bool,
+	signalList map[string]OSMUtil.Signal,
+	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
 	isFalling bool,
 	foundAnchorCount *int,
@@ -95,7 +99,7 @@ func processHauptsignal(
 				isFalling,
 				notFoundSignals,
 				anchors,
-				*conflictingSignalNames,
+				conflictingSignalNames,
 				osm,
 				foundAnchorCount,
 			)
@@ -104,10 +108,15 @@ func processHauptsignal(
 			}
 			if conflictFreeSignal {
 				*foundAnchorCount++
+				signalList[matchingSignalNodes[0].Id] = OSMUtil.Signal{
+					Name: signal.Name.Value,
+					Lat:  matchingSignalNodes[0].Lat,
+					Lon:  matchingSignalNodes[0].Lon,
+				}
 				return nil
 			}
 		}
-		(*conflictingSignalNames)[signal.Name.Value] = true
+		conflictingSignalNames[signal.Name.Value] = true
 		*notFoundSignals = append(*notFoundSignals, signal)
 	}
 	return nil
@@ -183,7 +192,8 @@ func insertNewHauptsignal(
 // mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
 func mapUnanchoredSignals(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
+	signalList map[string]OSMUtil.Signal,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	signalType string,
@@ -192,6 +202,7 @@ func mapUnanchoredSignals(
 	err := searchUnanchoredSignal(
 		osmData,
 		anchors,
+		signalList,
 		nodeIdCounter,
 		knoten,
 		signalType,
@@ -204,6 +215,7 @@ func mapUnanchoredSignals(
 	err = searchUnanchoredSignal(
 		osmData,
 		anchors,
+		signalList,
 		nodeIdCounter,
 		knoten,
 		signalType,
@@ -220,7 +232,8 @@ func mapUnanchoredSignals(
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchUnanchoredSignal(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
+	signalList map[string]OSMUtil.Signal,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	signalType string,
@@ -276,6 +289,11 @@ func searchUnanchoredSignal(
 			&newSignalNode,
 			maxNode,
 		)
+		signalList[newSignalNode.Id] = OSMUtil.Signal{
+			Name: signal.Name.Value,
+			Lat:  newSignalNode.Lat,
+			Lon:  newSignalNode.Lon,
+		}
 	}
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 
 // GenerateStationsAndHalts curates a list of all stations and halts in the OSM-file unter 'inputFilePath.
 // It generates both OSM-data (a list of Nodes) and a seperate JSON-structure stored.
-func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (SearchFile, Osm, error) {
+func GenerateStations(inputFilePath string, tempFolderPath string) (map[string]Station, Osm, error) {
 	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "/stationsUnfiltered.osm.pbf")
 	stationsFile, _ := filepath.Abs(tempFolderPath + "/stations.xml")
 
@@ -34,7 +34,7 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (Sear
 	data, _ := os.ReadFile(stationsFile)
 	var osm Osm
 	if err := xml.Unmarshal([]byte(data), &osm); err != nil {
-		return SearchFile{}, Osm{}, errors.Wrap(err, "failed unmarshalling osm: "+stationsFile)
+		return nil, Osm{}, errors.Wrap(err, "failed unmarshalling osm: "+stationsFile)
 	}
 
 	searchFile, stationHaltOsm := generateSearchFile(osm)
@@ -43,9 +43,8 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (Sear
 }
 
 // generateSerachFile does all th heavy lifting for GenerateStationsAndHalts, doing all the curating.
-func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
+func generateSearchFile(osm Osm) (stationsList map[string]Station, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
-	halts := make(map[string]Halt)
 	stationHaltsNodes := make([]*Node, 0)
 
 	for _, node := range osm.Node {
@@ -56,16 +55,8 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 			}
 
 			if name != "" && t.K == "railway" {
-				if t.V == "station" {
+				if t.V == "station" || t.V == "halt" {
 					stations[node.Id] = Station{
-						Name: name,
-						Lat:  node.Lat,
-						Lon:  node.Lon,
-					}
-					node.Tag = append(node.Tag, &Tag{K: "type", V: "station"})
-				}
-				if t.V == "halt" {
-					halts[node.Id] = Halt{
 						Name: name,
 						Lat:  node.Lat,
 						Lon:  node.Lon,
@@ -77,10 +68,7 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 		}
 	}
 
-	return SearchFile{
-			Stations: stations,
-			Halts:    halts,
-		}, Osm{
-			Node: stationHaltsNodes,
-		}
+	return stations, Osm{
+		Node: stationHaltsNodes,
+	}
 }

@@ -94,6 +94,8 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		"--overwrite",
 	})
 
+	searchFile := osmUtils.SearchFile{}
+
 	tempLinesDir, _ := filepath.Abs(tempFolderPath + "/lines")
 	tempDBLinesDir, _ := filepath.Abs(tempFolderPath + "/DBLines")
 	tempDBResoucesDir, _ := filepath.Abs(tempFolderPath + "/DBResources")
@@ -132,7 +134,13 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			if err != nil {
 				return errors.Wrap(err, "failed parsing DB data")
 			}
-			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+			haltList, mainSignalList, otherSignalList, err := dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+			if err != nil {
+				return errors.Wrap(err, "failed mapping DB data")
+			}
+			searchFile.Halts = haltList
+			searchFile.MainSignals = mainSignalList
+			searchFile.OtherSignals = otherSignalList
 		}
 
 		fmt.Println("Generated all lines")
@@ -153,26 +161,29 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
-	searchFile, stationHaltOsm, err := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
-	if err != nil {
-		return errors.Wrap(err, "failed generating stations and halts")
-	}
-	searchFileJsonPath, _ := filepath.Abs(tempFolderPath + "/searchFile.json")
-	err = saveSearchFile(searchFile, searchFileJsonPath)
-	if err != nil {
-		return errors.Wrap(err, "failed writing stations JSON")
-	}
+	if mapDB {
+		stationsList, stationHaltOsm, err := osmUtils.GenerateStations(inputFile, tempFolderPath)
+		if err != nil {
+			return errors.Wrap(err, "failed generating stations and halts")
+		}
+		searchFile.Stations = stationsList
+		searchFileJsonPath, _ := filepath.Abs(outputFile[:len(outputFile)-4] + ".json")
+		err = saveSearchFile(searchFile, searchFileJsonPath)
+		if err != nil {
+			return errors.Wrap(err, "failed writing stations JSON")
+		}
 
-	for i, node := range osmData.Node {
-		value, found := osmUtils.FindTagOnNode(node, "railway")
+		for i, node := range osmData.Node {
+			value, found := osmUtils.FindTagOnNode(node, "railway")
 
-		if found == nil {
-			if value == "station" || value == "halt" {
-				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
+			if found == nil {
+				if value == "station" || value == "halt" {
+					osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
+				}
 			}
 		}
+		osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
 	}
-	osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
 
 	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")

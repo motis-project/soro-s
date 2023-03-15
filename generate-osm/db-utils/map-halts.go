@@ -9,7 +9,8 @@ import (
 // mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
 func mapHalts(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
+	haltList map[string]OSMUtil.Halt,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -17,6 +18,7 @@ func mapHalts(
 	err := searchHalt(
 		osmData,
 		anchors,
+		haltList,
 		nodeIdCounter,
 		knoten,
 		elementsNotFound,
@@ -27,6 +29,7 @@ func mapHalts(
 	err = searchHalt(
 		osmData,
 		anchors,
+		haltList,
 		nodeIdCounter,
 		knoten,
 		elementsNotFound,
@@ -42,7 +45,8 @@ func mapHalts(
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchHalt(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
+	haltList map[string]OSMUtil.Halt,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
@@ -77,6 +81,11 @@ func searchHalt(
 			&newSignalNode,
 			maxNode,
 		)
+		haltList[newSignalNode.Id] = OSMUtil.Halt{
+			Name: halt.Name.Value,
+			Lat:  newSignalNode.Lat,
+			Lon:  newSignalNode.Lon,
+		}
 	}
 	return nil
 }

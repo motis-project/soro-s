@@ -17,15 +17,15 @@ var errNoSuitableAnchors = errors.New("failed to find suitable anchors")
 // Based on those, a new Node is then determined.
 func findBestOSMNode(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
 	sortedAnchors := sortAnchors(anchors, kilometrage)
 
 	nearest, secondNearest := sortedAnchors[0], sortedAnchors[1]
 
-	anchor1 := ((*anchors)[nearest])[0]
-	anchor2 := ((*anchors)[secondNearest])[0]
+	anchor1 := (anchors[nearest])[0]
+	anchor2 := (anchors[secondNearest])[0]
 	distance1 := math.Abs(nearest - kilometrage)
 	distance2 := math.Abs(secondNearest - kilometrage)
 
@@ -53,12 +53,12 @@ func findBestOSMNode(
 
 		if faultyNodeID == anchor1.Id {
 			nearest = sortedAnchors[newAnchorCounter]
-			anchor1 = ((*anchors)[nearest])[0]
+			anchor1 = (anchors[nearest])[0]
 			distance1 = math.Abs(nearest - kilometrage)
 			newAnchorCounter++
 		} else {
 			secondNearest = sortedAnchors[newAnchorCounter]
-			anchor2 = ((*anchors)[secondNearest])[0]
+			anchor2 = (anchors[secondNearest])[0]
 			distance2 = math.Abs(secondNearest - kilometrage)
 			newAnchorCounter++
 		}
@@ -81,11 +81,11 @@ func findBestOSMNode(
 // sortAnchors sorts the kilometrage-keys of the anchor-map.
 // The sort is based on least distance to the provided 'kilometrage'.
 func sortAnchors(
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	kilometrage float64,
 ) []float64 {
 	anchorKeys := []float64{}
-	for anchorKey := range *anchors {
+	for anchorKey := range anchors {
 		anchorKeys = append(anchorKeys, anchorKey)
 	}
 
