@@ -6,7 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
+// mapHalts processes all halts.
+// This includes freight as well as passenger train halts.
 func mapHalts(
 	osmData *OSMUtil.Osm,
 	anchors map[float64]([]*OSMUtil.Node),
@@ -35,13 +36,13 @@ func mapHalts(
 		elementsNotFound,
 		false)
 	if err != nil {
-		return errors.Wrap(err, "failed finding falling stop position")
+		return errors.Wrap(err, "failed finding rising stop position")
 	}
 	return nil
 }
 
-// serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
-// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// searchHalt searches for a Node, that best fits the halt to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the halt at hand.
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchHalt(
 	osmData *OSMUtil.Osm,

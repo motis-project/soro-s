@@ -14,14 +14,15 @@ go build
 ./transform-osm
 ```
 
-The final osm file will be in the folder `generate-osm` and named `finalOsm.xml`. The JSON station and halt file will be in the folder `generate-osm\temp` and named `stations.json`. 
+The final osm file will be in the folder `generate-osm` and named `finalOsmDB.xml`. The JSON search file will be in the folder `generate-osm\` and named the same as the output-`.xml`.
+Alternatively you can provide an OSM-file, in which the generated data will be inserted. In this case, the new output-file will be named `[name provided file]DB.xml` and the JSON will also be named accordingly.
 
 CLI-Flags
 ```bash
 --generate-lines, --gl   Generate lines all lines new (default: false)
 --mapDB, --mdb   Generate lines all lines new as well as map an DB data (default: false)
 --input value, -i value  The input file to read as OSM PBF file (default: "./temp/base.osm.pbf")
---output value, -o value  The output file to write result to as XML file (default: "./temp/finalOsm")
+--output value, -o value  The output file to write result to as XML file (default: "./finalOsm.xml")
 --help, -h               show help
 ```
 

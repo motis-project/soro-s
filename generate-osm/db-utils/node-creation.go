@@ -6,6 +6,9 @@ import (
 	OSMUtil "transform-osm/osm-utils"
 )
 
+// createNamedDirectionalNode creates a Node with the following Tags:
+// 'type:element', 'subtype:"subtype"', 'direction:...' and 'id:"name"', where ... depends on "isFalling".
+// It also increments the global id counter.
 func createNamedDirectionalNode(
 	id *int,
 	node *OSMUtil.Node,
@@ -19,6 +22,9 @@ func createNamedDirectionalNode(
 	return newNode
 }
 
+// createDirectionalNode creates a Node with the following Tags:
+// 'type:element', 'subtype:"subtype"' and 'direction:...' where ... depends on "isFalling".
+// It also increments the global id counter.
 func createDirectionalNode(
 	id *int,
 	node *OSMUtil.Node,
@@ -36,6 +42,9 @@ func createDirectionalNode(
 	return newNode
 }
 
+// createNamedSimpleNode creates a Node with the following Tags:
+// 'type:element', 'subtype:"subtype"' and 'id:"name".
+// It also increments the global id counter.
 func createNamedSimpleNode(
 	id *int,
 	node *OSMUtil.Node,
@@ -48,6 +57,9 @@ func createNamedSimpleNode(
 	return newNode
 }
 
+// createSimpleNode returns a Node with the following Tags:
+// 'type:element' and 'subtype:"subtype"'.
+// It also increments the global id counter.
 func createSimpleNode(
 	id *int,
 	node *OSMUtil.Node,

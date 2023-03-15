@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -37,8 +38,11 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 func getRefIds(trackRefOsm Osm) (refs []string) {
 	for _, s := range trackRefOsm.Relation {
 		for _, m := range s.Tag {
-			if m.K == "ref" &&
-				len(m.V) == 4 {
+			if m.K == "ref" && len(m.V) == 4 {
+				_, err := strconv.Atoi(m.V)
+				if err != nil {
+					break
+				}
 				refs = append(refs, m.V)
 			}
 		}

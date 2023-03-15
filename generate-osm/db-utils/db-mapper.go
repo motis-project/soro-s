@@ -16,7 +16,7 @@ func MapDB(
 	refs []string,
 	osmDir string,
 	DBDir string,
-) (map[string]OSMUtil.Halt, map[string]OSMUtil.Signal, map[string]OSMUtil.Signal, error) {
+) (map[string]OSMUtil.Halt, map[string]OSMUtil.Signal, map[string]OSMUtil.Signal, int, error) {
 	newNodeIdCounter := 0
 	totalNumberOfAnchors, totalElementsNotFound := 0, 0
 	linesWithNoAnchors := []string{}
@@ -33,19 +33,19 @@ func MapDB(
 		osmLineFilePath := osmDir + "/" + line + ".xml"
 		osmFile, err := os.ReadFile(osmLineFilePath)
 		if err != nil {
-			return nil, nil, nil, errors.Wrap(err, "failed reading osm line file: "+osmLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed reading osm line file: "+osmLineFilePath)
 		}
 		dbLineFilePath := DBDir + "/" + line + "_DB.xml"
 		dbFile, err := os.ReadFile(dbLineFilePath)
 		if err != nil {
-			return nil, nil, nil, errors.Wrap(err, "failed reading DB line file: "+dbLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed reading DB line file: "+dbLineFilePath)
 		}
 
 		if err := xml.Unmarshal([]byte(osmFile), &osm); err != nil {
-			return nil, nil, nil, errors.Wrap(err, "failed unmarshalling osm file: "+osmLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed unmarshalling osm file: "+osmLineFilePath)
 		}
 		if err := xml.Unmarshal([]byte(dbFile), &dbIss); err != nil {
-			return nil, nil, nil, errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
 		}
 
 		fmt.Printf("Mapping line %s \n", line)
@@ -68,7 +68,7 @@ func MapDB(
 						&newNodeIdCounter,
 					)
 					if err != nil {
-						return nil, nil, nil, errors.Wrap(err, "failed anchoring main signals")
+						return nil, nil, nil, -1, errors.Wrap(err, "failed anchoring main signals")
 					}
 
 					err = findAndMapAnchorSwitches(
@@ -80,7 +80,7 @@ func MapDB(
 						&newNodeIdCounter,
 					)
 					if err != nil {
-						return nil, nil, nil, errors.Wrap(err, "failed anchoring switches")
+						return nil, nil, nil, -1, errors.Wrap(err, "failed anchoring switches")
 					}
 				}
 
@@ -128,7 +128,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding main signals")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding main signals")
 						}
 						err = mapUnanchoredSwitches(
 							&osm,
@@ -138,10 +138,9 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding switches")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding switches")
 						}
 					}
-
 				}
 			}
 
@@ -170,7 +169,7 @@ func MapDB(
 								elementsNotFound,
 							)
 							if err != nil {
-								return nil, nil, nil, errors.Wrap(err, "failed finding "+elementName)
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
 							}
 						}
 						for elementName, elementList := range namedSimpleElements {
@@ -184,7 +183,7 @@ func MapDB(
 								elementsNotFound,
 							)
 							if err != nil {
-								return nil, nil, nil, errors.Wrap(err, "failed finding "+elementName)
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
 							}
 						}
 						for _, signalType := range []string{"as", "ps"} {
@@ -198,7 +197,7 @@ func MapDB(
 								elementsNotFound,
 							)
 							if err != nil {
-								return nil, nil, nil, errors.Wrap(err, "failed finding "+signalType)
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+signalType)
 							}
 						}
 
@@ -210,7 +209,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding crosses")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding crosses")
 						}
 						err = mapHalts(
 							&osm,
@@ -221,7 +220,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding halts")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding halts")
 						}
 						err = mapSpeedLimits(
 							&osm,
@@ -231,7 +230,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding speed limits")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding speed limits")
 						}
 						err = mapEoTDs(
 							&osm,
@@ -241,7 +240,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding end of train detectors")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding end of train detectors")
 						}
 						err = mapSlopes(
 							&osm,
@@ -251,7 +250,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return nil, nil, nil, errors.Wrap(err, "failed finding slopes")
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding slopes")
 						}
 					}
 				}
@@ -263,11 +262,11 @@ func MapDB(
 		}
 
 		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
-			return nil, nil, nil, errors.Wrap(err, "failed marshalling osm data")
+			return nil, nil, nil, -1, errors.Wrap(err, "failed marshalling osm data")
 		} else {
 			if err := os.WriteFile(osmLineFilePath,
 				[]byte(xml.Header+string(new_Data)), 0644); err != nil {
-				return nil, nil, nil, errors.Wrap(err, "failed writing file: "+osmLineFilePath)
+				return nil, nil, nil, -1, errors.Wrap(err, "failed writing file: "+osmLineFilePath)
 			}
 		}
 	}
@@ -276,5 +275,5 @@ func MapDB(
 	fmt.Printf("Could in total anchor %d/%d (%f%%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
 	fmt.Printf("Lines with no anchors: %d out of %d (%v)\n", len(linesWithNoAnchors), len(refs), linesWithNoAnchors)
 	fmt.Printf("Lines with only one anchor: %d out of %d (%v)\n", len(linesWithOneAnchor), len(refs), linesWithOneAnchor)
-	return haltList, mainSignalList, otherSignalList, nil
+	return haltList, mainSignalList, otherSignalList, newNodeIdCounter, nil
 }

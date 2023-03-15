@@ -9,17 +9,17 @@ import (
 // This is done by first sorting the lists of Nodes, Ways and Relations according to their ID.
 // Then, all duplicate Nodes, Ways and Relations are removed and only the first occurence is kept.
 func SortOsm(osmData Osm) Osm {
-	sort.Slice(osmData.Way, func(i, j int) bool {
+	sort.SliceStable(osmData.Way, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Way[i].Id)
 		id2, _ := strconv.Atoi(osmData.Way[j].Id)
 		return id1 < id2
 	})
-	sort.Slice(osmData.Node, func(i, j int) bool {
+	sort.SliceStable(osmData.Node, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Node[i].Id)
 		id2, _ := strconv.Atoi(osmData.Node[j].Id)
 		return id1 < id2
 	})
-	sort.Slice(osmData.Relation, func(i, j int) bool {
+	sort.SliceStable(osmData.Relation, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Relation[i].Id)
 		id2, _ := strconv.Atoi(osmData.Relation[j].Id)
 		return id1 < id2

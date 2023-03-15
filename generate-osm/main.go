@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	combineLines "transform-osm/combine-lines"
@@ -95,6 +96,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	})
 
 	searchFile := osmUtils.SearchFile{}
+	maxNewNodeID := -1
 
 	tempLinesDir, _ := filepath.Abs(tempFolderPath + "/lines")
 	tempDBLinesDir, _ := filepath.Abs(tempFolderPath + "/DBLines")
@@ -134,7 +136,10 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			if err != nil {
 				return errors.Wrap(err, "failed parsing DB data")
 			}
-			haltList, mainSignalList, otherSignalList, err := dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+			var haltList map[string]osmUtils.Halt
+			var mainSignalList map[string]osmUtils.Signal
+			var otherSignalList map[string]osmUtils.Signal
+			haltList, mainSignalList, otherSignalList, maxNewNodeID, err = dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 			if err != nil {
 				return errors.Wrap(err, "failed mapping DB data")
 			}
@@ -161,7 +166,15 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
+	sortedOsmData := osmUtils.SortOsm(osmData)
+
 	if mapDB {
+		outputOSM, err := insertOsm(sortedOsmData, outputFile, maxNewNodeID)
+		if err != nil {
+			return errors.Wrap(err, "failed inserting mapped DB data")
+		}
+		outputFile = outputFile[:len(outputFile)-4] + "DB.xml"
+
 		stationsList, stationHaltOsm, err := osmUtils.GenerateStations(inputFile, tempFolderPath)
 		if err != nil {
 			return errors.Wrap(err, "failed generating stations and halts")
@@ -173,19 +186,20 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			return errors.Wrap(err, "failed writing stations JSON")
 		}
 
-		for i, node := range osmData.Node {
+		for i, node := range outputOSM.Node {
 			value, found := osmUtils.FindTagOnNode(node, "railway")
 
 			if found == nil {
 				if value == "station" || value == "halt" {
-					osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
+					outputOSM.Node = append(outputOSM.Node[:i], outputOSM.Node[i+1:]...)
 				}
 			}
 		}
-		osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
+		outputOSM.Node = append(outputOSM.Node, stationHaltOsm.Node...)
+
+		sortedOsmData = osmUtils.SortOsm(outputOSM)
 	}
 
-	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
 	if err != nil {
 		return errors.Wrap(err, "failed marshalling final data")
@@ -196,6 +210,43 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		return errors.Wrap(err, "failed writing final osm file: "+outputFile)
 	}
 	return nil
+}
+
+func insertOsm(modifiedOsm osmUtils.Osm, outputFilePath string, maxNewNodeID int) (osmUtils.Osm, error) {
+	outputData, err := os.ReadFile(outputFilePath)
+	if err != nil {
+		return osmUtils.Osm{}, errors.Wrap(err, "failed reading output file "+outputFilePath)
+	}
+	var outputOSM = osmUtils.Osm{}
+	err = xml.Unmarshal(outputData, &outputOSM)
+	if err != nil {
+		return osmUtils.Osm{}, errors.Wrap(err, "failed unmarshalling output file "+outputFilePath)
+	}
+
+	newNodes := make(map[string]bool)
+
+	for _, modifiedWay := range modifiedOsm.Way {
+		for _, outputWay := range outputOSM.Way {
+			if modifiedWay.Id == outputWay.Id {
+				for _, node := range modifiedWay.Nd {
+					nodeID, _ := strconv.Atoi(node.Ref)
+					if nodeID <= maxNewNodeID {
+						newNodes[node.Ref] = true
+					}
+				}
+				outputWay.Tag = modifiedWay.Tag
+			}
+		}
+	}
+
+	for nodeID := range newNodes {
+		node, err := osmUtils.GetNodeById(&modifiedOsm, nodeID)
+		if err != nil {
+			return osmUtils.Osm{}, errors.Wrap(err, "failed to find node "+nodeID)
+		}
+		outputOSM.Node = append(outputOSM.Node, node)
+	}
+	return outputOSM, nil
 }
 
 func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) error {

@@ -189,7 +189,9 @@ func insertNewHauptsignal(
 	return true, nil
 }
 
-// mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
+// mapUnanchoredSignals processes all previously unmapped signals.
+// This is main signals, for which no unique Node could be determined ("signalType" = 'ms'),
+// or approach and protection signals ("signalType" = 'as'/'ps').
 func mapUnanchoredSignals(
 	osmData *OSMUtil.Osm,
 	anchors map[float64]([]*OSMUtil.Node),
@@ -227,7 +229,7 @@ func mapUnanchoredSignals(
 	return nil
 }
 
-// serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
+// serachUnanchoredSignal searches for a Node, that best fits the Signal to be mapped.
 // This search is based on at least two anchored elements and their respective distance to the signal at hand.
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchUnanchoredSignal(
