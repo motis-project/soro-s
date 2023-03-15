@@ -1,6 +1,5 @@
 import { ElementType, ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
-import { transformUrl } from '@/api/api-client';
 import { ThemeDefinition } from 'vuetify';
 
 export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof ElementTypes }) => {
@@ -27,7 +26,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 },
             },
         },
-        'glyphs': transformUrl('/font/{fontstack}/{range}.pbf'),
+        'glyphs': 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
         'layers': [
             {
                 'id': 'background',
@@ -162,7 +161,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'text-field': ['get', 'name'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
-                    'text-font': ['Noto Sans Display Bold'],
+                    'text-font': ['Noto Sans Bold'],
                     'icon-image': 'icon-' + type,
                     'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 20, 1.0],
                 },
@@ -204,7 +203,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
-                    'text-font': ['Noto Sans Display Regular'],
+                    'text-font': ['Noto Sans Regular'],
                     'icon-image': 'icon-' + type,
                     'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4],
                 },

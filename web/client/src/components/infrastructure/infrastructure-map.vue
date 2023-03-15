@@ -55,8 +55,8 @@ const mapDefaults = {
     attributionControl: false,
     zoom: 18,
     hash: 'location',
-    center: [8, 47],
-    maxBounds: [[6, 45], [17, 55]], // [SW Point] [NE Point] in LonLat
+    center: [10, 50],
+    maxBounds: [[-5, 40], [25, 60]], // [SW Point] [NE Point] in LonLat
     bearing: 0,
 };
 
