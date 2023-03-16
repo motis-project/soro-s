@@ -409,11 +409,20 @@ void ordering_graph::write_edge(Writer& writer, ordering_node::id from,
 }
 
 string ordering_graph::to_json() {
-  StringBuffer sb;
-  Writer<StringBuffer> writer(sb);
-  serialize(writer);
+  StringBuffer nodes, edges;
+  nodes_writer.Reset(nodes);
+  edges_writer.Reset(edges);
 
-  return sb.GetString();
+  nodes_writer.StartArray();
+  edges_writer.StartArray();
+  serialize(nodes_writer, edges_writer);
+  nodes_writer.EndArray();
+  edges_writer.EndArray();
+
+  std::stringstream result;
+  result << R"({"a":{},"n":)" << nodes.GetString() << R"(,"e":)"
+         << edges.GetString() << R"(})";
+  return result.str();
 }
 
 void ordering_graph::emplace_edge(ordering_node& from, ordering_node& to) {
@@ -422,35 +431,20 @@ void ordering_graph::emplace_edge(ordering_node& from, ordering_node& to) {
 }
 
 template <typename Writer>
-void ordering_graph::serialize(Writer& writer) {
-  writer.StartObject();
+void ordering_graph::serialize(Writer& node_writer, Writer& edge_writer) {
 
-  writer.Key("a");
-  writer.StartObject();
-  writer.EndObject();
-
-  writer.Key("n");
-  writer.StartArray();
-  for (ordering_node node : nodes_) {
-    node.serialize(writer);
-  }
-  writer.EndArray();
-
-  writer.Key("e");
-  writer.StartArray();
-  for (const ordering_node& node : nodes_) {
+  for (ordering_node& node : nodes_) {
+    node.serialize(node_writer);
     for (const uint32_t to_id : node.out_) {
-      writer.StartArray();
+      edge_writer.StartArray();
 
-      writer.String(std::to_string(node.id_).c_str());
+      edge_writer.String(std::to_string(node.id_).c_str());
 
-      writer.String(std::to_string(to_id).c_str());
+      edge_writer.String(std::to_string(to_id).c_str());
 
-      writer.EndArray();
+      edge_writer.EndArray();
     }
   }
-  writer.EndArray();
-  writer.EndObject();
 }
 
 ordering_graph from_json(const string& json) {

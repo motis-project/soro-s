@@ -3,7 +3,6 @@ const path = require('path');
 module.exports = {
   watch: true,
   entry: './components/ordering_graph/index.ts',
-  devtool: 'inline-source-map',
   module: {
     rules: [
       {
@@ -23,5 +22,8 @@ module.exports = {
       name: 'webpackSigmaGraph',
       type: 'umd',
     },
+  },
+  optimization: {
+    chunkIds: 'total-size',
   },
 };

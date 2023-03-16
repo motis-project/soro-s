@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>OrderingGraph</title>
@@ -8,12 +9,16 @@
 
 <body style="overflow:hidden">
     <div id="sigma-container" style="height: 100%;"></div>
+    <div id="menu">
+        <input type="checkbox" id="menu-enable">
+    </div>
     <div id="search">
         <div class="row pad">
             <label class="label">Train ID</label>
         </div>
         <div class="row">
-            <input class="text-input" type="number" id="search-input" name="search-input" min="0" placeholder="Enter Train ID"/>
+            <input class="text-input" type="number" id="search-input" name="search-input" min="0"
+                placeholder="Enter Train ID" />
         </div>
         <div class="row" id="warning">
             <small id="message">Train ID not found.</small>
@@ -42,14 +47,21 @@
         </div>
         <div class="row">
             <input type="checkbox" id="node-enable" style="margin-left: 0;">
-        </div>   
+        </div>
+        <div class="row pad">
+            <label class="label">Unsafe Mode</label>
+        </div>
+        <div class="row">
+            <input type="checkbox" id="unsafe-enable" style="margin-left: 0;">
+        </div>
         <div class="row pad">
             <label class="label">X-Y-Ratio</label>
         </div>
         <div class="row">
             <input type="range" id="Scaling-input" value="14" min="2" max="30">
         </div>
-        
-      </div>
+
+    </div>
 </body>
+
 </html>
