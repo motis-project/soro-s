@@ -21,24 +21,41 @@ namespace soro::server {
 
 
     std::vector<soro::server::osm_object> get_object_info(
-        const std::vector<soro::server::osm_object>& osm_objects,
+        const std::unordered_map<osm_type, std::vector<soro::server::osm_object>>& osm_objects,
         const std::string& name, const soro::server::search_filter& filter) {
 
         std::vector<soro::server::osm_object> matches;
 
-        using ot = soro::server::osm_type;
+        if (filter.halt_) {
+            // add halts
+            for (const auto& object : osm_objects.at(osm_type::HALT)) {
+              if (to_lower(object.name_).find(to_lower(name)) !=
+                  std::string::npos) {
+                matches.push_back(object);
+              }
+            }
+        }
 
-        for (const auto& object : osm_objects) {
-            if (!filter.halt_ && object.type_ == ot::HALT) continue;
-            if (!filter.station_ && object.type_ == ot::STATION) continue;
-            if (!filter.main_signal_ && object.type_ == ot::MAIN_SIGNAL)
-              continue;
+         if (filter.station_) {
+            // add stations
+            for (const auto& object : osm_objects.at(osm_type::STATION)) {
+              if (to_lower(object.name_).find(to_lower(name)) !=
+                  std::string::npos) {
+                matches.push_back(object);
+              }
+            }
+        }
 
+         if (filter.main_signal_) {
+            // add signaals
+            for (const auto& object : osm_objects.at(osm_type::MAIN_SIGNAL)) {
             if (to_lower(object.name_).find(to_lower(name)) !=
                 std::string::npos) {
               matches.push_back(object);
             }
         }
+        }
+
 
         std::sort(matches.begin(), matches.end(),
                   [](const soro::server::osm_object& a,

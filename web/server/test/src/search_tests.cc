@@ -1,21 +1,21 @@
+#include <algorithm>
+
 #include "doctest/doctest.h"
 
 #include "soro/server/search_util.h"
-
-#include <algorithm>
 
 using namespace soro::server;
 
 TEST_SUITE_BEGIN("osm search suite");
 
-std::vector<soro::server::osm_object> generate_objects() {
-  std::vector<soro::server::osm_object> objects;
+std::unordered_map<osm_type, std::vector<soro::server::osm_object>> generate_objects() {
+  std::unordered_map<osm_type, std::vector<soro::server::osm_object>> objects;
 
-  objects.emplace_back("Frankfurt", osm_type::STATION, 50, 34);
-  objects.emplace_back("Darmstadt", osm_type::STATION, 64, 42);
-  objects.emplace_back("Darmstadt Nord", osm_type::STATION, 15, 40);
-  objects.emplace_back("Weiterstadt", osm_type::HALT, 23, 78);
-  objects.emplace_back("F", osm_type::MAIN_SIGNAL, 50, 35);
+  objects[osm_type::STATION].emplace_back("Frankfurt", osm_type::STATION, 50, 34);
+  objects[osm_type::STATION].emplace_back("Darmstadt", osm_type::STATION, 64, 42);
+  objects[osm_type::STATION].emplace_back("Darmstadt Nord", osm_type::STATION,15, 40);
+  objects[osm_type::HALT].emplace_back("Weiterstadt", osm_type::HALT, 23, 78);
+  objects[osm_type::MAIN_SIGNAL].emplace_back("F", osm_type::MAIN_SIGNAL, 50, 35);
 
   return objects;
 }

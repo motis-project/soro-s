@@ -37,9 +37,7 @@ struct server {
   using serve_contexts = std::unordered_map<std::string, serve_context>;
 
   server(std::string const& address, port_t const port,
-         fs::path const& server_resource_dir, bool const test,
-         const std::unordered_map<
-             std::string, std::vector<osm_object>>& osm_halts);
+         fs::path const& server_resource_dir, bool const test);
 
   static void serve_forever(std::string const& address, port_t const port,
                             callback_t&& cb, bool const test);
