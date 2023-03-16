@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "soro/base/soro_types.h"
+
 namespace soro::utls {
 
 using hash = uint32_t;
@@ -26,35 +28,35 @@ constexpr hash str_hash(char const* c) {
 }
 
 inline hash str_hash(std::string const& str) {
-  return str_hash(str.c_str(), str.length());
+  return str_hash(str.data(), str.length());
 }
 
-inline bool contains(std::string const& s, std::string const& find) {
-  return s.find(find) != std::string::npos;
+inline bool equal(const char* const c1, const char* const c2) {
+  return strcmp(c1, c2) == 0;
 }
 
-inline bool equal(std::string const& s1, std::string const& s2) {
-  return strcmp(s1.c_str(), s2.c_str()) == 0;
+inline bool equal(soro::string const& s1, char const* const s2) {
+  return equal(s1.data(), s2);
 }
 
-inline bool equal(char const* const s1, char const* const s2) {
-  return strcmp(s1, s2) == 0;
+inline bool equal(char const* const s1, soro::string const& s2) {
+  return equal(s1, s2.data());
 }
 
-inline bool equal(std::string const& s1, char const* const s2) {
-  return strcmp(s1.c_str(), s2) == 0;
+inline bool equal(soro::string const& s1, soro::string const& s2) {
+  return equal(s1.data(), s2.data());
 }
 
-inline bool equal(char const* const s1, std::string const& s2) {
-  return strcmp(s1, s2.c_str()) == 0;
+inline bool equal(soro::string_view s1, char const* const s2) {
+  return equal(s1.data(), s2);
 }
 
-inline bool equal(std::string_view s1, char const* const s2) {
-  return strcmp(s1.data(), s2) == 0;
+inline bool equal(char const* const s1, soro::string_view s2) {
+  return equal(s1, s2.data());
 }
 
-inline bool equal(char const* const s1, std::string_view s2) {
-  return strcmp(s1, s2.data()) == 0;
+inline bool equal(soro::string_view const& s1, soro::string_view const& s2) {
+  return equal(s1.data(), s2.data());
 }
 
 inline bool starts_with(char const* const str, char const* const prfx) {

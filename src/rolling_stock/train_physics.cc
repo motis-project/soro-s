@@ -1,6 +1,7 @@
 #include "soro/rolling_stock/train_physics.h"
 
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/accumulate.h"
+#include "soro/utls/std_wrapper/min_element.h"
 
 namespace soro::rs {
 
@@ -25,10 +26,9 @@ si::weight train_physics::weight() const { return carriage_weight_; }
 
 si::speed train_physics::max_speed() const {
   auto const vehicle_max_speed =
-      std::min_element(
-          std::cbegin(vehicles_), std::cend(vehicles_),
-          [](auto&& v1, auto&& v2) { return v1.max_speed_ < v2.max_speed_; })
-          ->max_speed_;
+      utls::min_element(vehicles_, [](auto&& v1, auto&& v2) {
+        return v1.max_speed_ < v2.max_speed_;
+      })->max_speed_;
   return std::min(vehicle_max_speed, max_speed_);
 }
 

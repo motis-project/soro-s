@@ -6,7 +6,8 @@
 #include "utl/timer.h"
 
 #include "soro/utls/algo/multi_set_merge.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/is_sorted.h"
+#include "soro/utls/std_wrapper/set_difference.h"
 
 namespace soro::infra {
 
@@ -40,7 +41,7 @@ exclusion_graph get_exclusion_graph(
         });
 
     auto const merged_set =
-        utls::multi_set_merge<soro::vector<interlocking_route::id>>(ranges);
+        utls::multi_set_merge<interlocking_route::ids>(ranges);
 
     // remove all other IRs that are direct predecessors/successors
     auto const& ir = infra->interlocking_.routes_[ir_id];

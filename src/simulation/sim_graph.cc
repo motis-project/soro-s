@@ -4,6 +4,7 @@
 
 #include "soro/utls/graph/traversal.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/all_of.h"
 #include "soro/utls/unixtime.h"
 
 #include "soro/infrastructure/interlocking/interlocking_route.h"

@@ -1,9 +1,7 @@
 #include "soro/infrastructure/graph/element.h"
 
-#include "utl/overloaded.h"
-
 #include "soro/utls/sassert.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/contains.h"
 
 #include "soro/infrastructure/graph/node.h"
 

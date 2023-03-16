@@ -5,7 +5,8 @@
 #include "utl/get_or_create.h"
 
 #include "soro/utls/coroutine/collect.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/is_sorted.h"
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/path/is_path.h"
@@ -45,11 +46,11 @@ void section_iterators_have_all_elements(section const& sec) {
     expected_elements.insert(e);
   }
 
-  std::size_t const undirected_count_rising =
+  auto const undirected_count_rising =
       utls::count_if(sec.iterate<direction::Rising>(),
                      [](auto&& e) { return e->is_undirected_track_element(); });
 
-  std::size_t const undirected_count_falling =
+  auto const undirected_count_falling =
       utls::count_if(sec.iterate<direction::Falling>(),
                      [](auto&& e) { return e->is_undirected_track_element(); });
 

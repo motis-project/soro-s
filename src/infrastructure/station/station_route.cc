@@ -5,6 +5,7 @@
 
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/find_if_position.h"
 
 namespace soro::infra {
 

@@ -1,6 +1,7 @@
 #include "soro/timetable/train.h"
 
 #include "soro/infrastructure/path/length.h"
+#include "soro/utls/std_wrapper/count_if.h"
 
 namespace soro::tt {
 

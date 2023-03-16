@@ -1,10 +1,11 @@
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
 
-#include "soro/utls/algo/sort_and_intersect.h"
-
 #include "utl/concat.h"
-#include "utl/erase_duplicates.h"
 #include "utl/logging.h"
+
+#include "soro/utls/algo/sort_and_intersect.h"
+#include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/find_position.h"
 
 namespace soro::tt {
 

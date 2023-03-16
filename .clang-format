@@ -7,6 +7,8 @@ AccessModifierOffset: -2
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AlignTrailingComments: false
 RequiresClausePosition: OwnLine
+BreakBeforeConceptDeclarations: Always
+# RequiresExpressionIndentation: OuterScope // enable with clang 16
 KeepEmptyLinesAtTheStartOfBlocks: true
 AllowShortCaseLabelsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true

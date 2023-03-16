@@ -7,6 +7,7 @@
 
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/graph/traversal.h"
+#include "soro/utls/std_wrapper/contains_if.h"
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"

@@ -121,6 +121,7 @@ else()
     -Wextra
     -Werror
     -fcoroutines
+    -fconcepts-diagnostics-depth=10
     ${SORO_LINK_STATIC}
     )
 endif()

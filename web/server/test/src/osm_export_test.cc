@@ -1,5 +1,6 @@
 #include "doctest/doctest.h"
 
+#include "soro/utls/std_wrapper/contains.h"
 #include "soro/utls/string.h"
 
 #include "soro/base/fp_precision.h"

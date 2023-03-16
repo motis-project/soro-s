@@ -142,6 +142,8 @@ using optional = utls::optional<T>;
 
 using string = std::string;
 
+using string_view = std::string_view;
+
 template <typename T, typename... Args>
 soro::unique_ptr<T> make_unique(Args&&... args) {
   return std::make_unique<T>(std::forward<Args>(args)...);

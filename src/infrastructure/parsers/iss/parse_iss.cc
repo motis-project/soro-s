@@ -18,6 +18,8 @@
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/contains.h"
+#include "soro/utls/std_wrapper/sort.h"
 #include "soro/utls/string.h"
 
 #include "soro/infrastructure/exclusion/get_exclusion.h"

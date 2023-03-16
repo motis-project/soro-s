@@ -1,6 +1,7 @@
 #include "doctest/doctest.h"
 
 #include "soro/timetable/train.h"
+#include "soro/utls/std_wrapper/sort.h"
 
 using namespace soro;
 using namespace soro::tt;

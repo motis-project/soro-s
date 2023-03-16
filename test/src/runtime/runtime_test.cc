@@ -4,10 +4,10 @@
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
-#include "soro/runtime/runtime.h"
-
 #include "soro/infrastructure/infrastructure.h"
+#include "soro/runtime/runtime.h"
 #include "soro/timetable/timetable.h"
+#include "soro/utls/std_wrapper/count_if.h"
 
 #include "test/file_paths.h"
 

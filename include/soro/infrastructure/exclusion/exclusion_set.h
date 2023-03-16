@@ -5,7 +5,6 @@
 #include "cista/containers/bitvec.h"
 
 #include "soro/utls/sassert.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
 
 namespace soro::infra {
 

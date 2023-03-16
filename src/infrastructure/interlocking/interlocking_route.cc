@@ -1,8 +1,8 @@
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 
-#include "utl/erase.h"
-#include "utl/erase_duplicates.h"
-#include "utl/pipes.h"
+#include "utl/concat.h"
+
+#include "soro/utls/std_wrapper/find.h"
 
 #include "soro/infrastructure/path/length.h"
 
@@ -31,8 +31,8 @@ std::vector<element_ptr> interlocking_route::elements(
   std::vector<element_ptr> elements;
   for (auto const sr_id : station_routes_) {
     auto const sr = infra->station_routes_[sr_id];
-    utls::append(elements, soro::to_vec(sr->nodes(),
-                                        [](auto&& n) { return n->element_; }));
+    utl::concat(elements, soro::to_vec(sr->nodes(),
+                                       [](auto&& n) { return n->element_; }));
   }
   return elements;
 }

@@ -7,7 +7,8 @@
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/sort.h"
 
 #include "soro/runtime/runtime.h"
 

@@ -1,5 +1,7 @@
 #include "soro/infrastructure/exclusion/exclusion_set.h"
 
+#include "soro/utls/std_wrapper/is_sorted.h"
+
 namespace soro::infra {
 
 void compact(exclusion_set& set) {

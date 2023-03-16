@@ -9,6 +9,8 @@
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/utls/map/insert_or.h"
+#include "soro/utls/std_wrapper/accumulate.h"
+#include "soro/utls/std_wrapper/sort.h"
 
 #if defined(SORO_CUDA)
 #include "soro/infrastructure/gpu/exclusion.h"
@@ -70,7 +72,7 @@ auto get_ending_at(soro::vector<interlocking_route> const& irs,
     utls::sort(v);
   }
 
-  utls::ensures([&]() {
+  utls::ensures([&] {
     auto const acc =
         utls::accumulate(ending_at, soro::size_t{0},
                          [](auto&& a, auto&& v) { return a + v.size(); });
