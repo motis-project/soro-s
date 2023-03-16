@@ -1,6 +1,8 @@
 #include "doctest/doctest.h"
 
 #include "soro/simulation/ordering_graph.h"
+#include "soro/utls/graph/has_cycle.h"
+#include "soro/utls/std_wrapper/contains.h"
 
 #include "test/file_paths.h"
 
@@ -10,6 +12,11 @@ using namespace soro::infra;
 using namespace soro::simulation;
 
 namespace soro::simulation::test {
+
+void check_ordering_graph(ordering_graph const& og) {
+  utls::has_cycle(og.nodes_,
+                  [](auto&& nodes, auto&& id) { return nodes[id].out_; });
+}
 
 TEST_CASE("ordering graph, follow") {
   auto opts = soro::test::SMALL_OPTS;
@@ -63,6 +70,22 @@ TEST_CASE("ordering graph, follow") {
     CHECK(utls::contains(from.out_, to.id_));
     CHECK(utls::contains(to.in_, from.id_));
   }
+}
+
+TEST_CASE("ordering graph, cross") {
+  auto opts = soro::test::SMALL_OPTS;
+  auto tt_opts = soro::test::CROSS_OPTS;
+
+  opts.exclusions_ = true;
+  opts.interlocking_ = true;
+  opts.exclusion_graph_ = false;
+  opts.layout_ = false;
+
+  infrastructure const infra(opts);
+
+  timetable const tt(tt_opts, infra);
+
+  ordering_graph const og(infra, tt);
 }
 
 }  // namespace soro::simulation::test
