@@ -1,4 +1,4 @@
-import { ElementTypes } from './elementTypes.js';
+import { ElementTypes } from './element-types';
 import { Map } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 

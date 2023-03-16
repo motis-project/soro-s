@@ -86,15 +86,15 @@
 
 <script setup lang="ts">
 import SoroButton from '@/components/soro-button.vue';
-import { ElementTypeLabels } from '@/components/infrastructure/elementTypes';
-import { iconUrl, iconExtension } from '@/components/infrastructure/addIcons';
+import { ElementTypeLabels } from '@/components/infrastructure/element-types';
+import { iconUrl, iconExtension } from '@/components/infrastructure/add-icons';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { mapActions, mapMutations, mapState } from 'vuex';
-import { ElementType } from '@/components/infrastructure/elementTypes';
+import { ElementType } from '@/components/infrastructure/element-types';
 
 const validSearchTypes = [
     ElementType.STATION,

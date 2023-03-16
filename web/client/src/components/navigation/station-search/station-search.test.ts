@@ -1,11 +1,11 @@
 import { mountWithDefaults } from '@/test-utils/mount-with-defaults';
 import StationSearch from './station-search.vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { ElementType } from '@/components/infrastructure/elementTypes';
+import { ElementType } from '@/components/infrastructure/element-types';
 import { VueWrapper } from '@vue/test-utils';
 import { VList } from 'vuetify/components';
 
-vi.mock('@/components/infrastructure/addIcons', () => ({
+vi.mock('@/components/infrastructure/add-icons', () => ({
     iconUrl: 'some-icon-url/',
     iconExtension: '.something',
 }));

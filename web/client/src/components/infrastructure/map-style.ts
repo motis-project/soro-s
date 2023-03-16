@@ -1,4 +1,4 @@
-import { ElementType, ElementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './element-types';
 import { StyleSpecification } from 'maplibre-gl';
 import { ThemeDefinition } from 'vuetify';
 

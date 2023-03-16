@@ -16,7 +16,7 @@
             <div class="infrastructure-map-reset">
                 <a
                     href="/"
-                    @click="onReset"
+                    @click.prevent="$emit('reset')"
                 >
                     Reset
                 </a>
@@ -54,8 +54,8 @@
 </template>
 
 <script lang="ts">
-import { ElementTypeLabels, ElementTypes } from '@/components/infrastructure/elementTypes.js';
-import { iconExtension, iconUrl } from '@/components/infrastructure/addIcons';
+import { ElementTypeLabels, ElementTypes } from '@/components/infrastructure/element-types.js';
+import { iconExtension, iconUrl } from './add-icons';
 import { defineComponent } from 'vue';
 
 export const SpecialLegendControl = {
@@ -79,8 +79,7 @@ export default defineComponent({
     },
 
     emits: [
-        'checked',
-        'unchecked',
+        'change',
         'reset',
     ],
 
@@ -108,17 +107,13 @@ export default defineComponent({
             return ElementTypeLabels[elementType] ?? elementType;
         },
 
-        onReset(event: Event) {
-            event.preventDefault();
-            this.$emit('reset');
-        },
-
         emitChange(event: Event) {
             const eventTarget = event.target as HTMLInputElement;
 
             this.$emit(
-                eventTarget.checked ? 'checked' : 'unchecked',
+                'change',
                 eventTarget.value,
+                eventTarget.checked,
             );
         },
     },

@@ -25,10 +25,11 @@ export default mergeConfig(viteConfig, defineConfig({
                 'src/golden-layout/**',
                 'src/stores/**',
             ],
-            // These files are not used as of right now and not ensured to work properly, so they do not have to partake
-            // in coverage measurement.
             exclude: [
+                // These files are not used as of right now and not ensured to work properly, so they do not have to
+                // partake in coverage measurement.
                 'src/stores/timetable-store.ts',
+                'src/components/infrastructure/highlight-helpers.ts',
                 'src/components/disruption-detail.vue',
                 'src/components/station-detail.vue',
                 'src/components/simulation/**',

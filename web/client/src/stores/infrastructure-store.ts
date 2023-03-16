@@ -2,14 +2,16 @@ import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
 import { sendPostData, sendRequest } from '@/api/api-client';
 
+export type SearchResult = {
+    name: string,
+    position: MapPosition,
+};
+
 export type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
     currentSearchedMapPosition?: MapPosition,
-    currentSearchedMapPositions: {
-        name: string,
-        position: MapPosition,
-    }[],
+    currentSearchedMapPositions: SearchResult[],
     currentSearchTerm?: string,
     currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
@@ -71,8 +73,8 @@ export const InfrastructureStore: Module<InfrastructureState, unknown> = {
     },
 
     actions: {
-        initialLoad({ commit }) {
-            sendRequest({ url: 'infrastructure' })
+        async initialLoad({ commit }) {
+            await sendRequest({ url: 'infrastructure' })
                 .then(response => response.json())
                 .then((dir: InfrastructureFetchResponse) => {
                     commit('setInfrastructures', dir.dirs.filter((option: string) => option !== '.' && option !== '..'));
@@ -84,23 +86,21 @@ export const InfrastructureStore: Module<InfrastructureState, unknown> = {
         },
 
         unload({ commit }) {
-            commit('setCurrentInfrastructure', null);
+            commit('setCurrentInfrastructure', undefined);
         },
 
-        searchPositionFromName({ commit, state }, { query, includedTypes }) {
+        async searchPositionFromName({ commit, state }, { query, includedTypes }) {
             if (!state.currentInfrastructure) {
-                console.error('Tried search with no selected infrastructure');
-
                 return;
             }
 
             if (!query) {
-                commit('setCurrentSearchedMapPosition', null);
+                commit('setCurrentSearchedMapPosition', undefined);
 
                 return;
             }
 
-            sendPostData({
+            await sendPostData({
                 url: 'search',
                 data: {
                     query,
@@ -124,8 +124,6 @@ export const InfrastructureStore: Module<InfrastructureState, unknown> = {
                 })
                 .catch(() => {
                     commit('setCurrentSearchError', 'An error occurred!');
-
-                    return;
                 });
         },
     },
