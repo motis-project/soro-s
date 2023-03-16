@@ -177,41 +177,6 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
-std::string to_lower(std::string str) {
-  std::transform(str.begin(), str.end(), str.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return str;
-}
-
-std::vector<soro::server::osm_object> get_object_info(
-    const std::vector<soro::server::osm_object>& osm_objects,
-    const std::string& name,
-    const soro::server::search_filter& filter) {
-    std::vector<soro::server::osm_object> matches;
-
-    using ot = soro::server::osm_type;
-
-    for (const auto& object : osm_objects) {
-        if (!filter.halt_ && object.type_ == ot::HALT) continue;
-        if (!filter.station_ && object.type_ == ot::STATION) continue;
-        if (!filter.main_signal_ && object.type_ == ot::MAIN_SIGNAL) continue;
-
-        if (to_lower(object.name_).find(to_lower(name)) != std::string::npos) {
-            matches.push_back(object);
-        }
-    }
-
-   std::sort(matches.begin(), matches.end(),
-        [](const soro::server::osm_object& a, const soro::server::osm_object& b) {
-            // Primary ordering by length
-            if (a.name_.length() < b.name_.length()) return true;
-            if (a.name_.length() > b.name_.length()) return false;
-            // Secondary ordering by lexicographical order
-            return a.name_ < b.name_;
-        });
-
-    return matches;
-}
 
 void serve_search(
     request_t const& req, response_t& res,

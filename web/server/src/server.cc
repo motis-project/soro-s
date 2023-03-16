@@ -9,7 +9,7 @@
 #include "soro/server/import/import.h"
 #include "soro/server/osm_export/osm_export.h"
 #include "soro/server/soro_server.h"
-#include "soro/server/osm_util.h"
+#include "soro/server/search_util.h"
 
 namespace fs = std::filesystem;
 

@@ -11,7 +11,7 @@
 #include "tiles/util.h"
 
 #include "soro/server/http_server.h"
-#include "soro/server/osm_util.h"
+#include "soro/server/search_util.h"
 
 namespace soro::server {
 

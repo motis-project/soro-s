@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 
 namespace soro::server {
@@ -38,5 +39,9 @@ namespace soro::server {
 
 
     std::string map_type(const osm_type type);
+
+    std::string to_lower(std::string str);
+
+    std::vector<soro::server::osm_object> get_object_info(const std::vector<soro::server::osm_object>& osm_objects, const std::string& name, const soro::server::search_filter& filter);
 
 }  // namespace soro::server
