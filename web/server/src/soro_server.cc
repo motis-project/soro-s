@@ -195,19 +195,13 @@ void serve_graph(std::string const& url, auto const& req, auto& res) {
 
     uLOG(utl::info) << "inverted edge from: " << from_id << " to: " << to_id;
   } else {
-    ordering_graph random_graph = generate_testgraph(10000, 60, 5, 60, 23);
+    ordering_graph random_graph = generate_testgraph(100000, 60, 5, 60, 23);
 
     ordering_graph_json = random_graph.to_json();
     uLOG(utl::info) << "initial graph sent";
   }
 
-  if (req[http::field::accept_encoding]  //
-          .find("deflate") == std::string_view::npos) {
-    res.body() = std::string(ordering_graph_json);
-  } else {
-    res.body() = tiles::compress_deflate(ordering_graph_json);
-    res.set(http::field::content_encoding, "deflate");
-  }
+  res.body() = std::string(ordering_graph_json);  
   res.set(http::field::content_type, "application/json");
   res.result(http::status::ok);
 }

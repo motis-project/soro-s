@@ -22,6 +22,9 @@ export class SigmaGraphCreator {
     nodesForGivenTrainId: Map<number, Array<string>>;
     nodesForGivenRouteId: Map<number, Array<string>>;
     enableNodeHover: Boolean;
+    enableUnsafeEdgeFlipping: Boolean;
+    recentlyChangedEdges: Set<string>;
+    invertedEdge: string;
 
     //graph
     sigmaContainer: HTMLElement;
@@ -40,8 +43,10 @@ export class SigmaGraphCreator {
         this.sigmaContainer = rootElement.querySelector('#sigma-container') as HTMLElement;
         this.maxTrainLength = 0;
         this.enableNodeHover = false;
+        this.enableUnsafeEdgeFlipping = false;
         this.state = {};
         this.nodesForGivenTrainId = new Map<number, Array<string>>();
+        this.recentlyChangedEdges = new Set<string>();
         this.subGraph = new DirectedGraph();
         this.graph = new DirectedGraph();
         this.dataGraph = new DirectedGraph();
@@ -49,6 +54,22 @@ export class SigmaGraphCreator {
         this.getInitGraph(this.graph);
 
         var self = this;
+        // Menu
+        $("#menu-enable").on("change", function () {
+            if ($("#menu-enable").is(":checked")) {
+                $("#search").show();
+            }
+            else {
+                $("#search").hide();
+            }
+        });
+        // unsafe mode
+        $("#unsafe-enable").on("change", function () {
+            self.enableUnsafeEdgeFlipping = $("#unsafe-enable").is(":checked");
+            if(!self.enableUnsafeEdgeFlipping) {
+                self.invertedEdge = undefined;
+            }
+        });
         // These renderer events always operate on the pre-filtered graph.
         $("#node-enable").on("change", function () {
             self.enableNodeHover = $("#node-enable").is(":checked");
@@ -147,9 +168,9 @@ export class SigmaGraphCreator {
     private getRelevantTrainIds(shouldDisplay?: boolean): Set<number> {
         let loopCount = this.inputNeighbor;
         // If we send a request to invert an edge, we need to send a larger graph for consistency
-        if(shouldDisplay !== undefined) {
+        if (shouldDisplay !== undefined) {
             loopCount++;
-        } 
+        }
         let result = new Set<number>();
         result.add(this.inputTrainID);
         for (let i = 0; i < loopCount; i++) {
@@ -208,7 +229,9 @@ export class SigmaGraphCreator {
      * @param node 
      */
     private intializeRouteInfo(route_id, node) {
-        this.subGraphRouteIds.add(route_id);
+        if (this.graph.getNodeAttribute(node, "t") === this.inputTrainID) {
+            this.subGraphRouteIds.add(route_id);
+        }
         this.nodesForGivenRouteId.get(route_id) === undefined ? this.nodesForGivenRouteId.set(route_id, [node]) : this.nodesForGivenRouteId.get(route_id)!.push(node);
     }
 
@@ -302,9 +325,8 @@ export class SigmaGraphCreator {
     }
 
     private edgeAttributes(graph: DirectedGraph, edge) {
-        const weight = graph.getEdgeAttribute(edge, "weight");
         graph.mergeEdgeAttributes(edge, edgeSettings);
-        if (weight === undefined) {
+        if (!this.recentlyChangedEdges.has(edge)) {
             graph.setEdgeAttribute(edge, "color", edgeColor);
         }
         else {
@@ -364,7 +386,7 @@ export class SigmaGraphCreator {
                 nodeData.label = "";
                 nodeData.color = "#f6f6f6";
             }
-            // every node which is not in selected not or has no neighbor in selected is rendered white
+            // every node which is not in selected or has no neighbor in selected is rendered white
             if (this.state.selectedNodes && !(this.state.selectedNodes.has(node) && this.stateEdgeValidation(graph, node))) {
                 nodeData.label = null;
                 nodeData.color = "#f6f6f6";
@@ -393,9 +415,7 @@ export class SigmaGraphCreator {
         return result;
     }
 
-    /** 
-     *  
-    */
+
     private rendererEdgeReducer(graph: DirectedGraph) {
         this.renderer.setSetting("edgeReducer", (edge, data) => {
             const edgeData: Partial<EdgeDisplayData> = { ...data };
@@ -445,7 +465,7 @@ export class SigmaGraphCreator {
             graph.setEdgeAttribute(edge, "color", edgeOnHoverColor);
         });
         this.renderer.on("leaveEdge", ({ edge }) => {
-            if (graph.getEdgeAttribute(edge, "weight") === undefined) {
+            if (!this.recentlyChangedEdges.has(edge)) {
                 graph.setEdgeAttribute(edge, "color", edgeColor);
             }
             else {
@@ -454,11 +474,52 @@ export class SigmaGraphCreator {
         })
     }
 
+
+    /**
+     * Recolors the Edges from the last Edge invert to the original color
+     */
+    private colorRecentlyChangedEdges() {
+        this.recentlyChangedEdges.forEach((edge) => {
+            this.graph.setEdgeAttribute(edge, "color", edgeColor);
+            if (this.subGraph.hasEdge(edge)) {
+                this.subGraph.setEdgeAttribute(edge, "color", edgeColor);
+            }
+        });
+    }
+
+    /**
+     * Initializes the Edge flipping prozess, there is a safe mode (only one edge can be changed or reverted)
+     * aswell as an unsafe mode (without any guarantees if a cycle is created or not)
+     * @param graph 
+     */
     private invertEdge(graph: DirectedGraph) {
         this.renderer.on("clickEdge", (event) => {
             if (this.isRouteEdge(graph, event.edge)) {
-                const edgeInformation: Array<string> = [graph.source(event.edge), graph.target(event.edge)];
-                this.getUpdatedGraph(edgeInformation, graph);
+                
+                // unsafe mode
+                if (this.enableUnsafeEdgeFlipping) {
+                    this.colorRecentlyChangedEdges();
+                    this.recentlyChangedEdges = new Set<string>();
+                    const edgeInformation: Array<string> = [graph.source(event.edge), graph.target(event.edge)];
+                    this.getUpdatedGraph(edgeInformation, graph);
+                }
+                // safe mode
+                else {
+                    if (this.invertedEdge === undefined) {
+                        this.colorRecentlyChangedEdges();
+                        this.recentlyChangedEdges = new Set<string>();
+                        const edgeInformation: Array<string> = [graph.source(event.edge), graph.target(event.edge)];
+                        this.getUpdatedGraph(edgeInformation, graph);
+                        this.invertedEdge = event.edge;
+                    }
+                    else if (this.invertedEdge == event.edge) {
+                        this.colorRecentlyChangedEdges();
+                        this.recentlyChangedEdges = new Set<string>();
+                        const edgeInformation: Array<string> = [graph.source(event.edge), graph.target(event.edge)];
+                        this.getUpdatedGraph(edgeInformation, graph);
+                        this.invertedEdge = undefined;
+                    }
+                }
             }
         });
         this.renderer.refresh();
@@ -503,17 +564,13 @@ export class SigmaGraphCreator {
     private changeEdgeDirection(graph: DirectedGraph, edge) {
         const oldEdgeSource = graph.source(edge);
         const oldEdgeTarget = graph.target(edge);
-        const oldWeight = graph.getEdgeAttribute(edge, "weight");
 
         graph.dropEdge(oldEdgeSource, oldEdgeTarget);
         const newEdge = graph.addDirectedEdgeWithKey(edge, oldEdgeTarget, oldEdgeSource);
         this.edgeAttributes(graph, newEdge);
+        graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor);
 
-        if (oldWeight === undefined) {
-            graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor)
-                .setEdgeAttribute(newEdge, "weight", 1);
-        }
-
+        this.recentlyChangedEdges.add(newEdge);
     }
 
     /**
@@ -526,17 +583,12 @@ export class SigmaGraphCreator {
      */
     private replaceEdge(graph: DirectedGraph, oldSource, oldTarget, newSource, newTarget) {
         const edgeID = graph.edge(oldSource, oldTarget);
-        const oldWeight = graph.getEdgeAttribute(edgeID, "weight");
         graph.dropDirectedEdge(oldSource, oldTarget);
 
         const newEdge = graph.addDirectedEdgeWithKey(edgeID, newSource, newTarget);
         this.edgeAttributes(graph, newEdge);
-
-        if (oldWeight === undefined) {
-            graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor)
-                .setEdgeAttribute(newEdge, "weight", 1);
-        }
-
+        graph.setEdgeAttribute(newEdge, "color", edgeOnReverseColor);
+        this.recentlyChangedEdges.add(newEdge);
     }
 
     /**
