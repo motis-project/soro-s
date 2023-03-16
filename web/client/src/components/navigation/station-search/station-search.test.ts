@@ -150,17 +150,39 @@ describe('station-search', async () => {
         );
     });
 
-    it('shows a checkbox for each of the valid search types when setting \'showExtendedOptions\' to true', async () => {
-        stationSearch = await mountWithDefaults(StationSearch, {
-            ...defaults,
-            props: { showExtendedOptions: true },
+
+    describe('when setting \'showExtendedOptions\' to true', async () => {
+        it('shows a checkbox for each of the valid search types', async () => {
+            stationSearch = await mountWithDefaults(StationSearch, {
+                ...defaults,
+                props: { showExtendedOptions: true },
+            });
+
+            const extendedOptionList = stationSearch.find('.station-search-extended-options');
+
+            expect(extendedOptionList.exists()).toBe(true);
+            const checkboxes = extendedOptionList.findAllComponents({ name: 'v-checkbox' });
+            expect(checkboxes).toHaveLength(3);
         });
 
-        const extendedOptionList = stationSearch.find('.station-search-extended-options');
+        it('reacts to a state change of the checkboxes with the ', async () => {
+            stationSearch = await mountWithDefaults(StationSearch, {
+                ...defaults,
+                props: { showExtendedOptions: true },
+            });
+            await stationSearch.setData({ currentSearchTypes: ['foo-bar'] });
+            const checkboxes = stationSearch.findAllComponents({ name: 'v-checkbox' });
+            const firstCheckboxInput = checkboxes[0].get<HTMLInputElement>('input');
 
-        expect(extendedOptionList.exists()).toBe(true);
-        const checkboxes = extendedOptionList.findAllComponents({ name: 'v-checkbox' });
-        expect(checkboxes).toHaveLength(3);
+            firstCheckboxInput.element.checked = true;
+            await firstCheckboxInput.trigger('input');
+
+            expect(checkboxes[0].props().value).toBe(ElementType.STATION);
+            expect(stationSearch.vm.currentSearchTypes).toStrictEqual([
+                'foo-bar',
+                ElementType.STATION,
+            ]);
+        });
     });
 
     it('does not show checkboxes when setting \'showExtendedOptions\' to false', async () => {

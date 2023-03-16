@@ -51,14 +51,6 @@ const GLayoutRoot = ref();
 
 export default defineComponent({
     computed: {
-        ...mapState(InfrastructureNamespace, [
-            'currentInfrastructure',
-            'infrastructures',
-        ]),
-        ...mapState(TimetableNamespace, [
-            'currentTimetable',
-            'timetables',
-        ]),
         ...mapState(SettingsNamespace, ['theme']),
     },
 
@@ -71,18 +63,9 @@ export default defineComponent({
     },
 
     methods: {
-        ...mapActions(InfrastructureNamespace, {
-            loadInfrastructures: 'initialLoad',
-            loadInfrastructure: 'load',
-        }),
-
-        ...mapActions(TimetableNamespace, {
-            loadTimetables: 'initialLoad',
-            loadTimetable: 'load',
-        }),
-
+        ...mapActions(InfrastructureNamespace, { loadInfrastructures: 'initialLoad' }),
+        ...mapActions(TimetableNamespace, { loadTimetables: 'initialLoad' }),
         ...mapActions(SettingsNamespace, ['loadSettings']),
-
         ...mapMutations(GoldenLayoutNamespace, { setGoldenLayoutRootComponent: 'setRootComponent' }),
         ...mapActions(GoldenLayoutNamespace, ['initGoldenLayout']),
     },

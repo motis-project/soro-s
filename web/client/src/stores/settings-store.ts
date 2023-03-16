@@ -50,15 +50,15 @@ export const SettingsStore: Module<SettingsState, unknown> = {
     },
 
     actions: {
-        loadSettings({ dispatch, commit }) {
+        async loadSettings({ dispatch, commit }) {
             const storage = window.localStorage;
             const darkLightModePreference = storage.getItem('darkLightModePreference');
             if (darkLightModePreference) {
                 commit('setDarkLightModePreference', darkLightModePreference);
             }
 
-            dispatch('initThemeListener');
-            dispatch('applyTheme');
+            await dispatch('initThemeListener');
+            await dispatch('applyTheme');
 
             const primaryColor = storage.getItem('primaryColor');
             if (primaryColor) {
@@ -75,10 +75,10 @@ export const SettingsStore: Module<SettingsState, unknown> = {
             }
         },
 
-        setDarkLightModePreference({ commit, dispatch }, preference) {
+        async setDarkLightModePreference({ commit, dispatch }, preference) {
             commit('setDarkLightModePreference', preference);
-            dispatch('applyTheme');
-            dispatch('saveSettings');
+            await dispatch('applyTheme');
+            await dispatch('saveSettings');
         },
 
         initThemeListener({ commit, state }) {
@@ -94,19 +94,19 @@ export const SettingsStore: Module<SettingsState, unknown> = {
         },
 
         applyTheme({ commit, state }) {
-            const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            if (state.darkLightModePreference === DarkLightModes.OS) {
-                commit('setTheme', themeMediaQuery.matches ? DarkLightModes.DARK : DarkLightModes.LIGHT);
+            if (state.darkLightModePreference !== DarkLightModes.OS) {
+                commit('setTheme', state.darkLightModePreference);
 
                 return;
             }
 
-            commit('setTheme', state.darkLightModePreference);
+            const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            commit('setTheme', themeMediaQuery.matches ? DarkLightModes.DARK : DarkLightModes.LIGHT);
         },
 
-        setPrimaryColor({ commit, dispatch }, primaryColor) {
+        async setPrimaryColor({ commit, dispatch }, primaryColor) {
             commit('setPrimaryColor', primaryColor);
-            dispatch('saveSettings');
+            await dispatch('saveSettings');
         },
     },
 };

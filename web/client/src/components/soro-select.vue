@@ -4,6 +4,7 @@
         v-model="currentValue"
         :label="label"
         :items="options"
+        eager
         @update:model-value="emitChange"
     >
         <template #prepend-item>

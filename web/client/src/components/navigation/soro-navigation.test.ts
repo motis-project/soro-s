@@ -96,4 +96,13 @@ describe('soro-navigation', async () => {
         expect(overlayContainer.findComponent({ name: 'soro-navigation-menu-content' }).exists()).toBe(false);
         expect(overlayContainer.findComponent({ name: 'soro-navigation-search-content' }).exists()).toBe(true);
     });
+
+    it('changes the overlay to the selected overlay when the menu content emits a \'change-overlay\' event', async () => {
+        const overlayContainer = soroNavigation.find('.overlay-container');
+        const menuContent = overlayContainer.findComponent({ name: 'soro-navigation-menu-content' });
+
+        menuContent.vm.$emit('change-overlay', 'some-overlay');
+
+        expect(soroNavigation.vm.selectedOverlay).toBe('some-overlay');
+    });
 });

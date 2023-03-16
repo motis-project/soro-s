@@ -1,19 +1,17 @@
-// @ts-ignore
-const runningInDevMode = import.meta.env.DEV;
-
 export const transformUrl = (relativeUrl: string) => {
     const noSlashUrl = relativeUrl.startsWith('/') ? relativeUrl.slice(1) : relativeUrl;
-    if (!runningInDevMode) {
+    // @ts-ignore
+    if (!import.meta.env.DEV) {
         return `${window.origin}/${noSlashUrl}`;
     }
   
     return `${window.origin}/api/${noSlashUrl}`;
 };
 
-export const sendRequest = ({ url, options }: { url: string, options?: RequestInit }) =>
+export const sendRequest = async ({ url, options }: { url: string, options?: RequestInit }) =>
     fetch(transformUrl(url), options);
 
-export const sendPostData = ({ url, data }: { url: string, data: object }) =>
+export const sendPostData = async ({ url, data }: { url: string, data: object }) =>
     sendRequest({
         url,
         options: {

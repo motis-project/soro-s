@@ -24,6 +24,7 @@ export default mergeConfig(viteConfig, defineConfig({
                 'src/components/**',
                 'src/golden-layout/**',
                 'src/stores/**',
+                'src/App.vue',
             ],
             exclude: [
                 // These files are not used as of right now and not ensured to work properly, so they do not have to

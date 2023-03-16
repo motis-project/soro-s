@@ -1,7 +1,7 @@
 <template>
     <div>
         <v-navigation-drawer
-            v-model="showOverlay"
+            :model-value="showOverlay"
             permanent
             width="auto"
         >

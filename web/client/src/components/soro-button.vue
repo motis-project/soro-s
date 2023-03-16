@@ -2,7 +2,7 @@
     <v-btn
         class="soro-button"
         :color="type"
-        @click="(event: Event) => $emit('click', event)"
+        @click="$emit('click', $event)"
     >
         {{ label }}
     </v-btn>
