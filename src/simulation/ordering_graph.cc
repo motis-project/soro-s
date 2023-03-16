@@ -469,9 +469,11 @@ ordering_graph from_json(const string& json) {
 
   // Generate edges
   for (const Value& edge : d["e"].GetArray()) {
-    ordering_graph::emplace_edge(
-        graph.nodes_[std::stoul(edge.GetArray()[0].GetString())],
-        graph.nodes_[std::stoul(edge.GetArray()[1].GetString())]);
+    auto from = graph.node_by_id(static_cast<ordering_node::id>(
+        std::stoul(edge.GetArray()[0].GetString())));
+    auto to = graph.node_by_id(static_cast<ordering_node::id>(
+        std::stoul(edge.GetArray()[1].GetString())));
+    ordering_graph::emplace_edge(*from, *to);
   }
 
   return graph;

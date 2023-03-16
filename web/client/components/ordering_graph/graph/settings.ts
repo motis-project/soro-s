@@ -3,7 +3,7 @@ import NodeProgram from "sigma/rendering/webgl/programs/node"
 
 export const nodeColor = "#000000";
 export const edgeColor = "#808080";
-export const edgeOnHoverColor = "blue";
+export const edgeOnHoverColor = "#2196f3";
 export const edgeOnReverseColor = "red";
 
 export const rendererSettings: Partial<Settings> = {
@@ -19,5 +19,4 @@ export const rendererSettings: Partial<Settings> = {
 export const edgeSettings = {
     type: "arrow",
     size: 2,
-    color: edgeColor,
 }

@@ -180,12 +180,12 @@ void serve_graph(std::string const& url, auto const& req, auto& res) {
     const string json = buffers_to_string(req.body().data());
 
     ordering_graph graph_to_invert = from_json(json);
-
+ 
     const auto from_id_ulong =
         stoul(url.substr(url.find(from_str) + from_str.length()));
     const auto to_id_ulong =
         stoul(url.substr(url.find(to_str) + to_str.length()));
-
+ 
     const auto from_id = static_cast<unsigned int>(from_id_ulong);
     const auto to_id = static_cast<unsigned int>(to_id_ulong);
 
@@ -195,7 +195,7 @@ void serve_graph(std::string const& url, auto const& req, auto& res) {
 
     uLOG(utl::info) << "inverted edge from: " << from_id << " to: " << to_id;
   } else {
-    ordering_graph random_graph = generate_testgraph(10, 10, 5, 20, 23);
+    ordering_graph random_graph = generate_testgraph(10000, 60, 5, 60, 23);
 
     ordering_graph_json = random_graph.to_json();
     uLOG(utl::info) << "initial graph sent";
@@ -253,7 +253,12 @@ server::server(std::string const& address, port_t const port,
             res.result(http::status::no_content);
             break;
           }
-
+          case http::verb::post: {
+            if (should_serve_graph) {
+              serve_graph(url, req, res);
+            }
+            break;
+          }
           case http::verb::get:
           case http::verb::head: {
             if (should_serve_tiles) {
