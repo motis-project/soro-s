@@ -5,10 +5,18 @@ import (
 	"strconv"
 )
 
+func SortAndRemoveDuplicatesOsm(osmData *Osm) {
+	sortOsm(osmData)
+	// Check if there are any duplicate ids in the way, node and relation and remove them
+	// This is a very simple check and does not check if the data is the same
+	// It just checks if the id is the same
+	removeDuplicatesOsm(osmData)
+}
+
 // SortOsm takes arbitrarily built OSM-data and ensures a consistent set of OSM-data as output.
 // This is done by first sorting the lists of Nodes, Ways and Relations according to their ID.
 // Then, all duplicate Nodes, Ways and Relations are removed and only the first occurence is kept.
-func SortOsm(osmData Osm) Osm {
+func sortOsm(osmData *Osm) {
 	sort.SliceStable(osmData.Way, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Way[i].Id)
 		id2, _ := strconv.Atoi(osmData.Way[j].Id)
@@ -24,9 +32,9 @@ func SortOsm(osmData Osm) Osm {
 		id2, _ := strconv.Atoi(osmData.Relation[j].Id)
 		return id1 < id2
 	})
-	// Check if there are any duplicate ids in the way, node and relation and remove them
-	// This is a very simple check and does not check if the data is the same
-	// It just checks if the id is the same
+}
+
+func removeDuplicatesOsm(osmData *Osm) {
 	var existingWayIds []string
 	var existingNodeIds []string
 	var existingRelationIds []string
@@ -76,8 +84,6 @@ func SortOsm(osmData Osm) Osm {
 	osmData.Way = newWays
 	osmData.Node = newNodes
 	osmData.Relation = newRelations
-
-	return osmData
 }
 
 // search implements a binary search over arr.

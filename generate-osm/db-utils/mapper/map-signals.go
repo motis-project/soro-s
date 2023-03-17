@@ -1,33 +1,31 @@
-package dbUtils
+package mapper
 
 import (
-	"encoding/xml"
 	"strconv"
 	"strings"
-	OSMUtil "transform-osm/osm-utils"
+	findNodes "transform-osm/db-utils/find-nodes"
+	osmUtils "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
 )
 
-var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
-
-// findAndMapAnchorMainSignals identifies Hauptsignal(S/F)-Node pairs, that match up.
+// FindAndMapAnchorMainSignals identifies Hauptsignal(S/F)-Node pairs, that match up.
 // Matching up in this context means, that the Node has the tags 'railway:signal' and 'name:...' where ... is the same
 // (excluding spaces) as the Signal-name.
 // In notFoundSignals... all signals that could not be identified will be returned.
-func findAndMapAnchorMainSignals(
+func FindAndMapAnchorMainSignals(
 	knoten Spurplanknoten,
-	osm *OSMUtil.Osm,
-	anchors map[float64][]*OSMUtil.Node,
+	osm *osmUtils.Osm,
+	anchors map[float64][]*osmUtils.Node,
 	notFoundSignalsFalling *[]*NamedSimpleElement,
 	notFoundSignalsRising *[]*NamedSimpleElement,
-	signalList map[string]OSMUtil.Signal,
+	signalList map[string]osmUtils.Signal,
 	foundAnchorCount *int,
 	nodeIdCounter *int,
 ) error {
 	conflictingSignalNames := map[string]bool{}
 	err := processHauptsignal(
-		knoten,
+		knoten.HauptsigF,
 		notFoundSignalsFalling,
 		anchors,
 		signalList,
@@ -42,7 +40,7 @@ func findAndMapAnchorMainSignals(
 	}
 
 	err = processHauptsignal(
-		knoten,
+		knoten.HauptsigS,
 		notFoundSignalsRising,
 		anchors,
 		signalList,
@@ -61,28 +59,23 @@ func findAndMapAnchorMainSignals(
 // processHauptsignal iterates over all Hautpsignal[S/F] (depending on 'is Falling')
 // and does all the identification.
 func processHauptsignal(
-	knoten Spurplanknoten,
+	signals []*NamedSimpleElement,
 	notFoundSignals *[]*NamedSimpleElement,
-	anchors map[float64][]*OSMUtil.Node,
-	signalList map[string]OSMUtil.Signal,
+	anchors map[float64][]*osmUtils.Node,
+	signalList map[string]osmUtils.Signal,
 	conflictingSignalNames map[string]bool,
-	osm *OSMUtil.Osm,
+	osm *osmUtils.Osm,
 	isFalling bool,
 	foundAnchorCount *int,
 	nodeIdCounter *int,
 ) error {
-	signals := knoten.HauptsigF
-	if !isFalling {
-		signals = knoten.HauptsigS
-	}
-
 	for _, signal := range signals {
-		matchingSignalNodes := []*OSMUtil.Node{}
+		matchingSignalNodes := []*osmUtils.Node{}
 
 		for _, node := range osm.Node {
 			if len(node.Tag) != 0 {
-				railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
-				refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
+				railwayTag, _ := osmUtils.FindTagOnNode(node, "railway")
+				refTag, _ := osmUtils.FindTagOnNode(node, "ref")
 
 				if railwayTag == "signal" &&
 					strings.ReplaceAll(refTag, " ", "") == signal.Name.Value {
@@ -108,7 +101,7 @@ func processHauptsignal(
 			}
 			if conflictFreeSignal {
 				*foundAnchorCount++
-				signalList[matchingSignalNodes[0].Id] = OSMUtil.Signal{
+				signalList[matchingSignalNodes[0].Id] = osmUtils.Signal{
 					Name: signal.Name.Value,
 					Lat:  matchingSignalNodes[0].Lat,
 					Lon:  matchingSignalNodes[0].Lon,
@@ -128,19 +121,19 @@ func processHauptsignal(
 // or when there exists more than one node, that could be identified as a certian Signal (i.e. with the same name).
 func insertNewHauptsignal(
 	nodeIdCounter *int,
-	signalNode *OSMUtil.Node,
+	signalNode *osmUtils.Node,
 	signal *NamedSimpleElement,
 	isFalling bool,
 	notFound *[]*NamedSimpleElement,
-	anchors map[float64][]*OSMUtil.Node,
+	anchors map[float64][]*osmUtils.Node,
 	conflictingSignalNames map[string]bool,
-	osm *OSMUtil.Osm,
+	osm *osmUtils.Osm,
 	foundAnchorCount *int,
 ) (bool, error) {
 	if conflictingSignalNames[signal.Name.Value] {
 		return false, nil
 	}
-	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
+	signalKilometrage, err := findNodes.FormatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to format kilometrage")
 	}
@@ -175,40 +168,37 @@ func insertNewHauptsignal(
 		signal.Name.Value,
 		isFalling,
 	)
-	OSMUtil.InsertNewNodeWithReferenceNode(
+	osmUtils.InsertNewNodeWithReferenceNode(
 		osm,
 		&newSignalNode,
 		signalNode,
 	)
 
 	if len(anchors[signalKilometrage]) == 0 {
-		anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
+		anchors[signalKilometrage] = []*osmUtils.Node{&newSignalNode}
 	} else {
 		anchors[signalKilometrage] = append(anchors[signalKilometrage], &newSignalNode)
 	}
 	return true, nil
 }
 
-// mapUnanchoredSignals processes all previously unmapped signals.
-// This is main signals, for which no unique Node could be determined ("signalType" = 'ms'),
-// or approach and protection signals ("signalType" = 'as'/'ps').
-func mapUnanchoredSignals(
-	osmData *OSMUtil.Osm,
-	anchors map[float64]([]*OSMUtil.Node),
-	signalList map[string]OSMUtil.Signal,
+// MapUnanchoredSignals processes all previously unmapped main signals.
+func MapUnanchoredMainSignals(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	signalType string,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	err := searchUnanchoredSignal(
 		osmData,
 		anchors,
 		signalList,
 		nodeIdCounter,
-		knoten,
-		signalType,
-		elementsNotFound,
+		MainSignal,
+		knoten.HauptsigF,
+		tracker,
 		true)
 	if err != nil {
 		return errors.Wrap(err, "failed finding falling main signal")
@@ -219,12 +209,86 @@ func mapUnanchoredSignals(
 		anchors,
 		signalList,
 		nodeIdCounter,
-		knoten,
-		signalType,
-		elementsNotFound,
+		MainSignal,
+		knoten.HauptsigS,
+		tracker,
 		false)
 	if err != nil {
 		return errors.Wrap(err, "failed finding rising main signal")
+	}
+	return nil
+}
+
+// MapUnanchoredSignals processes all previously unmapped protection signals.
+func MapUnanchoredProtectionSignals(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	tracker NotFoundElementTracker,
+) error {
+	err := searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ProtectionSignal,
+		knoten.SchutzsigF,
+		tracker,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling protection signal")
+	}
+
+	err = searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ProtectionSignal,
+		knoten.SchutzsigS,
+		tracker,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising protection signal")
+	}
+	return nil
+}
+
+// MapUnanchoredSignals processes all previously unmapped approach signals.
+func MapUnanchoredApproachSignals(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	tracker NotFoundElementTracker,
+) error {
+	err := searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ApproachSignal,
+		knoten.VorsigF,
+		tracker,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling approach signal")
+	}
+
+	err = searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ApproachSignal,
+		knoten.VorsigS,
+		tracker,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising approach signal")
 	}
 	return nil
 }
@@ -233,65 +297,48 @@ func mapUnanchoredSignals(
 // This search is based on at least two anchored elements and their respective distance to the signal at hand.
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchUnanchoredSignal(
-	osmData *OSMUtil.Osm,
-	anchors map[float64]([]*OSMUtil.Node),
-	signalList map[string]OSMUtil.Signal,
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
 	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	signalType string,
-	elementsNotFound map[string]([]string),
+	signalType ElementType,
+	signals []*NamedSimpleElement,
+	tracker NotFoundElementTracker,
 	isFalling bool,
 ) error {
-	var signalTypeLong string
-	var signals []*NamedSimpleElement
-
-	switch signalType {
-	case "ms":
-		signalTypeLong = "main signal"
-		signals = knoten.HauptsigF
-		if !isFalling {
-			signals = knoten.HauptsigS
-		}
-	case "as":
-		signalTypeLong = "approach signal"
-		signals = knoten.VorsigF
-		if !isFalling {
-			signals = knoten.VorsigS
-		}
-	case "ps":
-		signalTypeLong = "protection signal"
-		signals = knoten.SchutzsigF
-		if !isFalling {
-			signals = knoten.SchutzsigS
-		}
-	}
-
 	for _, signal := range signals {
-		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
+		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound[signalTypeLong+"s"] = append(elementsNotFound[signalTypeLong+"s"], signal.Name.Value)
+			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
+				tracker.AddNotFoundElement(signalType, signal.Name.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map "+signalTypeLong+" "+signal.Name.Value)
+			return errors.Wrap(err, "failed to map signal: "+signal.Name.Value+" ("+signalType.String()+")")
 
+		}
+
+		signalSubtype := "ms"
+		if signalType == ProtectionSignal {
+			signalSubtype = "ps"
+		} else if signalType == ApproachSignal {
+			signalSubtype = "as"
 		}
 
 		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signalType,
+			signalSubtype,
 			signal.Name.Value,
 			isFalling,
 		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
+		osmUtils.InsertNewNodeWithReferenceNode(
 			osmData,
 			&newSignalNode,
 			maxNode,
 		)
-		signalList[newSignalNode.Id] = OSMUtil.Signal{
+		signalList[newSignalNode.Id] = osmUtils.Signal{
 			Name: signal.Name.Value,
 			Lat:  newSignalNode.Lat,
 			Lon:  newSignalNode.Lon,

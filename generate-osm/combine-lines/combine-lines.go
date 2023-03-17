@@ -24,7 +24,6 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 	}
 
 	var osmData osmUtils.Osm
-
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
 		data, _ := os.ReadFile(tempLineDir + "/" + file.Name())

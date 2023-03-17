@@ -1,20 +1,21 @@
-package dbUtils
+package mapper
 
 import (
-	OSMUtil "transform-osm/osm-utils"
+	findNodes "transform-osm/db-utils/find-nodes"
+	osmUtils "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
 )
 
-// findAndMapAnchorSwitches identifies all Nodes in the provided 'osm' with the tag 'railway:switch'.
+// FindAndMapAnchorSwitches identifies all Nodes in the provided 'osm' with the tag 'railway:switch'.
 // If their 'name' or 'ref'-Tag matches the name of the signal from the DB-data currently being processed.
 // This is done firstly for all "WeichenAnfang" where we also add a node to the osm-data.
 // In a second pass, also "WeichenStamm", "WeichenAbzweigLinks" and "WeichenAbzweigRechts" are being looked at.
 // However we do not add a node for those to only map each switch once.
-func findAndMapAnchorSwitches(
+func FindAndMapAnchorSwitches(
 	knoten Spurplanknoten,
-	osm *OSMUtil.Osm,
-	anchors map[float64][]*OSMUtil.Node,
+	osm *osmUtils.Osm,
+	anchors map[float64][]*osmUtils.Node,
 	notFoundSwitches *[]*Weichenanfang,
 	foundAnchorCount *int,
 	nodeIdCounter *int,
@@ -26,14 +27,14 @@ func findAndMapAnchorSwitches(
 				continue
 			}
 
-			railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
-			refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
-			name, _ := OSMUtil.FindTagOnNode(node, "name")
+			railwayTag, _ := osmUtils.FindTagOnNode(node, "railway")
+			refTag, _ := osmUtils.FindTagOnNode(node, "ref")
+			name, _ := osmUtils.FindTagOnNode(node, "name")
 
 			if railwayTag == "switch" &&
 				(refTag == switchBegin.Name.Value || name == switchBegin.Name.Value) {
 
-				kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
+				kilometrageFloat, err := findNodes.FormatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
 				if err != nil {
 					return errors.Wrap(err, "failed to format kilometrage")
 				}
@@ -45,7 +46,7 @@ func findAndMapAnchorSwitches(
 					"simple_switch",
 					switchBegin.Name.Value,
 				)
-				OSMUtil.InsertNewNodeWithReferenceNode(
+				osmUtils.InsertNewNodeWithReferenceNode(
 					osm,
 					&newSwitchNode,
 					node,
@@ -70,14 +71,14 @@ func findAndMapAnchorSwitches(
 				continue
 			}
 
-			railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
-			refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
-			name, _ := OSMUtil.FindTagOnNode(node, "name")
+			railwayTag, _ := osmUtils.FindTagOnNode(node, "railway")
+			refTag, _ := osmUtils.FindTagOnNode(node, "ref")
+			name, _ := osmUtils.FindTagOnNode(node, "name")
 
 			if railwayTag == "switch" {
 				partnerName := switchBegin.Partner.Name
 
-				kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
+				kilometrageFloat, err := findNodes.FormatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
 				if err != nil {
 					return errors.Wrap(err, "failed to format kilometrage")
 				}
@@ -93,21 +94,21 @@ func findAndMapAnchorSwitches(
 	return nil
 }
 
-// mapUnanchoredSwitches processes all switches for which no unique Node could be determined.
-func mapUnanchoredSwitches(
-	osmData *OSMUtil.Osm,
-	anchors map[float64]([]*OSMUtil.Node),
+// MapUnanchoredSwitches processes all switches for which no unique Node could be determined.
+func MapUnanchoredSwitches(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	for _, simple_switch := range knoten.WeichenAnf {
-		kilometrage, _ := formatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)
+		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["switches"] = append(elementsNotFound["switches"], simple_switch.Name.Value)
+			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
+				tracker.AddNotFoundElement(Switches, simple_switch.Name.Value)
 				continue
 
 			}
@@ -120,7 +121,7 @@ func mapUnanchoredSwitches(
 			"simple_switch",
 			simple_switch.Name.Value,
 		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
+		osmUtils.InsertNewNodeWithReferenceNode(
 			osmData,
 			&newSignalNode,
 			maxNode,
@@ -129,20 +130,20 @@ func mapUnanchoredSwitches(
 	return nil
 }
 
-func mapCrosses(
-	osmData *OSMUtil.Osm,
-	anchors map[float64]([]*OSMUtil.Node),
+func MapCrosses(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	for _, cross := range knoten.KreuzungsweicheAnfangLinks {
-		kilometrage, _ := formatKilometrageStringInFloat(cross.KnotenTyp.Kilometrierung.Value)
+		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(cross.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["crosses"] = append(elementsNotFound["crosses"], cross.Name.Value)
+			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
+				tracker.AddNotFoundElement(Crosses, cross.Name.Value)
 				continue
 
 			}
@@ -155,7 +156,7 @@ func mapCrosses(
 			"cross",
 			cross.Name.Value,
 		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
+		osmUtils.InsertNewNodeWithReferenceNode(
 			osmData,
 			&newSignalNode,
 			maxNode,

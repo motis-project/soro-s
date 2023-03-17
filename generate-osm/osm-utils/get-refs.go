@@ -13,7 +13,7 @@ import (
 func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []string, err error) {
 	refsPath, _ := filepath.Abs(tempFilePath + "/refs.xml")
 
-	ExecuteOsmFilterCommand([]string{
+	err = ExecuteOsmFilterCommand([]string{
 		"-R",
 		inputFilePath,
 		"-o",
@@ -21,6 +21,9 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 		"r/route=tracks,railway",
 		"--overwrite",
 	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute osmium command")
+	}
 
 	var data []byte
 	if data, err = os.ReadFile(refsPath); err != nil {

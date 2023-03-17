@@ -173,18 +173,16 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
-	sortedOsmData := osmUtils.SortOsm(osmData)
-
 	if mapDB {
 		var additionalOsm osmUtils.Osm
 		if additionalOsmFile != "" {
-			additionalOsm, err = insertOsm(sortedOsmData, additionalOsmFile, maxNewNodeID)
+			additionalOsm, err = insertOsm(osmData, additionalOsmFile, maxNewNodeID)
 			if err != nil {
 				return errors.Wrap(err, "failed adding db data to the additional OSM data")
 			}
 
 		}
-		outputOsm := sortedOsmData
+		outputOsm := osmData
 		if additionalOsmFile != "" {
 			outputOsm = additionalOsm
 		}
@@ -210,10 +208,10 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			}
 		}
 		outputOsm.Node = append(outputOsm.Node, stationHaltOsm.Node...)
-		sortedOsmData = osmUtils.SortOsm(outputOsm)
+		osmUtils.SortAndRemoveDuplicatesOsm(&outputOsm)
 	}
 
-	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
+	output, err := xml.MarshalIndent(osmData, "", "     ")
 	if err != nil {
 		return errors.Wrap(err, "failed marshalling final data")
 	}

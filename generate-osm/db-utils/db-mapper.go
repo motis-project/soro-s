@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"transform-osm/db-utils/mapper"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -28,7 +29,7 @@ func MapDB(
 	for _, line := range refs {
 		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
-		var dbIss XmlIssDaten
+		var dbIss mapper.XmlIssDaten
 
 		osmLineFilePath := osmDir + "/" + line + ".xml"
 		osmFile, err := os.ReadFile(osmLineFilePath)
@@ -50,14 +51,14 @@ func MapDB(
 
 		fmt.Printf("Mapping line %s \n", line)
 
-		var notFoundSignalsFalling []*NamedSimpleElement = []*NamedSimpleElement{}
-		var notFoundSignalsRising []*NamedSimpleElement = []*NamedSimpleElement{}
-		var notFoundSwitches []*Weichenanfang = []*Weichenanfang{}
+		var notFoundSignalsFalling = []*mapper.NamedSimpleElement{}
+		var notFoundSignalsRising = []*mapper.NamedSimpleElement{}
+		var notFoundSwitches = []*mapper.Weichenanfang{}
 		var foundAnchorCount = 0
 		for _, stelle := range dbIss.Betriebsstellen {
 			for _, abschnitt := range stelle.Abschnitte {
 				for _, knoten := range abschnitt.Knoten {
-					err = findAndMapAnchorMainSignals(
+					err = mapper.FindAndMapAnchorMainSignals(
 						*knoten,
 						&osm,
 						anchors,
@@ -71,7 +72,7 @@ func MapDB(
 						return nil, nil, nil, -1, errors.Wrap(err, "failed anchoring main signals")
 					}
 
-					err = findAndMapAnchorSwitches(
+					err = mapper.FindAndMapAnchorSwitches(
 						*knoten,
 						&osm,
 						anchors,
@@ -94,10 +95,10 @@ func MapDB(
 		totalNumberOfAnchors += foundAnchorCount
 		totalElementsNotFound += numElementsNotFound
 
-		var issWithMappedSignals = XmlIssDaten{
-			Betriebsstellen: []*Spurplanbetriebsstelle{{
-				Abschnitte: []*Spurplanabschnitt{{
-					Knoten: []*Spurplanknoten{{
+		var issWithMappedSignals = mapper.XmlIssDaten{
+			Betriebsstellen: []*mapper.Spurplanbetriebsstelle{{
+				Abschnitte: []*mapper.Spurplanabschnitt{{
+					Knoten: []*mapper.Spurplanknoten{{
 						HauptsigF:  notFoundSignalsFalling,
 						HauptsigS:  notFoundSignalsRising,
 						WeichenAnf: notFoundSwitches,
@@ -114,28 +115,28 @@ func MapDB(
 			linesWithOneAnchor = append(linesWithOneAnchor, line)
 			// TODO: Node not found, find closest mapped Node and work from there
 		} else {
-			elementsNotFound := make(map[string]([]string))
+			tracker := mapper.NewNotFoundElementTracker()
+
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
 					for _, knoten := range abschnitt.Knoten {
-						err = mapUnanchoredSignals(
+						err = mapper.MapUnanchoredMainSignals(
 							&osm,
 							anchors,
 							mainSignalList,
 							&newNodeIdCounter,
 							*knoten,
-							"ms",
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding main signals")
 						}
-						err = mapUnanchoredSwitches(
+						err = mapper.MapUnanchoredSwitches(
 							&osm,
 							anchors,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding switches")
@@ -144,110 +145,116 @@ func MapDB(
 				}
 			}
 
-			simpleElements := make(map[string]([]*SimpleElement))
-			namedSimpleElements := make(map[string]([]*NamedSimpleElement))
+			simpleElements := make(map[mapper.ElementType]([]*mapper.SimpleElement))
+			namedSimpleElements := make(map[mapper.ElementType]([]*mapper.NamedSimpleElement))
 
 			for _, stelle := range dbIss.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
 					for _, knoten := range abschnitt.Knoten {
-						simpleElements["line_switch"] = knoten.Streckenwechsel0
-						simpleElements["km_jump"] = knoten.KmSprungAnf
-						simpleElements["border"] = knoten.BetriebsStGr
-						simpleElements["bumper"] = knoten.Prellbock
+						simpleElements[mapper.LineSwitch] = knoten.Streckenwechsel0
+						simpleElements[mapper.KilometrageJump] = knoten.KmSprungAnf
+						simpleElements[mapper.Border] = knoten.BetriebsStGr
+						simpleElements[mapper.Bumper] = knoten.Prellbock
 
-						namedSimpleElements["tunnel"] = knoten.Tunnel
-						namedSimpleElements["track_end"] = knoten.Gleisende
+						namedSimpleElements[mapper.Tunnel] = knoten.Tunnel
+						namedSimpleElements[mapper.TrackEnd] = knoten.Gleisende
 
 						for elementName, elementList := range simpleElements {
-							err = mapSimpleElement(
+							err = mapper.MapSimpleElement(
 								&osm,
 								anchors,
 								&newNodeIdCounter,
-								*knoten,
-								elementName,
 								elementList,
-								elementsNotFound,
+								elementName,
+								tracker,
 							)
 							if err != nil {
-								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName.String())
 							}
 						}
 						for elementName, elementList := range namedSimpleElements {
-							err = mapNamedSimpleElement(
+							err = mapper.MapNamedSimpleElement(
 								&osm,
 								anchors,
 								&newNodeIdCounter,
-								*knoten,
 								elementName,
 								elementList,
-								elementsNotFound,
+								tracker,
 							)
 							if err != nil {
-								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName.String())
 							}
 						}
-						for _, signalType := range []string{"as", "ps"} {
-							err = mapUnanchoredSignals(
-								&osm,
-								anchors,
-								otherSignalList,
-								&newNodeIdCounter,
-								*knoten,
-								signalType,
-								elementsNotFound,
-							)
-							if err != nil {
-								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+signalType)
-							}
+						err = mapper.MapUnanchoredProtectionSignals(
+							&osm,
+							anchors,
+							otherSignalList,
+							&newNodeIdCounter,
+							*knoten,
+							tracker,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding protection signals")
+						}
+						err = mapper.MapUnanchoredApproachSignals(
+							&osm,
+							anchors,
+							otherSignalList,
+							&newNodeIdCounter,
+							*knoten,
+							tracker,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding approach signals")
 						}
 
-						err = mapCrosses(
+						err = mapper.MapCrosses(
 							&osm,
 							anchors,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding crosses")
 						}
-						err = mapHalts(
+						err = mapper.MapHalts(
 							&osm,
 							anchors,
 							haltList,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding halts")
 						}
-						err = mapSpeedLimits(
+						err = mapper.MapSpeedLimits(
 							&osm,
 							anchors,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding speed limits")
 						}
-						err = mapEoTDs(
+						err = mapper.MapEoTDs(
 							&osm,
 							anchors,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding end of train detectors")
 						}
-						err = mapSlopes(
+						err = mapper.MapSlopes(
 							&osm,
 							anchors,
 							&newNodeIdCounter,
 							*knoten,
-							elementsNotFound,
+							tracker,
 						)
 						if err != nil {
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding slopes")
@@ -256,9 +263,7 @@ func MapDB(
 				}
 			}
 
-			for elementType, nameList := range elementsNotFound {
-				fmt.Printf("Could not find %s: %v \n", elementType, nameList)
-			}
+			tracker.PrintNotFoundElements()
 		}
 
 		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {

@@ -37,13 +37,13 @@ func GenerateStations(inputFilePath string, tempFolderPath string) (map[string]S
 		return nil, Osm{}, errors.Wrap(err, "failed unmarshalling osm: "+stationsFile)
 	}
 
-	searchFile, stationHaltOsm := generateSearchFile(osm)
+	searchFile, stationHaltOsm := generateOsmAndSearchFile(osm)
 
 	return searchFile, stationHaltOsm, nil
 }
 
 // generateSerachFile does all th heavy lifting for GenerateStationsAndHalts, doing all the curating.
-func generateSearchFile(osm Osm) (stationsList map[string]Station, stationHaltOsm Osm) {
+func generateOsmAndSearchFile(osm Osm) (stationsList map[string]Station, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
 	stationHaltsNodes := make([]*Node, 0)
 
