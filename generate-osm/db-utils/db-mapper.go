@@ -18,7 +18,7 @@ func MapDB(
 	osmDir string,
 	DBDir string,
 ) (map[string]OSMUtil.Halt, map[string]OSMUtil.Signal, map[string]OSMUtil.Signal, int, error) {
-	newNodeIdCounter := 0
+	newNodeIdCounter := 100000000000
 	totalNumberOfAnchors, totalElementsNotFound := 0, 0
 	linesWithNoAnchors := []string{}
 	linesWithOneAnchor := []string{}

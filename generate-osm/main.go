@@ -225,6 +225,10 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 }
 
 func insertOsm(modifiedOsm osmUtils.Osm, additionalOsmFile string, maxNewNodeID int) (osmUtils.Osm, error) {
+	if additionalOsmFile[:len(additionalOsmFile)-4] != ".xml" {
+		return osmUtils.Osm{}, errors.New("additional osm file must be an xml file")
+	}
+
 	additionalOsmData, err := os.ReadFile(additionalOsmFile)
 	if err != nil {
 		return osmUtils.Osm{}, errors.Wrap(err, "failed reading additional osm file "+additionalOsmFile)
