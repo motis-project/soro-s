@@ -209,6 +209,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		}
 		outputOsm.Node = append(outputOsm.Node, stationHaltOsm.Node...)
 		osmUtils.SortAndRemoveDuplicatesOsm(&outputOsm)
+		osmData = outputOsm
 	}
 
 	output, err := xml.MarshalIndent(osmData, "", "     ")
