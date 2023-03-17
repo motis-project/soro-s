@@ -40,6 +40,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 19.1
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '^1.19.0'
+
+      # ==== GO TESTS ====
+      - name: Run GO Tests
+        run: |
+          cd generate-osm
+          go test ./...
 
       - name: Get deps
         run: ln -s /deps deps
