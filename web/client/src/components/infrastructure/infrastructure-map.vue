@@ -52,7 +52,7 @@ export const initiallyCheckedControls = [
 
 const mapDefaults = {
     attributionControl: false,
-    zoom: 18,
+    zoom: 10,
     hash: 'location',
     center: [10, 50],
     maxBounds: [[-5, 40], [25, 60]], // [SW Point] [NE Point] in LonLat

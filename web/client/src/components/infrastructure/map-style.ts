@@ -1,6 +1,7 @@
 import { ElementType, ElementTypes } from './element-types';
 import { StyleSpecification } from 'maplibre-gl';
 import { ThemeDefinition } from 'vuetify';
+import { transformUrl } from '@/api/api-client';
 
 export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof ElementTypes }) => {
     const style: StyleSpecification = {
@@ -26,7 +27,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 },
             },
         },
-        'glyphs': 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+        'glyphs': transformUrl('/font/{fontstack}/{range}.pbf'),
         'layers': [
             {
                 'id': 'background',

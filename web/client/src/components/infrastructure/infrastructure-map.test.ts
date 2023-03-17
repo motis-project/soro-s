@@ -122,7 +122,7 @@ describe('infrastructure-map', async () => {
                 const mapElement = infrastructureMap.find({ ref: 'map' });
                 expect(Map).toHaveBeenCalledWith({
                     attributionControl: false,
-                    zoom: 18,
+                    zoom: 10,
                     hash: 'location',
                     center: [10, 50],
                     maxBounds: [[-5, 40], [25, 60]],

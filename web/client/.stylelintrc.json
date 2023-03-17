@@ -3,7 +3,7 @@
     "stylelint-config-standard-scss",
     "stylelint-config-recommended-vue"
   ],
-  "ignoreFiles": ["**/*.js", "**/*.ts"],
+  "ignoreFiles": ["**/*.js", "**/*.ts", "**/*.md"],
   "rules": {
     "indentation": 4
   }

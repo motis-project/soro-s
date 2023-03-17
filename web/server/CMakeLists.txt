@@ -36,7 +36,7 @@ endforeach ()
 
 configure_file(${CMAKE_SOURCE_DIR}/resources/misc/btrs_geo.csv ${SORO_SERVER_DIR}/server_resources/misc/btrs_geo.csv COPYONLY)
 file(MAKE_DIRECTORY ${SORO_SERVER_DIR}/server_resources/resources/)
-file(GLOB_RECURSE soro-resources ${CMAKE_SOURCE_DIR}/resources/*.xml ${CMAKE_SOURCE_DIR}/resources/*.osm ${CMAKE_SOURCE_DIR}/resources/*.txt)
+file(GLOB_RECURSE soro-resources ${CMAKE_SOURCE_DIR}/resources/*.xml ${CMAKE_SOURCE_DIR}/resources/*.osm ${CMAKE_SOURCE_DIR}/resources/*.txt ${CMAKE_SOURCE_DIR}/resources/search_indices/*)
 foreach (file ${soro-resources})
     set(path ${file})
     cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE relative-path)
