@@ -14,9 +14,13 @@
 #include "tiles/perf_counter.h"
 #include "tiles/util.h"
 
+#include "soro/simulation/ordering_graph.h"
+
 #include "soro/server/http_server.h"
 
 namespace soro::server {
+using namespace soro::simulation;
+using namespace boost::beast;
 
 std::string url_decode(request_t const& req) {
   auto const& in = req.target();
@@ -161,6 +165,47 @@ bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
   return true;
 }
 
+/*
+Base/initialization:    api/ordering_graph/
+Invertion:              /invert?from=[node_id]&to=[node_id]
+*/
+void serve_graph(std::string const& url, auto const& req, auto& res) {
+  string ordering_graph_json;
+  bool const should_invert = url.find("/invert") != std::string::npos;
+
+  if (should_invert) {
+    const string from_str = "from=";
+    const string to_str = "to=";
+
+    const string json = buffers_to_string(req.body().data());
+
+    ordering_graph graph_to_invert = from_json(json);
+ 
+    const auto from_id_ulong =
+        stoul(url.substr(url.find(from_str) + from_str.length()));
+    const auto to_id_ulong =
+        stoul(url.substr(url.find(to_str) + to_str.length()));
+ 
+    const auto from_id = static_cast<unsigned int>(from_id_ulong);
+    const auto to_id = static_cast<unsigned int>(to_id_ulong);
+
+    ordering_graph_json =
+        graph_to_invert.invert_edge(*graph_to_invert.node_by_id(from_id),
+                                    *graph_to_invert.node_by_id(to_id));
+
+    uLOG(utl::info) << "inverted edge from: " << from_id << " to: " << to_id;
+  } else {
+    ordering_graph random_graph = generate_testgraph(100000, 60, 5, 60, 23);
+
+    ordering_graph_json = random_graph.to_json();
+    uLOG(utl::info) << "initial graph sent";
+  }
+
+  res.body() = std::string(ordering_graph_json);  
+  res.set(http::field::content_type, "application/json");
+  res.result(http::status::ok);
+}
+
 void initialize_serve_contexts(server::serve_contexts& contexts,
                                fs::path const& server_resource_dir) {
   fs::path const infra_dir = server_resource_dir / "infrastructure";
@@ -194,12 +239,20 @@ server::server(std::string const& address, port_t const port,
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
 
+        auto const graph_req = url.find("/api/ordering_graph/");
+        bool const should_serve_graph = graph_req != std::string::npos;
+
         switch (req.method()) {
           case http::verb::options: {
             res.result(http::status::no_content);
             break;
           }
-
+          case http::verb::post: {
+            if (should_serve_graph) {
+              serve_graph(url, req, res);
+            }
+            break;
+          }
           case http::verb::get:
           case http::verb::head: {
             if (should_serve_tiles) {
@@ -210,6 +263,8 @@ server::server(std::string const& address, port_t const port,
               }
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
+            } else if (should_serve_graph) {
+              serve_graph(url, req, res);
             } else {
               serve_file(url, server_resource_dir, res);
             }

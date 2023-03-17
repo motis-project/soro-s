@@ -5,7 +5,10 @@
 #include "soro/utls/container/priority_queue.h"
 #include "soro/utls/std_wrapper/std_wrapper.h"
 
+#include <algorithm>
 #include <random>
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 #include "soro/runtime/runtime.h"
 
 namespace soro::simulation {
@@ -13,12 +16,26 @@ namespace soro::simulation {
 using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
+using namespace std;
+using namespace rapidjson;
 
 struct route_usage {
   utls::unixtime from_{utls::INVALID_TIME};
   utls::unixtime to_{utls::INVALID_TIME};
   ordering_node::id node_id_{ordering_node::INVALID};
 };
+
+template <typename Writer>
+void ordering_node::serialize(Writer& writer) {
+  writer.StartArray();
+  writer.String(std::to_string(id_).c_str());
+
+  writer.Uint(ir_id_);
+
+  writer.Uint(train_id_);
+
+  writer.EndArray();
+}
 
 using usage_idx = uint32_t;
 constexpr auto const INVALID_USAGE_IDX = std::numeric_limits<usage_idx>::max();
@@ -146,28 +163,35 @@ ordering_graph::ordering_graph() = default;
  */
 ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
                                   const int min_nodes, const int max_nodes) {
+  std::random_device rd;
+  return generate_testgraph(train_amnt, track_amnt, min_nodes, max_nodes, rd());
+}
+
+ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
+                                  const int min_nodes, const int max_nodes,
+                                  const unsigned int seed) {
   ordering_graph graph;
 
   // are min and max valid?
-  const int min = min_nodes >= 0 ? min_nodes : 0;
   const int max = max_nodes <= track_amnt ? max_nodes : track_amnt;
+  const int min = min_nodes >= 0 ? min_nodes > max ? max : min_nodes : 0;
 
   // get random number generator
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<> distr(1, 6);
+  std::mt19937 mt(seed);
+  std::uniform_int_distribution<> distr_node(min, max);
+  std::uniform_int_distribution<> distr_track(0, track_amnt - 1);
 
   // generate nodes for each train and connect them
   for (auto train = 0; train < train_amnt; train++) {
     // amount of tracks this train will use for now
-    const auto node_amnt = min + (distr(mt) % (max - min));
+    const auto node_amnt = distr_node(mt);
+    std::vector<int> chosen_ids;
 
     for (auto n = 0; n < node_amnt; n++) {
       // choose a random new track that this train will use
-      std::vector<int> chosen_ids;
       int track_id = 0;
       while (true) {
-        track_id = distr(mt) % track_amnt;
+        track_id = distr_track(mt);
         // track must not already be used by this train
         if (!utls::contains(chosen_ids, track_id)) {
           chosen_ids.emplace_back(track_id);
@@ -179,10 +203,8 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
                                 train);
       // connect the node before this one with the new one
       if (n != 0) {
-        graph.nodes_[size - 1].out_.emplace_back(
-            static_cast<ordering_node::id>(size));
-        graph.nodes_[size].in_.emplace_back(
-            static_cast<ordering_node::id>(size - 1));
+        ordering_graph::emplace_edge(graph.nodes_[size - 1],
+                                     graph.nodes_[size]);
       }
     }
   }
@@ -199,14 +221,253 @@ ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
       if (graph.nodes_[first_index].ir_id_ != graph.nodes_[second_index].ir_id_)
         continue;
       // connect first train with problematic second
-      graph.nodes_[first_index].out_.emplace_back(
-          graph.nodes_[second_index].id_);
-      graph.nodes_[second_index].in_.emplace_back(
-          graph.nodes_[first_index].id_);
+      ordering_graph::emplace_edge(graph.nodes_[first_index],
+                                   graph.nodes_[second_index]);
       // to prevent unnecessary edges (will be added transivitely): move
       // firstIndex further
       break;
     }
+  }
+
+  return graph;
+}
+
+ordering_node* ordering_graph::node_by_id(const ordering_node::id id) {
+  auto node = find_if(nodes_.begin(), nodes_.end(),
+                      [id](const ordering_node& n) { return n.id_ == id; });
+
+  if (node == nodes_.end()) {
+    return nullptr;
+  } else {
+    return &(*node);
+  }
+}
+
+/**
+ * Flips a single edge in the graph that orignates at from and end at to. It
+ * does not propagate chages to parallel edges, but changes incoming/outgoing
+ * edges as needed.
+ */
+bool ordering_graph::invert_single_edge(ordering_node& from,
+                                        ordering_node& to) {
+  if (!utls::contains(from.out_, to.id_)) {
+    return false;
+  }
+
+  std::vector<ordering_node::id> from_in, from_out, to_in, to_out;
+
+  // re-oranize the incoming and outgoing edges of to and from
+  for (const ordering_node::id id : from.in_) {
+    auto node = node_by_id(id);
+    // edges ending in from that belong to another train need to be ending in to
+    // after the inversion
+    if (node == nullptr || node->train_id_ == from.train_id_) {
+      from_in.emplace_back(id);
+    } else {
+      to_in.emplace_back(id);
+      // edge added id -> to
+      write_edge(added_edges, id, to.id_);
+      // the out_ vector of the other node in this edge also needs adjusting
+      replace(node->out_.begin(), node->out_.end(), from.id_, to.id_);
+      // edge deleted id -> from
+      write_edge(deleted_edges, id, from.id_);
+    }
+  }
+  for (const ordering_node::id id : from.out_) {
+    // filter out the edge to flip
+    if (id != to.id_) {
+      from_out.emplace_back(id);
+    }
+  }
+  for (const ordering_node::id id : to.in_) {
+    // filter out the edge to flip
+    if (id != from.id_) {
+      to_in.emplace_back(id);
+    }
+  }
+  for (const ordering_node::id id : to.out_) {
+    auto node = node_by_id(id);
+    // edges originating in to that belong to another train need to be
+    // originating in from after the inversion
+    if (node == nullptr || node->train_id_ == to.train_id_) {
+      to_out.emplace_back(id);
+    } else {
+      from_out.emplace_back(id);
+      // edge added from -> id
+      write_edge(added_edges, from.id_, id);
+      // the in_ vector of the other node in this edge also needs adjusting
+      replace(node->in_.begin(), node->in_.end(), to.id_, from.id_);
+      // edge deleted to -> id
+      write_edge(deleted_edges, to.id_, id);
+    }
+  }
+
+  // re-insert the flip edge
+  from_in.emplace_back(to.id_);
+  to_out.emplace_back(from.id_);
+  // edge changed from -> to
+  write_edge(changed_edges, from.id_, to.id_);
+
+  // finalization
+  from.in_ = from_in;
+  from.out_ = from_out;
+  to.in_ = to_in;
+  to.out_ = to_out;
+
+  return true;
+}
+
+/**
+ * Returns the first ordering_node in node.out_ which belongs to the same train
+ * as node. Returns nullptr if no such node exists.
+ */
+ordering_node* ordering_graph::next_train_node(const ordering_node& node) {
+  for (const ordering_node::id id : node.out_) {
+    auto candidate = node_by_id(id);
+    if (candidate != nullptr && node.train_id_ == candidate->train_id_) {
+      return candidate;
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * Returns the first ordering_node in node.in_ which belongs to the same train
+ * as node. Returns nullptr if no such node exists.
+ */
+ordering_node* ordering_graph::prev_train_node(const ordering_node& node) {
+  for (const ordering_node::id id : node.in_) {
+    auto candidate = node_by_id(id);
+    if (candidate != nullptr && node.train_id_ == candidate->train_id_) {
+      return candidate;
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * Flips the edge in the graph that orignates at from and end at to, propagating
+ * changes to parallel edges that need to be flipped as well.
+ */
+string ordering_graph::invert_edge(ordering_node& from, ordering_node& to) {
+  // add writer to document edge changes, additions and deletions in sub-methods
+  StringBuffer c, d, a;
+  changed_edges.Reset(c);
+  deleted_edges.Reset(d);
+  added_edges.Reset(a);
+
+  // changed, deleted and added edges
+  changed_edges.StartArray();
+  deleted_edges.StartArray();
+  added_edges.StartArray();
+
+  if (!invert_single_edge(from, to)) {
+    // if there was no edge to flip, we also don't need to look for parallel
+    // edges.
+    return R"({"a":{},"c":[],"d":[],"a":[]})";
+  }
+
+  // walk the pointers forward along the train until there is no paralell edge
+  // to flip
+  auto from_ptr = next_train_node(*&from);
+  auto to_ptr = next_train_node(*&to);
+  while (from_ptr != nullptr && to_ptr != nullptr &&
+         invert_single_edge(*from_ptr, *to_ptr)) {
+    from_ptr = next_train_node(*from_ptr);
+    to_ptr = next_train_node(*to_ptr);
+  }
+
+  // and walk back the pointers backwards along the train until there is no
+  // parallel edge to flip
+  from_ptr = prev_train_node(*&from);
+  to_ptr = prev_train_node(*&to);
+
+  while (from_ptr != nullptr && to_ptr != nullptr &&
+         invert_single_edge(*from_ptr, *to_ptr)) {
+    from_ptr = prev_train_node(*from_ptr);
+    to_ptr = prev_train_node(*to_ptr);
+  }
+
+  changed_edges.EndArray();
+  deleted_edges.EndArray();
+  added_edges.EndArray();
+
+  std::stringstream result;
+  result << "{\"at\":{},"
+         << "\"c\":" << c.GetString() << ",\"d\":" << d.GetString()
+         << ",\"a\":" << a.GetString() << "}";
+  return result.str();
+}
+
+template <typename Writer>
+void ordering_graph::write_edge(Writer& writer, ordering_node::id from,
+                                ordering_node::id to) {
+  writer.StartArray();
+  writer.String(std::to_string(from).c_str());
+  writer.String(std::to_string(to).c_str());
+  writer.EndArray();
+}
+
+string ordering_graph::to_json() {
+  StringBuffer nodes, edges;
+  nodes_writer.Reset(nodes);
+  edges_writer.Reset(edges);
+
+  nodes_writer.StartArray();
+  edges_writer.StartArray();
+  serialize(nodes_writer, edges_writer);
+  nodes_writer.EndArray();
+  edges_writer.EndArray();
+
+  std::stringstream result;
+  result << R"({"a":{},"n":)" << nodes.GetString() << R"(,"e":)"
+         << edges.GetString() << R"(})";
+  return result.str();
+}
+
+void ordering_graph::emplace_edge(ordering_node& from, ordering_node& to) {
+  from.out_.emplace_back(to.id_);
+  to.in_.emplace_back(from.id_);
+}
+
+template <typename Writer>
+void ordering_graph::serialize(Writer& node_writer, Writer& edge_writer) {
+
+  for (ordering_node& node : nodes_) {
+    node.serialize(node_writer);
+    for (const uint32_t to_id : node.out_) {
+      edge_writer.StartArray();
+
+      edge_writer.String(std::to_string(node.id_).c_str());
+
+      edge_writer.String(std::to_string(to_id).c_str());
+
+      edge_writer.EndArray();
+    }
+  }
+}
+
+ordering_graph from_json(const string& json) {
+  ordering_graph graph;
+
+  Document d;
+  d.Parse(json.c_str());
+
+  // Generate nodes
+  for (const Value& node : d["n"].GetArray()) {
+    graph.nodes_.emplace_back(static_cast<ordering_node::id>(
+                                  std::stoul(node.GetArray()[0].GetString())),
+                              node.GetArray()[1].GetUint(),
+                              node.GetArray()[2].GetUint());
+  }
+
+  // Generate edges
+  for (const Value& edge : d["e"].GetArray()) {
+    auto from = graph.node_by_id(static_cast<ordering_node::id>(
+        std::stoul(edge.GetArray()[0].GetString())));
+    auto to = graph.node_by_id(static_cast<ordering_node::id>(
+        std::stoul(edge.GetArray()[1].GetString())));
+    ordering_graph::emplace_edge(*from, *to);
   }
 
   return graph;
