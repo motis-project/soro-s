@@ -37,6 +37,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.1
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '^1.19.0'
+
+      # ==== GO TESTS ====
+      - name: Run GO Tests
+        run: |
+          cd generate-osm
+          go test ./...
 
       - name: Get deps
         run: ln -s /deps deps
@@ -50,15 +62,22 @@ jobs:
           buildcache -z
           cmake --build build/${{ matrix.config.preset }} --target soro-test
           buildcache -s
+          
+      - name: Install Webclient
+        run: npm clean-install --prefix web/client
 
       # ==== TESTS ====
       - name: Run Tests
         run: ./build/${{ matrix.config.preset }}/soro-test
 
+      - name: Run Webclient Tests
+        run: npm run test --prefix web/client
+
       # ==== WEB BUILD ====
       - name: Build
         run: |
           buildcache -z
+          cmake --build build/${{ matrix.config.preset }} --target soro-client
           cmake --build build/${{ matrix.config.preset }} --target soro-server
           buildcache -s
 

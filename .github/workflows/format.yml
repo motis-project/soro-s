@@ -28,3 +28,21 @@ jobs:
           git status --porcelain
           git diff
           git status --porcelain | xargs -I {} -0 test -z \"{}\"
+
+  linting:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.1
+
+      # ==== WEB LINT ====
+      - name: Install deps
+        run: npm clean-install --prefix web/client
+
+      - name: Run ESLint
+        run: npm run lint:eslint --prefix web/client
+
+      - name: Run Stylelint
+        run: npm run lint:stylelint --prefix web/client

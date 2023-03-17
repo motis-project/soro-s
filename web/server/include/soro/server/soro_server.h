@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
 
 #include "tiles/db/pack_file.h"
 #include "tiles/db/tile_database.h"
@@ -10,6 +11,7 @@
 #include "tiles/util.h"
 
 #include "soro/server/http_server.h"
+#include "soro/server/search_util.h"
 
 namespace soro::server {
 

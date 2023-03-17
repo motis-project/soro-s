@@ -150,8 +150,7 @@ endif ()
 
 # Gets us the soro-server-client target
 set(SORO_SERVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
-add_subdirectory(web/server)
-add_subdirectory(web/client)
+add_subdirectory(web)
 
 # Generate file_paths.h for locating the test resources
 configure_file(test/include/test/file_paths.h.in

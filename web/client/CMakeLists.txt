@@ -1,19 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(soro)
 
-file(GLOB_RECURSE soro-client-files
-        *.html
-        *.css
-        *.js
-        *.ico
-        *.png
-        *.svg
-        *.map)
-
-foreach (file ${soro-client-files})
-    set(path ${file})
-    cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE relative-path)
-    configure_file(${file} ${SORO_SERVER_DIR}/server_resources/${relative-path} COPYONLY)
-endforeach ()
-
-
+add_custom_target(soro-client COMMAND npm install WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(TARGET soro-client POST_BUILD COMMAND npm run build WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(TARGET soro-client POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/dist
+        ${SORO_SERVER_DIR}/server_resources)

@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "soro/server/soro_server.h"
 
 #include <chrono>
@@ -13,8 +15,11 @@
 #include "tiles/parse_tile_url.h"
 #include "tiles/perf_counter.h"
 #include "tiles/util.h"
+#include "soro/utls/string.h"
+
 
 #include "soro/server/http_server.h"
+
 
 namespace soro::server {
 
@@ -175,9 +180,145 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
+
+void serve_search(
+    request_t const& req, response_t& res,
+    const std::unordered_map<
+        std::string, std::unordered_map<osm_type, std::vector<soro::server::osm_object>>>& osm_objects) {
+  namespace rj = rapidjson;
+
+  std::string body;
+
+  auto m_buffer = req.body();
+
+  for (auto seq : m_buffer.data()) {
+      auto* cbuf = boost::asio::buffer_cast<const char*>(seq);
+      body.append(cbuf, boost::asio::buffer_size(seq));
+  }
+
+  rj::Document req_body;
+  req_body.Parse(body.c_str());
+
+  std::string const infra_name = req_body["infrastructure"].GetString();
+  std::string const object_name = req_body["query"].GetString();
+
+  soro::server::search_filter filter;
+  filter.halt_ = true;
+  filter.station_ = true;
+
+  if (req_body.HasMember("options")) {
+      auto const options = req_body["options"].GetObject();
+      if (options.HasMember("includedTypes")) {
+          auto const include_types = options["includedTypes"].GetObject();
+          filter.halt_ = include_types["hlt"].GetBool();
+          filter.station_ = include_types["station"].GetBool();
+          filter.main_signal_ = include_types["ms"].GetBool();
+      }
+  }
+
+  std::vector<osm_object> info;
+  if (osm_objects.contains(infra_name)) {
+      info = get_object_info(osm_objects.at(infra_name), object_name, filter);
+  }
+ 
+  rapidjson::Document ret;
+  ret.SetArray();
+
+  for (const auto& elem : info) {
+      rj::Value pos;
+      pos.SetObject();
+      pos.AddMember("lat", elem.lat_, ret.GetAllocator());
+      pos.AddMember("lon", elem.lon_, ret.GetAllocator());
+
+
+      rj::Value name;
+      name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()), ret.GetAllocator());
+
+      auto const type_str = soro::server::map_type(elem.type_);
+      rj::Value type;
+      type.SetString(type_str.c_str(), static_cast<unsigned int>(type_str.length()), ret.GetAllocator());
+      
+      rj::Value entry;
+      entry.SetObject();
+      entry.AddMember("name", name, ret.GetAllocator());
+      entry.AddMember("type", type, ret.GetAllocator());
+      entry.AddMember("position", pos, ret.GetAllocator());
+
+      ret.PushBack(entry, ret.GetAllocator());
+  }
+
+  rapidjson::StringBuffer buffer;
+
+  buffer.Clear();
+
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  ret.Accept(writer);
+
+  auto const ret_body = buffer.GetString();
+  res.body() = ret_body;
+  res.result(http::status::ok);
+}
+
+
+std::unordered_map<osm_type, std::vector<osm_object>> parse_search_file(
+    const fs::path& file) {
+
+    std::ifstream const ifs(file.c_str());
+    std::stringstream buffer;
+    buffer << ifs.rdbuf();
+
+    std::string const s = buffer.str();
+
+    rapidjson::Document doc;
+    doc.Parse(s.c_str());
+
+    std::unordered_map<osm_type, std::vector<osm_object>> ret;
+
+    for (auto elem = doc.MemberBegin(); elem != doc.MemberEnd(); ++elem) {
+      auto const key = std::string(elem->name.GetString());
+
+      osm_type type = osm_type::UNDEFINED;
+      if (key == "stations")
+          type = osm_type::STATION;
+      else if (key == "halts")
+          type = osm_type::HALT;
+      else if (key == "main_signals")
+          type = osm_type::MAIN_SIGNAL;
+
+      auto const& val = elem->value.GetObject();
+      for (auto entry = val.MemberBegin(); entry != val.MemberEnd(); ++entry) {
+          auto const& v = entry->value.GetObject();
+         
+          osm_object obj;
+
+          obj.lat_ = std::stod(v["lat"].GetString());
+          obj.lon_ = std::stod(v["lon"].GetString());
+          obj.name_ = v["name"].GetString();
+          obj.type_ = type;
+
+          ret[type].push_back(obj);
+      }
+    }
+
+    return ret;
+
+}
+
+
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test) {
   initialize_serve_contexts(contexts_, server_resource_dir);
+
+
+  std::unordered_map<std::string, std::unordered_map<osm_type, std::vector<osm_object>>> search_indices;
+
+  const auto json_path = server_resource_dir / "resources" / "search_indices";
+  if (fs::exists(json_path)) {
+      for (auto&& dir_entry : fs::directory_iterator{json_path}) {
+          search_indices[dir_entry.path().filename().replace_extension().string()] = parse_search_file(dir_entry.path());
+      }
+  }
+
 
   serve_forever(
       address, port,
@@ -193,6 +334,7 @@ server::server(std::string const& address, port_t const port,
 
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
+        bool const should_send_pos = url.find("/search") != std::string::npos;
 
         switch (req.method()) {
           case http::verb::options: {
@@ -213,6 +355,11 @@ server::server(std::string const& address, port_t const port,
             } else {
               serve_file(url, server_resource_dir, res);
             }
+            break;
+          }
+          case http::verb::post: {
+            if (should_send_pos) serve_search(req, res, search_indices);
+
             break;
           }
 
