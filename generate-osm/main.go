@@ -24,6 +24,7 @@ func main() {
 	var mapDB bool
 	var inputFile string
 	var outputFile string
+	var additionalOsmFile string
 
 	app := &cli.App{
 		Name:  "generate-osm",
@@ -55,9 +56,15 @@ func main() {
 				Usage:       "The output file to write result to as XML file",
 				Destination: &outputFile,
 			},
+			&cli.StringFlag{
+				Name:        "additional-osm",
+				Aliases:     []string{"addOsm"},
+				Usage:       "With this flag you can add additional OSM data to the output file. All db data will be added to the additional OSM file and no other data will be lost.",
+				Destination: &additionalOsmFile,
+			},
 		},
 		Action: func(cCtx *cli.Context) error {
-			if err := generateOsm(generateLines, mapDB, inputFile, outputFile); err != nil {
+			if err := generateOsm(generateLines, mapDB, inputFile, outputFile, additionalOsmFile); err != nil {
 				return err
 			}
 
@@ -70,7 +77,7 @@ func main() {
 	}
 }
 
-func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile string) error {
+func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile string, additionalOsmFile string) error {
 	if !filepath.IsAbs(inputFile) {
 		inputFile, _ = filepath.Abs(inputFile)
 	}
@@ -169,11 +176,18 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	sortedOsmData := osmUtils.SortOsm(osmData)
 
 	if mapDB {
-		outputOSM, err := insertOsm(sortedOsmData, outputFile, maxNewNodeID)
-		if err != nil {
-			return errors.Wrap(err, "failed inserting mapped DB data")
+		var additionalOsm osmUtils.Osm
+		if additionalOsmFile != "" {
+			additionalOsm, err = insertOsm(sortedOsmData, additionalOsmFile, maxNewNodeID)
+			if err != nil {
+				return errors.Wrap(err, "failed adding db data to the additional OSM data")
+			}
+
 		}
-		outputFile = outputFile[:len(outputFile)-4] + "DB.xml"
+		outputOsm := sortedOsmData
+		if additionalOsmFile != "" {
+			outputOsm = additionalOsm
+		}
 
 		stationsList, stationHaltOsm, err := osmUtils.GenerateStations(inputFile, tempFolderPath)
 		if err != nil {
@@ -186,18 +200,17 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			return errors.Wrap(err, "failed writing stations JSON")
 		}
 
-		for i, node := range outputOSM.Node {
+		for i, node := range outputOsm.Node {
 			value, found := osmUtils.FindTagOnNode(node, "railway")
 
 			if found == nil {
 				if value == "station" || value == "halt" {
-					outputOSM.Node = append(outputOSM.Node[:i], outputOSM.Node[i+1:]...)
+					outputOsm.Node = append(outputOsm.Node[:i], outputOsm.Node[i+1:]...)
 				}
 			}
 		}
-		outputOSM.Node = append(outputOSM.Node, stationHaltOsm.Node...)
-
-		sortedOsmData = osmUtils.SortOsm(outputOSM)
+		outputOsm.Node = append(outputOsm.Node, stationHaltOsm.Node...)
+		sortedOsmData = osmUtils.SortOsm(outputOsm)
 	}
 
 	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
@@ -212,21 +225,21 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	return nil
 }
 
-func insertOsm(modifiedOsm osmUtils.Osm, outputFilePath string, maxNewNodeID int) (osmUtils.Osm, error) {
-	outputData, err := os.ReadFile(outputFilePath)
+func insertOsm(modifiedOsm osmUtils.Osm, additionalOsmFile string, maxNewNodeID int) (osmUtils.Osm, error) {
+	additionalOsmData, err := os.ReadFile(additionalOsmFile)
 	if err != nil {
-		return osmUtils.Osm{}, errors.Wrap(err, "failed reading output file "+outputFilePath)
+		return osmUtils.Osm{}, errors.Wrap(err, "failed reading additional osm file "+additionalOsmFile)
 	}
-	var outputOSM = osmUtils.Osm{}
-	err = xml.Unmarshal(outputData, &outputOSM)
+	var additionalOsm = osmUtils.Osm{}
+	err = xml.Unmarshal(additionalOsmData, &additionalOsm)
 	if err != nil {
-		return osmUtils.Osm{}, errors.Wrap(err, "failed unmarshalling output file "+outputFilePath)
+		return osmUtils.Osm{}, errors.Wrap(err, "failed unmarshalling additional osm file "+additionalOsmFile)
 	}
 
 	newNodes := make(map[string]bool)
 
 	for _, modifiedWay := range modifiedOsm.Way {
-		for _, outputWay := range outputOSM.Way {
+		for _, outputWay := range additionalOsm.Way {
 			if modifiedWay.Id == outputWay.Id {
 				for _, node := range modifiedWay.Nd {
 					nodeID, _ := strconv.Atoi(node.Ref)
@@ -244,9 +257,9 @@ func insertOsm(modifiedOsm osmUtils.Osm, outputFilePath string, maxNewNodeID int
 		if err != nil {
 			return osmUtils.Osm{}, errors.Wrap(err, "failed to find node "+nodeID)
 		}
-		outputOSM.Node = append(outputOSM.Node, node)
+		additionalOsm.Node = append(additionalOsm.Node, node)
 	}
-	return outputOSM, nil
+	return additionalOsm, nil
 }
 
 func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) error {
