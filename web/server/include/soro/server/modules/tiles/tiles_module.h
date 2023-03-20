@@ -2,14 +2,13 @@
 
 #include <filesystem>
 
+// for tiles::render_ctx
 #include "tiles/get_tile.h"
 
 #include "net/web_server/query_router.h"
 #include "net/web_server/web_server.h"
 
 #include "soro/server/modules/infrastructure/infrastructure_module.h"
-
-namespace fs = std::filesystem;
 
 namespace soro::server {
 
@@ -35,6 +34,6 @@ struct tiles_module {
 };
 
 tiles_module get_tile_module(server_settings const& settings,
-                             infrastructure_module const& infra_state);
+                             infrastructure_module const& infra_m);
 
 }  // namespace soro::server
