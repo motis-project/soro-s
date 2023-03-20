@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "utl/logging.h"
 #include "utl/timer.h"

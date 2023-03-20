@@ -38,10 +38,6 @@
                         id="addOrderingGraphComponentButton">
                     Ordering Graph
                 </button>
-                <button class="matter-button-contained window-button"
-                        id="addExclusionComponentButton">
-                    Exclusion
-                </button>
             </div>
             <div class="data-selects">
                 <div class="material-select data-select">
@@ -113,9 +109,6 @@
     import {
         OrderingGraphComponent
     } from "./components/ordering_graph/OrderingGraphComponent.js"
-    import {
-        ExclusionComponent
-    } from "./components/exclusion/ExclusionComponent.js";
     import {TimetableManager} from "./model/TimetableManager.js";
     import {getSimulationComponent} from "./utl/goldenLayoutHelper.js";
 
@@ -159,7 +152,6 @@
     window.goldenLayout.registerComponentConstructor('SimulationComponent', SimulationComponent);
     window.goldenLayout.registerComponentConstructor('TimetableComponent', TimetableComponent);
     window.goldenLayout.registerComponentConstructor('OrderingGraphComponent', OrderingGraphComponent);
-    window.goldenLayout.registerComponentConstructor('ExclusionComponent', ExclusionComponent);
     window.goldenLayout.loadLayout(initLayout);
 
     window.infrastructureManager = new InfrastructureManager();
@@ -183,11 +175,6 @@
     const addOrderingGraphComponent = document.getElementById('addOrderingGraphComponentButton');
     addOrderingGraphComponent.addEventListener('click', () => {
         window.goldenLayout.addComponent('OrderingGraphComponent', undefined, 'Ordering Graph');
-    });
-
-    const addExclusionComponent = document.getElementById('addExclusionComponentButton');
-    addExclusionComponent.addEventListener('click', () => {
-        window.goldenLayout.addComponent('ExclusionComponent', undefined, 'Exclusion');
     });
 
     const simulateButton = document.getElementById('simulateButton');
