@@ -15,7 +15,7 @@
 
 namespace soro::server {
 
-struct infra_state {
+struct infrastructure_module {
   auto all() const {
     return infrastructures_ | ranges::views::values |
            ranges::views::transform([](auto&& p) -> auto const& { return *p; });
@@ -49,6 +49,6 @@ struct infra_state {
       infrastructures_;
 };
 
-infra_state get_infra_state(server_settings const& s);
+infrastructure_module get_infrastructure_module(server_settings const& s);
 
 }  // namespace soro::server

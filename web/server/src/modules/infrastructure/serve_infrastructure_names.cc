@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "range/v3/view/map.hpp"
 
@@ -9,7 +9,7 @@
 
 namespace soro::server {
 
-net::web_server::string_res_t infra_state::serve_infrastructure_names(
+net::web_server::string_res_t infrastructure_module::serve_infrastructure_names(
     net::query_router::route_request const& req) const {
   json_archive archive;
   archive.add()(cereal::make_nvp("infrastructures",

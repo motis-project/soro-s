@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "net/web_server/responses.h"
 
@@ -38,7 +38,7 @@ void add_data_to_cereal_archive(Archive& archive, element_data_t const& ed) {
       }});
 }
 
-net::web_server::string_res_t infra_state::serve_element(
+net::web_server::string_res_t infrastructure_module::serve_element(
     net::query_router::route_request const& req) const {
   auto const infra = get_infra(req.path_params_.front());
   if (!infra.has_value()) {

@@ -1,4 +1,4 @@
-#include "soro/server/modules/tiles/tiles.h"
+#include "soro/server/modules/tiles/tiles_module.h"
 
 #include "net/web_server/responses.h"
 
@@ -13,7 +13,7 @@
 
 namespace soro::server {
 
-net::web_server::string_res_t tiles::serve_tile(
+net::web_server::string_res_t tiles_module::serve_tile(
     net::query_router::route_request const& req) {
 
   auto const sc_it = tile_contexts_.find(req.path_params_.front());
@@ -76,13 +76,13 @@ fs::path create_tiles_db(server_settings const& settings,
   return tile_db_path;
 }
 
-tiles get_tile_module(server_settings const& settings,
-                      infra_state const& infra_state) {
+tiles_module get_tile_module(server_settings const& settings,
+                             infrastructure_module const& infra_m) {
   utl::scoped_timer const timer("creating tile state");
 
-  tiles result;
+  tiles_module result;
 
-  for (auto const& infra : infra_state.all()) {
+  for (auto const& infra : infra_m.all()) {
     auto const osm_path = create_osm_file(settings, infra);
     auto const tile_db_path = create_tiles_db(settings, infra, osm_path);
 

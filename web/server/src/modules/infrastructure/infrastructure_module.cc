@@ -9,7 +9,7 @@ using namespace soro::infra;
 
 namespace soro::server {
 
-infra::infrastructure::optional_ptr infra_state::get_infra(
+infra::infrastructure::optional_ptr infrastructure_module::get_infra(
     std::string_view const name) const {
 
   if (auto const infra_it = infrastructures_.find(name);
@@ -52,12 +52,13 @@ std::vector<fs::path> get_infrastructure_todo_list(
   return infra_todo_list;
 }
 
-infra_state get_infra_state(soro::server::server_settings const& s) {
+infrastructure_module get_infrastructure_module(
+    soro::server::server_settings const& s) {
   using namespace soro::infra;
 
   utl::scoped_timer const timer("creating infrastructure state");
 
-  infra_state result;
+  infrastructure_module result;
 
   auto const infra_todo_list = get_infrastructure_todo_list(s);
   for (auto const& infra_item : infra_todo_list) {

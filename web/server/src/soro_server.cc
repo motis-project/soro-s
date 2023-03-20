@@ -28,7 +28,7 @@ void soro_server::set_up_routes() {
   router_.route("GET", R"(/infrastructure/$)",
                 [&](net::query_router::route_request const& req,
                     web_server::http_res_cb_t const& cb, bool const) {
-                  cb(infra_state_.serve_infrastructure_names(req));
+                  cb(infrastructure_module_.serve_infrastructure_names(req));
                 });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/tiles/{int}/{int}/{int}.mvt
@@ -37,53 +37,52 @@ void soro_server::set_up_routes() {
       R"(/infrastructure\/([a-zA-Z0-9_-]+)\/tiles\/(\d+)\/(\d+)\/(\d+).mvt)",
       [&](net::query_router::route_request const& req,
           web_server::http_res_cb_t const& cb,
-          bool const) { cb(tiles_.serve_tile(req)); });
+          bool const) { cb(tiles_module_.serve_tile(req)); });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/stations/
   router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/stations/$)",
                 [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb,
-                    bool const) { cb(infra_state_.serve_station_names(req)); });
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_station_names(req));
+                });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/stations/{id}
   router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/stations/(\d+)$)",
                 [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb,
-                    bool const) { cb(infra_state_.serve_station(req)); });
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_station(req));
+                });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/station_routes/{id}
   router_.route("GET",
                 R"(/infrastructure\/([a-zA-Z0-9_-]+)\/station_routes/(\d+)$)",
                 [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb,
-                    bool const) { cb(infra_state_.serve_station_route(req)); });
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_station_route(req));
+                });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/interlocking_routes/{id}
   router_.route(
       "GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/interlocking_routes/(\d+)$)",
       [&](net::query_router::route_request const& req,
-          web_server::http_res_cb_t const& cb,
-          bool const) { cb(infra_state_.serve_interlocking_route(req)); });
-
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/exclusion_sets/
-  router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/exclusion_sets/$)",
-                [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb, bool const) {
-                  cb(infra_state_.serve_exclusion_sets(req));
-                });
+          web_server::http_res_cb_t const& cb, bool const) {
+        cb(infrastructure_module_.serve_interlocking_route(req));
+      });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/exclusion_sets/{id}
   router_.route("GET",
                 R"(/infrastructure\/([a-zA-Z0-9_-]+)\/exclusion_sets/(\d+)$)",
                 [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb,
-                    bool const) { cb(infra_state_.serve_exclusion_set(req)); });
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_exclusion_set(req));
+                });
 
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/element/{id}
   router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/element/(\d+)$)",
                 [&](net::query_router::route_request const& req,
-                    web_server::http_res_cb_t const& cb,
-                    bool const) { cb(infra_state_.serve_element(req)); });
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_element(req));
+                });
 
   // if nothing matches: match all and try to serve static file
   router_.route("GET", ".*",
@@ -98,8 +97,8 @@ void soro_server::set_up_routes() {
 }
 
 soro_server::soro_server(server_settings const& settings) {
-  infra_state_ = get_infra_state(settings);
-  tiles_ = get_tile_module(settings, infra_state_);
+  infrastructure_module_ = get_infrastructure_module(settings);
+  tiles_module_ = get_tile_module(settings, infrastructure_module_);
 
   boost::asio::io_context ioc;
   net::web_server serv{ioc};

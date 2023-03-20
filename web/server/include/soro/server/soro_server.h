@@ -2,8 +2,8 @@
 
 #include "net/web_server/query_router.h"
 
-#include "soro/server/modules/infrastructure/infrastructure.h"
-#include "soro/server/modules/tiles/tiles.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
+#include "soro/server/modules/tiles/tiles_module.h"
 #include "soro/server/server_settings.h"
 
 namespace soro::server {
@@ -16,8 +16,8 @@ private:
 
   net::query_router router_;
 
-  infra_state infra_state_;
-  tiles tiles_;
+  infrastructure_module infrastructure_module_;
+  tiles_module tiles_module_;
 };
 
 }  // namespace soro::server

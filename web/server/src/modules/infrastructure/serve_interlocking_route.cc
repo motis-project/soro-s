@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "range/v3/view/transform.hpp"
 
@@ -10,7 +10,7 @@
 
 namespace soro::server {
 
-net::web_server::string_res_t infra_state::serve_interlocking_route(
+net::web_server::string_res_t infrastructure_module::serve_interlocking_route(
     net::query_router::route_request const& req) const {
   using namespace soro::infra;
 

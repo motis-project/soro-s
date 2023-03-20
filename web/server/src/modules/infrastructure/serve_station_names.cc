@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "cereal/types/vector.hpp"
 
@@ -17,7 +17,7 @@ void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive, station::ptr const s) {
 
 namespace soro::server {
 
-net::web_server::string_res_t infra_state::serve_station_names(
+net::web_server::string_res_t infrastructure_module::serve_station_names(
     net::query_router::route_request const& req) const {
 
   auto const infra = get_infra(req.path_params_.front());

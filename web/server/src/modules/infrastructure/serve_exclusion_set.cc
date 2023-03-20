@@ -1,4 +1,4 @@
-#include "soro/server/modules/infrastructure/infrastructure.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 #include "cereal/types/vector.hpp"
 
@@ -9,7 +9,7 @@
 
 namespace soro::server {
 
-net::web_server::string_res_t infra_state::serve_exclusion_set(
+net::web_server::string_res_t infrastructure_module::serve_exclusion_set(
     net::query_router::route_request const& req) const {
   using namespace soro::infra;
 

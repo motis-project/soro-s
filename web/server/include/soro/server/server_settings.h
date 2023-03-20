@@ -7,7 +7,7 @@ namespace fs = std::filesystem;
 namespace soro::server {
 
 // top level directory for all server resources, should be created by cmake
-const fs::path SERVER_RESOURCE_DIR("./server_resources/");
+const fs::path SERVER_RESOURCE_DIR("server_resources/");
 // DS100 -> GPS mapping
 const fs::path COORD_FILE = SERVER_RESOURCE_DIR / "misc" / "btrs_geo.csv";
 // OSM profile.lua
