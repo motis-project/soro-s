@@ -11,6 +11,8 @@ namespace soro::server {
 struct soro_server {
   explicit soro_server(server_settings const& settings);
 
+  void run(server_settings const& settings);
+
 private:
   void set_up_routes();
 

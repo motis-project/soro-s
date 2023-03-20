@@ -52,5 +52,6 @@ int main(int argc, char const** argv) {
   fs::create_directory(SERVER_OSM_DIR);
   fs::create_directory(SERVER_TMP_DIR);
 
-  soro_server const server(s);
+  soro_server server(s);
+  server.run(s);
 }

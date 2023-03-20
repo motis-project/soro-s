@@ -96,14 +96,16 @@ void soro_server::set_up_routes() {
                 });
 }
 
-soro_server::soro_server(server_settings const& settings) {
-  infrastructure_module_ = get_infrastructure_module(settings);
-  tiles_module_ = get_tile_module(settings, infrastructure_module_);
+soro_server::soro_server(server_settings const& settings)
+    : infrastructure_module_{get_infrastructure_module(settings)},
+      tiles_module_{get_tile_module(settings, infrastructure_module_)} {
+  set_up_routes();
+}
 
+void soro_server::run(server_settings const& settings) {
   boost::asio::io_context ioc;
   net::web_server serv{ioc};
 
-  set_up_routes();
   serv.on_http_request([&](web_server::http_req_t const& rq,
                            web_server::http_res_cb_t const& cb,
                            bool const ssl) {
