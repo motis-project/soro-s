@@ -92,6 +92,7 @@ get_infrastructure_scenarios(infra::infrastructure_options const& infra_opts) {
 // --- timetable files ---
 
 auto const FOLLOW_FOLDER = BASE_PATH / "timetable/follow/";
+auto const CROSS_FOLDER = BASE_PATH / "timetable/cross/";
 auto const OVERTAKE_FOLDER = BASE_PATH / "timetable/overtake/";
 auto const DE_KSS_FOLDER = BASE_PATH / "timetable/de_kss";
 
@@ -99,6 +100,7 @@ auto const DE_KSS_FOLDER = BASE_PATH / "timetable/de_kss";
 tt::timetable_options const OVERTAKE_OPTS = {.timetable_path_ =
                                                  OVERTAKE_FOLDER};
 tt::timetable_options const FOLLOW_OPTS = {.timetable_path_ = FOLLOW_FOLDER};
+tt::timetable_options const CROSS_OPTS = {.timetable_path_ = CROSS_FOLDER};
 tt::timetable_options const DE_KSS_OPTS = {.timetable_path_ = DE_KSS_FOLDER};
 
 // --- Test Scenarios ---
