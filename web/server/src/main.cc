@@ -25,20 +25,24 @@ int main(int argc, char const** argv) {
   }
 
   if (!fs::exists(SERVER_RESOURCE_DIR)) {
-    uLOG(utl::err) << "CMake should have created " << SERVER_RESOURCE_DIR
-                   << ", but it does not exist";
+    uLOG(utl::err) << "cmake should have created "
+                   << absolute(SERVER_RESOURCE_DIR)
+                   << ", but it does not exist for binary location "
+                   << absolute(fs::current_path());
     return 1;
   }
 
   if (!fs::exists(COORD_FILE)) {
-    uLOG(utl::err) << "cmake should have created " << COORD_FILE
-                   << ", but it does not exist";
+    uLOG(utl::err) << "cmake should have created " << fs::absolute(COORD_FILE)
+                   << ", but it does not exist for binary location "
+                   << fs::absolute(fs::current_path());
     return 1;
   }
 
   if (!fs::exists(PROFILE_FILE)) {
-    uLOG(utl::err) << "cmake should have created " << PROFILE_FILE
-                   << ", but it does not exist";
+    uLOG(utl::err) << "cmake should have created " << fs::absolute(PROFILE_FILE)
+                   << ", but it does not exist for binary location "
+                   << fs::absolute(fs::current_path());
     return 1;
   }
 
