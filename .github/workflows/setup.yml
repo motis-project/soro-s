@@ -1,4 +1,4 @@
-name: setting up environment
+name: 'setup'
 
 on:
   push:
