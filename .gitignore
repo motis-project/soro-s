@@ -11,6 +11,8 @@
 .pkg.mutex
 /CMakeSettings.json
 resources/infrastructure/de_iss
+resources/de_iss
 resources/timetable/de_kss
+resources/de_kss
 # Ignore the file produced by cmake
 test/include/test/file_paths.h

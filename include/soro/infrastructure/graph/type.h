@@ -36,6 +36,7 @@ enum class type : type_id {
   ETCS_END,
   ETCS_BLOCK_SIGN,
   FORCED_HALT,
+  META,
   HALT,
   // undirected track elements
   TUNNEL,

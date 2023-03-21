@@ -4,6 +4,7 @@
 
 #include "soro/utls/graph/traversal.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/all_of.h"
 #include "soro/utls/unixtime.h"
 
 #include "soro/infrastructure/interlocking/interlocking_route.h"
@@ -23,7 +24,7 @@ bool sim_node::finished(simulation_result const& sr) const {
 }
 
 bool sim_node::ready(sim_graph const& sg, simulation_result const& sr) const {
-  return utls::all_of(this->in(),
+  return utls::all_of(in(),
                       [&](auto&& in) { return sg.nodes_[in].finished(sr); });
 }
 
@@ -146,41 +147,6 @@ sim_graph::sim_graph(infra::infrastructure const& infra,
   //  }
 
   //  utl::verify(!cycle_detection(*this), "Found cycle in sim_graph!");
-}
-
-bool sim_graph::has_cycle() const {
-  std::vector<bool> visited(nodes_.size());
-  std::vector<bool> finished(nodes_.size());
-
-  auto const cycle_detection = [&](sim_node::id const n_outer) {
-    auto const cycle_detection_impl = [&](sim_node::id const n,
-                                          auto&& impl) -> bool {
-      if (finished[n]) {
-        return false;
-      }
-
-      if (visited[n]) {
-        return true;
-      }
-
-      visited[n] = true;
-
-      for (auto const& neighbour : nodes_[n].out()) {
-        if (impl(neighbour, impl)) {
-          return true;
-        }
-      }
-
-      finished[n] = true;
-
-      return false;
-    };
-
-    return cycle_detection_impl(n_outer, cycle_detection_impl);
-  };
-
-  return utls::any_of(train_to_sim_nodes_,
-                      [&](auto&& pair) { return cycle_detection(pair.first); });
 }
 
 bool sim_graph::path_exists(sim_node::id const from,

@@ -1,10 +1,11 @@
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
 
-#include "soro/utls/algo/sort_and_intersect.h"
-
 #include "utl/concat.h"
-#include "utl/erase_duplicates.h"
 #include "utl/logging.h"
+
+#include "soro/utls/algo/sort_and_intersect.h"
+#include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/find_position.h"
 
 namespace soro::tt {
 
@@ -67,7 +68,7 @@ auto get_prefix_length(interlocking_route const& interlocking_route,
 
 auto get_longest_prefix_interlocking_routes(
     soro::vector<interlocking_route::id> const& candidates,
-    interlocking_subsystem const& irs, stop_sequence const& stop_sequence,
+    interlocking const& irs, stop_sequence const& stop_sequence,
     std::size_t const sr_offset) {
 
   std::size_t current_longset_prefix = 0;
@@ -243,7 +244,8 @@ get_interlocking_route_path(stop_sequence const& stop_sequence,
 
   while (!ss_cover.covers(stop_sequence, freight, infra)) {
     auto const candidates = get_candidates(
-        stop_sequence, ss_cover, current_ir->last_node(infra), freight, infra);
+        stop_sequence, ss_cover,
+        node::optional_ptr(current_ir->last_node(infra)), freight, infra);
 
     auto const [longest_prefix_routes, prefix_length] =
         get_longest_prefix_interlocking_routes(candidates, irs, stop_sequence,

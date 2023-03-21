@@ -1,6 +1,7 @@
 #include "soro/timetable/train.h"
 
 #include "soro/infrastructure/path/length.h"
+#include "soro/utls/std_wrapper/count_if.h"
 
 namespace soro::tt {
 
@@ -9,19 +10,52 @@ using namespace soro::infra;
 
 train_node::train_node(soro::infra::route_node const& rn,
                        sequence_point::optional_ptr sp)
-    : infra::route_node{rn}, sequence_point_{sp} {}
+    : infra::route_node{rn},
+      sequence_point_{sp.has_value()
+                          ? sequence_point::optional_ptr(*sp)
+                          : sequence_point::optional_ptr(std::nullopt)} {}
 
 bool train_node::omitted() const {
   return omitted_ || (node_->is(type::HALT) && !sequence_point_.has_value());
 }
 
-bool is_halt(utls::unixtime arrival, utls::unixtime departure) {
-  return arrival != departure &&
-         (arrival != utls::INVALID_TIME || departure != utls::INVALID_TIME);
+train::iterator::iterator(train const* train, interval const& interval,
+                          bool const end)
+    : train_{train},
+      bitfield_it_(end ? train->service_days_.to(interval.end_)
+                       : train->service_days_.from(interval.start_)),
+      interval_{interval} {
+  advance();
 }
 
-bool stop_time::is_halt() const noexcept {
-  return soro::tt::is_halt(arrival_, departure_);
+void train::iterator::advance() {
+  while (bitfield_it_ != std::end(train_->service_days_) &&
+         *bitfield_it_ <= interval_.end_ &&
+         !interval_.overlaps(train_->event_interval(*bitfield_it_))) {
+    ++bitfield_it_;
+  }
+}
+
+train::iterator& train::iterator::operator++() {
+  utls::expect(bitfield_it_ != std::end(train_->service_days_),
+               "incrementing end bitfield iterator");
+  ++bitfield_it_;
+  advance();
+  return *this;
+}
+
+train::iterator::value_type train::iterator::operator*() const {
+  return absolute_time{*bitfield_it_};
+}
+
+utls::it_range<train::iterator> train::departures(
+    interval const& interval) const {
+  return utls::make_range(train::iterator{this, interval, false},
+                          train::iterator{this, interval, true});
+}
+
+utls::it_range<train::iterator> train::departures() const {
+  return departures(interval{});
 }
 
 FreightTrain train::freight() const { return this->physics_.freight(); }
@@ -41,9 +75,42 @@ relative_time train::first_departure() const {
   return result;
 }
 
+relative_time train::last_arrival() const {
+  auto const result = sequence_points_.back().arrival_;
+  utls::sassert(valid(result));
+  return result;
+}
+
+interval train::event_interval(absolute_time const midnight) const {
+  utls::sasserts([&]() {
+    auto const& floored = sc::floor<days>(midnight);
+    utls::sassert(floored == midnight, "time point {} not midnight", midnight);
+    utls::sassert(
+        service_days_.at(
+            sc::time_point_cast<bitfield::anchor_time::duration>(midnight)),
+        "midnight value {} is not set in service day bitfield", midnight);
+  });
+
+  return {.start_ = relative_to_absolute(midnight, first_departure()),
+          .end_ = relative_to_absolute(midnight, last_arrival())};
+}
+
 std::size_t train::total_halts() const {
   return utls::count_if(sequence_points_,
                         [](auto&& sp) { return sp.is_halt(); });
+}
+
+std::size_t train::trip_count() const { return service_days_.count(); }
+
+std::vector<train::trip> train::trips() const {
+  std::vector<train::trip> result;
+  result.reserve(trip_count());
+
+  for (auto const anchor : departures()) {
+    result.emplace_back(trip{.train_id_ = id_, .anchor_ = anchor});
+  }
+
+  return result;
 }
 
 bool train::effected_by(speed_limit const& spl) const {
@@ -168,7 +235,8 @@ utls::recursive_generator<train_node> train::iterate(
     if (sp_idx < sequence_points_.size() &&
         *sequence_points_[sp_idx].get_node(freight(), infra) == rn.node_) {
 
-      co_yield train_node(rn, {&sequence_points_[sp_idx]});
+      co_yield train_node(
+          rn, sequence_point::optional_ptr(&sequence_points_[sp_idx]));
       ++sp_idx;
     } else {
       co_yield train_node(rn, {});

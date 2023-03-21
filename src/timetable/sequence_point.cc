@@ -49,9 +49,9 @@ node::optional_idx sequence_point::get_node_idx(
 node::optional_ptr sequence_point::get_node(FreightTrain const freight,
                                             infrastructure const& infra) const {
   auto const sr = infra->station_routes_[station_route_];
-  return this->get_node_idx(freight, infra).transform([&](auto&& idx) {
-    return sr->nodes(idx);
-  });
+  auto const node_idx = get_node_idx(freight, infra);
+  return node_idx.has_value() ? node::optional_ptr(sr->nodes(*node_idx))
+                              : node::optional_ptr(std::nullopt);
 }
 
 }  // namespace soro::tt

@@ -21,12 +21,14 @@ struct sub_path {
 
 struct interlocking_route {
   using id = uint32_t;
+  using ids = soro::vector<id>;
   using ptr = soro::ptr<interlocking_route>;
   using sr_offset = uint8_t;
 
   static constexpr id INVALID = std::numeric_limits<id>::max();
   static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
+  bool static valid_end(type const t);
   type_set static valid_ends();
 
   bool operator==(interlocking_route const& o) const;
@@ -34,7 +36,7 @@ struct interlocking_route {
   bool follows(interlocking_route const& other,
                infrastructure const& infra) const;
 
-  std::vector<element_ptr> elements(infrastructure const&) const;
+  std::vector<element::ptr> elements(infrastructure const&) const;
 
   node::idx size(infrastructure const& infra) const;
 
@@ -56,6 +58,9 @@ struct interlocking_route {
 
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
+
+  bool starts_on_section(infrastructure const&) const;
+  bool ends_on_section(infrastructure const&) const;
 
   utls::recursive_generator<route_node> from_to(station_route::id, node::idx,
                                                 station_route::id, node::idx,
@@ -83,6 +88,5 @@ struct interlocking_route {
 
 // shorthand aliases
 using ir_id = interlocking_route::id;
-using ir_ptr = interlocking_route::ptr;
 
 }  // namespace soro::infra

@@ -42,19 +42,19 @@ regulatory_station_data parse_regulatory_stations(
 
 using line_type_key = uint32_t;
 
-static const std::map<line_type_key, bool> HAS_SIGNALLING = {
+static const soro::map<line_type_key, bool> HAS_SIGNALLING = {
     {1, true},  {2, true},  {3, false},  {6, true},   {8, true},
     {9, true},  {12, true}, {13, false}, {14, false}, {15, true},
     {18, true}, {20, true}, {21, true},  {23, true},  {24, false},
 };
 
-static const std::map<line_type_key, bool> HAS_LZB = {
+static const soro::map<line_type_key, bool> HAS_LZB = {
     {1, false},  {2, true},   {3, true},   {6, false},  {8, false},
     {9, false},  {12, false}, {13, false}, {14, false}, {15, false},
     {18, false}, {20, false}, {21, false}, {23, false}, {24, false},
 };
 
-static const std::map<line_type_key, bool> HAS_ETCS = {
+static const soro::map<line_type_key, bool> HAS_ETCS = {
     {1, false}, {2, false},  {3, false},  {6, false},  {8, true},
     {9, true},  {12, true},  {13, true},  {14, false}, {15, false},
     {18, true}, {20, false}, {21, false}, {23, true},  {24, false},

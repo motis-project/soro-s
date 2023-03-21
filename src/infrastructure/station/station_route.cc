@@ -5,6 +5,7 @@
 
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/find_if_position.h"
 
 namespace soro::infra {
 
@@ -92,12 +93,14 @@ node::optional_idx station_route::get_halt_idx(
 node::optional_ptr station_route::get_halt_node(
     rs::FreightTrain const f) const {
   auto const opt_idx = get_halt_idx(f);
-  return opt_idx.transform([&](node::idx const idx) { return nodes(idx); });
+  return opt_idx.has_value() ? node::optional_ptr(nodes(*opt_idx))
+                             : node::optional_ptr(std::nullopt);
 }
 
 node::optional_ptr station_route::get_runtime_checkpoint_node() const {
-  return runtime_checkpoint_.transform(
-      [&](node::idx const idx) { return nodes(idx); });
+  return runtime_checkpoint_.has_value()
+             ? node::optional_ptr(nodes(*runtime_checkpoint_))
+             : node::optional_ptr(std::nullopt);
 }
 
 std::pair<node::idx, node::idx> fast_forward_indices(station_route const& r,
@@ -169,7 +172,8 @@ utls::recursive_generator<route_node> station_route::from_to(
           extra_speed_limits_[spl_idx].node_->id_ == result.node_->id_;
 
       if (extra_spl) {
-        result.extra_spl_ = &extra_speed_limits_[spl_idx++];
+        result.extra_spl_ =
+            speed_limit::optional_ptr(&extra_speed_limits_[spl_idx++]);
       }
     }
 

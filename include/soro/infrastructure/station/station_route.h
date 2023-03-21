@@ -1,8 +1,5 @@
 #pragma once
 
-#include <optional>
-
-#include "soro/utls/container/optional.h"
 #include "soro/utls/coroutine/recursive_generator.h"
 
 #include "soro/infrastructure/graph/element_data.h"
@@ -23,7 +20,7 @@ struct route_node {
   bool omitted() const { return omitted_; }
 
   node::ptr node_{nullptr};
-  speed_limit::optional_ptr extra_spl_{};
+  speed_limit::optional_ptr extra_spl_;
   bool omitted_{false};
 };
 
@@ -97,8 +94,8 @@ struct station_route {
   node::optional_idx runtime_checkpoint_{};
 
   soro::ptr<station> station_{nullptr};
-  utls::optional<station_ptr, nullptr> from_station_{};
-  utls::optional<station_ptr, nullptr> to_station_{};
+  soro::optional<station_ptr> from_station_{};
+  soro::optional<station_ptr> to_station_{};
 
   si::length length_{si::INVALID<si::length>};
 

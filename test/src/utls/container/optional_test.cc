@@ -15,10 +15,10 @@ TEST_SUITE("optional") {
 
     CHECK(!opt.has_value());
 
-    opt = t{400};
+    opt = optional{t{400}};
 
     CHECK(opt.has_value());
-    CHECK(*opt == t{400});
+    CHECK_EQ(*opt, t{400});
 
     if (opt) {
       CHECK(opt.has_value());
@@ -26,8 +26,7 @@ TEST_SUITE("optional") {
       CHECK(!opt.has_value());
     }
 
-    CHECK(opt.value() != std::numeric_limits<t>::max());
-    CHECK(opt.value() != decltype(opt)::INVALID_VALUE);
+    CHECK_NE(opt.value(), std::numeric_limits<t>::max());
   }
 
   TEST_CASE("make optional") {
@@ -36,13 +35,12 @@ TEST_SUITE("optional") {
     auto opt = make_optional<t, std::numeric_limits<t>::max()>(400);
 
     CHECK(opt.has_value());
-    CHECK(opt.value() != std::numeric_limits<t>::max());
-    CHECK(opt.value() != decltype(opt)::INVALID_VALUE);
+    CHECK_NE(opt.value(), std::numeric_limits<t>::max());
 
-    opt = t{401};
+    opt = optional{t{401}};
 
     CHECK(opt.has_value());
-    CHECK(*opt == t{401});
+    CHECK_EQ(*opt, t{401});
   }
 
   TEST_CASE("optional value_or") {
@@ -55,8 +53,8 @@ TEST_SUITE("optional") {
     auto const result1 = opt.value_or(42);
     auto const result2 = empty.value_or(42);
 
-    CHECK(result1 == 400);
-    CHECK(result2 == 42);
+    CHECK_EQ(result1, 400);
+    CHECK_EQ(result2, 42);
   }
 
   TEST_CASE("optional or_else") {
@@ -70,10 +68,10 @@ TEST_SUITE("optional") {
     auto const result2 = empty.or_else([]() { return optional<t, max>{42}; });
 
     CHECK(result1.has_value());
-    CHECK(*result1 == 400);
+    CHECK_EQ(*result1, 400);
 
     CHECK(result2.has_value());
-    CHECK(*result2 == 42);
+    CHECK_EQ(*result2, 42);
   }
 
   TEST_CASE("optional transform") {
@@ -89,7 +87,7 @@ TEST_SUITE("optional") {
         [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
 
     CHECK(result1.has_value());
-    CHECK(*result1 == int{400});
+    CHECK_EQ(*result1, int{400});
 
     CHECK(!result2.has_value());
   }
@@ -107,7 +105,7 @@ TEST_SUITE("optional") {
         [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
 
     CHECK(result1.has_value());
-    CHECK(*result1 == int{400});
+    CHECK_EQ(*result1, int{400});
 
     CHECK(!result2.has_value());
   }

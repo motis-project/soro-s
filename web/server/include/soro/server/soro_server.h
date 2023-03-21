@@ -1,46 +1,25 @@
 #pragma once
 
-#include <filesystem>
+#include "net/web_server/query_router.h"
 
-#include "tiles/db/pack_file.h"
-#include "tiles/db/tile_database.h"
-#include "tiles/get_tile.h"
-#include "tiles/parse_tile_url.h"
-#include "tiles/perf_counter.h"
-#include "tiles/util.h"
-
-#include "soro/server/http_server.h"
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
+#include "soro/server/modules/tiles/tiles_module.h"
+#include "soro/server/server_settings.h"
 
 namespace soro::server {
 
-namespace fs = std::filesystem;
+struct soro_server {
+  explicit soro_server(server_settings const& settings);
 
-using port_t = uint16_t;
+  void run(server_settings const& settings);
 
-struct server {
-  struct serve_context {
-    explicit serve_context(fs::path const& tile_db_path)
-        : db_env_{tiles::make_tile_database(tile_db_path.string().c_str(),
-                                            tiles::kDefaultSize)},
-          tile_handle_{db_env_},
-          render_ctx_{tiles::make_render_ctx(tile_handle_)},
-          pack_handle_{tile_db_path.string().c_str()} {}
+private:
+  void set_up_routes();
 
-    lmdb::env db_env_;
-    tiles::tile_db_handle tile_handle_;
-    tiles::render_ctx render_ctx_;
-    tiles::pack_handle pack_handle_;
-  };
+  net::query_router router_;
 
-  using serve_contexts = std::unordered_map<std::string, serve_context>;
-
-  server(std::string const& address, port_t const port,
-         fs::path const& server_resource_dir, bool const test);
-
-  static void serve_forever(std::string const& address, port_t const port,
-                            callback_t&& cb, bool const test);
-
-  serve_contexts contexts_;
+  infrastructure_module infrastructure_module_;
+  tiles_module tiles_module_;
 };
 
 }  // namespace soro::server

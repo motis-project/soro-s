@@ -1,7 +1,7 @@
 #pragma once
 
 #include "soro/utls/concepts/iterable_helpers.h"
-#include "soro/utls/concepts/iterable_yields.h"
+#include "soro/utls/concepts/yields.h"
 #include "soro/utls/coroutine/coro_map.h"
 
 #include "soro/infrastructure/infrastructure.h"

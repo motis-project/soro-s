@@ -388,7 +388,7 @@ node::ptr get_node(element const& e, bool const rising, element::ptr neigh) {
 }
 
 non_const_ptr<node> to_non_const(node::ptr ptr) {
-#if defined(SERIALIZE)
+#if defined(SERIALIZE) && !defined(USE_CISTA_RAW)
   return static_cast<non_const_ptr<node>>(ptr);
 #else
   return const_cast<non_const_ptr<node>>(ptr);  // NOLINT
@@ -396,7 +396,7 @@ non_const_ptr<node> to_non_const(node::ptr ptr) {
 }
 
 non_const_element_ptr to_non_const(element::ptr ptr) {
-#if defined(SERIALIZE)
+#if defined(SERIALIZE) && !defined(USE_CISTA_RAW)
   return static_cast<non_const_element_ptr>(ptr);
 #else
   return const_cast<non_const_element_ptr>(ptr);  // NOLINT

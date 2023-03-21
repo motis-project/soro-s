@@ -1,10 +1,11 @@
 #include "doctest/doctest.h"
 
+#include "soro/utls/std_wrapper/contains.h"
 #include "soro/utls/string.h"
 
 #include "soro/base/fp_precision.h"
 #include "soro/infrastructure/infrastructure.h"
-#include "soro/server/osm_export/osm_export.h"
+#include "soro/server/modules/tiles/osm_export/osm_export.h"
 
 #include "test/file_paths.h"
 

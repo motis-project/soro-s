@@ -2,9 +2,10 @@
 
 #include "soro/utls/coordinates/gps.h"
 
+#include "soro/infrastructure/exclusion/exclusion.h"
 #include "soro/infrastructure/graph/graph.h"
 #include "soro/infrastructure/infrastructure_options.h"
-#include "soro/infrastructure/interlocking/interlocking_subsystem.h"
+#include "soro/infrastructure/interlocking/interlocking.h"
 #include "soro/infrastructure/line.h"
 #include "soro/infrastructure/station/station.h"
 #include "soro/infrastructure/station/station_route_graph.h"
@@ -20,8 +21,6 @@ struct default_values {
 };
 
 struct infrastructure_t {
-  using ptr = soro::ptr<infrastructure_t>;
-
   graph graph_;
 
   default_values defaults_;
@@ -36,7 +35,8 @@ struct infrastructure_t {
 
   station_route_graph station_route_graph_{};
 
-  interlocking_subsystem interlocking_{};
+  interlocking interlocking_{};
+  exclusion exclusion_{};
 
   soro::vector<soro::string> full_station_names_{};
 

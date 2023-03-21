@@ -4,7 +4,6 @@
 #include "soro/utls/container/it_range.h"
 #include "soro/utls/coordinates/gps.h"
 #include "soro/utls/coroutine/recursive_generator.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
 
 #include "soro/infrastructure/graph/graph.h"
 
@@ -20,7 +19,7 @@ struct station {
   static constexpr id INVALID = std::numeric_limits<id>::max();
   static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
-  using optional_ptr = utls::optional<ptr, nullptr>;
+  using optional_ptr = soro::optional<ptr>;
 
   soro::vector<station::ptr> neighbours() const;
 

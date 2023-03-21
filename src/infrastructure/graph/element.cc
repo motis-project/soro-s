@@ -1,9 +1,7 @@
 #include "soro/infrastructure/graph/element.h"
 
-#include "utl/overloaded.h"
-
 #include "soro/utls/sassert.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/contains.h"
 
 #include "soro/infrastructure/graph/node.h"
 
@@ -56,6 +54,10 @@ bool element::is_cross_switch() const {
 
 bool element::is_switch() const {
   return is(type::SIMPLE_SWITCH) || is_cross_switch();
+}
+
+bool element::joins_tracks() const {
+  return type() == type::SIMPLE_SWITCH || type() == type::CROSS;
 }
 
 kilometrage get_km(end_element const& e, element_ptr) { return e.km_; }

@@ -49,11 +49,14 @@ target_link_libraries(soro-server-lib PUBLIC
         tiles
         tiles-import-library
         boost
+        web-server
         soro-lib
+        cereal
+        range-v3
         ${SORO_LINK_STATIC}
         )
 
-add_executable(soro-server src/server.cc)
+add_executable(soro-server src/main.cc)
 set_target_properties(soro-server PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${SORO_SERVER_DIR})
 

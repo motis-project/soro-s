@@ -37,8 +37,7 @@ input[type=checkbox].hidden {
     content: '\e5cc';
 
     vertical-align: middle;
-    horiz-align: center;
-    padding-left: calc(100% - 8.5em);
+    horiz-align: right;
 }
 
 .collapsible-toggle:hover {
@@ -70,7 +69,7 @@ input[type=checkbox].hidden {
 }
 
 .collapsible-toggle:checked + .collapsible-toggle + .collapsible-content {
-    max-height: 65%;
+    max-height: 45%;
 }
 
 .collapsible-toggle:checked + .collapsible-toggle::after {

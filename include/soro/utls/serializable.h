@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "utl/overloaded.h"
+
 #include "cista/containers/variant.h"
 #include "cista/mmap.h"
 #include "cista/serialization.h"
@@ -10,21 +12,24 @@
 
 namespace soro::utls {
 
+constexpr auto const MODE = cista::mode::NONE;
+//    cista::mode::WITH_INTEGRITY | cista::mode::DEEP_CHECK;
+
 template <typename T>
 struct serializable {
   serializable() = default;
 
   explicit serializable(std::filesystem::path const& fp)
-      : mem_{cista::buf<cista::mmap>{
-            cista::mmap{fp.c_str(), cista::mmap::protection::READ}}},
-        access_{cista::deserialize<T>(
-            mem_.template as<cista::buf<cista::mmap>>())} {}
+      : mem_{cista::mmap{fp.string().c_str(), cista::mmap::protection::READ}},
+        access_{cista::deserialize<T, MODE>(mem_.template as<cista::mmap>())} {}
+
+  ~serializable() = default;
 
   void save(std::filesystem::path const& fp) const {
 #if defined(SERIALIZE)
     if (cista::holds_alternative<T>(mem_)) {
-      cista::buf<cista::mmap> mmap{cista::mmap{fp.c_str()}};
-      cista::serialize(mmap, mem_.template as<T>());
+      cista::buf mmap{cista::mmap{fp.c_str()}};
+      cista::serialize<MODE>(mmap, mem_.template as<T>());
     } else {
       throw utl::fail(
           "Saving a deserialized object to a different path not yet "
@@ -41,9 +46,20 @@ struct serializable {
   serializable(serializable const&) = delete;
   serializable& operator=(serializable const&) = delete;
 
+  static bool constexpr serialization_possible() {
+#if defined(SERIALIZE)
+    return true;
+#else
+    return false;
+#endif
+  }
+
   void move(serializable&& o) noexcept {
     this->mem_ = std::move(o.mem_);
-    this->access_ = std::addressof(this->mem_.template as<T>());
+
+    mem_.apply(utl::overloaded{
+        [&](T const& t) { access_ = std::addressof(t); },
+        [&](cista::mmap const&) { access_ = std::move(o.access_); }});
   }
 
   serializable(serializable&& o) noexcept {
@@ -59,7 +75,7 @@ struct serializable {
   T const& operator*() const { return *access_; }
 
 protected:
-  cista::variant<cista::buf<cista::mmap>, T> mem_{T{}};
+  cista::variant<cista::mmap, T> mem_{T{}};
   T const* access_{std::addressof(mem_.template as<T>())};
 };
 

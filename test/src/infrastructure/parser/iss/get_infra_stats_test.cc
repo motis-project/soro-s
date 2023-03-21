@@ -22,11 +22,18 @@ void check_infrastructure_stats(infrastructure_options const& opts) {
 
   CHECK_EQ(infra_stats.stations_, infra->stations_.size());
   CHECK_EQ(infra_stats.sections_, infra->graph_.sections_.size());
-  CHECK_EQ(infra_stats.total_elements(), infra->graph_.elements_.size());
 
+  std::size_t meta = 0;
   for (auto const& e : infra->graph_.elements_) {
+    if (e->is(type::META)) {
+      ++meta;
+      continue;
+    }
+
     ++(infra_element_numbers[type_to_id(e->type())]);
   }
+
+  CHECK_EQ(infra_stats.total_elements(), infra->graph_.elements_.size() - meta);
 
   for (auto const t : all_types()) {
     CHECK_EQ(infra_element_numbers[type_to_id(t)], infra_stats.number(t));
