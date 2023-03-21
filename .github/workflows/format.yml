@@ -1,17 +1,9 @@
 name: 'check format'
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  release:
-    types:
-      - published
-
 jobs:
   formatting:
-    runs-on: ${{ env.RUNS_ON }}
+    needs: setup
+    runs-on: ${{ needs.setup.outputs.runs-on }}
     steps:
       - uses: actions/checkout@v3
 
