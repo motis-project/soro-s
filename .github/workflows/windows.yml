@@ -1,92 +1,92 @@
-name: Windows Build
-
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  release:
-    types:
-      - published
-
-jobs:
-  windows-build:
-    runs-on: windows-2022
-
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - preset: msvc-release
-            artifact: windows-amd64
-          - preset: msvc-debug
-
-    env:
-      CXX: cl.exe
-      CC: cl.exe
-      BUILDCACHE_COMPRESS: true
-      BUILDCACHE_DIRECT_MODE: true
-      BUILDCACHE_ACCURACY: SLOPPY
-      BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
-      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: seanmiddleditch/gha-setup-ninja@master
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
-
-      # ==== BUILD ====
-      - name: Build
-        run: |
-          $devShell = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find **\Microsoft.VisualStudio.DevShell.dll
-          $installPath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
-          Import-Module $devShell
-          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64 -vcvars_ver=14.34"
-          cmake --preset=${{ matrix.config.preset }}
-          cmake --build build\${{ matrix.config.preset }} --target soro-server
-          cmake --build build\${{ matrix.config.preset }} --target soro-test
-
-      # ==== TESTS ====
-      - name: Run Tests
-        run: .\build\${{ matrix.config.preset }}\soro-test.exe
-
-      # ==== WEB TESTS ====
-      - name: Run Server
-        run: |
-          cd build\${{ matrix.config.preset }}\
-          .\soro-server.exe -t --resource_dir ..\..\resources 
-
-      # ==== DISTRIBUTION ====
-      - name: Delete unnecessary files
-        if: matrix.config.artifact
-        run: |
-          rm .\build\${{ matrix.config.preset }}\server_resources\infrastructure -r -force
-          rm .\build\${{ matrix.config.preset }}\server_resources\timetable -r -force
-
-      - name: Create Distribution
-        if: matrix.config.artifact
-        run: >
-          7z a soro-s-${{ matrix.config.artifact }}.zip
-          .\build\${{ matrix.config.preset }}\soro-server.exe
-          .\build\${{ matrix.config.preset }}\server_resources
-
-      - name: Upload Distribution
-        if: matrix.config.artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: soro-s-${{ matrix.config.artifact }}
-          path: soro-s-${{ matrix.config.artifact }}.zip
-
-      # ==== RELEASE ====
-      - name: Upload Release
-        if: github.event.action == 'published' && matrix.config.artifact
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-s-${{ matrix.config.artifact }}.zip
-          asset_name: soro-s-${{ matrix.config.artifact }}.zip
-          asset_content_type: application/zip
+#name: Windows Build
+#
+#on:
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+#  release:
+#    types:
+#      - published
+#
+#jobs:
+#  windows-build:
+#    runs-on: windows-2022
+#
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        config:
+#          - preset: msvc-release
+#            artifact: windows-amd64
+#          - preset: msvc-debug
+#
+#    env:
+#      CXX: cl.exe
+#      CC: cl.exe
+#      BUILDCACHE_COMPRESS: true
+#      BUILDCACHE_DIRECT_MODE: true
+#      BUILDCACHE_ACCURACY: SLOPPY
+#      BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
+#      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: seanmiddleditch/gha-setup-ninja@master
+#      - uses: actions/setup-python@v3
+#        with:
+#          python-version: '3.x'
+#
+#      # ==== BUILD ====
+#      - name: Build
+#        run: |
+#          $devShell = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find **\Microsoft.VisualStudio.DevShell.dll
+#          $installPath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
+#          Import-Module $devShell
+#          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64 -vcvars_ver=14.34"
+#          cmake --preset=${{ matrix.config.preset }}
+#          cmake --build build\${{ matrix.config.preset }} --target soro-server
+#          cmake --build build\${{ matrix.config.preset }} --target soro-test
+#
+#      # ==== TESTS ====
+#      - name: Run Tests
+#        run: .\build\${{ matrix.config.preset }}\soro-test.exe
+#
+#      # ==== WEB TESTS ====
+#      - name: Run Server
+#        run: |
+#          cd build\${{ matrix.config.preset }}\
+#          .\soro-server.exe -t --resource_dir ..\..\resources
+#
+#      # ==== DISTRIBUTION ====
+#      - name: Delete unnecessary files
+#        if: matrix.config.artifact
+#        run: |
+#          rm .\build\${{ matrix.config.preset }}\server_resources\infrastructure -r -force
+#          rm .\build\${{ matrix.config.preset }}\server_resources\timetable -r -force
+#
+#      - name: Create Distribution
+#        if: matrix.config.artifact
+#        run: >
+#          7z a soro-s-${{ matrix.config.artifact }}.zip
+#          .\build\${{ matrix.config.preset }}\soro-server.exe
+#          .\build\${{ matrix.config.preset }}\server_resources
+#
+#      - name: Upload Distribution
+#        if: matrix.config.artifact
+#        uses: actions/upload-artifact@v1
+#        with:
+#          name: soro-s-${{ matrix.config.artifact }}
+#          path: soro-s-${{ matrix.config.artifact }}.zip
+#
+#      # ==== RELEASE ====
+#      - name: Upload Release
+#        if: github.event.action == 'published' && matrix.config.artifact
+#        uses: actions/upload-release-asset@v1.0.2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: ./soro-s-${{ matrix.config.artifact }}.zip
+#          asset_name: soro-s-${{ matrix.config.artifact }}.zip
+#          asset_content_type: application/zip

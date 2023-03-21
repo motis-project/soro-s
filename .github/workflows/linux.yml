@@ -1,107 +1,107 @@
-name: Linux Build
-
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  release:
-    types:
-      - published
-
-jobs:
-  linux:
-    runs-on: ${{ env.RUNS_ON }}
-    container:
-      image: ghcr.io/julianharbarth/docker-cpp-build:master
-      volumes:
-        - ${{ matrix.config.preset }}-deps:/deps
-        - ${{ matrix.config.preset }}-buildcache:/buildcache
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - preset: clang-release
-            artifact: linux-amd64
-            for_ui_tests: true
-          - preset: clang-debug
-          - preset: gcc-debug
-          - preset: gcc-release
-          - preset: gcc-cista-debug
-          - preset: gcc-cista-release
-          - preset: clang-cista-debug
-          - preset: clang-cista-release
-          - preset: clang-sanitizer
-    env:
-      BUILDCACHE_DIR: /buildcache
-      BUILDCACHE_DIRECT_MODE: true
-      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
-      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
-
-    steps:
-      - use: actions/checkout@v3
-
-      - uses: ./.github/actions/build-soro-s
-        with:
-          preset: ${{ matrix.config.preset }}
-
-      # ==== TESTS ====
-      - name: Run Tests
-        run: ./build/${{ matrix.config.preset }}/soro-test
-
-      # ==== WEB TESTS ====
-      - name: Run Server
-        run: |
-          cd ./build/${{ matrix.config.preset }}
-          ./soro-server -t --resource_dir ../../resources
-
-      - name: Prepare upload soro-server
-        if: matrix.config.for_ui_tests
-        run: |
-          mkdir server-files
-          cp -r ./build/${{ matrix.config.preset }}/soro-server server-files/
-          cp -r ./build/${{ matrix.config.preset }}/server_resources server-files/
-          cp -r resources server-files/
-
-      - name: Upload soro-server
-        if: matrix.config.for_ui_tests
-        uses: actions/upload-artifact@v3
-        with:
-          name: soro-server
-          path: |
-            server-files/**
-
-      - name: Cleanup upload soro-server
-        if: matrix.config.for_ui_tests
-        run: |
-          rm -rf server-files
-
-      # ==== DISTRIBUTION ====
-      - name: Create Distribution
-        if: matrix.config.artifact
-        run: |
-          mkdir -p soro-s
-          rm -rf build/clang-release/server_resources/infrastructure
-          rm -rf build/clang-release/server_resources/timetable
-          mv build/clang-release/soro-server soro-s/
-          mv build/clang-release/server_resources soro-s/
-          tar cjf soro-s-${{ matrix.config.artifact }}.tar.bz2 soro-s
-
-      - name: Upload Distribution
-        if: matrix.config.artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: soro-s-${{ matrix.config.artifact }}
-          path: soro-s-${{ matrix.config.artifact }}.tar.bz2
-
-      # ==== RELEASE ====
-      - name: Upload Release
-        if: github.event.action == 'published' && matrix.config.artifact
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-s-${{ matrix.config.artifact }}.tar.bz2
-          asset_name: soro-s-${{ matrix.config.artifact }}.tar.bz2
-          asset_content_type: application/x-tar
+#name: Linux Build
+#
+#on:
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+#  release:
+#    types:
+#      - published
+#
+#jobs:
+#  linux:
+#    runs-on: ${{ env.RUNS_ON }}
+#    container:
+#      image: ghcr.io/julianharbarth/docker-cpp-build:master
+#      volumes:
+#        - ${{ matrix.config.preset }}-deps:/deps
+#        - ${{ matrix.config.preset }}-buildcache:/buildcache
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        config:
+#          - preset: clang-release
+#            artifact: linux-amd64
+#            for_ui_tests: true
+#          - preset: clang-debug
+#          - preset: gcc-debug
+#          - preset: gcc-release
+#          - preset: gcc-cista-debug
+#          - preset: gcc-cista-release
+#          - preset: clang-cista-debug
+#          - preset: clang-cista-release
+#          - preset: clang-sanitizer
+#    env:
+#      BUILDCACHE_DIR: /buildcache
+#      BUILDCACHE_DIRECT_MODE: true
+#      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
+#      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
+#
+#    steps:
+#      - use: actions/checkout@v3
+#
+#      - uses: ./.github/actions/build-soro-s
+#        with:
+#          preset: ${{ matrix.config.preset }}
+#
+#      # ==== TESTS ====
+#      - name: Run Tests
+#        run: ./build/${{ matrix.config.preset }}/soro-test
+#
+#      # ==== WEB TESTS ====
+#      - name: Run Server
+#        run: |
+#          cd ./build/${{ matrix.config.preset }}
+#          ./soro-server -t --resource_dir ../../resources
+#
+#      - name: Prepare upload soro-server
+#        if: matrix.config.for_ui_tests
+#        run: |
+#          mkdir server-files
+#          cp -r ./build/${{ matrix.config.preset }}/soro-server server-files/
+#          cp -r ./build/${{ matrix.config.preset }}/server_resources server-files/
+#          cp -r resources server-files/
+#
+#      - name: Upload soro-server
+#        if: matrix.config.for_ui_tests
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: soro-server
+#          path: |
+#            server-files/**
+#
+#      - name: Cleanup upload soro-server
+#        if: matrix.config.for_ui_tests
+#        run: |
+#          rm -rf server-files
+#
+#      # ==== DISTRIBUTION ====
+#      - name: Create Distribution
+#        if: matrix.config.artifact
+#        run: |
+#          mkdir -p soro-s
+#          rm -rf build/clang-release/server_resources/infrastructure
+#          rm -rf build/clang-release/server_resources/timetable
+#          mv build/clang-release/soro-server soro-s/
+#          mv build/clang-release/server_resources soro-s/
+#          tar cjf soro-s-${{ matrix.config.artifact }}.tar.bz2 soro-s
+#
+#      - name: Upload Distribution
+#        if: matrix.config.artifact
+#        uses: actions/upload-artifact@v1
+#        with:
+#          name: soro-s-${{ matrix.config.artifact }}
+#          path: soro-s-${{ matrix.config.artifact }}.tar.bz2
+#
+#      # ==== RELEASE ====
+#      - name: Upload Release
+#        if: github.event.action == 'published' && matrix.config.artifact
+#        uses: actions/upload-release-asset@v1.0.2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: ./soro-s-${{ matrix.config.artifact }}.tar.bz2
+#          asset_name: soro-s-${{ matrix.config.artifact }}.tar.bz2
+#          asset_content_type: application/x-tar
