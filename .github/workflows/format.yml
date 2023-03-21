@@ -13,7 +13,7 @@ jobs:
   formatting:
     runs-on: ubuntu-22.04
     steps:
-      - use: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: install jq
         run: |
