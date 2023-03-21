@@ -1,5 +1,11 @@
 name: 'check format'
 
+on:
+  workflow_run:
+    workflows: [ "setup" ]
+    types:
+      - completed
+
 jobs:
   formatting:
     needs: setup
