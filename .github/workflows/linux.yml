@@ -39,7 +39,7 @@
 #      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
 #
 #    steps:
-#      - use: actions/checkout@v3
+#      - uses: actions/checkout@v3
 #
 #      - uses: ./.github/actions/build-soro-s
 #        with:
