@@ -11,8 +11,10 @@ on:
 
 jobs:
   setup:
+    runs-on: ubuntu-22.04
     outputs:
       runs-on: ubuntu-22.04
       steps:
-        - name: empty
-          run: echo ""
+        - name: nothing to see here
+          run: |
+            echo "only setting up environment variables"
