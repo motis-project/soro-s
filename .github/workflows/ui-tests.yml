@@ -1,0 +1,44 @@
+ui-tests:
+  needs: linux
+  runs-on: ubuntu-latest
+  services:
+    selenium-hub:
+      image: selenium/hub:4.7.2-20221219
+      ports:
+        - 4442:4442
+        - 4443:4443
+        - 4444:4444
+    chrome:
+      image: selenium/node-chrome:4.7.2-20221219
+      options: --shm-size="2g" --add-host host.docker.internal:host-gateway
+      env:
+        SE_EVENT_BUS_HOST: selenium-hub
+        SE_EVENT_BUS_PUBLISH_PORT: 4442
+        SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+    firefox:
+      image: selenium/node-firefox:4.7.2-20221219
+      options: --shm-size="2g" --add-host host.docker.internal:host-gateway
+      env:
+        SE_EVENT_BUS_HOST: selenium-hub
+        SE_EVENT_BUS_PUBLISH_PORT: 4442
+        SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+  steps:
+    - uses: actions/checkout@v3
+    - name: Cache python dependencies
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+    - name: Install python dependencies
+      run: pip install -r ui-test/requirements.txt
+    - name: Download soro-server
+      uses: actions/download-artifact@v3
+      with:
+        name: soro-server
+    - name: Prepare soro-server
+      run: chmod +x soro-server
+    - name: Check hostname
+      run: hostname
+    - name: Run UI tests
+      run: |
+        find ui-test -type f -executable -name '*.py' -print0 | xargs -0 -n1 python3

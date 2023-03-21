@@ -1,0 +1,35 @@
+name: clang-tidy build
+
+# seperate workflow for clang-tidy, cause it takes a long time
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types:
+      - published
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/julianharbarth/docker-cpp-build:master
+      volumes:
+        - ${{ matrix.config.preset }}-deps:/deps
+        - ${{ matrix.config.preset }}-buildcache:/buildcache
+    strategy:
+      fail-fast: false
+    env:
+      BUILDCACHE_DIR: /buildcache
+      BUILDCACHE_DIRECT_MODE: true
+      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
+      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
+
+    steps:
+      - use: actions/checkout@v3
+
+      - uses: ./.github/actions/linux-build
+        with:
+          preset: clang-tidy

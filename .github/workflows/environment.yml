@@ -1,0 +1,7 @@
+name: setting up environment
+
+env:
+  RUNS_ON: ubuntu-22.04
+
+
+
