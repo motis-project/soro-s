@@ -40,6 +40,12 @@ jobs:
           path: './deps/'
           key: deps-${{ hashFiles('.pkg') }}
 
+      - name: get locally cached buildcache
+        uses: MasterWorkIO/action-local-cache@1.0.0
+        with:
+          path: './.buildcache/'
+          key: buildcache-${{ matrix.config.preset }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}
+
       # ==== BUILD ====
       - name: Build
         run: |
