@@ -13,10 +13,6 @@ jobs:
   windows-build:
     runs-on: [ self-hosted, windows, x64 ]
 
-    volumes:
-      - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-deps:/deps
-      - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-buildcache:/buildcache
-
     strategy:
       fail-fast: false
       matrix:
@@ -35,7 +31,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: get locally cached deps
+        uses: MasterWorksIO/action-local-cache@1.0.0
+        with:
+          path: './deps/'
+          key: deps-${{ hashFiles('.pkg') }}
 
       # ==== BUILD ====
       - name: Build
