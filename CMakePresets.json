@@ -35,10 +35,6 @@
       "name": "msvc-preset",
       "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "toolset": {
-        "value": "version=14.34",
-        "strategy": "external"
-      },
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "Off"
       }
