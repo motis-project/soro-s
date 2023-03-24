@@ -11,24 +11,20 @@ on:
 
 jobs:
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: [ self-hosted, linux, x64 ]
     container:
       image: ghcr.io/julianharbarth/docker-cpp-build:master
       volumes:
-        - ${{ matrix.config.preset }}-deps:/deps
-        - ${{ matrix.config.preset }}-buildcache:/buildcache
+        - ${{ github.event.repository_name }}-${{ matrix.config.preset }}-deps:/deps
+        - ${{ github.event.repository_name }}-${{ matrix.config.preset }}-buildcache:/buildcache
     strategy:
       fail-fast: false
       matrix:
         config:
-          - preset: clang-debug
           - preset: clang-release
             artifact: linux-amd64
-          - preset: gcc-debug
           - preset: gcc-release
-          - preset: gcc-cista-debug
           - preset: gcc-cista-release
-          - preset: clang-cista-debug
           - preset: clang-cista-release
           - preset: clang-tidy
           - preset: clang-sanitizer
@@ -44,6 +40,9 @@ jobs:
       # we need to checkout the repository to get the actions
       - name: checkout repository
         uses: actions/checkout@v3
+
+      - name: get deps
+        run: ln -s /deps deps
 
       - name: build soro-s
         uses: ./.github/actions/build
