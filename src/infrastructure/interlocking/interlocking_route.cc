@@ -25,18 +25,6 @@ type_set interlocking_route::valid_ends() {
                    type::TRACK_END}};
 }
 
-// TODO(julian): this could use a vec -> iterable fix
-std::vector<element_ptr> interlocking_route::elements(
-    infrastructure const& infra) const {
-  std::vector<element_ptr> elements;
-  for (auto const sr_id : station_routes_) {
-    auto const sr = infra->station_routes_[sr_id];
-    utl::concat(elements, soro::to_vec(sr->nodes(),
-                                       [](auto&& n) { return n->element_; }));
-  }
-  return elements;
-}
-
 node::idx interlocking_route::size(infrastructure const& infra) const {
   node::idx result = 0;
 

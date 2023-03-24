@@ -12,7 +12,7 @@ using std::end;
 template <typename Iterable, typename T>
 constexpr std::size_t find_position(Iterable&& c, T&& v) {
   return static_cast<std::size_t>(
-      std::distance(cbegin(c), std::find(cbegin(c), cend(c), v)));
+      std::distance(begin(c), std::find(begin(c), end(c), v)));
 }
 
 }  // namespace detail

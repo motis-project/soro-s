@@ -24,7 +24,7 @@ template <typename T, T INVALID = get_default_invalid<T>()>
   requires std::is_integral_v<T> || cista::is_pointer_v<T>
 struct optional {
   optional() noexcept = default;
-  explicit optional(std::nullopt_t) {}
+  optional(std::nullopt_t) {}
   explicit optional(T const val) noexcept : val_{val} {}  // NOLINT
 
   optional(optional const&) = default;

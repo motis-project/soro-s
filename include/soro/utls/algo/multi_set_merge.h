@@ -35,7 +35,7 @@ Result multi_set_merge(soro::vector<std::pair<Start, End>> ranges) {
         });
 
     result.reserve(static_cast<typename Result::size_type>(
-        distance(max->first, max->second)));
+        std::distance(max->first, max->second)));
   }
 
   auto const cmp = [&](auto&& r1, auto&& r2) { return *r1.first > *r2.first; };

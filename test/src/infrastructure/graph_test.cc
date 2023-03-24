@@ -83,8 +83,9 @@ void check_switch(simple_switch const& ss, soro::string const& station_name) {
                              : *ss.falling_start_neighbour()),
                  ss.id_);
 
-    auto const stem_id = (take_branch ? node->branch_node_ : node->next_node_)
-                             ->next_node_->element_->id();
+    auto const stem_id =
+        (take_branch ? node->branch_node_ : node->next_node_)  // NOLINT
+            ->next_node_->element_->id();
 
     CHECK_MESSAGE((stem_id == (ss.stem_rising_ ? ss.falling_stem_neighbour()
                                                : ss.rising_stem_neighbour())

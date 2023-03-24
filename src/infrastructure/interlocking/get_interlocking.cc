@@ -201,7 +201,7 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
       ir.end_offset_ = route->path_->main_signals_.empty()
                            ? route->size()
                            : route->path_->main_signals_.front() + 1;
-      routes.push_back(std::move(ir));
+      routes.emplace_back(std::move(ir));
       return;
     }
 

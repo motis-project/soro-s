@@ -11,12 +11,12 @@
 
 #include "test/file_paths.h"
 
+namespace soro::runtime::test {
+
 using namespace utl;
-using namespace soro;
 using namespace soro::tt;
 using namespace soro::utls;
 using namespace soro::infra;
-using namespace soro::runtime;
 
 void check_halt_count(train const& train, timestamps const& ts) {
   auto const halt_count = utls::count_if(
@@ -186,3 +186,5 @@ TEST_CASE("runtime") {
     check_delays(*scenario->infra_, scenario->timetable_);
   }
 }
+
+}  // namespace soro::runtime::test

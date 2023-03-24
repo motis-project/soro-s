@@ -11,7 +11,9 @@ TEST_SUITE("multi set merge") {
       return std::pair{std::begin(v), std::end(v)};
     };
 
-    auto result = std::vector{vec_to_pair(vec)};
+    auto result = soro::vector<
+        std::invoke_result_t<decltype(vec_to_pair), decltype(vec)>>{
+        vec_to_pair(vec)};
     (result.emplace_back(vec_to_pair(vecs)), ...);
 
     return result;

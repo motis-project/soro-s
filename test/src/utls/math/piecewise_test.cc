@@ -8,7 +8,8 @@
 #include "cista/serialization.h"
 #endif
 
-using namespace soro;
+namespace soro::test {
+
 using namespace soro::rs;
 using namespace soro::utls;
 
@@ -80,3 +81,5 @@ TEST_CASE("serialize piecewise") {  // NOLINT
   CHECK(equal(deserialized_pf->operator()(10.5), 159.85));
 }
 #endif
+
+}  // namespace soro::test

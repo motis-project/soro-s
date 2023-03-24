@@ -6,7 +6,6 @@
 
 #include "test/file_paths.h"
 
-using namespace soro;
 using namespace soro::si;
 using namespace soro::tt;
 using namespace soro::infra;

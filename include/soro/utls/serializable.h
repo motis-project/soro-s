@@ -28,7 +28,8 @@ struct serializable {
   void save(std::filesystem::path const& fp) const {
 #if defined(SERIALIZE)
     if (cista::holds_alternative<T>(mem_)) {
-      cista::buf mmap{cista::mmap{fp.c_str()}};
+      cista::buf mmap{
+          cista::mmap{fp.string().c_str(), cista::mmap::protection::WRITE}};
       cista::serialize<MODE>(mmap, mem_.template as<T>());
     } else {
       throw utl::fail(

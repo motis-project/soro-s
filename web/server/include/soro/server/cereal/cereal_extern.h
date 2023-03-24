@@ -35,23 +35,16 @@ inline void CEREAL_SAVE_FUNCTION_NAME(cereal::JSONOutputArchive& ar, R&& r) {
 
 namespace cista {
 
-//! Serialization for non-arithmetic vector types
 template <class Archive, class T>
-inline typename std::enable_if<(!cereal::traits::is_output_serializable<
-                                    cereal::BinaryData<T>, Archive>::value ||
-                                !std::is_arithmetic<T>::value) &&
-                                   !std::is_same<T, bool>::value,
-                               void>::type
-CEREAL_SERIALIZE_FUNCTION_NAME(Archive& ar,
-                               soro::data::vector<T> const& vector) {
-  ar(cereal::make_size_tag(
-      static_cast<cereal::size_type>(vector.size())));  // number of elements
+inline void CEREAL_SERIALIZE_FUNCTION_NAME(
+    Archive& ar, soro::data::vector<T> const& vector) {
+  ar(cereal::make_size_tag(static_cast<cereal::size_type>(vector.size())));
   for (auto&& v : vector) ar(v);
 }
 
 template <typename Archive>
 inline std::string_view CEREAL_SAVE_MINIMAL_FUNCTION_NAME(
-    Archive&, basic_string<soro::data::ptr<const char>> const& str) {
+    Archive&, cista::basic_string<soro::data::ptr<const char>> const& str) {
   return str.view();
 }
 

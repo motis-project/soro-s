@@ -7,7 +7,6 @@
 #include "soro/base/fp_precision.h"
 #include "soro/simulation/dpd.h"
 
-using namespace soro;
 using namespace soro::utls;
 using namespace soro::simulation;
 
@@ -88,7 +87,7 @@ TEST_CASE("dpd simple") {  // NOLINT
 
       CHECK(found_time);
       CHECK(found_speed);
-      CHECK(equal(prob, probability_t(0.1)));
+      CHECK(soro::equal(prob, probability_t(0.1)));
     }
   }
 
@@ -112,7 +111,7 @@ TEST_CASE("dpd sums to one") {  // NOLINT
     dpd.insert(times[idx], speeds[idx], 0.1F);
   }
 
-  CHECK(equal(sum(dpd), 0.9F));
+  CHECK(soro::equal(sum(dpd), 0.9F));
 }
 
 TEST_CASE("dpd iterate") {

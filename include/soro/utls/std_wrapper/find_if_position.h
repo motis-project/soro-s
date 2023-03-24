@@ -12,7 +12,7 @@ using std::end;
 template <typename Iterable, typename Pred>
 constexpr std::size_t find_if_position(Iterable&& i, Pred&& pred) {
   return static_cast<std::size_t>(
-      std::distance(begin(i), find_if(begin(i), end(i), pred)));
+      std::distance(begin(i), std::find_if(begin(i), end(i), pred)));
 }
 
 }  // namespace detail

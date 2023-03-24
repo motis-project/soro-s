@@ -1,0 +1,20 @@
+name: soro-s tests
+description: execute soro-s tests
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: run soro-s tests
+      shell: bash
+      run: |
+        cd ./build/${{ matrix.config.preset }}
+        ./soro-test
+        cd ../../
+
+    - name: run soro-server in test mode
+      shell: bash
+      run: |
+        cd ./build/${{ matrix.config.preset }}
+        ./soro-server -t 
+        cd ../../

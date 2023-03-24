@@ -8,7 +8,8 @@
 
 #include "test/file_paths.h"
 
-using namespace soro;
+namespace soro::test {
+
 using namespace soro::si;
 using namespace soro::utls;
 using namespace soro::infra;
@@ -33,3 +34,5 @@ TEST_SUITE("interpolation") {
     }
   }
 }
+
+}  // namespace soro::test

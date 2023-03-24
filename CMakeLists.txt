@@ -64,7 +64,6 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 include(cmake/pkg.cmake)
 
 include(cmake/buildcache.cmake)
-include(cmake/clang-format.cmake)
 
 set(CMAKE_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)

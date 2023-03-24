@@ -1,27 +1,35 @@
-name: Check Format
+name: check format
 
 on:
   push:
-    branches: [ master, advance-simulation ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, advance-simulation ]
+    branches: [ master ]
   release:
     types:
       - published
 
 jobs:
   formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Install clang-format-15
+      - name: install jq
+        run: |
+          sudo apt install jq
+
+      - name: set CLANG_FORMAT_COMMAND
+        run: | # extract the clang format command from the CMakePresets.json
+          CLANG_FORMAT_COMMAND=$(jq -r '.configurePresets[] | select(.name == "clang-preset") | .cacheVariables.CMAKE_C_COMPILER' CMakePresets.json)
+
+      - name: install clang-format
         run: |
           sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-          sudo apt-get install -y --no-install-recommends clang-format-15
+          sudo apt install -y --no-install-recommends $CLANG_FORMAT_COMMAND
 
-      - name: Format files
-        run: find include src test tools web/iss-server -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-15 -i
+      - name: format files
+        run: find -name "*.cc" -o -name "*.h" -print0 | xargs -0 $CLANG_FORMAT_COMMAND -i
 
       - name: Check for differences
         run: |
