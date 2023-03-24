@@ -13,23 +13,24 @@ jobs:
   windows-build:
     runs-on: [ self-hosted, windows, x64 ]
 
+    volumes:
+      - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-deps:/deps
+      - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-buildcache:/buildcache
+
     strategy:
       fail-fast: false
       matrix:
         config:
-          - preset: msvc-debug
           - preset: msvc-release
             artifact: windows-amd64
-          - preset: msvc-cista-debug
           - preset: msvc-cista-release
 
     env:
-      CXX: cl.exe
-      CC: cl.exe
-      BUILDCACHE_COMPRESS: true
-      BUILDCACHE_DIRECT_MODE: true
-      BUILDCACHE_ACCURACY: SLOPPY
+      #      CXX: cl.exe
+      #      CC: cl.exe
       BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
+      BUILDCACHE_DIRECT_MODE: true
+      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
       BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
 
     steps:
