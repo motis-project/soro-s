@@ -6,6 +6,7 @@
 
 #include "soro/utls/parse_int.h"
 
+#include "soro/server/cereal/cereal_extern.h"
 #include "soro/server/cereal/json_archive.h"
 
 namespace soro::infra {

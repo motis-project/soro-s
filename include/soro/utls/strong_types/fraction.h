@@ -26,10 +26,10 @@ struct ampere_tag {};
 // --- minimum of two integer constants --- //
 
 template <typename Constant1, typename Constant2>
-struct min
-    : std::conditional_t<(Constant1::value > Constant2::value),
-                         std::integral_constant<size_t, Constant2::value>,
-                         std::integral_constant<size_t, Constant1::value>> {};
+struct min : std::conditional_t<
+                 (Constant1::value > Constant2::value),
+                 std::integral_constant<std::size_t, Constant2::value>,
+                 std::integral_constant<std::size_t, Constant1::value>> {};
 
 template <typename Constant1, typename Constant2>
 inline auto constexpr min_v = min<Constant1, Constant2>::value;
@@ -209,7 +209,7 @@ struct fraction {
                     typename simplified::denominator, Precision>{val_ / o.val_};
   }
 
-  template <size_t Exp>
+  template <std::size_t Exp>
   auto pow() const {
     using simplified = simplify<concat_times_t<Exp, Nominator>,
                                 concat_times_t<Exp, Denominator>>;
@@ -279,7 +279,7 @@ inline std::string get_tag_symbol() {
   }
 }
 
-const std::array<std::string, 11> exponent_symbols{"",  "",  "²", "³", "⁴",
+std::vector<std::string> const exponent_symbols = {"",  "",  "²", "³", "⁴",
                                                    "⁵", "⁶", "⁷", "⁸", "⁹"};
 
 template <typename TypeList>

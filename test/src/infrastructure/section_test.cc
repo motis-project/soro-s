@@ -12,9 +12,6 @@
 #include "soro/infrastructure/path/is_path.h"
 #include "soro/infrastructure/path/length.h"
 
-using namespace soro;
-using namespace infra;
-
 namespace soro::infra::test {
 
 void sections_are_paths(section const& sec) {
@@ -229,14 +226,14 @@ void check_section_is_not_empty(section const& sec) {
   }
 
   std::size_t rising_elements = 0;
-  for (auto const e : sec.iterate<direction::Rising>()) {
+  for (auto const& e : sec.iterate<direction::Rising>()) {
     std::ignore = e;
     ++rising_elements;
   }
   CHECK_GT(rising_elements, 2);
 
   std::size_t falling_elements = 0;
-  for (auto const e : sec.iterate<direction::Falling>()) {
+  for (auto const& e : sec.iterate<direction::Falling>()) {
     std::ignore = e;
     ++falling_elements;
   }

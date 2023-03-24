@@ -1,15 +1,17 @@
-name: 'check format'
+name: check format
 
 on:
-  workflow_run:
-    workflows: [ "setup" ]
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
     types:
-      - completed
+      - published
 
 jobs:
   formatting:
-    needs: setup
-    runs-on: ${{ needs.setup.outputs.runs-on }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 

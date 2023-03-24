@@ -2,37 +2,58 @@
 
 #include "utl/cmd_line_parser.h"
 
-namespace fs = std::filesystem;
-
 namespace soro::server {
 
-// top level directory for all server resources, should be created by cmake
-const fs::path SERVER_RESOURCE_DIR("server_resources/");
-// DS100 -> GPS mapping
-const fs::path COORD_FILE = SERVER_RESOURCE_DIR / "misc" / "btrs_geo.csv";
-// OSM profile.lua
-const fs::path PROFILE_FILE = SERVER_RESOURCE_DIR / "profile" / "profile.lua";
-// put serialized infrastructure in this directory
-const fs::path SERVER_INFRA_DIR = SERVER_RESOURCE_DIR / "infrastructure";
-// put serialized timetables in this directory
-const fs::path SERVER_TIMTEABLE_DIR = SERVER_RESOURCE_DIR / "timetable";
-// tiles.mdb in this directory
-const fs::path SERVER_TILES_DIR = SERVER_RESOURCE_DIR / "tiles";
-// infrastructure.osm in this directory
-const fs::path SERVER_OSM_DIR = SERVER_RESOURCE_DIR / "osm";
-// temporary files in this directory
-const fs::path SERVER_TMP_DIR = SERVER_RESOURCE_DIR / "tmp";
-
 struct server_settings {
-  utl::cmd_line_flag<
-      fs::path, UTL_LONG("--infrastructure_dir"),
-      UTL_DESC("where the server reads the infrastructure resources from")>
-      infra_dir_{"../../resources/infrastructure/"};
+  // DS100 -> GPS mapping
+  std ::filesystem::path coord_file() const {
+    return server_resource_dir_.val() / "misc" / "btrs_geo.csv";
+  }
 
-  utl::cmd_line_flag<fs::path, UTL_LONG("--timetable_dir"),
+  // OSM profile.lua
+  std ::filesystem::path profile_file() const {
+    return server_resource_dir_.val() / "profile" / "profile.lua";
+  }
+
+  // put serialized infrastructure in this directory
+  std ::filesystem::path server_infra_dir() const {
+    return server_resource_dir_.val() / "infrastructure";
+  }
+
+  // put serialized timetables in this directory
+  std ::filesystem::path server_timetable_dir() const {
+    return server_resource_dir_.val() / "timetable";
+  }
+
+  // tiles.mdb in this directory
+  std ::filesystem::path tiles_dir() const {
+    return server_resource_dir_.val() / "tiles";
+  }
+
+  // infrastructure.osm in this directory
+  std ::filesystem::path osm_dir() const {
+    return server_resource_dir_.val() / "osm";
+  }
+
+  // temporary files in this directory
+  std ::filesystem::path tmp_dir() const {
+    return server_resource_dir_.val() / "tmp";
+  }
+
+  utl::cmd_line_flag<
+      std::filesystem::path, UTL_LONG("--server_resource_dir"),
+      UTL_DESC("working directory for the server, already created by cmake")>
+      server_resource_dir_{"./server_resources/"};
+
+  utl::cmd_line_flag<
+      std::filesystem::path, UTL_LONG("--infrastructure_sources"),
+      UTL_DESC("where the server reads the infrastructure resources from")>
+      infrastructure_sources_{"../../resources/infrastructure/"};
+
+  utl::cmd_line_flag<std::filesystem::path, UTL_LONG("--timetable_sources"),
                      UTL_DESC(
                          "where the server reads the timetable resources from")>
-      timetable_dir_{"../../resources/timetable/"};
+      timetable_sources_{"../../resources/timetable/"};
 
   utl::cmd_line_flag<std::string, UTL_LONG("--address"),
                      UTL_DESC("ip address the server listens on")>

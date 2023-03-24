@@ -34,7 +34,7 @@ soro::vector<soro::vector<exclusion_set::id>> get_irs_to_exclusion_sets(
 // for every element returns the interlocking routes using that element
 soro::vector<interlocking_route::ids> get_closed_element_used_by(
     soro::vector<element::ids> const& closed_exclusion_elements,
-    std::size_t const element_count) {
+    soro::size_t const element_count) {
   utl::scoped_timer const timer("generating element used by mapping");
 
   auto const ir_count = closed_exclusion_elements.size();

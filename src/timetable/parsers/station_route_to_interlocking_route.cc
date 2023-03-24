@@ -156,8 +156,9 @@ std::pair<interlocking_route::id, cover> get_first_ir(
   auto const first_sr =
       infra->station_routes_[stop_sequence.points_.front().station_route_];
 
-  node::optional_ptr const first_node{
-      stop_sequence.break_in_ ? first_sr->nodes().front() : nullptr};
+  auto const first_node = stop_sequence.break_in_
+                              ? node::optional_ptr{first_sr->nodes().front()}
+                              : std::nullopt;
 
   auto const candidates =
       get_candidates(stop_sequence, ss_cover, first_node, freight, infra);

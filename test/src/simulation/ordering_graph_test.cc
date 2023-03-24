@@ -7,12 +7,10 @@
 
 #include "test/file_paths.h"
 
-using namespace soro;
+namespace soro::simulation::test {
+
 using namespace soro::tt;
 using namespace soro::infra;
-using namespace soro::simulation;
-
-namespace soro::simulation::test {
 
 bool has_cycle(ordering_graph const& og) {
   return utls::has_cycle(

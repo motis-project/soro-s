@@ -5,9 +5,6 @@
 
 #include "test/file_paths.h"
 
-using namespace soro;
-using namespace soro::infra;
-
 namespace soro::infra::test {
 
 void check_infrastructure_stats(infrastructure_options const& opts) {

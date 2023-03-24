@@ -13,7 +13,7 @@ namespace soro::server {
 
 using namespace net;
 
-void soro_server::set_up_routes() {
+void soro_server::set_up_routes(server_settings const& s) {
   router_.reply_hook([](web_server::http_res_t const& resp) {
     std::visit(
         [](auto&& r) {
@@ -89,20 +89,20 @@ void soro_server::set_up_routes() {
                 [&](net::query_router::route_request const& req,
                     web_server::http_res_cb_t const& cb, bool const) {
                   auto const success = net::serve_static_file(
-                      SERVER_RESOURCE_DIR.string(), req, cb);
+                      s.server_resource_dir_.val().string(), req, cb);
                   if (!success) {
                     cb(net::not_found_response(req));
                   }
                 });
 }
 
-soro_server::soro_server(server_settings const& settings)
-    : infrastructure_module_{get_infrastructure_module(settings)},
-      tiles_module_{get_tile_module(settings, infrastructure_module_)} {
-  set_up_routes();
+soro_server::soro_server(server_settings const& s)
+    : infrastructure_module_{get_infrastructure_module(s)},
+      tiles_module_{get_tile_module(s, infrastructure_module_)} {
+  set_up_routes(s);
 }
 
-void soro_server::run(server_settings const& settings) {
+void soro_server::run(server_settings const& s) {
   boost::asio::io_context ioc;
   net::web_server serv{ioc};
 
@@ -114,7 +114,7 @@ void soro_server::run(server_settings const& settings) {
   });
 
   boost::system::error_code ec;
-  serv.init(settings.address_.val(), settings.port_.val(), ec);
+  serv.init(s.address_.val(), s.port_.val(), ec);
 
   if (ec) {
     uLOG(utl::err) << "init error: " << ec.message();
@@ -126,12 +126,12 @@ void soro_server::run(server_settings const& settings) {
     ioc.stop();
   });
 
-  uLOG(utl::info) << "soro-server running on " << settings.address_.val() << ":"
-                  << settings.port_.val();
+  uLOG(utl::info) << "soro-server running on " << s.address_.val() << ":"
+                  << s.port_.val();
 
   serv.run();
 
-  if (settings.test_.val()) {
+  if (s.test_.val()) {
     ioc.run_for(seconds{1});
   } else {
     ioc.run();

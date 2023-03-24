@@ -7,6 +7,8 @@
 
 using namespace soro::infra;
 
+namespace fs = std::filesystem;
+
 namespace soro::server {
 
 infra::infrastructure::optional_ptr infrastructure_module::get_infra(
@@ -25,14 +27,16 @@ std::vector<fs::path> get_infrastructure_todo_list(
 
   std::vector<fs::path> infra_todo_list;
 
-  for (auto&& dir_entry : fs::directory_iterator{settings.infra_dir_.val()}) {
+  for (auto&& dir_entry :
+       fs::directory_iterator{settings.infrastructure_sources_.val()}) {
     if (!dir_entry.is_directory()) {
-      uLOG(utl::info) << "Ignoring non-directory entry " << dir_entry
+      uLOG(utl::info) << "ignoring non-directory entry " << dir_entry
                       << " in infrastructure resource directory";
       continue;
     }
 
-    auto const potential_raw = SERVER_INFRA_DIR / dir_entry.path().filename();
+    auto const potential_raw =
+        settings.server_infra_dir() / dir_entry.path().filename();
 
     // add to todo list if either:
     // - regenerate is set
@@ -64,11 +68,11 @@ infrastructure_module get_infrastructure_module(
   for (auto const& infra_item : infra_todo_list) {
     auto infra = std::make_unique<infrastructure>(
         is_directory(infra_item)
-            ? infrastructure(make_infra_opts(infra_item, COORD_FILE))
+            ? infrastructure(make_infra_opts(infra_item, s.coord_file()))
             : infrastructure(infra_item));
 
     if (infrastructure::serialization_possible() && is_directory(infra_item)) {
-      (*infra).save(SERVER_INFRA_DIR / infra_item.filename());
+      (*infra).save(s.server_infra_dir() / infra_item.filename());
     }
 
     result.infrastructures_.emplace((*infra)->source_, std::move(infra));

@@ -1,0 +1,41 @@
+name: create and upload soro-s artifacts
+description: 'creates and uploads soro-s artifacts'
+
+inputs:
+  preset:
+    description: 'cmake preset to use'
+    required: true
+  artifact:
+    description: 'name of the artifact to create'
+    required: true
+  github_token:
+    description: 'secrets github token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: create artifact
+      shell: bash
+      run: |
+        mkdir -p soro-s
+        mv build/${{ inputs.preset }}/soro-server soro-s/
+        mv build/${{ inputs.preset }}/server_resources soro-s/
+        tar cjf soro-s-${{ inputs.artifact }}.tar.bz2 soro-s
+
+    - name: upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: soro-s-${{ inputs.artifact }}
+        path: soro-s-${{ inputs.artifact }}.tar.bz2
+
+    - name: upload artifact as release asset on publish
+      if: github.event.action == 'published'
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./soro-s-${{ inputs.artifact }}.tar.bz2
+        asset_name: soro-s-${{ inputs.artifact }}.tar.bz2
+        asset_content_type: application/x-tar

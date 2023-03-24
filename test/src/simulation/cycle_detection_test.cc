@@ -2,13 +2,12 @@
 
 #include "soro/utls/graph/has_cycle.h"
 
-using namespace soro;
-
 TEST_SUITE("cycle_detection suite") {
   using graph = std::vector<std::vector<uint32_t>>;
 
   bool detect_cycle(graph const& graph) {
-    return utls::has_cycle(graph, [](auto&& g, auto&& id) { return g[id]; });
+    return soro::utls::has_cycle(graph,
+                                 [](auto&& g, auto&& id) { return g[id]; });
   }
 
   TEST_CASE("no cycle") {

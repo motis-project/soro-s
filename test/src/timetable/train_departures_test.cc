@@ -3,10 +3,10 @@
 #include "soro/timetable/train.h"
 #include "soro/utls/std_wrapper/sort.h"
 
-using namespace soro;
-using namespace soro::tt;
+namespace soro::test {
 
 using namespace date;
+using namespace soro::tt;
 
 std::vector<absolute_time> gather_midnights(std::vector<train> const& trains,
                                             interval const& interval) {
@@ -704,3 +704,5 @@ TEST_SUITE("iterate train departures 6") {
     CHECK_EQ(result, expected);
   }
 }
+
+}  // namespace soro::test

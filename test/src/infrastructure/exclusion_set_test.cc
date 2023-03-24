@@ -24,7 +24,7 @@ TEST_SUITE("exclusion set") {
     check_set(es);
   }
 
-#if !defined(NDEBUG)
+#if !(defined(NDEBUG) || defined(SORO_SAN))
   TEST_CASE("construct failure - non sorted") {
     soro::vector<uint32_t> const ids = {6, 1, 2, 3, 4, 5};
     CHECK_THROWS(make_exclusion_set(ids));

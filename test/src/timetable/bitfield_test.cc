@@ -354,7 +354,7 @@ TEST_SUITE("bitfield") {
     CHECK_EQ(bf, expected_result);
   }
 
-#if !defined(NDEBUG)
+#if !(defined(NDEBUG) || defined(SORO_SAN))
   TEST_CASE("construct bitfield throws - end before start") {
     year_month_day const s = 2022_y / February / 22;
     year_month_day const t = 2022_y / March / 2;

@@ -36,8 +36,6 @@ struct interlocking_route {
   bool follows(interlocking_route const& other,
                infrastructure const& infra) const;
 
-  std::vector<element::ptr> elements(infrastructure const&) const;
-
   node::idx size(infrastructure const& infra) const;
 
   bool contains(station_route::id, node::idx) const;

@@ -33,7 +33,9 @@ exclusion_graph get_exclusion_graph(
   exclusion_graph g;
   g.nodes_.resize(ir_count);
 
-  utl::parallel_for_run(ir_count, [&](auto&& ir_id) {
+  utl::parallel_for_run(ir_count, [&](auto&& ir_id_large) {
+    auto const ir_id = static_cast<interlocking_route::id>(ir_id_large);
+
     auto const ranges =
         soro::to_vec(closed_exclusion_elements[ir_id], [&](auto&& e_id) {
           auto const& irs_using = closed_element_used_by[e_id];

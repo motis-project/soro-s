@@ -217,6 +217,19 @@
       }
     },
     {
+      "name": "clang-cista-tidy",
+      "displayName": "Linux AMD64 Clang CISTA Tidy",
+      "inherits": [
+        "base-preset",
+        "clang-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On",
+        "SORO_LINT": "On"
+      }
+    },
+    {
       "name": "clang-cista-sanitizer",
       "displayName": "Linux AMD64 Clang CISTA Sanitizer",
       "inherits": [
@@ -247,6 +260,30 @@
       "inherits": [
         "base-preset",
         "gcc-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "msvc-cista-debug",
+      "displayName": "Windows AMD64 MSVC CISTA Debug",
+      "inherits": [
+        "base-preset",
+        "msvc-preset"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SERIALIZE": "On"
+      }
+    },
+    {
+      "name": "msvc-cista-release",
+      "displayName": "Windows AMD64 MSVC CISTA Release",
+      "inherits": [
+        "base-preset",
+        "msvc-preset"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",

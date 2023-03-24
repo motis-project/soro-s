@@ -223,10 +223,10 @@ interval_list get_interval_list(train const& train, type_set const& event_types,
       auto const use_sp =
           tn.sequence_point_.has_value() && (*tn.sequence_point_)->is_halt();
 
-      interval const new_interval(
-          current_distance, prev_limit, current_limit,
-          use_sp ? tn.sequence_point_ : sequence_point::optional_ptr{},
-          current_events);
+      auto const sp = use_sp ? sequence_point::optional_ptr{tn.sequence_point_}
+                             : sequence_point::optional_ptr{std::nullopt};
+      interval const new_interval(current_distance, prev_limit, current_limit,
+                                  sp, current_events);
 
       if (!list.empty() && list.back().distance_ == current_distance) {
         list.back().append(new_interval);

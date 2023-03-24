@@ -9,12 +9,12 @@
 namespace soro::server {
 
 struct soro_server {
-  explicit soro_server(server_settings const& settings);
+  explicit soro_server(server_settings const& s);
 
-  void run(server_settings const& settings);
+  void run(server_settings const& s);
 
 private:
-  void set_up_routes();
+  void set_up_routes(server_settings const& s);
 
   net::query_router router_;
 

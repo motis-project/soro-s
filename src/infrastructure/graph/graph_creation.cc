@@ -465,7 +465,7 @@ void connect_nodes(undirected_track_element& e, element::ptr this_ptr) {
 }
 
 void connect_nodes(simple_switch& e, element::ptr this_ptr) {
-  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> const& neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);
@@ -502,7 +502,7 @@ void connect_nodes(track_element& e, element::ptr this_ptr) {
 }
 
 void connect_nodes(cross& e, element::ptr this_ptr) {
-  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> const& neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);

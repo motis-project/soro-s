@@ -1,16 +1,13 @@
 #include "doctest/doctest.h"
 
-#include <fstream>
-
 #include "utl/enumerate.h"
 
 #include "test/file_paths.h"
 
-using namespace soro;
 using namespace soro::infra;
 
 TEST_CASE("exclusion graph is symmetric") {
-  auto opts = test::SMALL_OPTS;
+  auto opts = soro::test::SMALL_OPTS;
   opts.exclusions_ = true;
   opts.interlocking_ = true;
   opts.exclusion_graph_ = true;

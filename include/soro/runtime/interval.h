@@ -25,9 +25,7 @@ struct interval {
       : distance_(dist),
         limit_left_{left_limit},
         limit_right_{right_limit},
-        sequence_point_{sp.has_value()
-                            ? tt::sequence_point::optional_ptr(*sp)
-                            : tt::sequence_point::optional_ptr(std::nullopt)},
+        sequence_point_{std::move(sp)},
         events_{std::move(events)} {}
 
   void append(interval const& o) {
