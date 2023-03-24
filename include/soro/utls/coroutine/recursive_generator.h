@@ -9,12 +9,6 @@
 
 #pragma once
 
-#if defined(__clang__)
-#include <experimental/coroutine>
-#else
-#include <coroutine>
-#endif
-
 #include <cassert>
 #include <exception>
 #include <functional>
@@ -25,12 +19,6 @@
 #include "soro/utls/coroutine/generator.h"
 
 namespace soro::utls {
-
-#if defined(__clang__)
-namespace coro = std::experimental;
-#else
-namespace coro = std;
-#endif
 
 template <typename T>
 class [[nodiscard]] recursive_generator {

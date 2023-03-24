@@ -49,7 +49,6 @@ struct sim_node {
 struct sim_graph {
   sim_graph(infra::infrastructure const&, tt::timetable const&);
 
-  bool has_cycle() const;
   bool path_exists(sim_node::id const from, sim_node::id const to) const;
 
   std::vector<sim_node> nodes_;

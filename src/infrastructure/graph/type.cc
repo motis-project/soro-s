@@ -134,6 +134,7 @@ std::string get_type_str(type const& t) {
     case type::ETCS_END: return "etcs_end";
     case type::ETCS_START: return "etcs_start";
     case type::ETCS_BLOCK_SIGN: return "etcs_block_sign";
+    case type::META: return "meta";
   }
   throw utl::fail("No type string found in infrastructure element");
 }

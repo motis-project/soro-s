@@ -17,8 +17,6 @@ struct timestamp {
 
   relative_time arrival_;
   relative_time departure_;
-  //  utls::unixtime arrival_;
-  //  utls::unixtime departure_;
   infra::element::ptr element_{nullptr};
 };
 

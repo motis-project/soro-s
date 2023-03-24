@@ -5,7 +5,7 @@
 namespace soro::infra {
 
 line::segment const& get_segment(line const& l, kilometrage const km) {
-  utls::expects(!l.segments_.empty(), "Segments of line {} are empty.", l.id_);
+  utls::expect(!l.segments_.empty(), "Segments of line {} are empty.", l.id_);
 
   // ideally these would be a precondition, alas
   if (km < l.segments_.front().from_) {

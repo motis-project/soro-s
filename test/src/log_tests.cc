@@ -11,7 +11,6 @@
 
 #include "test/file_paths.h"
 
-using namespace soro;
 using namespace soro::utls;
 using namespace soro::tt;
 using namespace soro::infra;
@@ -43,11 +42,11 @@ void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
 }
 
 void log_possible_speed_limit_values(infrastructure const& infra) {
-  std::set<si::speed> possible_values;
+  std::set<soro::si::speed> possible_values;
 
   for (auto const& data : infra->graph_.element_data_) {
     execute_if<speed_limit>(data, [&](auto&& spl) {
-      if (si::valid(spl.limit_)) {
+      if (soro::si::valid(spl.limit_)) {
         possible_values.insert(spl.limit_);
       }
     });

@@ -315,6 +315,7 @@ struct element {
 #endif
 
   using ptr = element_ptr;
+  using ids = soro::vector<element_id>;
 
   using member_t =
       soro::variant<end_element, track_element, undirected_track_element,
@@ -343,6 +344,12 @@ struct element {
   std::span<const element_ptr> neighbours() const {
     return this->e_.apply([](auto&& e) -> std::span<const element_ptr> {
       return {std::cbegin(e.neighbours_), e.neighbours_.size()};
+    });
+  }
+
+  std::span<element_ptr> neighbours() {
+    return this->e_.apply([](auto&& e) -> std::span<element_ptr> {
+      return {std::begin(e.neighbours_), e.neighbours_.size()};
     });
   }
 
@@ -378,6 +385,8 @@ struct element {
   bool is_cross_switch() const;
 
   bool is_switch() const;
+
+  bool joins_tracks() const;
 
   kilometrage get_km(element::ptr neigh) const;
   si::length get_distance(element::ptr const neigh) const;

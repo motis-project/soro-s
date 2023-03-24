@@ -1,80 +1,77 @@
-import { getFileContents } from "../../../utl/getFileContents.js";
-import { iterate } from "../../../utl/iterate.js";
+import {getFileContents} from "../../../utl/getFileContents.js";
+import {iterate} from "../../../utl/iterate.js";
 
-const routeSwitchCallback = e => {
-  if (e.target.checked) {
-    window.infrastructureManager.highlightStationRoute(Number(e.target.value));
-  } else {
-    window.infrastructureManager.deHighlightStationRoute(Number(e.target.value));
-  }
+const stationRouteSwitchCallback = e => {
+    if (e.target.checked) {
+        window.infrastructureManager.highlightStationRoute(Number(e.target.value));
+    } else {
+        window.infrastructureManager.deHighlightStationRoute(Number(e.target.value));
+    }
 }
 
-const signalRouteSwitchCallback = e => {
-  if (e.target.checked) {
-    window.infrastructureManager.highlightSignalStationRoute(Number(e.target.value));
-  } else {
-    window.infrastructureManager.deHighlightSignalStationRoute(Number(e.target.value));
-  }
+const interlockingRouteSwitchCallback = e => {
+    if (e.target.checked) {
+        window.infrastructureManager.highlightInterlockingRoute(Number(e.target.value));
+    } else {
+        window.infrastructureManager.deHighlightInterlockingRoute(Number(e.target.value));
+    }
 }
 
-function fillStation(station, infrastructure, highlightedStationRoutes, highlightedSignalStationRoutes) {
-  let stationDetailName = document.getElementById('stationDetailName');
-  stationDetailName.innerText = station.name;
+function fillStation(station, highlightedStationRoutes, highlightedInterlockingRoutes) {
+    let stationDetailName = document.getElementById('stationDetailName');
+    stationDetailName.innerText = station.ds100;
 
-  let routeContent = document.getElementById('stationRouteCollapsibleContent');
-  let newRoutes = [];
-  for (let i = 0; i < station.station_routes.size(); i++) {
-    const key = station.station_routes.keys().get(i);
-    const sr = station.station_routes.get(key);
+    let routeContent = document.getElementById('stationRouteCollapsibleContent');
+    let newRoutes = [];
+    for (const stationRoute of station.station_routes) {
+        let route = document.createElement('label');
+        route.classList.add('matter-switch', 'station-detail-route');
 
-    let route = document.createElement('label');
-    route.classList.add('matter-switch', 'station-detail-route');
+        let input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = stationRoute.id;
+        input.checked = highlightedStationRoutes.find(f => f.properties.id === stationRoute.id);
+        input.addEventListener('input', stationRouteSwitchCallback);
 
-    let input = document.createElement('input');
-    input.type = 'checkbox';
-    input.value = sr.id;
-    input.checked = highlightedStationRoutes.find(f => f.properties.id === sr.id);
-    input.addEventListener('input', routeSwitchCallback);
+        let span = document.createElement('span');
+        span.innerHTML = stationRoute.name + ' ' + stationRoute.from_element + ' -> ' + stationRoute.to_element;
 
-    let span = document.createElement('span');
-    span.innerHTML = key;
+        route.appendChild(input);
+        route.appendChild(span);
+        newRoutes.push(route);
+    }
 
-    route.appendChild(input);
-    route.appendChild(span);
-    newRoutes.push(route);
-  }
+    routeContent.replaceChildren(...newRoutes);
 
-  routeContent.replaceChildren(...newRoutes);
+    let newInterlockingRoutes = [];
+    for (const interlockingRouteId of station.interlocking_routes) {
+        let route = document.createElement('label');
+        route.classList.add('matter-switch', 'station-detail-route');
 
-  let newSignalStationRoutes = [];
-  for (const ssr of iterate(infrastructure.station_to_ssrs.get(station.id))) {
-    let route = document.createElement('label');
-    route.classList.add('matter-switch', 'station-detail-signal-route');
+        let input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = interlockingRouteId;
+        input.checked = highlightedInterlockingRoutes.find(f => f.properties.id === interlockingRouteId);
+        input.addEventListener('input', interlockingRouteSwitchCallback);
 
-    let input = document.createElement('input');
-    input.type = 'checkbox';
-    input.value = ssr.id;
-    input.checked = highlightedSignalStationRoutes.find(f => f.properties.id === ssr.id);
-    input.addEventListener('input', signalRouteSwitchCallback);
+        let span = document.createElement('span');
+        span.innerHTML = 'ID: ' + interlockingRouteId;
 
-    let span = document.createElement('span');
-    span.innerHTML = 'ID: ' + ssr.id;
+        route.appendChild(input);
+        route.appendChild(span);
+        newInterlockingRoutes.push(route);
+    }
 
-    route.appendChild(input);
-    route.appendChild(span);
-    newSignalStationRoutes.push(route);
-  }
+    let interlockingRouteContent = document.getElementById('interlockingRouteCollapsibleContent');
+    interlockingRouteContent.replaceChildren(...newInterlockingRoutes);
 
-  let signalStationRouteContent = document.getElementById('signalStationRouteCollapsibleContent');
-  signalStationRouteContent.replaceChildren(...newSignalStationRoutes);
-
-  showSubOverlay();
+    showSubOverlay();
 }
 
-export function showStation(station, infrastructure, highlightedStationRoutes, highlightedSignalStationRoutes) {
-  getFileContents("./components/infrastructure/station_detail/station_detail.html")
-    .then(html => {
-      document.getElementById('subOverlayContent').innerHTML = html;
-      fillStation(station, infrastructure, highlightedStationRoutes, highlightedSignalStationRoutes);
-    });
+export function showStation(station, highlightedStationRoutes, highlightedSignalStationRoutes) {
+    getFileContents("./components/infrastructure/station_detail/station_detail.html")
+        .then(html => {
+            document.getElementById('subOverlayContent').innerHTML = html;
+            fillStation(station, highlightedStationRoutes, highlightedSignalStationRoutes);
+        });
 }

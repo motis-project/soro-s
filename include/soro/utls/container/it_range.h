@@ -19,7 +19,7 @@ struct it_range {
 };
 
 template <typename Iterator>
-constexpr auto make_range(Iterator begin, Iterator end) noexcept {
+constexpr it_range<Iterator> make_range(Iterator begin, Iterator end) noexcept {
   return it_range<Iterator>(begin, end);
 }
 

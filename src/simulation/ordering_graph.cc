@@ -1,11 +1,15 @@
 #include "soro/simulation/ordering_graph.h"
 
-#include "utl/enumerate.h"
-
-#include "soro/utls/container/priority_queue.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
-
 #include <random>
+
+#include "utl/enumerate.h"
+#include "utl/erase_duplicates.h"
+#include "utl/parallel_for.h"
+#include "utl/timer.h"
+
+#include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/sort.h"
+
 #include "soro/runtime/runtime.h"
 
 namespace soro::simulation {
@@ -14,202 +18,186 @@ using namespace soro::tt;
 using namespace soro::infra;
 using namespace soro::runtime;
 
-struct route_usage {
-  utls::unixtime from_{utls::INVALID_TIME};
-  utls::unixtime to_{utls::INVALID_TIME};
-  ordering_node::id node_id_{ordering_node::INVALID};
-};
+void print_ordering_graph_stats(ordering_graph const& og) {
+  std::size_t edges = 0;
 
-using usage_idx = uint32_t;
-constexpr auto const INVALID_USAGE_IDX = std::numeric_limits<usage_idx>::max();
+  // edge count e -> node count with edge count e
+  std::map<std::size_t, std::size_t> in_edge_counts;
+  std::map<std::size_t, std::size_t> out_edge_counts;
 
-ordering_graph::ordering_graph(infra::infrastructure const& infra,
-                               tt::timetable const& tt) {
-  utls::sassert(false, "Not implemented");
-
-  std::vector<std::vector<route_usage>> route_orderings(
-      infra->interlocking_.routes_.size());
-
-  for (auto const& train : tt->trains_) {
-    auto const stamps = runtime_calculation(train, infra, {type::MAIN_SIGNAL});
-
-    utl::verify(train.path_.size() == stamps.times_.size() + 1,
-                "Differing amounts of signal station routes in train path and "
-                "main signals in running time calculation timestamps");
-
-    for (auto const [idx, ir_id] : utl::enumerate(train.path_)) {
-      auto const id = static_cast<ordering_node::id>(nodes_.size());
-
-      nodes_.emplace_back(id, ir_id, train.id_);
-
-      utls::unixtime const from;
-      utls::unixtime const to;
-
-      route_orderings[ir_id].push_back(
-          {.from_ = from, .to_ = to, .node_id_ = id});
-    }
+  for (auto const& n : og.nodes_) {
+    edges += n.out_.size();
+    ++in_edge_counts[n.in_.size()];
+    ++out_edge_counts[n.out_.size()];
   }
 
-  for (auto& usage_order : route_orderings) {
-    utls::sort(usage_order, [](auto&& usage1, auto&& usage2) {
-      return usage1.from_ < usage2.from_;
-    });
+  uLOG(utl::info) << "ordering graph node count: " << og.nodes_.size();
+  uLOG(utl::info) << "ordering graph edge count: " << edges;
+
+  uLOG(utl::info) << "incoming edges distribution:";
+  for (auto const [edge_count, nodes] : in_edge_counts) {
+    uLOG(utl::info) << "nodes with " << edge_count << " in edges: " << nodes;
   }
 
-  // holds an index for every std::vector<route_usage> in route_orderings
-  // the index points to the smallest not yet processed route_usage object
-  std::vector<size_t> current_route_usage_index(route_orderings.size(),
-                                                INVALID_USAGE_IDX);
-
-  auto const entry_comparison = [&](auto const e1, auto const e2) {
-    return route_orderings[e1][current_route_usage_index[e1]].from_ >
-           route_orderings[e2][current_route_usage_index[e2]].from_;
-  };
-
-  // the priority queue contains every interlocking route that is used
-  // by at least one train contained in the timetable.
-  // the elements of the queue are sorted so that the top element is the
-  // usage of an interlocking route with the smallest from_ time value of its
-  // usage w.r.t to the current route usage index
-  utls::priority_queue<ir_id, decltype(entry_comparison)> todo_queue(
-      entry_comparison);
-
-  for (auto const [route_id, usages] : utl::enumerate(route_orderings)) {
-    if (usages.empty()) {
-      continue;
-    }
-
-    current_route_usage_index[route_id] = 0;
-    todo_queue.emplace(static_cast<ir_id>(route_id));
-  }
-
-  // the algorithm is similar to a merge operation
-  // take the currently smallest route usage and add edges to all other
-  // nodes with interlocking routes that are excluded
-  // this is correct since we have taken the smallest (earliest) usage,
-  // so all other nodes (i.e. usages) follow the currently processed usage
-  // then increment the usage index of the interlocking route and re-add it
-  // to the queue
-  while (!todo_queue.empty()) {
-    auto from_ssr = todo_queue.top();
-    todo_queue.pop();
-
-    auto& from_idx = current_route_usage_index[from_ssr];
-    auto const from_usage = route_orderings[from_ssr][from_idx];
-    auto const from_node = from_usage.node_id_;
-
-    for (auto const& to_ir : infra->interlocking_.exclusions_[from_ssr]) {
-      auto to_idx = current_route_usage_index[to_ir];
-
-      if (to_idx == INVALID_USAGE_IDX) {
-        continue;
-      }
-
-      // every interlocking route is in conflict with itself
-      // since we are currently processing the usage of an interlocking
-      // route we have to manually increment the usage index to get the next
-      // usage of a different train of the same interlocking route
-      if (to_ir == from_ssr) {
-        if (to_idx < route_orderings[to_ir].size() - 1) {
-          ++to_idx;
-        } else {
-          // if its the last usage of the interlocking route we can simply
-          // continue, as we there will not be an edge
-          continue;
-        }
-      }
-
-      auto const& to_usage = route_orderings[to_ir][to_idx];
-      auto const to_node = to_usage.node_id_;
-
-      nodes_[from_node].out_.emplace_back(to_node);
-      nodes_[to_node].in_.emplace_back(from_node);
-    }
-
-    if (from_idx < route_orderings[from_ssr].size() - 1) {
-      ++from_idx;
-      todo_queue.emplace(from_ssr);
-    }
+  uLOG(utl::info) << "outgoing edges distribution:";
+  for (auto const [edge_count, nodes] : out_edge_counts) {
+    uLOG(utl::info) << "nodes with " << edge_count << " out edges: " << nodes;
   }
 }
 
-ordering_graph::ordering_graph() = default;
+struct route_usage {
+  soro::absolute_time from_{};
+  soro::absolute_time to_{};
+  ordering_node::id id_{ordering_node::INVALID};
+};
 
-/**
- * Generates a graph with given amount of trains, tracks and a given minimum and
- * maximum amount of nodes per train.
- *
- * Example: 2 trains with 5 tracks, and minimum of 2 and maximum of 5 could
- * yield a graph, where:
- * train A follows tracks 1, 2, 3, 4 and 5 (all 5 tracks)
- * train B follows tracks 3 and 1 (just 2 tracks)
- */
-ordering_graph generate_testgraph(const int train_amnt, const int track_amnt,
-                                  const int min_nodes, const int max_nodes) {
-  ordering_graph graph;
+ordering_graph::ordering_graph(infra::infrastructure const& infra,
+                               tt::timetable const& tt)
+    : ordering_graph(infra, tt, interval{}) {}
 
-  // are min and max valid?
-  const int min = min_nodes >= 0 ? min_nodes : 0;
-  const int max = max_nodes <= track_amnt ? max_nodes : track_amnt;
+ordering_graph::ordering_graph(infra::infrastructure const& infra,
+                               tt::timetable const& tt,
+                               tt::interval const& interval) {
+  utl::scoped_timer const timer("creating ordering graph");
 
-  // get random number generator
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<> distr(1, 6);
+  ordering_node::id glob_current_node_id = 0;
 
-  // generate nodes for each train and connect them
-  for (auto train = 0; train < train_amnt; train++) {
-    // amount of tracks this train will use for now
-    const auto node_amnt = min + (distr(mt) % (max - min));
+  std::vector<std::vector<route_usage>> orderings(
+      infra->exclusion_.exclusion_sets_.size());
 
-    for (auto n = 0; n < node_amnt; n++) {
-      // choose a random new track that this train will use
-      std::vector<int> chosen_ids;
-      int track_id = 0;
-      while (true) {
-        track_id = distr(mt) % track_amnt;
-        // track must not already be used by this train
-        if (!utls::contains(chosen_ids, track_id)) {
-          chosen_ids.emplace_back(track_id);
-          break;
-        }
+  auto const insert_into_orderings = [&](route_usage const& usage,
+                                         interlocking_route::id const ir_id) {
+    for (auto const es_id : infra->exclusion_.irs_to_exclusion_sets_[ir_id]) {
+      orderings[es_id].push_back(usage);
+    }
+  };
+
+  auto const generate_route_orderings = [&](train const& train) {
+    soro::vector<timestamp> times;
+
+    for (auto const anchor : train.departures(interval)) {
+      if (times.empty()) {
+        times = runtime_calculation(train, infra, {type::MAIN_SIGNAL}).times_;
+
+        utls::sasserts([&]() {
+          auto const ms_count = utls::count_if(times, [](auto&& t) {
+            return t.element_->is(type::MAIN_SIGNAL);
+          });
+
+          utls::sassert(
+              train.path_.size() == ms_count + 1,
+              "Differing amounts of interlocking routes in train path and "
+              "main signals in running time calculation timestamps");
+        });
       }
-      const auto size = graph.nodes_.size();
-      graph.nodes_.emplace_back(static_cast<ordering_node::id>(size), track_id,
-                                train);
-      // connect the node before this one with the new one
-      if (n != 0) {
-        graph.nodes_[size - 1].out_.emplace_back(
-            static_cast<ordering_node::id>(size));
-        graph.nodes_[size].in_.emplace_back(
-            static_cast<ordering_node::id>(size - 1));
+
+      if (times.empty()) {
+        uLOG(utl::warn) << "no main signal in path of train " << train.id_;
+        return;
       }
+
+      ordering_node::id curr_node_id = ordering_node::INVALID;
+      {
+        curr_node_id = glob_current_node_id;
+        glob_current_node_id += train.path_.size();
+        nodes_.resize(nodes_.size() + train.path_.size());
+        trip_to_nodes_.emplace(
+            train::trip{.train_id_ = train.id_, .anchor_ = anchor},
+            std::pair{curr_node_id, static_cast<ordering_node::id>(
+                                        curr_node_id + train.path_.size())});
+      }
+
+      {  // add first halt -> first ms
+        nodes_[curr_node_id] = ordering_node{.id_ = curr_node_id,
+                                             .ir_id_ = train.path_.front(),
+                                             .train_id_ = train.id_,
+                                             .in_ = {},
+                                             .out_ = {curr_node_id + 1}};
+
+        route_usage const first_usage = {
+            .from_ = relative_to_absolute(anchor, train.first_departure()),
+            .to_ = relative_to_absolute(anchor, times.front().arrival_),
+            .id_ = curr_node_id};
+
+        insert_into_orderings(first_usage, nodes_[curr_node_id].ir_id_);
+
+        ++curr_node_id;
+      }
+
+      auto path_idx = 1U;
+      for (auto const [from_time, to_time] : utl::pairwise(times)) {
+        nodes_[curr_node_id] = ordering_node{.id_ = curr_node_id,
+                                             .ir_id_ = train.path_[path_idx],
+                                             .train_id_ = train.id_,
+                                             .in_ = {curr_node_id - 1},
+                                             .out_ = {curr_node_id + 1}};
+
+        route_usage const usage = {
+            .from_ = relative_to_absolute(anchor, from_time.arrival_),
+            .to_ = relative_to_absolute(anchor, from_time.departure_),
+            .id_ = curr_node_id};
+
+        insert_into_orderings(usage, nodes_[curr_node_id].ir_id_);
+
+        ++path_idx;
+        ++curr_node_id;
+      }
+
+      {  // add last ms -> last halt
+        nodes_[curr_node_id] = ordering_node{.id_ = curr_node_id,
+                                             .ir_id_ = train.path_.back(),
+                                             .train_id_ = train.id_,
+                                             .in_ = {curr_node_id - 1},
+                                             .out_ = {}};
+
+        route_usage const last_usage = {
+            .from_ = relative_to_absolute(anchor, times.back().arrival_),
+            .to_ = relative_to_absolute(anchor, train.last_arrival()),
+            .id_ = curr_node_id};
+
+        insert_into_orderings(last_usage, nodes_[curr_node_id].ir_id_);
+
+        ++curr_node_id;
+      }
+      utls::sassert(path_idx == train.path_.size() - 1);
+    }
+  };
+
+  // generate the nodes and route usage orderings (1 node == 1 usage)
+  for (auto const& train : tt->trains_) {
+    generate_route_orderings(train);
+  }
+
+  utl::parallel_for(orderings, [](auto&& usage_order) {
+    utls::sort(usage_order, [](auto&& usage1, auto&& usage2) {
+      return usage1.from_ < usage2.from_;
+    });
+  });
+
+  // create edges according to the sorted orderings
+  for (auto const& usage_order : orderings) {
+    for (auto [from, to] : utl::pairwise(usage_order)) {
+      nodes_[from.id_].out_.emplace_back(to.id_);
+      nodes_[to.id_].in_.emplace_back(from.id_);
     }
   }
 
-  // iterate over all nodes and test, whether future nodes have other trains on
-  // the same track to generate edges (nodes further back will be trains with
-  // higher ids!)
-  const auto size = graph.nodes_.size();
-  for (uint64_t first_index = 0; first_index < size; first_index++) {
-    for (auto second_index = first_index + 1; second_index < size;
-         second_index++) {
-      // other train on different track is irrelevant and same
-      // train can not have same track
-      if (graph.nodes_[first_index].ir_id_ != graph.nodes_[second_index].ir_id_)
-        continue;
-      // connect first train with problematic second
-      graph.nodes_[first_index].out_.emplace_back(
-          graph.nodes_[second_index].id_);
-      graph.nodes_[second_index].in_.emplace_back(
-          graph.nodes_[first_index].id_);
-      // to prevent unnecessary edges (will be added transivitely): move
-      // firstIndex further
-      break;
-    }
+  for (auto& node : nodes_) {
+    utl::erase_duplicates(node.out_);
+    utl::erase_duplicates(node.in_);
   }
 
-  return graph;
+  print_ordering_graph_stats(*this);
+}
+
+std::span<const ordering_node> ordering_graph::trip_nodes(
+    tt::train::trip const trip) const {
+  auto const it = trip_to_nodes_.find(trip);
+
+  utls::sassert(it != std::end(trip_to_nodes_),
+                "could not find nodes for trip {}", trip);
+
+  return {&nodes_[it->second.first], it->second.second - it->second.first};
 }
 
 }  // namespace soro::simulation

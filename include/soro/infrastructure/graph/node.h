@@ -25,9 +25,9 @@ struct node {
     return idx != INVALID_IDX;
   }
 
-  using optional_id = utls::optional<id, INVALID>;
-  using optional_ptr = utls::optional<ptr, nullptr>;
-  using optional_idx = utls::optional<idx, INVALID_IDX>;
+  using optional_id = soro::optional<id>;
+  using optional_ptr = soro::optional<ptr>;
+  using optional_idx = soro::optional<idx>;
 
   bool is(type const t) const;
 

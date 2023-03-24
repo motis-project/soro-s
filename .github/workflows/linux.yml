@@ -1,4 +1,4 @@
-name: Linux Build
+name: linux build
 
 on:
   push:
@@ -11,24 +11,25 @@ on:
 
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: [ self-hosted, linux, x64 ]
     container:
       image: ghcr.io/julianharbarth/docker-cpp-build:master
       volumes:
-        - ${{ matrix.config.preset }}-deps:/deps
-        - ${{ matrix.config.preset }}-buildcache:/buildcache
+        - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-deps:/deps
+        - ${{ github.event.repository.name }}-${{ matrix.config.preset }}-buildcache:/buildcache
     strategy:
       fail-fast: false
       matrix:
         config:
           - preset: clang-release
             artifact: linux-amd64
-            for_ui_tests: true
-          - preset: clang-debug
           - preset: gcc-release
-          - preset: gcc-debug
+          - preset: gcc-cista-release
+          - preset: clang-cista-release
           - preset: clang-tidy
           - preset: clang-sanitizer
+          - preset: clang-cista-tidy
+          - preset: clang-cista-sanitizer
     env:
       BUILDCACHE_DIR: /buildcache
       BUILDCACHE_DIRECT_MODE: true
@@ -36,174 +37,36 @@ jobs:
       BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
 
     steps:
-      - uses: actions/checkout@v3
+      # we need to checkout the repository to get the actions
+      - name: checkout repository
+        uses: actions/checkout@v3
 
-      - name: Get deps
+      - name: get deps
         run: ln -s /deps deps
 
-      - name: CMake
-        run: cmake --preset=${{ matrix.config.preset }}
-
-      # ==== BUILD ====
-      - name: Build
-        run: |
-          buildcache -z
-          cmake --build build/${{ matrix.config.preset }} --target soro-test
-          buildcache -s
-
-      # ==== TESTS ====
-      - name: Run Tests
-        run: ./build/${{ matrix.config.preset }}/soro-test
-
-      # ==== WEB BUILD ====
-      - name: Build
-        run: |
-          buildcache -z
-          cmake --build build/${{ matrix.config.preset }} --target soro-server
-          buildcache -s
-
-      - name: Prepare upload soro-server
-        if: matrix.config.for_ui_tests
-        run: |
-            mkdir server-files
-            cp -r ./build/${{ matrix.config.preset }}/soro-server server-files/
-            cp -r ./build/${{ matrix.config.preset }}/server_resources server-files/
-            cp -r resources server-files/
-
-      - name: Upload soro-server
-        if: matrix.config.for_ui_tests
-        uses: actions/upload-artifact@v3
+      - name: build soro-s
+        uses: ./.github/actions/build
         with:
-          name: soro-server
-          path: |
-            server-files/**
+          preset: ${{ matrix.config.preset }}
 
-      - name: Cleanup upload soro-server
-        if: matrix.config.for_ui_tests
-        run: |
-            rm -rf server-files
+      - name: test soro-s
+        uses: ./.github/actions/test
 
-      # ==== WEB TESTS ====
-      - name: Run Server
-        run: |
-          cd ./build/${{ matrix.config.preset }}
-          ./soro-server -t --resource_dir ../../resources
-
-      # ==== DISTRIBUTION ====
-      - name: Create Distribution
+      - name: create and upload artifact
         if: matrix.config.artifact
-        run: |
-          mkdir -p soro-s
-          rm -rf build/clang-release/server_resources/infrastructure
-          rm -rf build/clang-release/server_resources/timetable
-          mv build/clang-release/soro-server soro-s/
-          mv build/clang-release/server_resources soro-s/
-          tar cjf soro-s-${{ matrix.config.artifact }}.tar.bz2 soro-s
-
-      - name: Upload Distribution
-        if: matrix.config.artifact
-        uses: actions/upload-artifact@v1
+        uses: ./.github/actions/create-artifact
         with:
-          name: soro-s-${{ matrix.config.artifact }}
-          path: soro-s-${{ matrix.config.artifact }}.tar.bz2
-
-      # ==== RELEASE ====
-      - name: Upload Release
-        if: github.event.action == 'published' && matrix.config.artifact
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./soro-s-${{ matrix.config.artifact }}.tar.bz2
-          asset_name: soro-s-${{ matrix.config.artifact }}.tar.bz2
-          asset_content_type: application/x-tar
+          preset: ${{ matrix.config.preset }}
+          artifact: ${{ matrix.config.artifact }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
     if: github.event.action == 'published'
-    runs-on: ubuntu-20.04
-    needs: linux
+    runs-on: ubuntu-22.04
+    needs: [ linux ]
+
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Docker setup-buildx
-        uses: docker/setup-buildx-action@v2
+      - name: create and upload docker image
+        uses: ./.github/actions/create-docker
         with:
-          install: true
-      - name: Docker Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=edge
-
-      - name: Docker build and push
-        uses: docker/build-push-action@v3
-        with:
-          push: true
-          context: .
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
-
-  uitests:
-    needs: linux
-    runs-on: ubuntu-latest
-    services:
-      selenium-hub:
-        image: selenium/hub:4.7.2-20221219
-        ports:
-          - 4442:4442
-          - 4443:4443
-          - 4444:4444
-      chrome:
-        image: selenium/node-chrome:4.7.2-20221219
-        options: --shm-size="2g" --add-host host.docker.internal:host-gateway
-        env:
-          SE_EVENT_BUS_HOST: selenium-hub
-          SE_EVENT_BUS_PUBLISH_PORT: 4442
-          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-      firefox:
-        image: selenium/node-firefox:4.7.2-20221219
-        options: --shm-size="2g" --add-host host.docker.internal:host-gateway
-        env:
-          SE_EVENT_BUS_HOST: selenium-hub
-          SE_EVENT_BUS_PUBLISH_PORT: 4442
-          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-    steps:
-      - uses: actions/checkout@v3
-      - name: Cache python dependencies
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          cache: 'pip'
-      - name: Install python dependencies
-        run: pip install -r ui-test/requirements.txt
-      - name: Download soro-server
-        uses: actions/download-artifact@v3
-        with:
-          name: soro-server
-      - name: Prepare soro-server
-        run: chmod +x soro-server
-      - name: Check hostname
-        run: hostname
-      - name: Run UI tests
-        run: |
-          find ui-test -type f -executable -name '*.py' -print0 | xargs -0 -n1 python3
+          github-token: ${{ secrets.GITHUB_TOKEN }}

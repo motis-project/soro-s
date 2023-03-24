@@ -6,8 +6,8 @@
 #include "soro/utls/tuple/for_each.h"
 #include "soro/utls/tuple/is_tuple.h"
 
-using namespace soro;
-using namespace soro::utls;
+namespace soro::test {
+
 using namespace soro::utls::tuple;
 
 TEST_CASE("is_tuple test") {  // NOLINT
@@ -44,3 +44,5 @@ TEST_CASE("for_each test") {  // NOLINT
   for_each(t_const, [&](auto const& e) { acc += e; });
   CHECK(acc == 6);
 }
+
+}  // namespace soro::test

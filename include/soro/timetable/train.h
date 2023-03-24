@@ -4,7 +4,6 @@
 
 #include "soro/utls/container/id_iterator.h"
 #include "soro/utls/coroutine/iterator.h"
-#include "soro/utls/unixtime.h"
 
 #include "soro/base/time.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
@@ -12,20 +11,12 @@
 #include "soro/rolling_stock/freight.h"
 #include "soro/rolling_stock/train_physics.h"
 #include "soro/timetable/bitfield.h"
+#include "soro/timetable/interval.h"
 #include "soro/timetable/sequence_point.h"
 
 namespace soro::tt {
 
-bool is_halt(utls::unixtime arrival, utls::unixtime departure);
-
-struct stop_time {
-  bool is_halt() const noexcept;
-
-  utls::unixtime arrival_;
-  utls::unixtime departure_;
-  utls::duration min_stop_time_;
-};
-
+// yielded when iterating a train
 struct train_node : infra::route_node {
   train_node(route_node const& rn, sequence_point::optional_ptr sp);
 
@@ -50,6 +41,39 @@ struct train {
     sub_t sub_{std::numeric_limits<sub_t>::max()};
   };
 
+  struct trip {
+    CISTA_COMPARABLE()
+
+    id train_id_{tt::train::INVALID};
+    absolute_time anchor_{soro::INVALID<absolute_time>};
+  };
+
+  struct iterator {
+    using iterator_category = typename std::input_iterator_tag;
+    using value_type = absolute_time;
+    using difference_type = value_type;
+    using pointer = value_type*;
+    using reference = value_type;
+
+    iterator(train const* train, interval const& interval, bool const end);
+
+    void advance();
+
+    iterator& operator++();
+
+    value_type operator*() const;
+
+    bool operator==(iterator const& other) const = default;
+    bool operator!=(iterator const& other) const = default;
+
+    train const* train_;
+    bitfield::iterator bitfield_it_;
+    interval interval_;
+  };
+
+  utls::it_range<iterator> departures(interval const& interval) const;
+  utls::it_range<iterator> departures() const;
+
   rs::FreightTrain freight() const;
   bool is_freight() const;
 
@@ -59,9 +83,13 @@ struct train {
   si::length path_length(infra::infrastructure const& infra) const;
 
   relative_time first_departure() const;
-  //  relative_time last_arrival() const;
+  relative_time last_arrival() const;
+  interval event_interval(absolute_time const midnight) const;
 
   std::size_t total_halts() const;
+  std::size_t trip_count() const;
+
+  std::vector<trip> trips() const;
 
   bool effected_by(infra::speed_limit const& spl) const;
 
@@ -98,9 +126,29 @@ struct train {
 
   bitfield service_days_;
   rs::train_physics physics_;
-
-  // deprecated
-  soro::vector<stop_time> stop_times_;
 };
 
 }  // namespace soro::tt
+
+namespace fmt {
+
+template <>
+struct formatter<soro::tt::train::trip> {
+  constexpr auto parse(format_parse_context& ctx)  // NOLINT
+      -> decltype(ctx.begin()) {
+    if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
+      throw format_error("invalid format for train::trip");
+    }
+
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(soro::tt::train::trip const& trip, FormatContext& ctx) const
+      -> decltype(ctx.out()) {
+    return format_to(ctx.out(), "[train {} @ {}]", trip.train_id_,
+                     date::format("%F", trip.anchor_));
+  }
+};
+
+}  // namespace fmt

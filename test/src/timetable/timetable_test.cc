@@ -134,8 +134,8 @@ TEST_CASE("timetable test") {
   for (auto const& scenario : soro::test::get_timetable_scenarios()) {
 
 #if defined(SERIALIZE)
-    scenario.infra_.save("infra.raw");
-    scenario.timetable_.save("tt.raw");
+    scenario->infra_->save("infra.raw");
+    scenario->timetable_.save("tt.raw");
 
     infrastructure const infra("infra.raw");
     timetable const tt("tt.raw");

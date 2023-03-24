@@ -1,4 +1,4 @@
-name: Windows Build
+name: windows build
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   windows-build:
-    runs-on: windows-2022
+    runs-on: [ self-hosted, windows, x64 ]
 
     strategy:
       fail-fast: false
@@ -19,23 +19,31 @@ jobs:
         config:
           - preset: msvc-release
             artifact: windows-amd64
-          - preset: msvc-debug
+          - preset: msvc-cista-release
 
     env:
-      CXX: cl.exe
-      CC: cl.exe
-      BUILDCACHE_COMPRESS: true
-      BUILDCACHE_DIRECT_MODE: true
-      BUILDCACHE_ACCURACY: SLOPPY
       BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
-      BUILDCACHE_LUA_PATH: ${{ github.workspace }}/tools
+      BUILDCACHE_DIRECT_MODE: true
+      BUILDCACHE_MAX_CACHE_SIZE: 26843545600
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - uses: seanmiddleditch/gha-setup-ninja@master
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
+
+      - name: get locally cached deps
+        run: |
+          $depsHash = "${{ hashFiles('.pkg') }}".Substring(0, 8)
+          $depsPath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\deps-$depsHash"
+          New-Item -ItemType Directory -Force -Path $depsPath
+          New-Item -Path .\deps\ -ItemType SymbolicLink -Value $depsPath
+
+      - name: get locally cached buildcache
+        run: |
+          $buildcacheHash = "${{ hashFiles('.pkg', '**/*.h', '**/*.cc') }}".Substring(0, 8)
+          $buildcachePath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\buildcache-${{ matrix.config.preset }}-$buildcacheHash"
+          New-Item -ItemType Directory -Force -Path $buildcachePath
+          New-Item -Path .\.buildcache\ -ItemType SymbolicLink -Value $buildcachePath
 
       # ==== BUILD ====
       - name: Build
@@ -43,7 +51,7 @@ jobs:
           $devShell = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find **\Microsoft.VisualStudio.DevShell.dll
           $installPath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
           Import-Module $devShell
-          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64 -vcvars_ver=14.34"
+          Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64"
           cmake --preset=${{ matrix.config.preset }}
           cmake --build build\${{ matrix.config.preset }} --target soro-server
           cmake --build build\${{ matrix.config.preset }} --target soro-test
@@ -55,7 +63,8 @@ jobs:
       # ==== WEB TESTS ====
       - name: Run Server
         run: |
-          .\build\${{ matrix.config.preset }}\soro-server.exe -t --resource_dir .\resources --server_resource_dir .\build\${{ matrix.config.preset }}\server_resources\
+          cd build\${{ matrix.config.preset }}\
+          .\soro-server.exe -t --resource_dir ..\..\resources
 
       # ==== DISTRIBUTION ====
       - name: Delete unnecessary files

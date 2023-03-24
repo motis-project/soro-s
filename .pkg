@@ -1,11 +1,11 @@
 [cista]
   url=git@github.com:felixguendling/cista.git
   branch=master
-  commit=1ab98b3a3b9b41b12788107325df3d7b7c49efa6
+  commit=7d56bbdb0f653acdb04f21022e8071d8f67e0c66
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=0be21a91d96f27f2de4583eb5badfd1c873e3f6c
+  commit=52afc3944fddf974d6875deb690afda58e971771
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
@@ -34,3 +34,15 @@
   url=git@github.com:motis-project/boost.git
   branch=master
   commit=c90d53bdcd7ff741a416ae122b33c9c2a96e8be7
+[net]
+  url=git@github.com:motis-project/net.git
+  branch=master
+  commit=47a699159ea87e781451ce80e09915e2a8278082
+[range-v3]
+  url=git@github.com:motis-project/range-v3.git
+  branch=master
+  commit=4178d8359d76e3ba612d40a980bc0e5711073ca8
+[cereal]
+  url=git@github.com:motis-project/cereal.git
+  branch=master
+  commit=9e4b49437bc3d47b628a271edd38c1cd7266c669

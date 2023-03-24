@@ -7,7 +7,8 @@
 #include "cista/serialization.h"
 #endif
 
-using namespace soro;
+namespace soro::test {
+
 using namespace soro::utls;
 
 TEST_CASE("polynomial test") {  // NOLINT
@@ -34,7 +35,6 @@ TEST_CASE("polynomial test") {  // NOLINT
 
 #if defined(SERIALIZE)
 TEST_CASE("serialize polynomial") {  // NOLINT
-
   std::vector<unsigned char> buf;
   {
     auto const p = make_polynomial(0.2, 0.3, 0.4);
@@ -47,3 +47,5 @@ TEST_CASE("serialize polynomial") {  // NOLINT
   CHECK(equal(deserialized_p->operator()(0.5), 0.6));
 }
 #endif
+
+}  // namespace soro::test

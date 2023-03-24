@@ -10,6 +10,8 @@ namespace soro::infra {
 struct infrastructure : utls::serializable<infrastructure_t> {
   using utls::serializable<infrastructure_t>::serializable;
 
+  using optional_ptr = soro::optional<infrastructure const*>;
+
   // TODO(julian) This wrapper is only a temporary solution
   explicit infrastructure(infrastructure_t const* wrapped_infra);
 

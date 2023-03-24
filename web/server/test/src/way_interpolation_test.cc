@@ -4,11 +4,12 @@
 #include "soro/utls/coordinates/cartesian.h"
 #include "soro/utls/coordinates/gps.h"
 
-#include "soro/server/osm_export/interpolation.h"
+#include "soro/server/modules/tiles/osm_export/interpolation.h"
 
 #include "test/file_paths.h"
 
-using namespace soro;
+namespace soro::test {
+
 using namespace soro::si;
 using namespace soro::utls;
 using namespace soro::infra;
@@ -33,3 +34,5 @@ TEST_SUITE("interpolation") {
     }
   }
 }
+
+}  // namespace soro::test

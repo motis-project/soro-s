@@ -129,8 +129,9 @@ speed_limit_duo get_speed_limit(train_node const& tn, train const& train,
       return;
     }
 
-    spl->poa_ == speed_limit::poa::HERE ? result.here_ = spl
-                                        : result.last_signal_ = spl;
+    spl->poa_ == speed_limit::poa::HERE
+        ? result.here_ = speed_limit::optional_ptr(spl)
+        : result.last_signal_ = speed_limit::optional_ptr(spl);
   };
 
   // the extra speed limit overwrites the general speed limit if necessary
@@ -222,9 +223,10 @@ interval_list get_interval_list(train const& train, type_set const& event_types,
       auto const use_sp =
           tn.sequence_point_.has_value() && (*tn.sequence_point_)->is_halt();
 
+      auto const sp = use_sp ? sequence_point::optional_ptr{tn.sequence_point_}
+                             : sequence_point::optional_ptr{std::nullopt};
       interval const new_interval(current_distance, prev_limit, current_limit,
-                                  use_sp ? tn.sequence_point_ : nullptr,
-                                  current_events);
+                                  sp, current_events);
 
       if (!list.empty() && list.back().distance_ == current_distance) {
         list.back().append(new_interval);

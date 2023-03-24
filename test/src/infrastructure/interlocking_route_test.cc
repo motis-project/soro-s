@@ -7,9 +7,9 @@
 
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/graph/traversal.h"
+#include "soro/utls/std_wrapper/contains_if.h"
 
 #include "soro/infrastructure/infrastructure.h"
-#include "soro/infrastructure/interlocking/exclusion.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/infrastructure/path/is_path.h"
 #include "soro/infrastructure/path/length.h"
@@ -58,25 +58,6 @@ void check_interlocking_route_count(infrastructure const& infra) {
       (ssr_count <= infra->interlocking_.routes_.size()),
       fmt::format("Exptected at least {} signal station routes, but got {}",
                   ssr_count, infra->interlocking_.routes_.size()));
-}
-
-void check_station_route_exclusions(infrastructure const& infra) {
-  auto const station_route_exclusions =
-      detail::get_station_route_exclusions(*infra);
-
-  for (auto const [id, exclusions] : utl::enumerate(station_route_exclusions)) {
-    for (auto const excluded_route : exclusions) {
-      CHECK(utls::contains(station_route_exclusions[excluded_route], id));
-    }
-  }
-}
-
-void check_interlocking_route_exclusions(interlocking_subsystem const& irs) {
-  for (auto const [id, exclusions] : utl::enumerate(irs.exclusions_)) {
-    for (auto const excluded_route : exclusions) {
-      CHECK(!utls::contains(irs.exclusions_[excluded_route], id));
-    }
-  }
 }
 
 void interlocking_route_path_is_valid(interlocking_route const& ir,
@@ -157,8 +138,6 @@ void do_interlocking_route_tests(infrastructure const& infra) {
   check_interlocking_route_count(infra);
   check_interlocking_routes(infra);
 
-  check_interlocking_route_exclusions(infra->interlocking_);
-  check_station_route_exclusions(infra);
   check_interlocking_route_lengths(infra);
 
   check_halting_at(infra);

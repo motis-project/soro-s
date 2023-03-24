@@ -388,7 +388,7 @@ node::ptr get_node(element const& e, bool const rising, element::ptr neigh) {
 }
 
 non_const_ptr<node> to_non_const(node::ptr ptr) {
-#if defined(SERIALIZE)
+#if defined(SERIALIZE) && !defined(USE_CISTA_RAW)
   return static_cast<non_const_ptr<node>>(ptr);
 #else
   return const_cast<non_const_ptr<node>>(ptr);  // NOLINT
@@ -396,7 +396,7 @@ non_const_ptr<node> to_non_const(node::ptr ptr) {
 }
 
 non_const_element_ptr to_non_const(element::ptr ptr) {
-#if defined(SERIALIZE)
+#if defined(SERIALIZE) && !defined(USE_CISTA_RAW)
   return static_cast<non_const_element_ptr>(ptr);
 #else
   return const_cast<non_const_element_ptr>(ptr);  // NOLINT
@@ -465,7 +465,7 @@ void connect_nodes(undirected_track_element& e, element::ptr this_ptr) {
 }
 
 void connect_nodes(simple_switch& e, element::ptr this_ptr) {
-  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> const& neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);
@@ -502,7 +502,7 @@ void connect_nodes(track_element& e, element::ptr this_ptr) {
 }
 
 void connect_nodes(cross& e, element::ptr this_ptr) {
-  auto const& connect = [&](std::pair<element::ptr, element::ptr> neighs,
+  auto const& connect = [&](std::pair<element::ptr, element::ptr> const& neighs,
                             auto const rising) {
     return get_node(*(rising ? neighs.second : neighs.first), !rising,
                     this_ptr);

@@ -9,7 +9,8 @@
 
 #include "soro/utls/math/polynomial.h"
 #include "soro/utls/sassert.h"
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/all_of.h"
+#include "soro/utls/std_wrapper/find_if.h"
 #include "soro/utls/template/is_vector.h"
 #include "soro/utls/template/type_at_position.h"
 

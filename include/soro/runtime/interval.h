@@ -25,7 +25,7 @@ struct interval {
       : distance_(dist),
         limit_left_{left_limit},
         limit_right_{right_limit},
-        sequence_point_{sp},
+        sequence_point_{std::move(sp)},
         events_{std::move(events)} {}
 
   void append(interval const& o) {

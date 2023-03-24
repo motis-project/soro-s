@@ -1,6 +1,6 @@
 #include "doctest/doctest.h"
 
-#include "soro/utls/std_wrapper/std_wrapper.h"
+#include "soro/utls/std_wrapper/count.h"
 
 #include "soro/timetable/bitfield.h"
 
@@ -10,9 +10,10 @@ using namespace soro;
 using namespace soro::tt;
 
 TEST_SUITE("bitfield") {
+
   TEST_CASE("construct bitfield") {
-    year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / March / 1;
+    bitfield::anchor_time const s = 2022_y / February / 22;
+    bitfield::anchor_time const t = 2022_y / March / 1;
 
     auto const bf = make_bitfield(s, t, "01010101");
 
@@ -20,8 +21,8 @@ TEST_SUITE("bitfield") {
   }
 
   TEST_CASE("construct bitfield with only a single day") {
-    year_month_day const s = 2022_y / February / 22;
-    year_month_day const t = 2022_y / February / 22;
+    bitfield::anchor_time const s = 2022_y / February / 22;
+    bitfield::anchor_time const t = 2022_y / February / 22;
 
     auto const bf = make_bitfield(s, t, "1");
 
@@ -171,7 +172,7 @@ TEST_SUITE("bitfield") {
 
     auto const result = bf.get_set_days();
 
-    std::vector<year_month_day> const expected = {s, s2, s4, s6, s8};
+    std::vector<bitfield::anchor_time> const expected = {s, s2, s4, s6, s8};
     CHECK_EQ(result, expected);
   }
 
@@ -353,7 +354,7 @@ TEST_SUITE("bitfield") {
     CHECK_EQ(bf, expected_result);
   }
 
-#if !defined(NDEBUG)
+#if !(defined(NDEBUG) || defined(SORO_SAN))
   TEST_CASE("construct bitfield throws - end before start") {
     year_month_day const s = 2022_y / February / 22;
     year_month_day const t = 2022_y / March / 2;

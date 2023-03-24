@@ -9,25 +9,15 @@
 
 #pragma once
 
-#if defined(__clang__)
-#include <experimental/coroutine>
-#else
-#include <coroutine>
-#endif
-
 #include <exception>
 #include <functional>
 #include <iterator>
 #include <type_traits>
 #include <utility>
 
-namespace soro::utls {
+#include "soro/utls/coroutine/coro_namespace.h"
 
-#if defined(__clang__)
-namespace coro = std::experimental;
-#else
-namespace coro = std;
-#endif
+namespace soro::utls {
 
 template <typename T>
 struct generator;
