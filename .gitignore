@@ -10,6 +10,10 @@
 .pkg.lock
 .pkg.mutex
 /CMakeSettings.json
+/.clangd
+/.cache
+/em_cache
+/compile_commands.json
 resources/infrastructure/de_iss
 resources/de_iss
 resources/timetable/de_kss
@@ -18,6 +22,6 @@ resources/osm
 resources/search_indices
 web/client/dist
 web/client/node_modules
+
 # Ignore the file produced by cmake
 test/include/test/file_paths.h
-

@@ -193,14 +193,20 @@ function(get_all_targets _result _dir)
 endfunction()
 
 # if linting is on set the clang tidy property on all defined targets
-if(SORO_LINT)
-  get_all_targets(all-targets ${CMAKE_CURRENT_SOURCE_DIR})
+if (SORO_LINT)
+    get_all_targets(all-targets ${CMAKE_CURRENT_SOURCE_DIR})
 
-  foreach(target ${all-targets})
-    set_target_properties(${target} PROPERTIES
-      CXX_CLANG_TIDY ${SORO_CLANG_TIDY}
-      )
-  endforeach()
+    foreach (target ${all-targets})
+        set_target_properties(${target} PROPERTIES
+                CXX_CLANG_TIDY ${SORO_CLANG_TIDY}
+                )
+    endforeach ()
+endif ()
+
+# This is needed for clangd to find system headers no nixos systems
+# using a compile_commands.json generated with
+# -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
-
-add_subdirectory(tools)
