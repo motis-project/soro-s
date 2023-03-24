@@ -34,7 +34,7 @@ jobs:
       - name: get locally cached deps
         run: |
           $depsHash = "${{ hashFiles('.pkg') }}".Substring(0, 8)
-          $depsPath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\deps-${{ matrix.config.preset }}-$depsHash"
+          $depsPath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\deps-$depsHash"
           New-Item -ItemType Directory -Force -Path $depsPath
           New-Item -Path .\deps\ -ItemType SymbolicLink -Value $depsPath
 
