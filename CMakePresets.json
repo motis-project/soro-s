@@ -35,6 +35,10 @@
       "name": "msvc-preset",
       "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "Off"
       }
