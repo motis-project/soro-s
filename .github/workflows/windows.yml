@@ -22,8 +22,6 @@ jobs:
           - preset: msvc-cista-release
 
     env:
-      #      CXX: cl.exe
-      #      CC: cl.exe
       BUILDCACHE_DIR: ${{ github.workspace }}/.buildcache
       BUILDCACHE_DIRECT_MODE: true
       BUILDCACHE_MAX_CACHE_SIZE: 26843545600
@@ -36,11 +34,15 @@ jobs:
 
       - name: get locally cached deps
         run: |
-          New-Item -Path .\deps\ -ItemType SymbolicLink -Value ${{ runner.tool_cache }}\deps-${{ hashFiles('.pkg') }}
+          $depsPath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\deps-${{ hashFiles('.pkg') }}"
+          New-Item -ItemType Directory -Force -Path $depsPath
+          New-Item -Path .\deps\ -ItemType SymbolicLink -Value $depsPath
 
       - name: get locally cached buildcache
         run: |
-          New-Item -Path .\.buildcache\ -ItemType SymbolicLink -Value ${{ runner.tool_cache }}\buildcache-${{ matrix.config.preset }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}
+          $buildcachePath = "${{ runner.tool_cache }}\${{ github.event.repository.name }}\buildcache-${{ matrix.config.preset }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}"
+          New-Item -ItemType Directory -Force -Path $buildcachePath
+          New-Item -Path .\.buildcache\ -ItemType SymbolicLink -Value $buildcachePath
 
       # ==== BUILD ====
       - name: Build
