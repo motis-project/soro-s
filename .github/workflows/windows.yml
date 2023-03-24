@@ -35,16 +35,12 @@ jobs:
       - uses: seanmiddleditch/gha-setup-ninja@master
 
       - name: get locally cached deps
-        uses: MasterWorksIO/action-local-cache@1.0.0
-        with:
-          path: './deps/'
-          key: deps-${{ hashFiles('.pkg') }}
+        run: |
+          New-Item -Path .\deps\ -ItemType SymbolicLink -Value ${{ runner.tool_cache }}\deps-${{ hashFiles('.pkg') }}
 
       - name: get locally cached buildcache
-        uses: MasterWorksIO/action-local-cache@1.0.0
-        with:
-          path: './.buildcache/'
-          key: buildcache-${{ matrix.config.preset }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}
+        run: |
+          New-Item -Path .\.buildcache\ -ItemType SymbolicLink -Value ${{ runner.tool_cache }}\buildcache-${{ matrix.config.preset }}-${{ hashFiles('.pkg') }}-${{ hashFiles('**/*.h') }}-${{ hashFiles('**/*.cc') }}
 
       # ==== BUILD ====
       - name: Build
