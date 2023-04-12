@@ -1,9 +1,6 @@
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
-import {
-  InfrastructureNamespace,
-  InfrastructureState
-} from '@/stores/infrastructure-store';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { SettingsNamespace } from '@/stores/settings-store';
 import App from '@/App.vue';
 import {

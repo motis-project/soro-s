@@ -1,32 +1,34 @@
+/* stylelint-disable string-quotes */
+
 #app {
-    height: 100%;
-    font-family: Avenir, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
-    height: 100%;
-    overflow-y: auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 body {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 :root {
-    --overlay-width: 450px;
-    --overlay-padding-left: 20px;
-    --overlay-padding-top: 50px;
-    --border-radius: 3px;
-    --border-width: 2px;
-    --main-font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-    --text-color: rgb(0 0 0 / 87%);
-    --secondary-text-color: rgb(0 0 0 / 54%);
-    --hint-text-color: rgb(0 0 0 / 38%);
-    --border-color: rgb(0 0 0 / 12%);
-    --icon-color: rgb(0 0 0 / 38%);
-    --data-select-width: 250px;
+  --overlay-width: 450px;
+  --overlay-padding-left: 20px;
+  --overlay-padding-top: 50px;
+  --border-radius: 3px;
+  --border-width: 2px;
+  --main-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --text-color: rgb(0 0 0 / 87%);
+  --secondary-text-color: rgb(0 0 0 / 54%);
+  --hint-text-color: rgb(0 0 0 / 38%);
+  --border-color: rgb(0 0 0 / 12%);
+  --icon-color: rgb(0 0 0 / 38%);
+  --data-select-width: 250px;
 }

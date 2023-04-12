@@ -375,7 +375,10 @@ export default defineComponent({
           // this.setSelectedOverlay('element');
           // this.setShowOverlay(true);
           // this.setCurrentElements(features);
-          console.log('Clicked on element', clickedFeature.properties.id);
+          console.error(
+            'clicked on element, not implemented',
+            clickedFeature.properties.id
+          );
         }
       });
     }

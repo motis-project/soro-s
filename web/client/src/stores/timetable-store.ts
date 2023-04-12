@@ -31,12 +31,8 @@ export const TimetableStore: Module<TimetableState, unknown> = {
   },
 
   actions: {
-    initialLoad({ commit }) {
-      // sendRequest({url: 'timetable'})
-      //     .then(response => response.json())
-      //     .then((ttResponse: TimetableFetchResponse) => {
-      //         commit('setTimetables', ttResponse.timetables);
-      //     });
+    initialLoad() {
+      console.error('not implemented');
     },
 
     load({ rootState }, timetableFilename) {

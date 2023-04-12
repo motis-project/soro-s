@@ -1,7 +1,7 @@
 <template>
-    <div>
-        <h2>Graph coming soon tm.</h2>
-    </div>
+  <div>
+    <h2>Graph coming soon tm.</h2>
+  </div>
 </template>
 
 <script>
@@ -12,6 +12,6 @@ export default defineComponent({ name: 'OrderingGraphComponent' });
 
 <style scoped>
 h2 {
-    text-align: center;
+  text-align: center;
 }
 </style>

@@ -19,7 +19,6 @@
         Select color
         <v-menu activator="parent" :close-on-content-click="false">
           <v-color-picker
-            style="overflow: unset"
             :model-value="colorSelection"
             min-width="300"
             hide-inputs
