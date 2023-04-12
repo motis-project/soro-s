@@ -1,0 +1,29 @@
+name: eslint
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types:
+      - published
+
+jobs:
+  linting:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.1
+
+      # ==== WEB LINT ====
+      - name: Install deps
+        run: npm clean-install --prefix web/client
+
+      - name: Run ESLint
+        run: npm run lint:eslint --prefix web/client
+
+      - name: Run Stylelint
+        run: npm run lint:stylelint --prefix web/client

@@ -60,7 +60,7 @@ infrastructure_module get_infrastructure_module(
     soro::server::server_settings const& s) {
   using namespace soro::infra;
 
-  utl::scoped_timer const timer("creating infrastructure state");
+  utl::scoped_timer const timer("creating infrastructure module");
 
   infrastructure_module result;
 

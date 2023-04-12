@@ -62,8 +62,8 @@ net::web_server::string_res_t infrastructure_module::serve_station(
   json_archive archive;
   archive.add()(cereal::make_nvp("id", station->id_),
                 cereal::make_nvp("ds100", station->ds100_),
-                cereal::make_nvp("station_routes", station->station_routes_),
-                cereal::make_nvp("interlocking_routes", irs));
+                cereal::make_nvp("stationRoutes", station->station_routes_),
+                cereal::make_nvp("interlockingRouteIds", irs));
   return json_response(req, archive);
 }
 

@@ -53,14 +53,21 @@ jobs:
           Import-Module $devShell
           Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation -DevCmdArguments "-arch=amd64"
           cmake --preset=${{ matrix.config.preset }}
+          cmake --build build\${{ matrix.config.preset }} --target soro-client
           cmake --build build\${{ matrix.config.preset }} --target soro-server
           cmake --build build\${{ matrix.config.preset }} --target soro-test
+
+      - name: Install Webclient
+        run: npm clean-install --prefix web/client
 
       # ==== TESTS ====
       - name: Run Tests
         run: .\build\${{ matrix.config.preset }}\soro-test.exe
 
       # ==== WEB TESTS ====
+      - name: Run Webclient Tests
+        run: npm run test --prefix web/client
+
       - name: Run Server
         run: |
           cd build\${{ matrix.config.preset }}\

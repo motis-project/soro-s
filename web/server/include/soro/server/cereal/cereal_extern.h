@@ -2,6 +2,7 @@
 
 #include "cereal/archives/json.hpp"
 #include "cereal/cereal.hpp"
+#include "cereal/types/array.hpp"
 
 #include "range/v3/range.hpp"
 #include "range/v3/range/concepts.hpp"
@@ -13,6 +14,14 @@ namespace soro::utls {
 template <typename Archive>
 inline void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive, gps const& gps) {
   archive(cereal::make_nvp("lon", gps.lon_), cereal::make_nvp("lat", gps.lat_));
+}
+
+template <typename Archive>
+inline void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive,
+                                           bounding_box const& bb) {
+  archive(cereal::make_size_tag(2));
+  archive(bb.south_west_);
+  archive(bb.north_east_);
 }
 
 }  // namespace soro::utls

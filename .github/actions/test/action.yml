@@ -12,6 +12,10 @@ runs:
         ./soro-test
         cd ../../
 
+    - name: Run Webclient Tests
+      shell: bash
+      run: npm run test --prefix web/client
+
     - name: run soro-server in test mode
       shell: bash
       run: |

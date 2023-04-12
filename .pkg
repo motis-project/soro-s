@@ -25,7 +25,7 @@
 [tiles]
   url=git@github.com:motis-project/tiles.git
   branch=master
-  commit=653637bd3fb595eaaca71d9a153ddfcc59930a8b
+  commit=6dc60472ba6b3270c2afb50f9905e86c8db7bff5
 [rapidjson]
   url=git@github.com:motis-project/rapidjson.git
   branch=master
@@ -46,3 +46,7 @@
   url=git@github.com:motis-project/cereal.git
   branch=master
   commit=9e4b49437bc3d47b628a271edd38c1cd7266c669
+[guess]
+  url=git@github.com:motis-project/guess.git
+  branch=master
+  commit=5acaeaacca154bd20987806f9626be5e3b87e1c5
