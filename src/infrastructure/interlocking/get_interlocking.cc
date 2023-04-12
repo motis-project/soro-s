@@ -8,8 +8,8 @@
 #include "utl/timer.h"
 
 #include "soro/infrastructure/infrastructure.h"
-#include "soro/utls/map/insert_or.h"
 #include "soro/utls/std_wrapper/accumulate.h"
+#include "soro/utls/std_wrapper/is_sorted.h"
 #include "soro/utls/std_wrapper/sort.h"
 
 #if defined(SORO_CUDA)
@@ -284,17 +284,21 @@ auto get_station_to_interlocking_routes(
       infra->stations_.size());
 
   for (auto const& ir : interlocking_routes) {
-    utl::all(ir.station_routes_) | utl::transform([&](auto&& sr) {
-      return infra->station_routes_[sr]->station_;
-    }) | utl::for_each([&](auto&& station) {
-      station_to_irs[station->id_].push_back(ir.id_);
-    });
+    for (auto const& sr_id : ir.station_routes_) {
+      auto const sr = infra->station_routes_[sr_id];
+      station_to_irs[sr->station_->id_].emplace_back(ir.id_);
+    }
   }
 
   for (auto& station_irs : station_to_irs) {
     utl::erase_duplicates(station_irs);
-    utls::sort(station_irs);
   }
+
+  utls::ensures([&] {
+    for (auto const& station_irs : station_to_irs) {
+      utls::sassert(utls::is_sorted(station_irs));
+    }
+  });
 
   return station_to_irs;
 }

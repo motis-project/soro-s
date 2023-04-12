@@ -127,7 +127,7 @@ else()
     )
 endif()
 
-set(SORO_COMPILE_FEATURES cxx_std_20)
+set(SORO_COMPILE_FEATURES cxx_std_23)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 

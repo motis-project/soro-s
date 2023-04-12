@@ -6,11 +6,13 @@
 
 #include "pugixml.hpp"
 
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/transform.hpp"
+
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
 #include "utl/get_or_create.h"
 #include "utl/logging.h"
-#include "utl/pipes.h"
 #include "utl/timer.h"
 #include "utl/verify.h"
 
@@ -995,10 +997,12 @@ auto get_element_to_station_map(infrastructure_t const& iss) {
 
 soro::map<soro::string, station::ptr> get_ds100_to_station(
     soro::vector<station::ptr> const& stations) {
-  return utl::all(stations) | utl::transform([](auto&& s_ptr) {
-           return soro::pair<soro::string, station::ptr>{s_ptr->ds100_, s_ptr};
+  using namespace ranges;
+
+  return stations | views::transform([](auto&& s_ptr) {
+           return std::pair<soro::string, station::ptr>{s_ptr->ds100_, s_ptr};
          }) |
-         utl::emplace<soro::map<string, station::ptr>>();
+         to<soro::map<soro::string, station::ptr>>();
 }
 
 void log_stats(infrastructure_t const& iss) {

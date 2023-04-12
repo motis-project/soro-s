@@ -1,9 +1,35 @@
 #pragma once
 
+#include <map>
 #include <system_error>
 #include <type_traits>
 
+#include "soro/utls/result.h"
+#include "soro/utls/sassert.h"
+
 namespace soro {
+
+struct error_stats {
+  error_stats(std::string_view const name) : name_{name} {}
+
+  template <typename T>
+  void count(utls::result<T> const& result) {
+    utls::expect(!result, "error counting a valid result");
+    count(result.error());
+  }
+
+  void count(std::error_code const e) { ++errors_[e]; }
+
+  void report(std::ostream& out) const {
+    out << "error report for [" << name_ << "]";
+    for (auto const& [e, count] : errors_) {
+      out << e.message() << ": " << count;
+    }
+  }
+
+  std::string_view name_{"give me name"};
+  std::map<std::error_code, std::size_t> errors_;
+};
 
 namespace error {
 enum error_code_t { ok = 0, not_implemented = 1, file_not_found = 2 };

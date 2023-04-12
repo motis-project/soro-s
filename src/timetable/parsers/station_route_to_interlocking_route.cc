@@ -7,20 +7,21 @@
 #include "soro/utls/std_wrapper/count_if.h"
 #include "soro/utls/std_wrapper/find_position.h"
 
+#include "soro/infrastructure/interlocking/interlocking_route.h"
+#include "soro/timetable/parsers/route_transform_error.h"
+
 namespace soro::tt {
 
 using namespace soro::rs;
 using namespace soro::infra;
 
-struct failures {};
-
-enum class failure_reason : uint8_t {
-  could_not_find_first_ir,
-  could_not_find_unique_first_ir,
-  could_not_find_ir,
-  could_not_find_unique_ir,
-  halt_in_stop_but_none_in_station_route
-};
+// enum class failure_reason : uint8_t {
+//   could_not_find_first_ir = 1,
+//   could_not_find_unique_first_ir,
+//   could_not_find_ir,
+//   could_not_find_unique_ir,
+//   halt_in_stop_but_none_in_station_route,
+// };
 
 static std::map<failure_reason, std::size_t> failures = {  // NOLINT
     {failure_reason::could_not_find_first_ir, 0},
@@ -216,17 +217,10 @@ soro::vector<sequence_point> get_sequence_points(interlocking_route const& ir,
   return result;
 }
 
-std::optional<std::pair<soro::vector<infra::interlocking_route::id>,
-                        soro::vector<sequence_point>>>
-get_interlocking_route_path(stop_sequence const& stop_sequence,
-                            FreightTrain const freight,
-                            infrastructure const& infra) {
-  std::optional<std::pair<soro::vector<infra::interlocking_route::id>,
-                          soro::vector<sequence_point>>>
-      result{{{}, {}}};
-
-  auto& path = result.value().first;
-  auto& sequence_points = result.value().second;
+utls::result<interlocking_transformation> get_interlocking_route_path(
+    stop_sequence const& stop_sequence, FreightTrain const freight,
+    infrastructure const& infra) {
+  interlocking_transformation result;
 
   auto const& irs = infra->interlocking_;
 
@@ -238,8 +232,8 @@ get_interlocking_route_path(stop_sequence const& stop_sequence,
 
   interlocking_route::ptr current_ir = &irs.routes_[first_ir_id];
 
-  path.emplace_back(first_ir_id);
-  utl::concat(sequence_points,
+  result.path_.emplace_back(first_ir_id);
+  utl::concat(result.sequence_points_,
               get_sequence_points(*current_ir, stop_sequence, freight, 0,
                                   ss_cover.stop_sequence_offset_ + 1, infra));
 
@@ -253,20 +247,18 @@ get_interlocking_route_path(stop_sequence const& stop_sequence,
                                                ss_cover.stop_sequence_offset_);
 
     if (longest_prefix_routes.size() > 1) {
-      ++failures[failure_reason::could_not_find_unique_ir];
-      return {};
+      return std::unexpected(route_transform_error::NO_UNIQUE_IR);
     }
 
     if (longest_prefix_routes.empty()) {
-      ++failures[failure_reason::could_not_find_ir];
-      return {};
+      return std::unexpected(route_transform_error::NO_IR);
     }
 
     current_ir = &irs.routes_[longest_prefix_routes.front()];
 
-    path.emplace_back(current_ir->id_);
+    result.path_.emplace_back(current_ir->id_);
     utl::concat(
-        sequence_points,
+        result.sequence_points_,
         get_sequence_points(
             *current_ir, stop_sequence, freight, ss_cover.stop_sequence_offset_,
             ss_cover.stop_sequence_offset_ + prefix_length, infra));
@@ -293,11 +285,12 @@ get_interlocking_route_path(stop_sequence const& stop_sequence,
     ss_cover.node_idx_ = current_ir->end_offset_;
   }
 
-  utls::sasserts([&]() {
+  utls::ensures([&] {
     auto const measurable_points = utls::count_if(
         stop_sequence.points_, [](auto&& sp) { return sp.is_measurable(); });
 
-    utls::sassert(measurable_points == sequence_points.size());
+    utls::ensure(measurable_points == result.sequence_points_.size());
+    utls::ensure(result.path_.size() == result.sequence_points_.size());
   });
 
   return result;
