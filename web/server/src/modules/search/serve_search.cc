@@ -3,6 +3,7 @@
 #include "cereal/types/vector.hpp"
 
 #include "net/web_server/responses.h"
+#include "utl/to_vec.h"
 
 #include "soro/server/cereal/cereal_extern.h"
 #include "soro/server/cereal/json_archive.h"

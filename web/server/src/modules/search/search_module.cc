@@ -5,14 +5,15 @@
 #include "utl/concat.h"
 #include "utl/enumerate.h"
 #include "utl/timer.h"
+#include "utl/to_vec.h"
 
 #include "soro/utls/coroutine/coro_map.h"
 
 namespace soro::server {
 
-std::string left_pad_to_3_digits(std::integral auto const& i) {
+std::string left_pad_to_3_digits(std::integral auto const i) {
   auto const id = std::to_string(i);
-  return std::string(3 - std::min(3UL, static_cast<std::size_t>(id.length())),
+  return std::string(3UL - std::min(3UL, static_cast<decltype(1UL)>(id.length())),
                      '0') +
          id;
 }
@@ -54,7 +55,7 @@ search_module::context get_search_context(infra::infrastructure const& infra) {
   // add all station ds100s
   utl::concat(ctx.results_, utl::to_vec(infra->stations_, [&](auto&& s) {
                 return search_module::result{
-                    search_module::result::type::STATION, s->ds100_,
+                    search_module::result::type::STATION, s->ds100_.data(),
                     get_bounding_box(s, infra->element_positions_), s->id_};
               }));
 
@@ -67,7 +68,7 @@ search_module::context get_search_context(infra::infrastructure const& infra) {
     }
 
     ctx.results_.push_back(search_module::result{
-        search_module::result::type::STATION, full,
+        search_module::result::type::STATION, full.data(),
         get_bounding_box(s, infra->element_positions_), id});
   }
 
@@ -76,35 +77,35 @@ search_module::context get_search_context(infra::infrastructure const& infra) {
     auto const bb = get_bounding_box(e, infra->element_positions_);
     auto const type = search_module::result::type::ELEMENT;
     auto const id = e->id();
-    auto const type_str = get_type_str(e->type());
+    std::string const type_str(get_type_str(e->type()).data());
 
     ctx.results_.push_back({type, left_pad_to_3_digits(id), bb, id, type_str});
 
     if (e->is(type::MAIN_SIGNAL)) {
       auto const data = infra->graph_.element_data_[id].as<main_signal>();
 
-      ctx.results_.push_back({type, data.name_, bb, id, type_str});
+      ctx.results_.push_back({type, data.name_.data(), bb, id, type_str});
     }
 
     if (e->is(type::SIMPLE_SWITCH)) {
       auto const data = infra->graph_.element_data_[id].as<switch_data>();
 
-      ctx.results_.push_back({type, data.name_, bb, id, type_str});
+      ctx.results_.push_back({type, data.name_.data(), bb, id, type_str});
     }
 
     if (e->is(type::HALT)) {
       auto const data = infra->graph_.element_data_[id].as<halt>();
 
-      ctx.results_.push_back({type, data.name_, bb, id, type_str});
-      ctx.results_.push_back({type, data.identifier_operational_, bb, id});
-      ctx.results_.push_back({type, data.identifier_extern_, bb, id, type_str});
+      ctx.results_.push_back({type, data.name_.data(), bb, id, type_str});
+      ctx.results_.push_back({type, data.identifier_operational_.data(), bb, id});
+      ctx.results_.push_back({type, data.identifier_extern_.data(), bb, id, type_str});
     }
   }
 
   // add all station routes
   utl::concat(ctx.results_, utl::to_vec(infra->station_routes_, [&](auto&& r) {
                 return search_module::result{
-                    search_module::result::type::STATION_ROUTE, r->name_,
+                    search_module::result::type::STATION_ROUTE, r->name_.data(),
                     get_bounding_box(r, infra->element_positions_), r->id_};
               }));
 
