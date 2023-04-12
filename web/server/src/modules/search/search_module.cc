@@ -12,7 +12,9 @@ namespace soro::server {
 
 std::string left_pad_to_3_digits(std::integral auto const& i) {
   auto const id = std::to_string(i);
-  return std::string(3 - std::min(3UL, id.length()), '0') + id;
+  return std::string(3 - std::min(3UL, static_cast<std::size_t>(id.length())),
+                     '0') +
+         id;
 }
 
 utls::bounding_box get_bounding_box(
