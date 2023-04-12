@@ -70,6 +70,8 @@ find_package(Threads REQUIRED)
 
 ### --- CXX FLAGS --- ###
 
+message("-- The clang-format executable is: ${CLANG_FORMAT_COMMAND}")
+
 set(SORO_COMPILE_OPTIONS "")
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
@@ -129,6 +131,7 @@ set(SORO_COMPILE_FEATURES cxx_std_20)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+
 # === soro-lib ===
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -159,8 +162,7 @@ endif()
 
 # Gets us the soro-server-client target
 set(SORO_SERVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
-add_subdirectory(web/server)
-add_subdirectory(web/client)
+add_subdirectory(web)
 
 # Generate file_paths.h for locating the test resources
 configure_file(test/include/test/file_paths.h.in
@@ -193,20 +195,20 @@ function(get_all_targets _result _dir)
 endfunction()
 
 # if linting is on set the clang tidy property on all defined targets
-if (SORO_LINT)
-    get_all_targets(all-targets ${CMAKE_CURRENT_SOURCE_DIR})
+if(SORO_LINT)
+  get_all_targets(all-targets ${CMAKE_CURRENT_SOURCE_DIR})
 
-    foreach (target ${all-targets})
-        set_target_properties(${target} PROPERTIES
-                CXX_CLANG_TIDY ${SORO_CLANG_TIDY}
-                )
-    endforeach ()
-endif ()
+  foreach(target ${all-targets})
+    set_target_properties(${target} PROPERTIES
+      CXX_CLANG_TIDY ${SORO_CLANG_TIDY}
+      )
+  endforeach()
+endif()
 
 # This is needed for clangd to find system headers no nixos systems
 # using a compile_commands.json generated with
 # -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+    ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()

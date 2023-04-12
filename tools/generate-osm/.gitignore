@@ -1,0 +1,10 @@
+# Ignore the file produced by osm data generation
+temp/*
+
+*.exe
+# We cannot ignore all executables generically on UNIX systems as they do not have a fixed extension (unlike on windows)
+# Thus we have to ignore the generated executable explicitly:
+transform-osm
+
+*.xml
+*.json

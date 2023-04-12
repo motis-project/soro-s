@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iterator>
+#include <utility>
+
 #include "soro/utls/concepts/is_any_of.h"
 
 namespace soro::utls {

@@ -22,6 +22,7 @@ resources/osm
 resources/search_indices
 web/client/dist
 web/client/node_modules
+web/client/coverage
 
 # Ignore the file produced by cmake
 test/include/test/file_paths.h

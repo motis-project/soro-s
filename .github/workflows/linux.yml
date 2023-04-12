@@ -41,6 +41,11 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
+      - name: setup node
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.1
+
       - name: get deps
         run: ln -s /deps deps
 

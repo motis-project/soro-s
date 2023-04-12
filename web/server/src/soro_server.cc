@@ -14,6 +14,8 @@ namespace soro::server {
 using namespace net;
 
 void soro_server::set_up_routes(server_settings const& s) {
+  router_.enable_cors();
+
   router_.reply_hook([](web_server::http_res_t const& resp) {
     std::visit(
         [](auto&& r) {
@@ -24,8 +26,8 @@ void soro_server::set_up_routes(server_settings const& s) {
         resp);
   });
 
-  // 0.0.0.0:8080/infrastructure/
-  router_.route("GET", R"(/infrastructure/$)",
+  // 0.0.0.0:8080/infrastructures/
+  router_.route("GET", R"(/infrastructures\/?$)",
                 [&](net::query_router::route_request const& req,
                     web_server::http_res_cb_t const& cb, bool const) {
                   cb(infrastructure_module_.serve_infrastructure_names(req));
@@ -39,6 +41,13 @@ void soro_server::set_up_routes(server_settings const& s) {
           web_server::http_res_cb_t const& cb,
           bool const) { cb(tiles_module_.serve_tile(req)); });
 
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/bounding_box/
+  router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/bounding_box\/?$)",
+                [&](net::query_router::route_request const& req,
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(infrastructure_module_.serve_bounding_box(req));
+                });
+
   // 0.0.0.0:8080/infrastructure/{infrastructure_name}/stations/
   router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/stations/$)",
                 [&](net::query_router::route_request const& req,
@@ -46,24 +55,24 @@ void soro_server::set_up_routes(server_settings const& s) {
                   cb(infrastructure_module_.serve_station_names(req));
                 });
 
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/stations/{id}
-  router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/stations/(\d+)$)",
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/station/{id}
+  router_.route("GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/station/(\d+)$)",
                 [&](net::query_router::route_request const& req,
                     web_server::http_res_cb_t const& cb, bool const) {
                   cb(infrastructure_module_.serve_station(req));
                 });
 
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/station_routes/{id}
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/station_route/{id}
   router_.route("GET",
-                R"(/infrastructure\/([a-zA-Z0-9_-]+)\/station_routes/(\d+)$)",
+                R"(/infrastructure\/([a-zA-Z0-9_-]+)\/station_route/(\d+)$)",
                 [&](net::query_router::route_request const& req,
                     web_server::http_res_cb_t const& cb, bool const) {
                   cb(infrastructure_module_.serve_station_route(req));
                 });
 
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/interlocking_routes/{id}
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/interlocking_route/{id}
   router_.route(
-      "GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/interlocking_routes/(\d+)$)",
+      "GET", R"(/infrastructure\/([a-zA-Z0-9_-]+)\/interlocking_route/(\d+)$)",
       [&](net::query_router::route_request const& req,
           web_server::http_res_cb_t const& cb, bool const) {
         cb(infrastructure_module_.serve_interlocking_route(req));
@@ -84,6 +93,14 @@ void soro_server::set_up_routes(server_settings const& s) {
                   cb(infrastructure_module_.serve_element(req));
                 });
 
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/search/{search_string}
+  router_.route("GET",
+                R"(/infrastructure/([a-zA-Z0-9_-]+)/search/([a-zA-Z0-9_-]+)$)",
+                [&](net::query_router::route_request const& req,
+                    web_server::http_res_cb_t const& cb, bool const) {
+                  cb(search_module_.serve_search(req, infrastructure_module_));
+                });
+
   // if nothing matches: match all and try to serve static file
   router_.route("GET", ".*",
                 [&](net::query_router::route_request const& req,
@@ -98,7 +115,8 @@ void soro_server::set_up_routes(server_settings const& s) {
 
 soro_server::soro_server(server_settings const& s)
     : infrastructure_module_{get_infrastructure_module(s)},
-      tiles_module_{get_tile_module(s, infrastructure_module_)} {
+      tiles_module_{get_tile_module(s, infrastructure_module_)},
+      search_module_{get_search_module(infrastructure_module_)} {
   set_up_routes(s);
 }
 

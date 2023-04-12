@@ -22,9 +22,14 @@ runs:
         buildcache -s
 
     # ==== WEB BUILD ====
+    - name: install Webclient
+      shell: bash
+      run: npm clean-install --prefix web/client
+
     - name: Build soro-server
       shell: bash
       run: |
         buildcache -z
         cmake --build build/${{ matrix.config.preset }} --target soro-server
+        cmake --build build/${{ matrix.config.preset }} --target soro-client
         buildcache -s

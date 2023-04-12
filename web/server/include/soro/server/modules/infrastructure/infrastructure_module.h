@@ -26,6 +26,9 @@ struct infrastructure_module {
   net::web_server::string_res_t serve_infrastructure_names(
       net::query_router::route_request const& req) const;
 
+  net::web_server::string_res_t serve_bounding_box(
+      net::query_router::route_request const& req) const;
+
   net::web_server::string_res_t serve_station_names(
       net::query_router::route_request const& req) const;
 

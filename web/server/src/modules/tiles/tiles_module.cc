@@ -81,7 +81,7 @@ fs::path create_tiles_db(server_settings const& s,
 
 tiles_module get_tile_module(server_settings const& settings,
                              infrastructure_module const& infra_m) {
-  utl::scoped_timer const timer("creating tile state");
+  utl::scoped_timer const timer("creating tile module");
 
   tiles_module result;
 
