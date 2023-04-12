@@ -8,7 +8,7 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AlignTrailingComments: false
 RequiresClausePosition: OwnLine
 BreakBeforeConceptDeclarations: Always
-# RequiresExpressionIndentation: OuterScope // enable with clang 16
+RequiresExpressionIndentation: OuterScope
 KeepEmptyLinesAtTheStartOfBlocks: true
 AllowShortCaseLabelsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: Yes

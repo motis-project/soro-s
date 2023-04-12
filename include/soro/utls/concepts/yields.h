@@ -12,12 +12,6 @@ namespace detail {
 using std::begin;
 using std::cbegin;
 
-#if (__clang_major__ >= 16)
-static_assert(false, "remove the format workaround when clang 16 is released");
-#endif
-
-// clang-format off
-
 // using begin(std::as_const(i)) instead of cbegin(i) because
 // std::filesystem::cbegin(directory_iterator) does not exist
 template <typename R, typename Iterable>
@@ -31,8 +25,6 @@ concept predicate_yields_impl = requires(Iterable&& i, Pred&& p) {
   { p(*begin(i)) } -> is_any_of<R, R&, R const, R const&>;
   { p(*begin(std::as_const(i))) } -> is_any_of<R, R const, R const&>;
 };
-
-// clang-format on
 
 }  // namespace detail
 
