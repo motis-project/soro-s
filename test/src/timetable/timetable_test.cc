@@ -53,7 +53,7 @@ void check_train_path_sequence_points(train const& train,
   // all sequence points in a train must refer to a node
   CHECK_EQ(sequence_point_nodes.size(), train.sequence_points_.size());
 
-  std::size_t spn_idx = 0;
+  soro::size_t spn_idx = 0;
   for (auto&& tn : train.iterate(infra)) {
     if (spn_idx < sequence_point_nodes.size() &&
         tn.node_ == sequence_point_nodes[spn_idx]) {

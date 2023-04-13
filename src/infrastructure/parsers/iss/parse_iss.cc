@@ -1,13 +1,9 @@
 #include "soro/infrastructure/parsers/iss/parse_iss.h"
 
-#include <cstdint>
 #include <string>
 #include <utility>
 
 #include "pugixml.hpp"
-
-#include "range/v3/range/conversion.hpp"
-#include "range/v3/view/transform.hpp"
 
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
@@ -997,12 +993,13 @@ auto get_element_to_station_map(infrastructure_t const& iss) {
 
 soro::map<soro::string, station::ptr> get_ds100_to_station(
     soro::vector<station::ptr> const& stations) {
-  using namespace ranges;
+  soro::map<soro::string, station::ptr> result;
 
-  return stations | views::transform([](auto&& s_ptr) {
-           return std::pair<soro::string, station::ptr>{s_ptr->ds100_, s_ptr};
-         }) |
-         to<soro::map<soro::string, station::ptr>>();
+  for (auto const& station : stations) {
+    result[station->ds100_] = station;
+  }
+
+  return result;
 }
 
 void log_stats(infrastructure_t const& iss) {
