@@ -283,14 +283,16 @@ std::vector<std::string> const exponent_symbols = {"",  "",  "²", "³", "⁴",
                                                    "⁵", "⁶", "⁷", "⁸", "⁹"};
 
 template <typename TypeList>
-inline std::optional<std::string> get_type_list_unit_str(TypeList const&) {
+constexpr std::optional<std::string> get_type_list_unit_str() {
   std::string result;
 
   auto const get_str_for_tag = []<typename Tag>(Tag const&) {
-    if constexpr (auto const count = count_v<Tag, TypeList>; count != 0) {
-      return get_tag_symbol<Tag>() + exponent_symbols[count] + "*";
+    if constexpr (auto const count = count_v<Tag, TypeList>;
+                  count != 0 && count < 10) {
+      return fmt::format("{}{}*", get_tag_symbol<Tag>(),
+                         exponent_symbols[count]);
     } else {
-      return "";
+      return fmt::format("^{}*", count);
     }
   };
 
@@ -311,15 +313,15 @@ inline std::optional<std::string> get_type_list_unit_str(TypeList const&) {
 }
 
 template <typename Nominator, typename Denominator, typename Precision>
-inline auto get_fraction_unit_str(
+constexpr std::string get_fraction_unit_str(
     fraction<Nominator, Denominator, Precision> const& fraction) {
-  auto nominator_str = get_type_list_unit_str(Nominator{});
+  auto const nominator_str = get_type_list_unit_str<Nominator>();
 
   if (!fraction.is_fraction()) {
-    return "[" + nominator_str.value_or("") + "]";
+    return fmt::format("[{}]", nominator_str.value_or(""));
   } else {
-    return "[" + nominator_str.value_or("1") + " / " +
-           get_type_list_unit_str(Denominator{}).value_or("") + "]";
+    return fmt::format("[{}/{}]", nominator_str.value_or("1"),
+                       get_type_list_unit_str<Denominator>().value_or(""));
   }
 }
 

@@ -5,6 +5,7 @@ Checks: "*,\
 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,\
 -cppcoreguidelines-pro-type-union-access,\
+-cppcoreguidelines-avoid-reference-coroutine-parameters,\
 -readability-simplify-boolean-expr,\
 -clang-analyzer-alpha*,\
 -google-build-using-namespace,\

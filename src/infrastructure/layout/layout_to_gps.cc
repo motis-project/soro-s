@@ -1,9 +1,12 @@
 #include "soro/infrastructure/layout/layout_to_gps.h"
 
+#include "range/v3/algorithm/count_if.hpp"
+#include "range/v3/algorithm/max.hpp"
+#include "range/v3/view/transform.hpp"
+
 #include <unordered_map>
 
 #include "utl/logging.h"
-#include "utl/pipes.h"
 #include "utl/zip.h"
 
 #include "soro/utls/coordinates/polar.h"
@@ -49,6 +52,8 @@ auto get_neighbours_with_coords(station::ptr const station,
 
 gps interpolate_coordinates(station::ptr station,
                             soro::vector<gps> const& station_coords) {
+  using namespace ranges;
+
   auto const neighbours_with_coords =
       get_neighbours_with_coords(station, station_coords);
 
@@ -59,9 +64,8 @@ gps interpolate_coordinates(station::ptr station,
   gps interpolated{0.0, 0.0};
 
   auto const max_dist =
-      (utl::all(neighbours_with_coords) |
-       utl::transform([](auto&& pair) { return pair.second; }) |
-       utl::max<uint32_t>()) +
+      max(neighbours_with_coords |
+          views::transform([](auto&& pair) { return pair.second; })) +
       1;
 
   gps::precision total_dist{0.0};
@@ -70,10 +74,11 @@ gps interpolate_coordinates(station::ptr station,
     auto d0 = max_dist - dist;
     // how strong is the station coupled with the neighbour
     // i.e. how many borders do they share
-    auto const coupling =
-        utl::all(station->borders_) |
-        utl::transform([](auto&& b) { return b.neighbour_; }) |
-        utl::count([neigh = neigh](auto&& n) { return n == neigh; });
+    auto const borders = station->borders_ | views::transform([](auto&& b) {
+                           return b.neighbour_;
+                         });
+    auto const is_neigh = [&](auto&& n) { return n == neigh; };
+    auto const coupling = count_if(borders, is_neigh);
 
     // TODO(julian) maybe use the coupling as a factor here
     if (dist == 1 && coupling > 4) {

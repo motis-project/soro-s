@@ -1,9 +1,10 @@
 #include "doctest/doctest.h"
 
-#include "soro/utls/coroutine/coro_map.h"
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/filter.hpp"
+#include "range/v3/view/transform.hpp"
 
-#include "utl/pipes.h"
-#include "utl/timer.h"
+#include "soro/utls/coroutine/coro_map.h"
 
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/path/length.h"
@@ -39,18 +40,20 @@ void check_train_path_length(train const& train, infrastructure const& infra) {
 
 void check_train_path_sequence_points(train const& train,
                                       infrastructure const& infra) {
+  using namespace ranges;
+
   auto const sequence_point_nodes =
-      utl::all(train.sequence_points_) | utl::transform([&](auto&& seq_point) {
+      train.sequence_points_ | views::transform([&](auto&& seq_point) {
         return seq_point.get_node(train.freight(), infra);
       }) |
-      utl::remove_if([](auto&& node_opt) { return !node_opt.has_value(); }) |
-      utl::transform([](auto&& node_opt) { return node_opt.value(); }) |
-      utl::vec();
+      views::filter([](auto&& node_opt) { return node_opt.has_value(); }) |
+      views::transform([](auto&& node_opt) { return node_opt.value(); }) |
+      to<soro::vector<node::ptr>>();
 
   // all sequence points in a train must refer to a node
   CHECK_EQ(sequence_point_nodes.size(), train.sequence_points_.size());
 
-  std::size_t spn_idx = 0;
+  soro::size_t spn_idx = 0;
   for (auto&& tn : train.iterate(infra)) {
     if (spn_idx < sequence_point_nodes.size() &&
         tn.node_ == sequence_point_nodes[spn_idx]) {

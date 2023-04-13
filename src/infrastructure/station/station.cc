@@ -1,18 +1,17 @@
 #include "soro/infrastructure/station/station.h"
 
-#include "fmt/format.h"
-
-#include "utl/erase_duplicates.h"
-#include "utl/pipes.h"
+#include "range/v3/action/sort.hpp"
+#include "range/v3/action/unique.hpp"
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/transform.hpp"
 
 namespace soro::infra {
 
 soro::vector<station::ptr> station::neighbours() const {
-  auto neighbours = utl::all(borders_) |
-                    utl::transform([](auto&& b) { return b.neighbour_; }) |
-                    utl::emplace_back<soro::vector<station::ptr>>();
-  utl::erase_duplicates(neighbours);
-  return neighbours;
+  return borders_ |
+         ranges::views::transform([](auto&& b) { return b.neighbour_; }) |
+         ranges::to<soro::vector<station::ptr>>() | ranges::actions::sort |
+         ranges::actions::unique;
 }
 
 }  // namespace soro::infra

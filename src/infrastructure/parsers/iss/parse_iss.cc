@@ -1,6 +1,5 @@
 #include "soro/infrastructure/parsers/iss/parse_iss.h"
 
-#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -10,7 +9,6 @@
 #include "utl/erase_if.h"
 #include "utl/get_or_create.h"
 #include "utl/logging.h"
-#include "utl/pipes.h"
 #include "utl/timer.h"
 #include "utl/verify.h"
 
@@ -995,10 +993,13 @@ auto get_element_to_station_map(infrastructure_t const& iss) {
 
 soro::map<soro::string, station::ptr> get_ds100_to_station(
     soro::vector<station::ptr> const& stations) {
-  return utl::all(stations) | utl::transform([](auto&& s_ptr) {
-           return soro::pair<soro::string, station::ptr>{s_ptr->ds100_, s_ptr};
-         }) |
-         utl::emplace<soro::map<string, station::ptr>>();
+  soro::map<soro::string, station::ptr> result;
+
+  for (auto const& station : stations) {
+    result[station->ds100_] = station;
+  }
+
+  return result;
 }
 
 void log_stats(infrastructure_t const& iss) {
@@ -1185,8 +1186,11 @@ soro::vector<soro::string> get_full_station_names(
     regulatory_station_data const& regulatory_data) {
   return soro::to_vec(base_infra.stations_, [&](station::ptr s) {
     auto const it = regulatory_data.ds100_to_full_name_.find(s->ds100_);
-    return it != std::end(regulatory_data.ds100_to_full_name_) ? it->second
-                                                               : s->ds100_;
+    if (it != std::end(regulatory_data.ds100_to_full_name_)) {
+      return it->second;
+    } else {
+      return s->ds100_;
+    }
   });
 }
 
