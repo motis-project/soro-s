@@ -1186,8 +1186,11 @@ soro::vector<soro::string> get_full_station_names(
     regulatory_station_data const& regulatory_data) {
   return soro::to_vec(base_infra.stations_, [&](station::ptr s) {
     auto const it = regulatory_data.ds100_to_full_name_.find(s->ds100_);
-    return it != std::end(regulatory_data.ds100_to_full_name_) ? it->second
-                                                               : s->ds100_;
+    if (it != std::end(regulatory_data.ds100_to_full_name_)) {
+      return it->second;
+    } else {
+      return s->ds100_;
+    }
   });
 }
 
