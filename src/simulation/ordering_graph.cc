@@ -35,12 +35,12 @@ void print_ordering_graph_stats(ordering_graph const& og) {
   uLOG(utl::info) << "ordering graph edge count: " << edges;
 
   uLOG(utl::info) << "incoming edges distribution:";
-  for (auto const [edge_count, nodes] : in_edge_counts) {
+  for (auto const& [edge_count, nodes] : in_edge_counts) {
     uLOG(utl::info) << "nodes with " << edge_count << " in edges: " << nodes;
   }
 
   uLOG(utl::info) << "outgoing edges distribution:";
-  for (auto const [edge_count, nodes] : out_edge_counts) {
+  for (auto const& [edge_count, nodes] : out_edge_counts) {
     uLOG(utl::info) << "nodes with " << edge_count << " out edges: " << nodes;
   }
 }

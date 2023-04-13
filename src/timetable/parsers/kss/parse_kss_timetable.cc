@@ -1,11 +1,7 @@
 #include "soro/timetable/parsers/kss/parse_kss_timetable.h"
-#include <__expected/unexpected.h>
 
-#include <charconv>
-#include <expected>
-#include <set>
+#include "pugixml.hpp"
 
-#include "soro/base/error.h"
 #include "utl/concat.h"
 #include "utl/enumerate.h"
 #include "utl/logging.h"
@@ -18,11 +14,10 @@
 #include "soro/utls/statistics.h"
 #include "soro/utls/string.h"
 
+#include "soro/base/error.h"
 #include "soro/timetable/bitfield.h"
 #include "soro/timetable/parsers/kss/kss_error.h"
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
-
-#include "pugixml.hpp"
 
 namespace soro::tt {
 
@@ -31,42 +26,6 @@ using namespace soro::utls;
 using namespace soro::infra;
 
 namespace fs = std::filesystem;
-
-enum class kss : uint8_t {
-  total_trains,
-  total_train_runs,
-  worked_on_train,
-  failed_getting_station_route_path,
-  failed_getting_interlocking_route_path,
-  first_stop_is_no_halt_and_train_is_not_breaking_in,
-  last_stop_is_no_halt_and_train_is_not_breaking_out,
-  stop_is_marked_halt_but_station_route_has_no_halt,
-  transit_time_but_station_route_has_no_runtime_checkpoint,
-  train_has_lzb,
-  double_train_number,
-  count
-};
-
-statistics<kss>::stat_texts const kss_stat_texts = {
-    {kss::total_trains, "Total trains: "},
-    {kss::total_train_runs, "Total train runs: "},
-    {kss::worked_on_train, "Skipped worked on trains: "},
-    {kss::failed_getting_station_route_path,
-     "Failed getting station route path for trains: "},
-    {kss::failed_getting_interlocking_route_path,
-     "Failed generating interlocking route path: "},
-    {kss::first_stop_is_no_halt_and_train_is_not_breaking_in,
-     "First stop is not a halt, but train is not breaking in: "},
-    {kss::last_stop_is_no_halt_and_train_is_not_breaking_out,
-     "Last stop is not a halt, but train is not breaking out: "},
-    {kss::stop_is_marked_halt_but_station_route_has_no_halt,
-     "Stop is marked halt, but  station route has no halt: "},
-    {kss::transit_time_but_station_route_has_no_runtime_checkpoint,
-     "Transit time in timetable, but no runtime checkpoint in station route"},
-    {kss::train_has_lzb, "Train has LZB: "},
-    {kss::double_train_number, "Double train number: "}};
-
-static statistics<kss> kss_stats(kss_stat_texts);  // NOLINT
 
 bool is_kss_timetable(timetable_options const& opts) {
   if (!std::filesystem::is_directory(opts.timetable_path_)) {
@@ -83,10 +42,10 @@ bool is_kss_timetable(timetable_options const& opts) {
 
 std::size_t distance(date::year_month_day const from,
                      date::year_month_day const to) {
-  utls::sassert(from.ok(), "Date from {} is not ok.", from);
-  utls::sassert(to.ok(), "Date to {} is not ok.", to);
+  utls::sassert(from.ok(), "date from {} is not ok.", from);
+  utls::sassert(to.ok(), "date to {} is not ok.", to);
   utls::sassert(from <= to,
-                "Call distance for year_month_date with ascending dates, "
+                "call distance for year_month_date with ascending dates, "
                 "got called with {} and {}",
                 from, to);
 
@@ -252,7 +211,7 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
     auto station_it = infra->ds100_to_station_.find(ds100);
     if (station_it == std::end(infra->ds100_to_station_)) {
       uLOG(utl::warn) << "could not find station " << ds100;
-      return std::unexpected(kss_error::STATION_NOT_FOUND);
+      return std::unexpected(error::kss::STATION_NOT_FOUND);
     }
 
     auto route_it = station_it->second->station_routes_.find(route_name);
@@ -335,31 +294,31 @@ rs::train_physics parse_characteristic(xml_node const charac_xml,
   return {tvs, carriage_weight, length, max_speed, ctc, freight};
 }
 
-utls::result<bool> is_supported(stop_sequence const& stop_sequence,
+utls::result<void> is_supported(stop_sequence const& stop_sequence,
                                 infrastructure const& infra, train const& t) {
 
   if (t.has_ctc()) {
-    return std::unexpected(kss_error::CTC_NOT_SUPPORTED);
+    return std::unexpected(error::kss::CTC_NOT_SUPPORTED);
   }
 
   if (stop_sequence.points_.size() < 2) {
-    return std::unexpected(kss_error::SINGLE_STOP_NOT_SUPPORTED);
+    return std::unexpected(error::kss::SINGLE_STOP_NOT_SUPPORTED);
   }
 
   if (stop_sequence.break_in_) {
-    return std::unexpected(kss_error::BREAK_IN_NOT_SUPPORTED);
+    return std::unexpected(error::kss::BREAK_IN_NOT_SUPPORTED);
   }
 
   if (stop_sequence.break_out_) {
-    return std::unexpected(kss_error::BREAK_OUT_NOT_SUPPORTED);
+    return std::unexpected(error::kss::BREAK_OUT_NOT_SUPPORTED);
   }
 
   if (!stop_sequence.points_.front().is_halt()) {
-    return std::unexpected(kss_error::FIRST_STOP_NO_HALT_NOT_SUPPORTED);
+    return std::unexpected(error::kss::FIRST_STOP_NO_HALT_NOT_SUPPORTED);
   }
 
   if (!stop_sequence.points_.back().is_halt()) {
-    return std::unexpected(kss_error::LAST_STOP_NO_HALT_NOT_SUPPORTED);
+    return std::unexpected(error::kss::LAST_STOP_NO_HALT_NOT_SUPPORTED);
   }
 
   for (auto const& sequence_point : stop_sequence.points_) {
@@ -367,16 +326,18 @@ utls::result<bool> is_supported(stop_sequence const& stop_sequence,
 
     if (sequence_point.is_halt() &&
         !sr->get_halt_idx(t.freight()).has_value()) {
-      return std::unexpected(kss_error::STOP_IS_HALT_BUT_STATION_ROUTE_NO_HALT);
+      return std::unexpected(
+          error::kss::STOP_IS_HALT_BUT_STATION_ROUTE_NO_HALT);
     }
 
     if (sequence_point.has_transit_time() &&
         !sr->get_runtime_checkpoint_node().has_value()) {
-      return std::unexpected(kss_error::TRANSIT_TIME_BUT_NO_RUNTIME_CHECKPOINT);
+      return std::unexpected(
+          error::kss::TRANSIT_TIME_BUT_NO_RUNTIME_CHECKPOINT);
     }
   }
 
-  return true;
+  return {};
 }
 
 train::number parse_train_number(xml_node const train_number_xml) {
@@ -434,19 +395,16 @@ utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
                                                   infrastructure const& infra) {
   soro::vector<train> result;
 
-  kss_stats.inc(kss::total_trains);
-
   // don't parse worked on trains
   auto const train_status = train_xml.attribute("trainStatus").value();
   if (!utls::equal(train_status, "freig")) {
-    return std::unexpected(kss_error::WORKED_ON_TRAIN);
+    return std::unexpected(error::kss::WORKED_ON_TRAIN);
   }
 
   for (auto const construction_train_xml :
        train_xml.child("fineConstruction").children("constructionTrain")) {
-    kss_stats.inc(kss::total_train_runs);
 
-    auto train = parse_construction_train(construction_train_xml, infra);
+    auto const train = parse_construction_train(construction_train_xml, infra);
 
     if (!train) {
       return utls::propagate(train);
@@ -460,7 +418,7 @@ utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
 
 soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
                                          infrastructure const& infra,
-                                         error_stats& stats) {
+                                         error::stats& stats) {
   soro::vector<train> result;
 
   auto const loaded_file = utls::load_file(fp);
@@ -470,7 +428,7 @@ soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
       reinterpret_cast<void const*>(loaded_file.data()), loaded_file.size());
 
   utl::verify(success,
-              "PugiXML error '{}' while parsing {} from KSS timetable {}!",
+              "pugixml error '{}' while parsing {} from kss timetable {}!",
               success.description(), fp);
 
   auto const timetable_xml =
@@ -484,7 +442,7 @@ soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
       stats.count(parsed_train);
     }
 
-    utl::concat(result, parse_kss_train(train_xml, infra));
+    utl::concat(result, *parsed_train);
   }
 
   return result;
@@ -499,8 +457,7 @@ void set_ids(soro::vector<train>& trains) {
 base_timetable parse_kss_timetable(timetable_options const& opts,
                                    infra::infrastructure const& infra) {
   utl::scoped_timer const timetable_timer("parsing kss timetable");
-
-  error_stats stats("parsing kss timetable");
+  error::stats stats("parsing kss timetable");
 
   base_timetable bt;
 
@@ -528,8 +485,6 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
 
   uLOG(utl::info) << "total trains runs successfully parsed: "
                   << bt.trains_.size();
-  kss_stats.print();
-
   stats.report();
 
   return bt;

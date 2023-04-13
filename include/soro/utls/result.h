@@ -3,6 +3,8 @@
 #include <expected>
 #include <system_error>
 
+#include "soro/utls/sassert.h"
+
 namespace soro::utls {
 
 template <typename T>

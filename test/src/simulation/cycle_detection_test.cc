@@ -18,7 +18,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({2});
     g.push_back({3});
     g.push_back({4});
-    g.push_back({});
+    g.emplace_back();
 
     auto const result = detect_cycle(g);
 
@@ -53,7 +53,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({1, 2});
     g.push_back({3});
     g.push_back({3});
-    g.push_back({});
+    g.emplace_back();
 
     auto const result = detect_cycle(g);
 
@@ -69,13 +69,13 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({2});
     g.push_back({3});
     g.push_back({4});
-    g.push_back({});
+    g.emplace_back();
 
     g.push_back({6});
     g.push_back({7});
     g.push_back({8});
     g.push_back({9});
-    g.push_back({});
+    g.emplace_back();
 
     auto const result = detect_cycle(g);
 
@@ -91,7 +91,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({2});
     g.push_back({3});
     g.push_back({4});
-    g.push_back({});
+    g.emplace_back();
 
     g.push_back({6});
     g.push_back({7});
@@ -119,7 +119,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({7});
     g.push_back({8});
     g.push_back({9});
-    g.push_back({});
+    g.emplace_back();
 
     auto const result = detect_cycle(g);
 
@@ -141,7 +141,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({6, 13});
     g.push_back({7});
     g.push_back({8});
-    g.push_back({});
+    g.emplace_back();
 
     g.push_back({10});
     g.push_back({11});
@@ -173,7 +173,7 @@ TEST_SUITE("cycle_detection suite") {
     g.push_back({6, 13});
     g.push_back({7});
     g.push_back({8});
-    g.push_back({});
+    g.emplace_back();
 
     g.push_back({10});
     g.push_back({11});
