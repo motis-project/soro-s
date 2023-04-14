@@ -8,15 +8,15 @@
 
 namespace soro::tt {
 
-// Parse a timetable from the following:
-//   - 'Timetable.xml', a single dispo timetable xml
-//   - 'timetable.fpl', which is a .tar.zst file containing timetable xmls
-//   - 'timetable/', a folder which contains a multiple timetable xmls
-
 struct timetable_options {
   CISTA_COMPARABLE()
 
   std::filesystem::path timetable_path_{""};
 };
+
+inline timetable_options make_timetable_opts(
+    std::filesystem::path const& timetable_path) {
+  return timetable_options{.timetable_path_ = timetable_path};
+}
 
 }  // namespace soro::tt

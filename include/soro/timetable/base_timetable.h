@@ -8,6 +8,7 @@ namespace soro::tt {
 struct base_timetable {
   soro::vector<train> trains_;
   soro::map<train::number, train::ptr> number_to_train_;
+  soro::string source_;
 };
 
 }  // namespace soro::tt

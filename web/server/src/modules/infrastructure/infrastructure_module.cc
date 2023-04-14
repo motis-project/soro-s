@@ -23,8 +23,7 @@ infra::infrastructure::optional_ptr infrastructure_module::get_infra(
 }
 
 std::vector<fs::path> get_infrastructure_todo_list(
-    soro::server::server_settings const& settings) {
-
+    server_settings const& settings) {
   std::vector<fs::path> infra_todo_list;
 
   for (auto&& dir_entry :

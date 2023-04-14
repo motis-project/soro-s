@@ -292,7 +292,7 @@ constexpr std::optional<std::string> get_type_list_unit_str() {
       return fmt::format("{}{}*", get_tag_symbol<Tag>(),
                          exponent_symbols[count]);
     } else {
-      return fmt::format("^{}*", count);
+      return "";
     }
   };
 

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "soro/utls/result.h"
 #include "soro/utls/serializable.h"
 
 #include "soro/infrastructure/infrastructure.h"
@@ -11,14 +12,18 @@
 
 namespace soro::tt {
 
-enum class TimetableSource : uint8_t { NOT_FOUND, KSS };
+enum class timetable_source : uint8_t { NOT_FOUND, KSS };
 
 struct timetable : utls::serializable<base_timetable> {
   using utls::serializable<base_timetable>::serializable;
 
+  explicit timetable(base_timetable&& bt);
   timetable(timetable_options const& opts, infra::infrastructure const& infra);
 
-  TimetableSource source_type_{TimetableSource::NOT_FOUND};
+  timetable_source source_type_{timetable_source::NOT_FOUND};
 };
+
+utls::result<timetable> try_parsing_timetable(
+    timetable_options const& opts, infra::infrastructure const& infra);
 
 }  // namespace soro::tt
