@@ -20,9 +20,10 @@ resources/timetable/de_kss
 resources/de_kss
 resources/osm
 resources/search_indices
-web/client/dist
-web/client/node_modules
-web/client/coverage
+web/client/dist/
+web/client/coverage/
+web/client/node_modules/
+*.vitest/
 
 # Ignore the file produced by cmake
 test/include/test/file_paths.h

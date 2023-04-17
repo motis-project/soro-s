@@ -7,9 +7,13 @@ import {
   StationRoute
 } from '@/util/SoroClient';
 
-export type InfrastructureState = {
+export type SidebarState = {
+  // infrastructure state
   infrastructures: string[];
   currentInfrastructure?: string;
+  // timetable state
+  timetables: string[];
+  currentTimetable?: string;
   // sidebar search state
   currentSearchResults: SearchResult[];
   currentBoundingBox?: LngLatBounds;
@@ -35,15 +39,19 @@ function routeToGeoJSON(route: StationRoute | InterlockingRoute) {
   };
 }
 
-export const InfrastructureNamespace = 'infrastructure';
+export const SidebarNamespace = 'sidebar';
 
-export const InfrastructureStore: Module<InfrastructureState, GlobalState> = {
+export const SidebarStore: Module<SidebarState, GlobalState> = {
   namespaced: true,
 
-  state(): InfrastructureState {
+  state(): SidebarState {
     return {
+      // infrastructure state
       infrastructures: [],
       currentInfrastructure: undefined,
+      // timetable state
+      timetables: [],
+      currentTimetable: undefined,
       // search state
       currentSearchResults: [],
       currentBoundingBox: undefined,
@@ -63,6 +71,14 @@ export const InfrastructureStore: Module<InfrastructureState, GlobalState> = {
 
     setCurrentInfrastructure(state, currentInfrastructure) {
       state.currentInfrastructure = currentInfrastructure;
+    },
+
+    setTimetables(state, timetables) {
+      state.timetables = timetables;
+    },
+
+    setCurrentTimetable(state, currentTimetable) {
+      state.currentTimetable = currentTimetable;
     },
 
     setCurrentSearchResults(state, currentSearchResults) {
@@ -107,9 +123,7 @@ export const InfrastructureStore: Module<InfrastructureState, GlobalState> = {
     async initialLoad({ commit, rootState }) {
       rootState.soroClient
         .infrastructures()
-        .then((response) => {
-          commit('setInfrastructures', response.infrastructures);
-        })
+        .then((r) => commit('setInfrastructures', r.infrastructures))
         .catch(console.error);
     },
 
@@ -148,12 +162,23 @@ export const InfrastructureStore: Module<InfrastructureState, GlobalState> = {
       commit('deleteHighlightedInterlockingRoute', routeId);
     },
 
-    load({ commit }, infrastructureFilename) {
-      commit('setCurrentInfrastructure', infrastructureFilename);
+    loadInfrastructure({ commit, rootState }, infrastructureName) {
+      commit('setCurrentInfrastructure', infrastructureName);
+      commit('setCurrentTimetable', undefined);
+
+      if (!infrastructureName) {
+        return;
+      }
+
+      rootState.soroClient
+        .infrastructure(infrastructureName)
+        .timetables()
+        .then((response) => commit('setTimetables', response.timetables))
+        .catch(console.error);
     },
 
-    unload({ commit }) {
-      commit('setCurrentInfrastructure', undefined);
+    loadTimetable({ commit }, timetableName) {
+      commit('setCurrentTimetable', timetableName);
     }
   }
 };

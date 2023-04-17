@@ -38,7 +38,7 @@ import SidebarStation from '@/components/sidebar/station/station.vue';
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapMutations, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 
 type Overlay = {
   name: string;
@@ -70,7 +70,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, ['currentStation']),
+    ...mapState(SidebarNamespace, ['currentStation']),
     ...mapState(['showOverlay', 'selectedOverlay'])
   },
 

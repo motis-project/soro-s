@@ -4,13 +4,23 @@
       <div class="window-controls">
         <soro-button
           label="New Infrastructure Tab"
+          :disabled="!currentInfrastructure"
           @click="addTab(ComponentTechnicalNames.INFRASTRUCTURE)"
         />
-        <soro-button disabled label="New Simulation Tab" />
-        <soro-button disabled label="New Timetable Tab" />
+        <soro-button
+          label="New Timetable Tab"
+          :disabled="!currentTimetable"
+          @click="addTab(ComponentTechnicalNames.TIMETABLE)"
+        />
         <soro-button
           label="New OrderingGraph Tab"
+          :disabled="!currentInfrastructure || !currentTimetable"
           @click="addTab(ComponentTechnicalNames.ORDERING_GRAPH)"
+        />
+        <soro-button
+          label="New Simulation Tab"
+          :disabled="!currentInfrastructure || !currentTimetable || true"
+          @click="addTab(ComponentTechnicalNames.SIMULATION)"
         />
       </div>
 
@@ -27,7 +37,7 @@
           label="Select Timetable"
           :value="currentTimetable"
           :options="timetables"
-          disabled
+          :disabled="!currentInfrastructure"
           @select="loadTimetable"
         />
       </div>
@@ -60,8 +70,7 @@ import MenuSettings from './settings.vue';
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapActions, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { TimetableNamespace } from '@/stores/timetable-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import { ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
@@ -76,11 +85,12 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, [
+    ...mapState(SidebarNamespace, [
+      'infrastructures',
       'currentInfrastructure',
-      'infrastructures'
-    ]),
-    ...mapState(TimetableNamespace, ['currentTimetable', 'timetables'])
+      'timetables',
+      'currentTimetable'
+    ])
   },
 
   methods: {
@@ -96,8 +106,7 @@ export default defineComponent({
       this.$emit('change-overlay', 'extended-search.vue');
     },
 
-    ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
-    ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
+    ...mapActions(SidebarNamespace, ['loadInfrastructure', 'loadTimetable']),
     ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab'])
   }
 });

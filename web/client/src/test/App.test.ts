@@ -1,6 +1,5 @@
 import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
-import { TimetableNamespace } from '@/stores/timetable-store';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import { SettingsNamespace } from '@/stores/settings-store';
 import App from '@/App.vue';
 import {
@@ -17,7 +16,6 @@ describe('App', async () => {
     state: { currentSearchResults: [] },
     actions: { initialLoad: vi.fn() }
   };
-  const timetableStoreMock = { actions: { initialLoad: vi.fn() } };
   const settingsStoreMock = {
     state: { theme: 'some-theme' },
     actions: { loadSettings: vi.fn() }
@@ -28,8 +26,7 @@ describe('App', async () => {
   };
   const defaults = {
     store: {
-      [InfrastructureNamespace]: infrastructureStoreMock,
-      [TimetableNamespace]: timetableStoreMock,
+      [SidebarNamespace]: infrastructureStoreMock,
       [SettingsNamespace]: settingsStoreMock,
       [GoldenLayoutNamespace]: goldenLayoutStoreMock
     }
@@ -56,7 +53,6 @@ describe('App', async () => {
 
     expect(settingsStoreMock.actions.loadSettings).toHaveBeenCalled();
     expect(infrastructureStoreMock.actions.initialLoad).toHaveBeenCalled();
-    expect(timetableStoreMock.actions.initialLoad).toHaveBeenCalled();
 
     const goldenLayoutRoot = app.findComponent({ ref: 'GLayoutRoot' });
     expect(

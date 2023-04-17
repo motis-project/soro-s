@@ -12,7 +12,7 @@
         title="Clear selection"
         @click="
           () => {
-            currentValue = null;
+            currentValue = undefined;
             emitChange();
           }
         "
