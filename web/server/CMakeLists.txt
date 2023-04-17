@@ -17,7 +17,8 @@ target_include_directories(soro-server-lib PUBLIC include)
 #   - Icon .png
 #   - Font .pbf
 #   - OSM profiles .lua
-file(GLOB_RECURSE soro-server-resources server_resources/*[.png,.pbf,.lua])
+#   - Favicon .ico
+file(GLOB_RECURSE soro-server-resources server_resources/*[.png,.pbf,.lua,.ico])
 foreach(file ${soro-server-resources})
   set(path ${file})
   cmake_path(RELATIVE_PATH path BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE relative-path)
