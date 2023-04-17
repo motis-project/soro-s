@@ -210,7 +210,6 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
 
     auto station_it = infra->ds100_to_station_.find(ds100);
     if (station_it == std::end(infra->ds100_to_station_)) {
-      //      uLOG(utl::warn) << "could not find station " << ds100;
       return std::unexpected(error::kss::STATION_NOT_FOUND);
     }
 
@@ -467,8 +466,42 @@ void set_ids(soro::vector<train>& trains) {
   }
 }
 
+infra::version get_required_infra_version(timetable_options const& opts) {
+  utls::expect(fs::is_directory(opts.timetable_path_),
+               "timetable path {} is not a directory", opts.timetable_path_);
+  utls::expect(!fs::is_empty(opts.timetable_path_),
+               "timetable path {} is empty", opts.timetable_path_);
+
+  auto const first_fp = begin(fs::directory_iterator{opts.timetable_path_});
+  auto const first_file = utls::load_file(first_fp->path());
+
+  xml_document tt_xml;
+  auto success = tt_xml.load_buffer(
+      reinterpret_cast<void const*>(first_file.data()), first_file.size());
+  utl::verify(success,
+              "pugixml error '{}' while parsing {} from kss timetable {}!",
+              success.description(), *first_fp);
+
+  auto const version_xml =
+      tt_xml.child("KSS").child("header").child("spurplanVersionDescription");
+
+  version v;
+
+  v.name_ = version_xml.child_value("name");
+  v.number_ =
+      utls::parse_int<version::number>(version_xml.child_value("number"));
+
+  return v;
+}
+
 utls::result<base_timetable> parse_kss_timetable(
     timetable_options const& opts, infra::infrastructure const& infra) {
+  auto const required_version = get_required_infra_version(opts);
+
+  if (required_version != infra->version_) {
+    return std::unexpected(error::kss::INFRASTRUCTURE_VERSION_MISMATCH);
+  }
+
   utl::scoped_timer const timetable_timer("parsing kss timetable");
   error::stats stats("parsing kss timetable");
 

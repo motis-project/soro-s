@@ -16,6 +16,7 @@ enum class kss {
   BREAK_OUT_NOT_SUPPORTED,
   FIRST_STOP_NO_HALT_NOT_SUPPORTED,
   LAST_STOP_NO_HALT_NOT_SUPPORTED,
+  INFRASTRUCTURE_VERSION_MISMATCH
 };
 
 std::error_code make_error_code(kss const e);

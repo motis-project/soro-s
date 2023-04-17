@@ -31,6 +31,8 @@ std::string kss_error_category::message(int ev) const {
       return "break in not supported";
     case soro::error::kss::BREAK_OUT_NOT_SUPPORTED:
       return "break out not supported";
+    case soro::error::kss::INFRASTRUCTURE_VERSION_MISMATCH:
+      return "infrastructure version mismatch";
   }
 
   return "not reachable";
