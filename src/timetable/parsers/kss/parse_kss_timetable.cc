@@ -36,7 +36,8 @@ bool is_kss_timetable(timetable_options const& opts) {
       fs::directory_iterator{opts.timetable_path_}, [](auto&& dir_entry) {
         auto const& fn = dir_entry.path().filename();
         return !fs::is_directory(dir_entry) && fn.extension() == ".xml" &&
-               fn.string().starts_with("KSS-");
+               (fn.string().starts_with("KSS-") ||
+                fn.string().starts_with("."));
       });
 }
 
