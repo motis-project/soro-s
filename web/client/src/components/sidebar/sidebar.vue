@@ -116,8 +116,8 @@ nav.v-navigation-drawer--active .overlay-tabs {
   left: var(--overlay-width);
 }
 
+/* stylelint-disable-line selector-class-pattern */
 nav:not(.v-navigation-drawer--active) .overlay-tabs {
-  /* stylelint-disable-line selector-class-pattern */
   left: calc(1.1 * var(--overlay-width));
 }
 
