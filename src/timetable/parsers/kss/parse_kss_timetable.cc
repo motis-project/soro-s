@@ -218,7 +218,7 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
     if (route_it != std::end(station_it->second->station_routes_)) {
       st.station_route_ = route_it->second->id_;
     } else {
-      return {};
+      return std::unexpected(error::kss::STATION_ROUTE_NOT_FOUND);
     }
 
     if (auto arr = point_xml.child("arrival"); arr) {
@@ -445,10 +445,6 @@ utls::result<soro::vector<train>> parse_timetable_file(
 
   for (auto const train_xml : timetable_xml.children("train")) {
     auto const trains = parse_kss_train(train_xml, infra);
-
-    if (!trains && trains.error() == error::kss::STATION_NOT_FOUND) {
-      return utls::propagate(trains);
-    }
 
     if (!trains) {
       stats.count(trains);

@@ -34,10 +34,6 @@ struct stats {
     for (auto const& [e, count] : errors_) {
       uLOG(utl::info) << e.message() << ": " << count;
     }
-
-    if (errors_.empty()) {
-      uLOG(utl::info) << "no errors to report";
-    }
   }
 
   std::string_view name_{"give me name"};

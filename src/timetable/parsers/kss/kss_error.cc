@@ -1,6 +1,6 @@
 #include "soro/timetable/parsers/kss/kss_error.h"
 
-namespace {
+// namespace {
 
 struct kss_error_category : std::error_category {
   const char* name() const noexcept override;
@@ -13,6 +13,8 @@ std::string kss_error_category::message(int ev) const {
   switch (static_cast<soro::error::kss>(ev)) {
     case soro::error::kss::STATION_NOT_FOUND:;
       return "could not find station from timetable in infrastructure";
+    case soro::error::kss::STATION_ROUTE_NOT_FOUND:;
+      return "could not find station route used in timetable in infrastructure";
     case soro::error::kss::NO_INTERLOCKING_ROUTE_PATH:
       return "could not determine interlocking route path";
     case soro::error::kss::STOP_IS_HALT_BUT_STATION_ROUTE_NO_HALT:
@@ -40,12 +42,17 @@ std::string kss_error_category::message(int ev) const {
 
 const kss_error_category kss_error_category_singleton{};
 
-}  // namespace
+//}  // namespace
+
+const std::error_category& kss_error_category() {
+  static struct kss_error_category const instance;
+  return instance;
+}
 
 namespace soro::error {
 
 std::error_code make_error_code(kss const e) {
-  return {static_cast<int>(e), kss_error_category_singleton};
+  return {static_cast<int>(e), kss_error_category()};
 }
 
 }  // namespace soro::error

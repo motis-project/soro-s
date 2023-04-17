@@ -6,6 +6,7 @@ namespace soro::error {
 
 enum class kss {
   STATION_NOT_FOUND = 1,  // 0 is success
+  STATION_ROUTE_NOT_FOUND,
   WORKED_ON_TRAIN,
   NO_INTERLOCKING_ROUTE_PATH,
   STOP_IS_HALT_BUT_STATION_ROUTE_NO_HALT,
