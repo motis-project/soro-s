@@ -12,7 +12,7 @@
         title="Clear selection"
         @click="
           () => {
-            currentValue = null;
+            currentValue = undefined;
             emitChange();
           }
         "
@@ -47,9 +47,9 @@ export default defineComponent({
 
   emits: ['select'],
 
-  data(): { currentValue: string | null } {
+  data(): { currentValue?: string } {
     return {
-      currentValue: null
+      currentValue: undefined
     };
   },
 

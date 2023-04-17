@@ -20,8 +20,7 @@ import SoroSidebar from '@/components/sidebar/sidebar.vue';
 
 <script lang="ts">
 import { mapActions, mapMutations, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { TimetableNamespace } from '@/stores/timetable-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
 import {
@@ -62,16 +61,14 @@ export default defineComponent({
   mounted() {
     this.loadSettings();
     this.loadInfrastructures();
-    this.loadTimetables();
     this.setGoldenLayoutRootComponent(GLayoutRoot.value);
     this.initGoldenLayout(initLayout);
   },
 
   methods: {
-    ...mapActions(InfrastructureNamespace, {
+    ...mapActions(SidebarNamespace, {
       loadInfrastructures: 'initialLoad'
     }),
-    ...mapActions(TimetableNamespace, { loadTimetables: 'initialLoad' }),
     ...mapActions(SettingsNamespace, ['loadSettings']),
     ...mapMutations(GoldenLayoutNamespace, {
       setGoldenLayoutRootComponent: 'setRootComponent'

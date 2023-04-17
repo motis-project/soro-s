@@ -38,7 +38,7 @@ import SidebarStation from '@/components/sidebar/station/station.vue';
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapMutations, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 
 type Overlay = {
   name: string;
@@ -70,7 +70,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, ['currentStation']),
+    ...mapState(SidebarNamespace, ['currentStation']),
     ...mapState(['showOverlay', 'selectedOverlay'])
   },
 
@@ -109,16 +109,16 @@ export default defineComponent({
 .overlay-tabs {
   margin-top: 40px;
   z-index: 10;
+  position: absolute;
 }
 
-nav.v-navigation-drawer-active .overlay-tabs {
-  position: absolute;
+/* stylelint-disable-next-line selector-class-pattern */
+nav.v-navigation-drawer--active .overlay-tabs {
   left: var(--overlay-width);
 }
 
-nav:not(.v-navigation-drawer-active) .overlay-tabs {
-  /* stylelint-disable-line selector-class-pattern */
-  position: fixed;
+/* stylelint-disable-next-line selector-class-pattern */
+nav:not(.v-navigation-drawer--active) .overlay-tabs {
   left: calc(1.1 * var(--overlay-width));
 }
 
@@ -127,17 +127,6 @@ nav:not(.v-navigation-drawer-active) .overlay-tabs {
   border-top-left-radius: 0;
   margin-bottom: 10px;
   color: rgb(var(--v-theme-on-surface));
-}
-
-.sub-overlay-tab-button {
-  width: 30px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
-  transition: all 0.2s ease;
 }
 
 .overlay {

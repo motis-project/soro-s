@@ -43,7 +43,7 @@ describe('soro-select', async () => {
     expect(listItems).toHaveLength(2);
     expect(listItems[0].text()).toBe('Clear selection');
     expect(listItems[1].text()).not.toBe('Clear selection');
-    expect(oneOption.emitted('select')).toStrictEqual([[null]]);
+    expect(oneOption.emitted('select')).toStrictEqual([[undefined]]);
   });
 
   it("emits a 'select' event when the inner select emits a model update", async () => {

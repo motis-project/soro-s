@@ -2,6 +2,8 @@ import HttpClient from '@/util/HttpClient';
 import { LngLatBounds } from 'maplibre-gl';
 
 type InfrastructureList = { infrastructures: string[] };
+type TimetableList = { timetables: string[] };
+
 type BoundingBox = { boundingBox: LngLatBounds };
 type Coordinate = { lon: number; lat: number };
 
@@ -88,6 +90,7 @@ type Infrastructure = {
   stationRoute: (id: number) => Promise<StationRoute>;
   element: (id: number) => Promise<Element>;
   search: (query: string) => Promise<SearchResult[]>;
+  timetables: () => Promise<TimetableList>;
 };
 
 class SoroClient extends HttpClient {
@@ -107,7 +110,8 @@ class SoroClient extends HttpClient {
       stationRoute: (id: number) => this.stationRoute(name, id),
       interlockingRoute: (id: number) => this.interlockingRoute(name, id),
       element: (id: number) => this.element(name, id),
-      search: (query: string) => this.search(name, query)
+      search: (query: string) => this.search(name, query),
+      timetables: () => this.timetables(name)
     };
   }
 
@@ -159,6 +163,10 @@ class SoroClient extends HttpClient {
     return this.get(
       '/infrastructure/' + infrastructureName + '/search/' + query
     );
+  }
+
+  timetables(infrastructureName: string): Promise<TimetableList> {
+    return this.get('/infrastructure/' + infrastructureName + '/timetables');
   }
 }
 

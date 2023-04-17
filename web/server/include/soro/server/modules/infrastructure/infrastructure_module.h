@@ -47,8 +47,7 @@ struct infrastructure_module {
   net::web_server::string_res_t serve_element(
       net::query_router::route_request const& req) const;
 
-  std::unordered_map<std::string_view,
-                     std::unique_ptr<soro::infra::infrastructure>>
+  std::unordered_map<std::string_view, std::unique_ptr<infra::infrastructure>>
       infrastructures_;
 };
 

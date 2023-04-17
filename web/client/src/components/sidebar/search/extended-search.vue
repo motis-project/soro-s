@@ -58,7 +58,7 @@ import SoroButton from '@/components/base/soro-button.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import { mapMutations, mapState } from 'vuex';
 import { ElementType } from '@/components/infrastructure/element-types';
 import { SearchResult, SearchResultType } from '@/util/SoroClient';
@@ -101,7 +101,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, [
+    ...mapState(SidebarNamespace, [
       'currentInfrastructure',
       'currentSearchResults',
       'currentSearchError',
@@ -116,7 +116,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapMutations(InfrastructureNamespace, [
+    ...mapMutations(SidebarNamespace, [
       'setCurrentQuery',
       'setCurrentSearchResults',
       'setCurrentBoundingBox'

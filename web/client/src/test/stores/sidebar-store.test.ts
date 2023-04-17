@@ -1,7 +1,4 @@
-import {
-  InfrastructureState,
-  InfrastructureStore
-} from '@/stores/infrastructure-store';
+import { SidebarState, SidebarStore } from '@/stores/sidebar-store';
 import { Commit, Dispatch } from 'vuex';
 
 vi.mock('@/api/api-client', () => ({
@@ -9,25 +6,27 @@ vi.mock('@/api/api-client', () => ({
   sendRequest: vi.fn(async () => ({}))
 }));
 
-describe('infrastructure-store', async () => {
-  let state: InfrastructureState;
+describe('sidebar-store', async () => {
+  let state: SidebarState;
   let commit: Commit;
   let dispatch: Dispatch;
 
   beforeEach(async () => {
     state = {
-      currentInfrastructure: 'some-infrastructure',
       infrastructures: [],
+      currentInfrastructure: 'some-infrastructure',
+      timetables: [],
+      currentTimetable: '',
       currentSearchResults: [],
       highlightedStationRoutes: [],
       highlightedInterlockingRoutes: []
     };
     commit = vi.fn((mutationName: string, args: any) =>
-      InfrastructureStore.mutations?.[mutationName]?.(state, args)
+      SidebarStore.mutations?.[mutationName]?.(state, args)
     );
     dispatch = vi.fn((actionName: string, value: any) =>
       // @ts-ignore
-      InfrastructureStore.actions[actionName](
+      SidebarStore.actions[actionName](
         {
           state,
           dispatch,
@@ -43,16 +42,7 @@ describe('infrastructure-store', async () => {
     state.currentInfrastructure = 'foo';
 
     // @ts-ignore
-    await InfrastructureStore.actions.load({ commit }, 'some-infrastructure');
-
-    expect(state.currentInfrastructure).toBe('some-infrastructure');
-  });
-
-  it('can unload the current infrastructure from the state', async () => {
-    state.currentInfrastructure = 'foo';
-
-    // @ts-ignore
-    await InfrastructureStore.actions.unload({ commit });
+    await SidebarStore.actions.loadInfrastructure({ commit }, undefined);
 
     expect(state.currentInfrastructure).toBe(undefined);
   });

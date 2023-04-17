@@ -45,7 +45,7 @@ import SoroSwitch from '@/components/base/soro-switch.vue';
 
 <script lang="ts">
 import { mapActions, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import { defineComponent } from 'vue';
 import { Station } from '@/util/SoroClient';
 import { GeoJSONFeature } from 'maplibre-gl';
@@ -63,7 +63,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, [
+    ...mapState(SidebarNamespace, [
       'currentInfrastructure',
       'currentStation',
       'highlightedStationRoutes',
@@ -84,7 +84,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapActions(InfrastructureNamespace, [
+    ...mapActions(SidebarNamespace, [
       'addHighlightedStationRoute',
       'deleteHighlightedStationRoute',
       'addHighlightedInterlockingRoute',

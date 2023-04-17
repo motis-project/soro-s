@@ -36,7 +36,8 @@ bool is_kss_timetable(timetable_options const& opts) {
       fs::directory_iterator{opts.timetable_path_}, [](auto&& dir_entry) {
         auto const& fn = dir_entry.path().filename();
         return !fs::is_directory(dir_entry) && fn.extension() == ".xml" &&
-               fn.string().starts_with("KSS-");
+               (fn.string().starts_with("KSS-") ||
+                fn.string().starts_with("."));
       });
 }
 
@@ -210,7 +211,6 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
 
     auto station_it = infra->ds100_to_station_.find(ds100);
     if (station_it == std::end(infra->ds100_to_station_)) {
-      uLOG(utl::warn) << "could not find station " << ds100;
       return std::unexpected(error::kss::STATION_NOT_FOUND);
     }
 
@@ -218,7 +218,7 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
     if (route_it != std::end(station_it->second->station_routes_)) {
       st.station_route_ = route_it->second->id_;
     } else {
-      return {};
+      return std::unexpected(error::kss::STATION_ROUTE_NOT_FOUND);
     }
 
     if (auto arr = point_xml.child("arrival"); arr) {
@@ -257,8 +257,8 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
   return sequence;
 }
 
-rs::train_physics parse_characteristic(xml_node const charac_xml,
-                                       rs::rolling_stock const& rolling_stock) {
+utls::result<rs::train_physics> parse_characteristic(
+    xml_node const charac_xml, rs::rolling_stock const& rolling_stock) {
   auto const traction_units_xml = charac_xml.child("tractionUnits");
 
   soro::vector<rs::traction_vehicle> tvs;
@@ -272,8 +272,12 @@ rs::train_physics parse_characteristic(xml_node const charac_xml,
     std::integral auto const variant =
         utls::parse_int<rs::variant_id>(series_xml.child_value("variante"));
 
-    tvs.emplace_back(
-        rolling_stock.get_traction_vehicle(series, owner, variant));
+    auto tv = rolling_stock.get_traction_vehicle(series, owner, variant);
+    if (!tv) {
+      return utls::propagate(tv);
+    }
+
+    tvs.emplace_back(*tv);
   }
 
   auto const length = si::from_m(
@@ -291,7 +295,8 @@ rs::train_physics parse_characteristic(xml_node const charac_xml,
   auto const ctc = static_cast<rs::CTC>(
       utls::equal(charac_xml.child_value("trainProtection"), "true"));
 
-  return {tvs, carriage_weight, length, max_speed, ctc, freight};
+  return rs::train_physics{tvs, carriage_weight, length, max_speed,
+                           ctc, freight};
 }
 
 utls::result<void> is_supported(stop_sequence const& stop_sequence,
@@ -360,16 +365,20 @@ utls::result<train> parse_construction_train(
   auto const services_xml = construction_train_xml.child("services");
   t.service_days_ = parse_services(services_xml);
 
-  auto const characteristic_xml =
-      construction_train_xml.child("characteristic");
-  t.physics_ = parse_characteristic(characteristic_xml, infra->rolling_stock_);
-
   auto const sequence_xml = construction_train_xml.child("sequence");
   auto const train_sequence = parse_sequence(sequence_xml, infra);
 
   if (!train_sequence) {
     return utls::propagate(train_sequence);
   }
+
+  auto const characteristic_xml =
+      construction_train_xml.child("characteristic");
+  auto phys = parse_characteristic(characteristic_xml, infra->rolling_stock_);
+  if (!phys) {
+    return utls::propagate(phys);
+  }
+  t.physics_ = std::move(*phys);
 
   if (auto supported = is_supported(*train_sequence, infra, t); !supported) {
     return utls::propagate(supported);
@@ -416,9 +425,9 @@ utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
   return result;
 }
 
-soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
-                                         infrastructure const& infra,
-                                         error::stats& stats) {
+utls::result<soro::vector<train>> parse_timetable_file(
+    std::filesystem::path const& fp, infrastructure const& infra,
+    error::stats& stats) {
   soro::vector<train> result;
 
   auto const loaded_file = utls::load_file(fp);
@@ -435,14 +444,14 @@ soro::vector<train> parse_timetable_file(std::filesystem::path const& fp,
       file_xml.child("KSS").child("railml").child("timetable");
 
   for (auto const train_xml : timetable_xml.children("train")) {
+    auto const trains = parse_kss_train(train_xml, infra);
 
-    auto const parsed_train = parse_kss_train(train_xml, infra);
-
-    if (!parsed_train) {
-      stats.count(parsed_train);
+    if (!trains) {
+      stats.count(trains);
+      continue;
     }
 
-    utl::concat(result, *parsed_train);
+    utl::concat(result, *trains);
   }
 
   return result;
@@ -454,16 +463,51 @@ void set_ids(soro::vector<train>& trains) {
   }
 }
 
-base_timetable parse_kss_timetable(timetable_options const& opts,
-                                   infra::infrastructure const& infra) {
+infra::version get_required_infra_version(timetable_options const& opts) {
+  utls::expect(fs::is_directory(opts.timetable_path_),
+               "timetable path {} is not a directory", opts.timetable_path_);
+  utls::expect(!fs::is_empty(opts.timetable_path_),
+               "timetable path {} is empty", opts.timetable_path_);
+
+  auto const first_fp = begin(fs::directory_iterator{opts.timetable_path_});
+  auto const first_file = utls::load_file(first_fp->path());
+
+  xml_document tt_xml;
+  auto success = tt_xml.load_buffer(
+      reinterpret_cast<void const*>(first_file.data()), first_file.size());
+  utl::verify(success,
+              "pugixml error '{}' while parsing {} from kss timetable {}!",
+              success.description(), *first_fp);
+
+  auto const version_xml =
+      tt_xml.child("KSS").child("header").child("spurplanVersionDescription");
+
+  version v;
+
+  v.name_ = version_xml.child_value("name");
+  v.number_ =
+      utls::parse_int<version::number>(version_xml.child_value("number"));
+
+  return v;
+}
+
+utls::result<base_timetable> parse_kss_timetable(
+    timetable_options const& opts, infra::infrastructure const& infra) {
+  auto const required_version = get_required_infra_version(opts);
+
+  if (required_version != infra->version_) {
+    return std::unexpected(error::kss::INFRASTRUCTURE_VERSION_MISMATCH);
+  }
+
   utl::scoped_timer const timetable_timer("parsing kss timetable");
   error::stats stats("parsing kss timetable");
 
   base_timetable bt;
+  bt.source_ = opts.timetable_path_.filename().string();
 
   struct work_item {
     fs::path timetable_file_;
-    soro::vector<train> result_;
+    utls::result<soro::vector<train>> result_;
   };
 
   std::vector<work_item> work_todo;
@@ -478,7 +522,11 @@ base_timetable parse_kss_timetable(timetable_options const& opts,
   });
 
   for (auto const& work_item : work_todo) {
-    utl::concat(bt.trains_, work_item.result_);
+    if (!work_item.result_) {
+      return utls::propagate(work_item.result_);
+    }
+
+    utl::concat(bt.trains_, *work_item.result_);
   }
 
   set_ids(bt.trains_);

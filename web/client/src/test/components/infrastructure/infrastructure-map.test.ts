@@ -5,10 +5,7 @@ import MaplibreGl, { Map } from 'maplibre-gl';
 import InfrastructureMap, {
   initiallyCheckedControls
 } from '@/components/infrastructure/infrastructure-map.vue';
-import {
-  InfrastructureNamespace,
-  InfrastructureState
-} from '@/stores/infrastructure-store';
+import { SidebarNamespace, SidebarState } from '@/stores/sidebar-store';
 import {
   ElementType,
   ElementTypes
@@ -64,9 +61,11 @@ const getLastMapLibreGlMapInstance = () =>
 describe('infrastructure-map', async () => {
   let infrastructureMap: VueWrapper<ComponentPublicInstance<any>>;
   let maplibreGLMapInstance: Map & Mock;
-  const infrastructureState: InfrastructureState = {
+  const sidebarState: SidebarState = {
     infrastructures: [],
     currentInfrastructure: '',
+    timetables: [],
+    currentTimetable: '',
     currentSearchResults: [],
     highlightedStationRoutes: [],
     highlightedInterlockingRoutes: []
@@ -74,7 +73,7 @@ describe('infrastructure-map', async () => {
 
   const defaults = {
     store: {
-      [InfrastructureNamespace]: { state: infrastructureState }
+      [SidebarNamespace]: { state: sidebarState }
     },
     injections: {
       goldenLayoutKeyInjection: 'some-golden-key-injection'
@@ -83,9 +82,9 @@ describe('infrastructure-map', async () => {
 
   beforeEach(async () => {
     window.localStorage.clear();
-    infrastructureState.infrastructures = [];
-    infrastructureState.currentSearchResults = [];
-    infrastructureState.currentInfrastructure = 'some-infrastructure';
+    sidebarState.infrastructures = [];
+    sidebarState.currentSearchResults = [];
+    sidebarState.currentInfrastructure = 'some-infrastructure';
     infrastructureMap = await mountWithDefaults(InfrastructureMap, defaults);
     maplibreGLMapInstance = getLastMapLibreGlMapInstance();
     vi.clearAllMocks();
@@ -118,8 +117,7 @@ describe('infrastructure-map', async () => {
 
     describe('when an infrastructure is selected', async () => {
       beforeEach(async () => {
-        infrastructureState.currentInfrastructure =
-          'some-current-infrastructure';
+        sidebarState.currentInfrastructure = 'some-current-infrastructure';
       });
 
       it('creates a new map instance', async () => {
@@ -142,7 +140,7 @@ describe('infrastructure-map', async () => {
     });
 
     it('creates no new map instance when no infrastructure is selected', async () => {
-      infrastructureState.currentInfrastructure = undefined;
+      sidebarState.currentInfrastructure = undefined;
       infrastructureMap = await mountWithDefaults(InfrastructureMap, defaults);
 
       expect(Map).not.toHaveBeenCalled();

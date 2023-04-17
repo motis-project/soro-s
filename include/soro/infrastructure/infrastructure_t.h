@@ -13,6 +13,15 @@
 
 namespace soro::infra {
 
+struct version {
+  CISTA_COMPARABLE()
+
+  using number = uint32_t;
+
+  soro::string name_;
+  number number_{0};
+};
+
 struct default_values {
   soro::string line_class_;
   si::time route_form_time_{si::INVALID<si::time>};
@@ -51,6 +60,7 @@ struct infrastructure_t {
       station_route_path_store_{};
 
   soro::string source_{};
+  version version_{};
 };
 
 }  // namespace soro::infra

@@ -21,7 +21,7 @@
 
 <script lang="ts">
 import { mapMutations, mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { SidebarNamespace } from '@/stores/sidebar-store';
 import {
   FilterSpecification,
   Map,
@@ -99,7 +99,7 @@ export default defineComponent({
       return `infrastructure[${this.goldenLayoutKeyInjection}].checkedControls`;
     },
 
-    ...mapState(InfrastructureNamespace, [
+    ...mapState(SidebarNamespace, [
       'currentInfrastructure',
       'currentBoundingBox',
       'currentStation',
@@ -195,7 +195,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapMutations(InfrastructureNamespace, ['setCurrentStation']),
+    ...mapMutations(SidebarNamespace, ['setCurrentStation']),
     ...mapMutations(['setShowOverlay', 'setSelectedOverlay']),
 
     onLegendControlChanged(legendControl: string, checked: boolean) {

@@ -20,8 +20,7 @@
 /* eslint-disable */
 // import { d3Graph } from '@/components/simulation/d3Graph.js';
 import { mapState } from 'vuex';
-import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { TimetableNamespace } from '@/stores/timetable-store';
+import { SidebarNamespace } from '@/stores/sidebar-store.ts';
 import { ComponentContainer } from 'golden-layout';
 import { defineComponent } from 'vue';
 
@@ -59,8 +58,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapState(InfrastructureNamespace, ['currentInfrastructure']),
-    ...mapState(TimetableNamespace, ['currentTimetable'])
+    ...mapState(SidebarNamespace, ['currentInfrastructure'])
   },
 
   watch: {

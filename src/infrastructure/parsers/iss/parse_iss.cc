@@ -1194,11 +1194,31 @@ soro::vector<soro::string> get_full_station_names(
   });
 }
 
+version parse_version(utls::loaded_file const& index) {
+  version v;
+
+  xml_document d;
+  auto success =
+      d.load_buffer(reinterpret_cast<void const*>(index.data()), index.size());
+  utl::verify(success, "bad index xml: {}", success.description());
+
+  auto const& version_xml =
+      d.child(XML_ISS_INDEX).child("SpurplandatenVersion");
+
+  v.name_ = version_xml.child_value("Name");
+  v.number_ =
+      utls::parse_int<version::number>(version_xml.child_value("Nummer"));
+
+  return v;
+}
+
 infrastructure_t parse_iss(infrastructure_options const& options) {
   utl::scoped_timer const parse_timer("Parsing ISS");
   auto const iss_files = get_iss_files(options.infrastructure_path_);
 
   auto [iss, mats] = parse_iss(iss_files.rail_plan_files_);
+
+  iss.version_ = parse_version(iss_files.index_);
 
   // ds100_to_station must be constructed before complete_borders
   iss.ds100_to_station_ = get_ds100_to_station(iss.stations_);

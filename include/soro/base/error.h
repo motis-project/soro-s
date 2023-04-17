@@ -26,13 +26,13 @@ struct stats {
   }
 
   void report() const {
+    if (errors_.empty()) {
+      return;
+    }
+
     uLOG(utl::info) << "error report for [" << name_ << "]:";
     for (auto const& [e, count] : errors_) {
       uLOG(utl::info) << e.message() << ": " << count;
-    }
-
-    if (errors_.empty()) {
-      uLOG(utl::info) << "no errors to report";
     }
   }
 

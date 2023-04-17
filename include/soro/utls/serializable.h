@@ -59,8 +59,8 @@ struct serializable {
     this->mem_ = std::move(o.mem_);
 
     mem_.apply(utl::overloaded{
-        [&](T const& t) { access_ = std::addressof(t); },
-        [&](cista::mmap const&) { access_ = std::move(o.access_); }});
+        [this](T const& t) { access_ = std::addressof(t); },
+        [this, &o](cista::mmap const&) { access_ = std::move(o.access_); }});
   }
 
   serializable(serializable&& o) noexcept {
