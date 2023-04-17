@@ -9,6 +9,9 @@
 namespace soro::infra {
 
 struct iss_files {
+  explicit iss_files(std::filesystem::path const& index);
+
+  utls::loaded_file index_;
   std::vector<utls::loaded_file> rail_plan_files_;
   std::vector<utls::loaded_file> core_data_files_;
   std::vector<utls::loaded_file> regulatory_station_files_;
