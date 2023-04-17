@@ -112,11 +112,12 @@ export default defineComponent({
   position: absolute;
 }
 
+/* stylelint-disable-next-line selector-class-pattern */
 nav.v-navigation-drawer--active .overlay-tabs {
   left: var(--overlay-width);
 }
 
-/* stylelint-disable-line selector-class-pattern */
+/* stylelint-disable-next-line selector-class-pattern */
 nav:not(.v-navigation-drawer--active) .overlay-tabs {
   left: calc(1.1 * var(--overlay-width));
 }
