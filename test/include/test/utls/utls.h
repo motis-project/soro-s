@@ -10,6 +10,10 @@ namespace soro::test::utls {
 
 template <typename Container>
 void check_continuous_ascending_ids(Container const& c) {
+  if (c.empty()) {
+    return;
+  }
+
   for (auto [e1, e2] : utl::pairwise(c)) {
     if constexpr (soro::is_pointer_v<std::remove_reference_t<decltype(e1)>>) {
       CHECK(e1->id_ + 1 == e2->id_);

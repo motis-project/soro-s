@@ -33,7 +33,7 @@ timetable::timetable(timetable_options const& opts,
         throw utl::fail("kss parser failed: {}", kss.error().message());
       }
 
-      mem_ = *kss;
+      mem_ = std::move(*kss);
       break;
     }
     case timetable_source::NOT_FOUND: {
