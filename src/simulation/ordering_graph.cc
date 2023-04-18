@@ -1,7 +1,5 @@
 #include "soro/simulation/ordering_graph.h"
 
-#include <random>
-
 #include "utl/erase_duplicates.h"
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
