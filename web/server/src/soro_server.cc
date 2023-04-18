@@ -104,6 +104,14 @@ void soro_server::set_up_routes(server_settings const& s) {
                   cb(timetable_module_.serve_timetable_names(req));
                 });
 
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetables/
+  router_.route("GET", R"(/infrastructure/([a-zA-Z0-9_-]+)/timetables\/?$)",
+                [this](net::query_router::route_request const& req,
+                       web_server::http_res_cb_t const& cb, bool const) {
+                  cb(ordering_module_.serve_ordering_graph(
+                      req, infrastructure_module_, timetable_module_));
+                });
+
   // if nothing matches: match all and try to serve static file
   router_.route("GET", ".*",
                 [&s](net::query_router::route_request const& req,
@@ -120,7 +128,8 @@ soro_server::soro_server(server_settings const& s)
     : infrastructure_module_{get_infrastructure_module(s)},
       tiles_module_{get_tile_module(s, infrastructure_module_)},
       search_module_{get_search_module(infrastructure_module_)},
-      timetable_module_{get_timetable_module(s, infrastructure_module_)} {
+      timetable_module_{get_timetable_module(s, infrastructure_module_)},
+      ordering_module_{get_ordering_module()} {
   set_up_routes(s);
 }
 

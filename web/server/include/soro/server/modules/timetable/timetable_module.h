@@ -29,6 +29,10 @@ struct timetable_module {
            ranges::views::transform([](auto&& p) -> auto const& { return *p; });
   }
 
+  tt::timetable::optional_ptr get_timetable(
+      std::string_view const infrastructure_name,
+      std::string_view const timetable_name) const;
+
   net::web_server::string_res_t serve_timetable_names(
       net::query_router::route_request const& req) const;
 

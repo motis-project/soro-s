@@ -19,7 +19,7 @@ infra::infrastructure::optional_ptr infrastructure_module::get_infra(
     return infrastructure::optional_ptr(infra_it->second.get());
   }
 
-  return {};
+  return std::nullopt;
 }
 
 std::vector<fs::path> get_infrastructure_todo_list(

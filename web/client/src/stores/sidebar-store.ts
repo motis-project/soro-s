@@ -7,6 +7,8 @@ import {
   StationRoute
 } from '@/util/SoroClient';
 
+export type UnixRange = [number, number];
+
 export type SidebarState = {
   // infrastructure state
   infrastructures: string[];
@@ -14,6 +16,8 @@ export type SidebarState = {
   // timetable state
   timetables: string[];
   currentTimetable?: string;
+  // date state
+  currentDateRange?: UnixRange;
   // sidebar search state
   currentSearchResults: SearchResult[];
   currentBoundingBox?: LngLatBounds;
@@ -52,6 +56,8 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
       // timetable state
       timetables: [],
       currentTimetable: undefined,
+      // date state
+      currentDateRange: undefined,
       // search state
       currentSearchResults: [],
       currentBoundingBox: undefined,
@@ -79,6 +85,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
 
     setCurrentTimetable(state, currentTimetable) {
       state.currentTimetable = currentTimetable;
+    },
+
+    setCurrentDateRange(state, currentDateRange: UnixRange) {
+      state.currentDateRange = currentDateRange;
     },
 
     setCurrentSearchResults(state, currentSearchResults) {
@@ -179,6 +189,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
 
     loadTimetable({ commit }, timetableName) {
       commit('setCurrentTimetable', timetableName);
+    },
+
+    setCurrentDateRange({ commit }, dateRange: UnixRange) {
+      commit('setCurrentDateRange', dateRange);
     }
   }
 };

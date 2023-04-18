@@ -17,6 +17,8 @@ enum class timetable_source : uint8_t { NOT_FOUND, KSS };
 struct timetable : utls::serializable<base_timetable> {
   using utls::serializable<base_timetable>::serializable;
 
+  using optional_ptr = soro::optional<timetable const*>;
+
   explicit timetable(base_timetable&& bt);
   timetable(timetable_options const& opts, infra::infrastructure const& infra);
 

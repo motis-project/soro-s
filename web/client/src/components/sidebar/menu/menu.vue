@@ -42,6 +42,15 @@
         />
       </div>
 
+      <div class="date-range-select">
+        <v-card-title class="text-subtitle-1">Select Time Range:</v-card-title>
+        <soro-date-time-range
+          :value="currentDateRange"
+          :disabled="!currentInfrastructure || !currentTimetable"
+          @change="setCurrentDateRange"
+        ></soro-date-time-range>
+      </div>
+
       <search
         :show-extended-link="true"
         class="search-field"
@@ -63,8 +72,9 @@
 import SoroSelect from '@/components/base/soro-select.vue';
 import SoroButton from '@/components/base/soro-button.vue';
 import SoroCollapsible from '@/components/base/soro-collapsible.vue';
+import SoroDateTimeRange from '@/components/base/soro-datetimerange.vue';
 import Search from '@/components/sidebar/search/search.vue';
-import MenuSettings from './settings.vue';
+import MenuSettings from '@/components/sidebar/menu/settings.vue';
 </script>
 
 <script lang="ts">
@@ -89,7 +99,8 @@ export default defineComponent({
       'infrastructures',
       'currentInfrastructure',
       'timetables',
-      'currentTimetable'
+      'currentTimetable',
+      'currentDateRange'
     ])
   },
 
@@ -106,7 +117,11 @@ export default defineComponent({
       this.$emit('change-overlay', 'extended-search.vue');
     },
 
-    ...mapActions(SidebarNamespace, ['loadInfrastructure', 'loadTimetable']),
+    ...mapActions(SidebarNamespace, [
+      'loadInfrastructure',
+      'loadTimetable',
+      'setCurrentDateRange'
+    ]),
     ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab'])
   }
 });
@@ -118,45 +133,6 @@ export default defineComponent({
   flex-direction: column;
   pointer-events: auto;
   position: relative;
-}
-
-.sub-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 0.8em;
-  width: calc(100% - 1.6em);
-  height: calc(100% - 1.6em);
-  transition: all 0.2s ease;
-  pointer-events: auto;
-  z-index: 20;
-  border-radius: var(--border-radius);
-}
-
-.sub-overlay.hidden {
-  left: calc(0px - calc(var(--overlay-width) + var(--overlay-padding-left)));
-}
-
-.sub-overlay-content {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: inherit;
-  background: var(--overlay-color);
-  box-shadow: 0 6px 6px rgb(0 0 0 / 23%), 0 -2px 6px rgb(0 0 0 / 23%);
-}
-
-.sub-overlay-close {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  cursor: pointer;
-  color: var(--icon-color);
-}
-
-.sub-overlay-close i {
-  cursor: pointer;
 }
 
 .window-controls {
@@ -174,6 +150,15 @@ export default defineComponent({
 }
 
 .data-selects {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: space-around;
+  padding: 3%;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.date-range-select {
   display: flex;
   flex-flow: column wrap;
   justify-content: space-around;
