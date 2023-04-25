@@ -1,7 +1,9 @@
 #include "soro/timetable/train.h"
 
-#include "soro/infrastructure/path/length.h"
+#include "soro/utls/narrow.h"
 #include "soro/utls/std_wrapper/count_if.h"
+
+#include "soro/infrastructure/path/length.h"
 
 namespace soro::tt {
 
@@ -103,12 +105,14 @@ interval train::event_interval(absolute_time const midnight) const {
           .end_ = relative_to_absolute(midnight, last_arrival())};
 }
 
-std::size_t train::total_halts() const {
-  return utls::count_if(sequence_points_,
-                        [](auto&& sp) { return sp.is_halt(); });
+soro::size_t train::total_halts() const {
+  return utls::narrow<soro::size_t>(
+      utls::count_if(sequence_points_, [](auto&& sp) { return sp.is_halt(); }));
 }
 
-std::size_t train::trip_count() const { return service_days_.count(); }
+soro::size_t train::trip_count() const {
+  return utls::narrow<soro::size_t>(service_days_.count());
+}
 
 std::vector<train::trip> train::trips() const {
   std::vector<train::trip> result;
