@@ -8,20 +8,23 @@ namespace soro::infra {
 
 using namespace soro::utls;
 
-kilometrage parse_kilometrage(std::string_view kmp) {
-  if (auto const pos = kmp.find('+'); pos != std::string::npos) {
-    auto const base_km =
-        parse_fp<kilometrage::precision, utls::replace_comma::ON>(
-            kmp.substr(0, pos));
-    auto const extra_km =
-        parse_fp<kilometrage::precision, utls::replace_comma::ON>(
-            kmp.substr(pos + 1, kmp.size()));
+kilometrage parse_kilometrage(std::string_view const kmp) {
+  auto const sign_pos = kmp.find_first_of("+-");
 
-    return si::from_km(base_km) + si::from_km(extra_km);
-  } else {
-    return si::from_km(
-        parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp));
+  if (sign_pos == std::string::npos || sign_pos == 0) {
+    return si::from_km(parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp.substr(0, kmp.size())));
   }
+
+  auto km =
+      parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp.substr(0, sign_pos));
+
+  if (kmp[sign_pos] == '+') {
+    km += parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp.substr(sign_pos + 1, kmp.size()));
+  } else {
+    km -= parse_fp<kilometrage::precision, utls::replace_comma::ON>(kmp.substr(sign_pos + 1, kmp.size()));
+  }
+
+  return si::from_km(km);
 }
 
 rail_plan_node_id parse_rp_node_id(pugi::xml_node const& node) {

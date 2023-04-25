@@ -83,7 +83,17 @@ struct switch_data {
   cista::optional<soro::string> ui_identifier_;
 };
 
+struct cross_start_data {
+  soro::string name_start_;
+};
+
+struct cross_end_data {
+  cista::optional<soro::string> name_end_;
+};
+
+struct cross_data : cross_start_data, cross_end_data {};
+
 using element_data_t = soro::variant<empty, eotd, slope, halt, speed_limit,
-                                     main_signal, switch_data>;
+                                     main_signal, switch_data, cross_data>;
 
 }  // namespace soro::infra

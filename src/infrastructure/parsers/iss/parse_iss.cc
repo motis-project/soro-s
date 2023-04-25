@@ -80,6 +80,24 @@ switch_data get_switch_data(pugi::xml_node const& node) {
   }
 }
 
+cross_start_data get_cross_start_data(pugi::xml_node const& cross_start) {
+  auto const name_xml = cross_start.child("NameAnfang");
+
+  utls::sassert(static_cast<bool>(name_xml),
+                "could not fine cross start child {}", "NameAnfang");
+
+  return cross_start_data{.name_start_ = name_xml.child_value()};
+}
+
+cross_end_data get_cross_end_data(pugi::xml_node const& cross_end) {
+  auto const name_xml = cross_end.child("NameEnde");
+  if (static_cast<bool>(name_xml)) {
+    return cross_end_data{.name_end_ = name_xml.child_value()};
+  } else {
+    return cross_end_data{.name_end_ = std::nullopt};
+  }
+}
+
 using type_order_key = int16_t;
 
 constexpr type_order_key get_type_order_key(type const t, bool const rising) {
@@ -282,9 +300,28 @@ section::id parse_section_into_network(xml_node const& xml_rp_section,
       element->template as<simple_switch>().branch_rising_ = !is_start;
     }
 
+    if (utls::equal(node.name(), CROSS_START_LEFT) ||
+        utls::equal(node.name(), CROSS_SWITCH_START_LEFT)) {
+      auto& data = network.element_data_[element->id()];
+      if (holds_alternative<empty>(data)) {
+        data = cross_data{};
+      }
+
+      static_cast<cross_start_data>(data.template as<cross_data>()) =
+          get_cross_start_data(node);
+    }
+
     if (utls::equal(node.name(), CROSS_END_LEFT) ||
         utls::equal(node.name(), CROSS_SWITCH_END_LEFT)) {
       element->template as<cross>().end_left_rising_ = !is_start;
+
+      auto& data = network.element_data_[element->id()];
+      if (holds_alternative<empty>(data)) {
+        data = cross_data{};
+      }
+
+      static_cast<cross_end_data>(data.template as<cross_data>()) =
+          get_cross_end_data(node);
     }
 
     if (utls::equal(node.name(), CROSS_START_RIGHT) ||

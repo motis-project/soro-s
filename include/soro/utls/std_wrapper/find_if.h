@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "soro/utls/concepts/yields.h"
+
 namespace soro::utls {
 
 namespace detail {

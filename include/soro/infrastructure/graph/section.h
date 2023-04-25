@@ -3,6 +3,8 @@
 #include <vector>
 
 #include "soro/utls/coroutine/generator.h"
+#include "soro/utls/std_wrapper/find_if.h"
+#include "soro/utls/std_wrapper/find_if_reverse.h"
 
 #include "soro/si/units.h"
 
@@ -67,6 +69,31 @@ struct section {
 
     return dir == direction::Rising ? get_range(rising_order_)
                                     : get_range(falling_order_);
+  }
+
+  kilometrage low_kilometrage() const {
+    auto const neighbour = utls::find_if(rising_order_, [this](element::ptr e) {
+      return e != first_rising() &&
+             (e->is_undirected_track_element() || e->is_section_element() ||
+              e->template as<track_element>().rising_);
+    });
+
+    utls::sassert(neighbour != std::end(rising_order_));
+
+    return first_rising()->get_km(*neighbour);
+  }
+
+  kilometrage high_kilometrage() const {
+    auto const neighbour =
+        utls::find_if_reverse(rising_order_, [this](element::ptr e) {
+          return e != last_rising() &&
+                 (e->is_undirected_track_element() || e->is_section_element() ||
+                  e->template as<track_element>().rising_);
+        });
+
+    utls::sassert(neighbour != std::rend(rising_order_));
+
+    return last_rising()->get_km(*neighbour);
   }
 
   std::size_t size() const { return rising_order_.size(); }
