@@ -81,6 +81,14 @@ relative_time train::last_arrival() const {
   return result;
 }
 
+absolute_time train::first_absolute_departure() const {
+  return relative_to_absolute(service_days_.first_date(), first_departure());
+}
+
+absolute_time train::last_absolute_arrival() const {
+  return relative_to_absolute(service_days_.last_date(), last_arrival());
+}
+
 interval train::event_interval(absolute_time const midnight) const {
   utls::sasserts([&]() {
     auto const& floored = sc::floor<days>(midnight);

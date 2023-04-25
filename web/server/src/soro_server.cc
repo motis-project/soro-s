@@ -104,13 +104,23 @@ void soro_server::set_up_routes(server_settings const& s) {
                   cb(timetable_module_.serve_timetable_names(req));
                 });
 
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetables/
-  router_.route("GET", R"(/infrastructure/([a-zA-Z0-9_-]+)/timetables\/?$)",
-                [this](net::query_router::route_request const& req,
-                       web_server::http_res_cb_t const& cb, bool const) {
-                  cb(ordering_module_.serve_ordering_graph(
-                      req, infrastructure_module_, timetable_module_));
-                });
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetable/{timetable_name}
+  router_.route(
+      "GET",
+      R"(/infrastructure/([a-zA-Z0-9_-]+)/timetable/([a-zA-Z0-9_-]+)\/?$)",
+      [this](net::query_router::route_request const& req,
+             web_server::http_res_cb_t const& cb,
+             bool const) { cb(timetable_module_.serve_timetable(req)); });
+
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetable/{timetable_name}/ordering?from={from}&to={to}
+  router_.route(
+      "GET",
+      R"(/infrastructure/([a-zA-Z0-9_-]+)/timetable/([a-zA-Z0-9_-]+)/ordering\?from=([0-9]+)&to=([0-9]+)$)",
+      [this](net::query_router::route_request const& req,
+             web_server::http_res_cb_t const& cb, bool const) {
+        cb(ordering_module_.serve_ordering_graph(req, infrastructure_module_,
+                                                 timetable_module_));
+      });
 
   // if nothing matches: match all and try to serve static file
   router_.route("GET", ".*",

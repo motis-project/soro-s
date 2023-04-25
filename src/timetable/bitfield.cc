@@ -226,6 +226,14 @@ bitfield bitfield::operator|=(bitfield const& o) noexcept {
 
 std::size_t bitfield::count() const noexcept { return this->bitset_.count(); }
 
+absolute_time bitfield::first_date() const noexcept {
+  return absolute_time{first_date_};
+}
+
+absolute_time bitfield::last_date() const noexcept {
+  return absolute_time{last_date_};
+}
+
 bitfield make_bitfield(bitfield::anchor_time const first_date,
                        bitfield::anchor_time const last_date,
                        const char* const bitmask) {

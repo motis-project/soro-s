@@ -36,6 +36,9 @@ struct timetable_module {
   net::web_server::string_res_t serve_timetable_names(
       net::query_router::route_request const& req) const;
 
+  net::web_server::string_res_t serve_timetable(
+      net::query_router::route_request const& req) const;
+
   std::unordered_map<std::string_view, infra_context> contexts_;
 };
 

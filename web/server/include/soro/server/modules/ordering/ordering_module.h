@@ -12,6 +12,6 @@ struct ordering_module {
       timetable_module const& timetable_m) const;
 };
 
-ordering_module get_ordering_module(infrastructure_module const& infra_m);
+ordering_module get_ordering_module();
 
 }  // namespace soro::server

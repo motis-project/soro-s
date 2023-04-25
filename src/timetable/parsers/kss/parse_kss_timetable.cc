@@ -491,6 +491,22 @@ infra::version get_required_infra_version(timetable_options const& opts) {
   return v;
 }
 
+interval get_interval(soro::vector<train> const& trains) {
+  interval result{.start_ = absolute_time::max(), .end_ = absolute_time::min()};
+
+  for (auto const& train : trains) {
+    utls::sassert(train.service_days_.at(train.service_days_.first_date_),
+                  "train {} service days bitfield has nonset first date, "
+                  "interval calculation will fail",
+                  train.id_);
+
+    result.start_ = std::min(result.start_, train.first_absolute_departure());
+    result.end_ = std::max(result.end_, train.last_absolute_arrival());
+  }
+
+  return result;
+}
+
 utls::result<base_timetable> parse_kss_timetable(
     timetable_options const& opts, infra::infrastructure const& infra) {
   auto const required_version = get_required_infra_version(opts);
@@ -530,6 +546,8 @@ utls::result<base_timetable> parse_kss_timetable(
   }
 
   set_ids(bt.trains_);
+
+  bt.interval_ = get_interval(bt.trains_);
 
   uLOG(utl::info) << "total trains runs successfully parsed: "
                   << bt.trains_.size();
