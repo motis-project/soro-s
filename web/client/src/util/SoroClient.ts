@@ -7,6 +7,8 @@ type TimetableList = { timetables: string[] };
 type BoundingBox = { boundingBox: LngLatBounds };
 type Coordinate = { lon: number; lat: number };
 
+export type Unixtime = number;
+
 export type Station = {
   id: number;
   ds100: string;
@@ -82,6 +84,25 @@ export type SearchResult = {
   elementType: string;
 };
 
+export type Interval = {
+  start: number;
+  end: number;
+};
+
+export type Timetable = {
+  source: string;
+  interval: Interval;
+};
+
+export type TimetableModule = {
+  get: () => Promise<TimetableResponse>;
+  ordering: (from: number, to: number) => Promise<OrderingGraphResponse>;
+};
+
+export type TimetableResponse = {
+  timetable: Timetable;
+};
+
 type Infrastructure = {
   boundingBox: () => Promise<BoundingBox>;
   stations: () => Promise<StationList>;
@@ -91,6 +112,13 @@ type Infrastructure = {
   element: (id: number) => Promise<Element>;
   search: (query: string) => Promise<SearchResult[]>;
   timetables: () => Promise<TimetableList>;
+  timetable: (ttName: string) => TimetableModule;
+};
+
+export type OrderingGraphResponse = {
+  attributes: any;
+  nodes: any[];
+  edges: any[];
 };
 
 class SoroClient extends HttpClient {
@@ -111,7 +139,16 @@ class SoroClient extends HttpClient {
       interlockingRoute: (id: number) => this.interlockingRoute(name, id),
       element: (id: number) => this.element(name, id),
       search: (query: string) => this.search(name, query),
-      timetables: () => this.timetables(name)
+      timetables: () => this.timetables(name),
+      timetable: (ttName: string) => this.timetable(name, ttName)
+    };
+  }
+
+  timetable(infraName: string, ttName: string): TimetableModule {
+    return {
+      get: () => this.get_timetable(infraName, ttName),
+      ordering: (from: Unixtime, to: Unixtime) =>
+        this.ordering_graph(infraName, ttName, from, to)
     };
   }
 
@@ -167,6 +204,34 @@ class SoroClient extends HttpClient {
 
   timetables(infrastructureName: string): Promise<TimetableList> {
     return this.get('/infrastructure/' + infrastructureName + '/timetables');
+  }
+
+  get_timetable(
+    infrastructureName: string,
+    timetableName: string
+  ): Promise<TimetableResponse> {
+    return this.get(
+      '/infrastructure/' + infrastructureName + '/timetable/' + timetableName
+    );
+  }
+
+  ordering_graph(
+    infrastructureName: string,
+    timetableName: string,
+    from: Unixtime,
+    to: Unixtime
+  ): Promise<OrderingGraphResponse> {
+    return this.get(
+      '/infrastructure/' +
+        infrastructureName +
+        '/timetable/' +
+        timetableName +
+        '/ordering?' +
+        'from=' +
+        from +
+        '&to=' +
+        to
+    );
   }
 }
 

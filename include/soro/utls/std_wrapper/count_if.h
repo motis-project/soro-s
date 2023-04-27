@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "soro/utls/narrow.h"
+
 namespace soro::utls {
 
 namespace detail {
@@ -17,8 +19,9 @@ constexpr std::size_t count_if(Iterable&& i, Pred&& p) {
 }  // namespace detail
 
 template <typename Iterable, typename Pred>
-[[nodiscard]] constexpr std::size_t count_if(Iterable&& i, Pred&& p) {
-  return detail::count_if(std::forward<Iterable>(i), std::forward<Pred>(p));
+[[nodiscard]] constexpr soro::size_t count_if(Iterable&& i, Pred&& p) {
+  return narrow<soro::size_t>(
+      detail::count_if(std::forward<Iterable>(i), std::forward<Pred>(p)));
 }
 
 }  // namespace soro::utls

@@ -106,13 +106,11 @@ interval train::event_interval(absolute_time const midnight) const {
 }
 
 soro::size_t train::total_halts() const {
-  return utls::narrow<soro::size_t>(
-      utls::count_if(sequence_points_, [](auto&& sp) { return sp.is_halt(); }));
+  return utls::count_if(sequence_points_,
+                        [](auto&& sp) { return sp.is_halt(); });
 }
 
-soro::size_t train::trip_count() const {
-  return utls::narrow<soro::size_t>(service_days_.count());
-}
+soro::size_t train::trip_count() const { return service_days_.count(); }
 
 std::vector<train::trip> train::trips() const {
   std::vector<train::trip> result;

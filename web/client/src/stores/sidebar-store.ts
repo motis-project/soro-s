@@ -187,7 +187,23 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
         .catch(console.error);
     },
 
-    loadTimetable({ commit }, timetableName) {
+    loadTimetable({ commit, rootState, state }, timetableName) {
+      if (!state.currentInfrastructure) {
+        return;
+      }
+
+      rootState.soroClient
+        .infrastructure(state.currentInfrastructure)
+        .timetable(timetableName)
+        .get()
+        .then((response) => {
+          commit('setCurrentDateRange', [
+            response.timetable.interval.start,
+            response.timetable.interval.end
+          ]);
+        })
+        .catch(console.error);
+
       commit('setCurrentTimetable', timetableName);
     },
 

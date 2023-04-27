@@ -13,6 +13,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'OrderingGraphComponent',
+
   provide() {
     return {
       goldenLayoutKeyInjection: this.goldenLayoutKey

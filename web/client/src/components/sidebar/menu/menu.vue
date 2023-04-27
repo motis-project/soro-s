@@ -45,14 +45,13 @@
       <div class="date-range-select">
         <v-card-title class="text-subtitle-1">Select Time Range:</v-card-title>
         <soro-date-time-range
-          :value="currentDateRange"
+          :watch-value="currentDateRange"
           :disabled="!currentInfrastructure || !currentTimetable"
           @change="setCurrentDateRange"
         ></soro-date-time-range>
       </div>
 
       <search
-        :show-extended-link="true"
         class="search-field"
         @change-to-extended="changeToSearchOverlay"
       />
