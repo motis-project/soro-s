@@ -162,4 +162,15 @@ class deleteGraph {
       e: edges
     };
   }
+
+  /**
+   * Requests a randomly generated graph from the server.
+   */
+  private async getInitGraph(graph: DirectedGraph) {
+    sendRequest({ url: '/api/ordering_graph/' })
+      .then((response) => response.json())
+      .then((json) => {
+        this.unsafeImport(json, graph);
+      });
+  }
 }

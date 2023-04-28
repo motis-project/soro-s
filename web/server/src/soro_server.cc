@@ -112,10 +112,10 @@ void soro_server::set_up_routes(server_settings const& s) {
              web_server::http_res_cb_t const& cb,
              bool const) { cb(timetable_module_.serve_timetable(req)); });
 
-  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetable/{timetable_name}/ordering?from={from}&to={to}
+  // 0.0.0.0:8080/infrastructure/{infrastructure_name}/timetable/{timetable_name}/ordering?from={from}&to={to}&trainIds={trainId,trainId,...}
   router_.route(
       "GET",
-      R"(/infrastructure/([a-zA-Z0-9_-]+)/timetable/([a-zA-Z0-9_-]+)/ordering\?from=([0-9]+)&to=([0-9]+)$)",
+      R"(/infrastructure/([a-zA-Z0-9_-]+)/timetable/([a-zA-Z0-9_-]+)/ordering\?from=([0-9]+)&to=([0-9]+)&trainIds=(\d*(?:,\d+)*)$)",
       [this](net::query_router::route_request const& req,
              web_server::http_res_cb_t const& cb, bool const) {
         cb(ordering_module_.serve_ordering_graph(req, infrastructure_module_,

@@ -26,6 +26,8 @@ export type SidebarState = {
   currentStation?: number;
   highlightedStationRoutes: GeoJSONFeature[];
   highlightedInterlockingRoutes: GeoJSONFeature[];
+  // dev tools state
+  trainIdsFilter: number[];
 };
 
 function routeToGeoJSON(route: StationRoute | InterlockingRoute) {
@@ -66,7 +68,9 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
       currentStation: undefined,
       // map state
       highlightedStationRoutes: [],
-      highlightedInterlockingRoutes: []
+      highlightedInterlockingRoutes: [],
+      // dev tools state:
+      trainIdsFilter: []
     };
   },
 
@@ -126,6 +130,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
         state.highlightedInterlockingRoutes.filter(
           (route) => route.properties.id !== routeId
         );
+    },
+
+    setTrainIdsFilter(state, trainIdsFilter) {
+      state.trainIdsFilter = trainIdsFilter;
     }
   },
 
@@ -209,6 +217,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
 
     setCurrentDateRange({ commit }, dateRange: UnixRange) {
       commit('setCurrentDateRange', dateRange);
+    },
+
+    setTrainIdsFilter({ commit }, trainIdsFilter: number[]) {
+      commit('setTrainIdsFilter', trainIdsFilter);
     }
   }
 };

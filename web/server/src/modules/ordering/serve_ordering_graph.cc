@@ -5,6 +5,8 @@
 #include "net/web_server/responses.h"
 
 #include "soro/simulation/ordering_graph.h"
+#include "soro/utls/result.h"
+#include "soro/utls/string.h"
 
 #include "soro/server/cereal/json_archive.h"
 
@@ -66,13 +68,32 @@ std::string serialize_ordering_graph(simulation::ordering_graph const& og) {
   return result.str();
 }
 
+utls::result<std::vector<tt::train::id>> comma_values_to_train_ids(
+    std::string_view const csv) {
+  auto const split = utls::split(csv, ",");
+
+  std::vector<tt::train::id> result;
+  result.reserve(split.size());
+
+  for (auto const sv : utls::split(csv, ",")) {
+    auto const parsed_id = utls::try_parse_int<tt::train::id>(sv);
+
+    if (!parsed_id) return utls::propagate(parsed_id);
+
+    result.push_back(*parsed_id);
+  }
+
+  return result;
+}
+
 net::web_server::string_res_t ordering_module::serve_ordering_graph(
     net::query_router::route_request const& req,
     infrastructure_module const& infra_m,
     timetable_module const& timetable_m) const {
-  utls::expect(req.path_params_.size() == 4);
+  utls::expect(req.path_params_.size() == 5);
 
   std::string_view const infra_name = req.path_params_.front();
+
   auto const infra = infra_m.get_infra(infra_name);
   if (!infra.has_value()) {
     return net::not_found_response(req);
@@ -84,17 +105,23 @@ net::web_server::string_res_t ordering_module::serve_ordering_graph(
     return net::not_found_response(req);
   }
 
+  simulation::ordering_graph::filter filter;
+
   auto const from = str_to_absolute_time(req.path_params_[2]);
   if (!from) return net::bad_request_response(req);
+  filter.interval_.start_ = *from;
 
   auto const to = str_to_absolute_time(req.path_params_[3]);
   if (!to) return net::bad_request_response(req);
+  filter.interval_.end_ = *to;
 
-  tt::interval const iv{.start_ = *from, .end_ = *to};
+  if (!filter.interval_.valid()) return net::bad_request_response(req);
 
-  if (!iv.valid()) return net::bad_request_response(req);
+  auto train_ids = comma_values_to_train_ids(req.path_params_[4]);
+  if (!train_ids) return net::bad_request_response(req);
+  filter.trains_ = std::move(*train_ids);
 
-  simulation::ordering_graph const ordering_graph(**infra, **timetable, iv);
+  simulation::ordering_graph const ordering_graph(**infra, **timetable, filter);
 
   return json_response(req, serialize_ordering_graph(ordering_graph));
 }

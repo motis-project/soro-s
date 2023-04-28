@@ -59,6 +59,9 @@
       <menu-settings class="settings" />
 
       <soro-collapsible label="Dev Tools" class="dev-tools">
+        <div>
+          <soro-id-input label="Train IDs filter" @enter="setTrainIdsFilter" />
+        </div>
         <soro-button label="Clear local storage" @click="clearLocalStorage" />
         <soro-button disabled label="Clear Cache" />
         <soro-button disabled label="Simulate" />
@@ -72,6 +75,7 @@ import SoroSelect from '@/components/base/soro-select.vue';
 import SoroButton from '@/components/base/soro-button.vue';
 import SoroCollapsible from '@/components/base/soro-collapsible.vue';
 import SoroDateTimeRange from '@/components/base/soro-datetimerange.vue';
+import SoroIdInput from '@/components/base/soro-id-input.vue';
 import Search from '@/components/sidebar/search/search.vue';
 import MenuSettings from '@/components/sidebar/menu/settings.vue';
 </script>
@@ -99,7 +103,8 @@ export default defineComponent({
       'currentInfrastructure',
       'timetables',
       'currentTimetable',
-      'currentDateRange'
+      'currentDateRange',
+      'trainIdsFilter'
     ])
   },
 
@@ -119,7 +124,8 @@ export default defineComponent({
     ...mapActions(SidebarNamespace, [
       'loadInfrastructure',
       'loadTimetable',
-      'setCurrentDateRange'
+      'setCurrentDateRange',
+      'setTrainIdsFilter'
     ]),
     ...mapActions(GoldenLayoutNamespace, ['addGoldenLayoutTab'])
   }

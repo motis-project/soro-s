@@ -65,8 +65,8 @@ struct bitfield {
 
   soro::size_t count() const noexcept;
 
-  absolute_time first_date() const noexcept;
-  absolute_time last_date() const noexcept;
+  absolute_time first_set_date() const noexcept;
+  absolute_time last_set_date() const noexcept;
 
   anchor_time first_date_{anchor_time::max()};
   anchor_time last_date_{anchor_time::max()};

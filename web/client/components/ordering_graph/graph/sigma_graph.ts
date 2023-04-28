@@ -582,17 +582,6 @@ export class SigmaGraphCreator {
   //---- data handling ----
 
   /**
-   * Requests a randomly generated graph from the server.
-   */
-  private async getInitGraph(graph: DirectedGraph) {
-    sendRequest({ url: '/api/ordering_graph/' })
-      .then((response) => response.json())
-      .then((json) => {
-        this.unsafeImport(json, graph);
-      });
-  }
-
-  /**
    * Unsafe Version of the Graphology import Function, removed checks and personalized json processing to make it faster
    * @param data json format:
    * {

@@ -162,7 +162,7 @@ bool sim_graph::path_exists(sim_node::id const from,
     return nodes_[node].out();
   };
 
-  utls::bfs(from, handle_node, get_neighbours);
+  utls::bfs(from, get_neighbours, handle_node);
 
   return result;
 }

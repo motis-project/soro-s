@@ -4,6 +4,7 @@
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
+#include "soro/utls/std_wrapper/contains.h"
 #include "soro/utls/std_wrapper/count_if.h"
 #include "soro/utls/std_wrapper/sort.h"
 
@@ -50,11 +51,10 @@ struct route_usage {
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
                                tt::timetable const& tt)
-    : ordering_graph(infra, tt, interval{}) {}
+    : ordering_graph(infra, tt, filter{}) {}
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
-                               tt::timetable const& tt,
-                               tt::interval const& interval) {
+                               tt::timetable const& tt, filter const& filter) {
   utl::scoped_timer const timer("creating ordering graph");
 
   ordering_node::id glob_current_node_id = 0;
@@ -72,7 +72,7 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   auto const generate_route_orderings = [&](train const& train) {
     soro::vector<timestamp> times;
 
-    for (auto const anchor : train.departures(interval)) {
+    for (auto const anchor : train.departures(filter.interval_)) {
       if (times.empty()) {
         times = runtime_calculation(train, infra, {type::MAIN_SIGNAL}).times_;
 
@@ -162,6 +162,10 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
 
   // generate the nodes and route usage orderings (1 node == 1 usage)
   for (auto const& train : tt->trains_) {
+    if (!filter.trains_.empty() && !utls::contains(filter.trains_, train.id_)) {
+      continue;
+    }
+
     generate_route_orderings(train);
   }
 

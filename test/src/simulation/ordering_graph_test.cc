@@ -1,5 +1,11 @@
 #include "doctest/doctest.h"
 
+#include <queue>
+#include <stack>
+
+#include "soro/base/time.h"
+
+#include "soro/simulation/get_cycle.h"
 #include "soro/simulation/ordering_graph.h"
 
 #include "soro/utls/graph/has_cycle.h"
@@ -46,7 +52,7 @@ TEST_CASE("ordering graph, follow") {
   // both take the same path
   CHECK_EQ(earlier.path_, later.path_);
 
-  ordering_graph const og(infra, tt, interval{});
+  ordering_graph const og(infra, tt);
 
   check_ordering_graph(og);
 
@@ -91,6 +97,33 @@ TEST_CASE("ordering graph, cross") {
   ordering_graph const og(infra, tt);
 
   check_ordering_graph(og);
+}
+
+TEST_CASE("de_kss graph") {
+  auto opts = soro::test::DE_ISS_OPTS;
+  auto tt_opts = soro::test::DE_KSS_OPTS;
+
+  opts.exclusions_ = true;
+  opts.interlocking_ = true;
+  opts.exclusion_graph_ = false;
+  opts.layout_ = false;
+
+  infrastructure const infra(opts);
+  timetable const tt(tt_opts, infra);
+
+  interval const inter{.start_ = rep_to_absolute_time(1636786800),
+                       .end_ = rep_to_absolute_time(1636794000)};
+  ordering_graph const og(infra, tt, {.interval_ = inter});
+
+  auto const cycle = get_cycle(og);
+  if (cycle.has_value()) {
+    std::cout << "cycle: ";
+    for (auto const& id : *cycle) {
+      std::cout << id << " ";
+    }
+    std::cout << "\n";
+  }
+  //  check_ordering_graph(og);
 }
 
 }  // namespace soro::simulation::test

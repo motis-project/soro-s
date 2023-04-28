@@ -96,7 +96,11 @@ export type Timetable = {
 
 export type TimetableModule = {
   get: () => Promise<TimetableResponse>;
-  ordering: (from: number, to: number) => Promise<OrderingGraphResponse>;
+  ordering: (
+    from: number,
+    to: number,
+    trainIdFilter: number[]
+  ) => Promise<OrderingGraphResponse>;
 };
 
 export type TimetableResponse = {
@@ -147,8 +151,8 @@ class SoroClient extends HttpClient {
   timetable(infraName: string, ttName: string): TimetableModule {
     return {
       get: () => this.get_timetable(infraName, ttName),
-      ordering: (from: Unixtime, to: Unixtime) =>
-        this.ordering_graph(infraName, ttName, from, to)
+      ordering: (from: Unixtime, to: Unixtime, trainIdFilter: number[]) =>
+        this.ordering_graph(infraName, ttName, from, to, trainIdFilter)
     };
   }
 
@@ -219,7 +223,8 @@ class SoroClient extends HttpClient {
     infrastructureName: string,
     timetableName: string,
     from: Unixtime,
-    to: Unixtime
+    to: Unixtime,
+    trainIdFilter: number[]
   ): Promise<OrderingGraphResponse> {
     return this.get(
       '/infrastructure/' +
@@ -230,7 +235,9 @@ class SoroClient extends HttpClient {
         'from=' +
         from +
         '&to=' +
-        to
+        to +
+        '&trainIds=' +
+        trainIdFilter.toString()
     );
   }
 }

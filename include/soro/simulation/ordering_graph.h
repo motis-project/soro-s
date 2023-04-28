@@ -20,9 +20,15 @@ struct ordering_node {
 };
 
 struct ordering_graph {
+  struct filter {
+    tt::interval interval_{};
+    std::vector<tt::train::id> trains_{};
+  };
+
+  ordering_graph() = default;
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt,
-                 tt::interval const& interval);
+                 filter const& filter);
 
   std::span<const ordering_node> trip_nodes(tt::train::trip const trip) const;
 
