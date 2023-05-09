@@ -6,15 +6,32 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 import { Sigma } from 'sigma';
 import { DirectedGraph } from 'graphology';
+import noverlap from 'graphology-layout-noverlap';
 
 import { SidebarNamespace, UnixRange } from '@/stores/sidebar-store';
 
 import { nodeColor, rendererSettings } from '@/components/ordering/settings';
 import { Attributes } from 'graphology-types';
+
+class timer {
+  constructor() {
+    this.start = Date.now();
+  }
+
+  elapsed(): number {
+    return Date.now() - this.start;
+  }
+
+  printElapsed(message: string): void {
+    console.log('[' + message + ']:', this.elapsed());
+  }
+
+  start: number;
+}
 
 export default defineComponent({
   name: 'OrderingGraph',
@@ -74,6 +91,11 @@ export default defineComponent({
   },
 
   methods: {
+    ...mapActions(SidebarNamespace, [
+      'addHighlightedInterlockingRoute',
+      'deleteHighlightedInterlockingRoute'
+    ]),
+
     async createOrderingGraph(
       infrastructureName: string,
       timetableName: string,
@@ -87,22 +109,31 @@ export default defineComponent({
       this.graph.clear();
       this.graph = new DirectedGraph();
 
+      const tim: timer = new timer();
       const og = await this.$store.state.soroClient
         .infrastructure(infrastructureName)
         .timetable(timetableName)
         .ordering(dateRange[0], dateRange[1], trainIds);
 
+      tim.printElapsed('fetched ordering graph');
+
       this.graph.import(og);
+
+      tim.printElapsed('imported ordering graph');
+
+      const totalTrains = this.graph.getAttribute('totalTrains');
+      const maxTrainLength = this.graph.getAttribute('maxTrainLength');
 
       const xSpacing = 500;
       const ySpacing = 500;
 
       this.graph.forEachNode((node: string, attr: Attributes) => {
-        attr['x'] = attr['offset'] * 1000000;
-        attr['y'] = attr['train'] * 10000;
+        attr['x'] = attr['offset'] * 1000 * totalTrains;
+        attr['y'] = attr['relativeTrainId'] * -1000 * totalTrains;
+
         attr['color'] = nodeColor;
         attr['type'] = 'fast';
-        attr['size'] = 1;
+        attr['size'] = 2;
         attr['label'] = 'Train: ' + attr['train'] + '\nRoute: ' + attr['route'];
       });
 
@@ -111,18 +142,33 @@ export default defineComponent({
         attr['size'] = 1;
       });
 
+      tim.printElapsed('set node attributes');
+
+      // const positions = noverlap(this.graph, {
+      //   maxIterations: 50,
+      //   settings: { ratio: 2 }
+      // });
+
+      // console.log(positions);
+      noverlap.assign(this.graph, 100);
+
       this.sigma = new Sigma(
         this.graph,
         this.$refs.graph as HTMLElement,
         rendererSettings
       );
 
+      tim.printElapsed('created sigma');
+
       this.sigma.on('clickNode', ({ node }) => {
-        // console.log('clicked node', e.type, e.data.node.label, e.data.captor);
-        console.log(
-          'clicked node',
-          node,
-          this.graph.getNodeAttributes(node)['train']
+        this.addHighlightedInterlockingRoute(
+          this.graph.getNodeAttributes(node)['route']
+        );
+      });
+
+      this.sigma.on('rightClickNode', ({ node }) => {
+        this.deleteHighlightedInterlockingRoute(
+          this.graph.getNodeAttributes(node)['route']
         );
       });
 

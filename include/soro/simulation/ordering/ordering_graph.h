@@ -19,6 +19,8 @@ struct ordering_node {
   std::vector<id> out_;
 };
 
+using ordering_edge = std::pair<ordering_node::id, ordering_node::id>;
+
 struct ordering_graph {
   struct filter {
     tt::interval interval_{};

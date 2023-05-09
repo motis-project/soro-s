@@ -37,7 +37,7 @@ inline void graph_traversal(Node const start, GetNeighbours&& get_neighbours,
 
     q.pop();
 
-    if (work_on_node(current_node, prev_node)) {
+    if (current_node != start && work_on_node(current_node, prev_node)) {
       return;
     }
 

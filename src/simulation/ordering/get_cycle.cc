@@ -1,19 +1,13 @@
-#pragma once
+#include "soro/simulation/ordering/get_cycle.h"
 
 #include "soro/utls/graph/traversal.h"
 #include "soro/utls/std_wrapper/min_element.h"
 #include "soro/utls/std_wrapper/reverse.h"
 
-#include "soro/simulation/ordering_graph.h"
-
 namespace soro::simulation {
 
-using cycle = std::vector<ordering_node::id>;
-
-namespace detail {
-
-inline std::optional<cycle> get_shortest_cycle_from_node(
-    ordering_node::id const start, ordering_graph const& og) {
+std::optional<cycle> get_shortest_cycle_from_node(ordering_node::id const start,
+                                                  ordering_graph const& og) {
   using depth_t = uint32_t;
 
   std::vector<uint32_t> depth(og.nodes_.size(),
@@ -63,18 +57,22 @@ inline std::optional<cycle> get_shortest_cycle_from_node(
   return c;
 }
 
-}  // namespace detail
-
-inline std::optional<cycle> get_cycle(ordering_graph const& og) {
+std::vector<cycle> get_cycles(ordering_graph const& og) {
   std::vector<cycle> cycles;
 
   for (auto const& start : og.nodes_) {
-    auto cycle = detail::get_shortest_cycle_from_node(start.id_, og);
+    auto cycle = get_shortest_cycle_from_node(start.id_, og);
 
     if (cycle) {
       cycles.emplace_back(std::move(*cycle));
     }
   }
+
+  return cycles;
+}
+
+std::optional<cycle> get_cycle(ordering_graph const& og) {
+  auto const cycles = get_cycles(og);
 
   if (cycles.empty()) {
     return std::nullopt;

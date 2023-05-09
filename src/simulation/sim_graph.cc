@@ -10,7 +10,7 @@
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/runtime/runtime.h"
 #include "soro/simulation/disruption.h"
-#include "soro/simulation/ordering_graph.h"
+#include "soro/simulation/ordering/ordering_graph.h"
 
 namespace soro::simulation {
 

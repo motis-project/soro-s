@@ -7,6 +7,13 @@
 
 namespace soro::tt {
 
+struct additional_stop {
+  constexpr additional_stop() = default;
+
+  duration2 duration_{duration2::max()};
+  bool is_before_halt_{false};
+};
+
 struct sequence_point {
   CISTA_COMPARABLE()
 

@@ -4,7 +4,7 @@
 
 #include "soro/utls/std_wrapper/contains.h"
 
-#include "soro/simulation/get_cycle.h"
+#include "soro/simulation/ordering/get_cycle.h"
 
 namespace soro::simulation {
 
@@ -14,7 +14,7 @@ namespace soro::simulation {
 TEST_SUITE("cycle_detection suite") {
 
   void check_is_valid_cycle(cycle const& c, ordering_graph const& og) {
-    for (auto const& [from, to] : utl::pairwise(c)) {
+    for (auto const [from, to] : utl::pairwise(c)) {
       CHECK(utls::contains(og.nodes_[from].out_, to));
     }
 
@@ -48,17 +48,10 @@ TEST_SUITE("cycle_detection suite") {
     auto result = get_cycle(g);
 
     CHECK(result);
-    check_is_valid_cycle(*result, g);
+    check_is_valid_cycle(*result, g);  // NOLINT
   }
 
   TEST_CASE("no cycle in diamond") {
-    /* graph:
-          0
-         / \
-        1   2
-        \  /
-         3      */
-
     ordering_graph g;
 
     g.nodes_.push_back({.id_ = 0, .out_ = {1, 2}});
@@ -113,7 +106,7 @@ TEST_SUITE("cycle_detection suite") {
     auto const result = get_cycle(g);
 
     CHECK(result);
-    check_is_valid_cycle(*result, g);
+    check_is_valid_cycle(*result, g);  // NOLINT
   }
 
   TEST_CASE("cycle forest 2") {
@@ -136,7 +129,7 @@ TEST_SUITE("cycle_detection suite") {
     auto const result = get_cycle(g);
 
     CHECK(result);
-    check_is_valid_cycle(*result, g);
+    check_is_valid_cycle(*result, g);  // NOLINT
   }
 
   TEST_CASE("cycle from following") {
@@ -169,7 +162,7 @@ TEST_SUITE("cycle_detection suite") {
     auto const result = get_cycle(g);
 
     CHECK(result);
-    check_is_valid_cycle(*result, g);
+    check_is_valid_cycle(*result, g);  // NOLINT
   }
 
   TEST_CASE("no cycle from following") {
@@ -220,8 +213,8 @@ TEST_SUITE("cycle_detection suite") {
     auto const result = get_cycle(g);
 
     CHECK(result);
-    CHECK_EQ(result->size(), 3);
-    check_is_valid_cycle(*result, g);
+    CHECK_EQ(result->size(), 3);  // NOLINT
+    check_is_valid_cycle(*result, g);  // NOLINT
   }
 }
 

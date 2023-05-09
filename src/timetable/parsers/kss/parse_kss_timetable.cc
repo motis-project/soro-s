@@ -8,13 +8,15 @@
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
+#include "soro/base/error.h"
+
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/statistics.h"
+#include "soro/utls/std_wrapper/any_of.h"
 #include "soro/utls/string.h"
 
-#include "soro/base/error.h"
 #include "soro/timetable/bitfield.h"
 #include "soro/timetable/parsers/kss/kss_error.h"
 #include "soro/timetable/parsers/station_route_to_interlocking_route.h"
@@ -27,18 +29,20 @@ using namespace soro::infra;
 
 namespace fs = std::filesystem;
 
+bool is_kss_file(fs::path const& p) {
+  return !fs::is_directory(p) && p.filename().extension() == ".xml" &&
+         p.filename().string().starts_with("KSS-");
+}
+
 bool is_kss_timetable(timetable_options const& opts) {
   if (!std::filesystem::is_directory(opts.timetable_path_)) {
     return false;
   }
 
-  return utls::all_of(
-      fs::directory_iterator{opts.timetable_path_}, [](auto&& dir_entry) {
-        auto const& fn = dir_entry.path().filename();
-        return !fs::is_directory(dir_entry) && fn.extension() == ".xml" &&
-               (fn.string().starts_with("KSS-") ||
-                fn.string().starts_with("."));
-      });
+  // at least one kss file is required to be qualified as a kss timetable
+  return utls::any_of(
+      fs::directory_iterator{opts.timetable_path_},
+      [](auto&& dir_entry) { return is_kss_file(dir_entry.path()); });
 }
 
 std::size_t distance(date::year_month_day const from,
@@ -198,6 +202,32 @@ duration2 parse_duration(char const* const dur_str) {
   return std::chrono::duration_cast<duration2>(result);
 }
 
+bool parse_boolean(std::string_view const bool_str) {
+  utls::expect(equal(bool_str, "true") || equal(bool_str, "false"),
+               "bool string was neither 'true' nor 'false', but {}", bool_str);
+  return equal(bool_str, "true");
+}
+
+additional_stop parse_additional_stop(xml_node const additional_stop_xml) {
+  additional_stop as{};
+
+  auto element_xml = additional_stop_xml.child("infrastructureElement");
+  if (static_cast<bool>(element_xml)) {
+    uLOG(utl::warn) << "should parse infrastructure element for additional "
+                       "stop, but this is not implemented yet";
+  }
+
+  as.duration_ =
+      parse_duration(additional_stop_xml.child_value("additionalStopTime"));
+
+  auto is_before_halt = additional_stop_xml.child("isBeforeArrivalDeparture");
+  if (static_cast<bool>(is_before_halt)) {
+    as.is_before_halt_ = parse_boolean(is_before_halt.child_value());
+  }
+
+  return as;
+}
+
 utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
                                            infrastructure const& infra) {
   stop_sequence sequence;
@@ -247,6 +277,14 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
                     "Found departure time value, but not valid runtime "
                     "checkpoint in station route");
     }
+
+    // ignore additional stops for now
+    /*
+    auto additional_stop_xml = point_xml.child("additionalStop");
+    if (static_cast<bool>(additional_stop_xml)) {
+      st.additional_stop_ = parse_additional_stop(additional_stop_xml);
+    }
+     */
 
     sequence.points_.emplace_back(st);
   }
@@ -507,7 +545,7 @@ utls::result<base_timetable> parse_kss_timetable(
   auto const required_version = get_required_infra_version(opts);
 
   if (required_version != infra->version_) {
-    return std::unexpected(error::kss::INFRASTRUCTURE_VERSION_MISMATCH);
+    return utls::unexpected(error::kss::INFRASTRUCTURE_VERSION_MISMATCH);
   }
 
   utl::scoped_timer const timetable_timer("parsing kss timetable");
@@ -524,6 +562,10 @@ utls::result<base_timetable> parse_kss_timetable(
   std::vector<work_item> work_todo;
 
   for (auto const& dir_entry : fs::directory_iterator{opts.timetable_path_}) {
+    if (!is_kss_file(dir_entry.path())) {
+      continue;
+    }
+
     work_todo.emplace_back(work_item{dir_entry.path(), {}});
   }
 

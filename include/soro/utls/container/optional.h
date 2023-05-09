@@ -33,6 +33,9 @@ struct optional {
   optional(optional&&) noexcept = default;
   optional& operator=(optional&&) noexcept = default;
 
+  static_assert(
+      std::is_integral_v<T> || cista::is_pointer_v<T>,
+      "if T would be a more complicated type we'd need to ensure destruction");
   ~optional() = default;
 
   T const* operator->() const noexcept {

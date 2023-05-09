@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cista/containers/array.h"
+#include "cista/containers/fws_multimap.h"
 #include "cista/containers/hash_set.h"
 #include "cista/containers/optional.h"
 #include "cista/containers/variant.h"
@@ -63,6 +64,9 @@ using set = data::hash_set<T>;
 
 template <typename T>
 using vector = data::vector<T>;
+
+template <typename Data, typename Index>
+using fws_multimap = data::fws_multimap<Data, Index>;
 
 using size_t = uint32_t;
 
@@ -128,6 +132,9 @@ using set = data::hash_set<T>;
 
 template <typename ValueType>
 using vector = std::vector<ValueType>;
+
+template <typename Data, typename Index>
+using fws_multimap = data::fws_multimap<Data, Index>;
 
 using size_t = std::size_t;
 
