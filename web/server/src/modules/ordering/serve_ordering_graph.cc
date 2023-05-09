@@ -108,7 +108,8 @@ std::string serialize_ordering_graph(simulation::ordering_graph const& og,
          << R"(, "nodes":)" << node_buffer.GetString() << R"(, "edges":)"
          << edge_buffer.GetString() << "}";
 
-  uLOG(utl::info) << "serialized ordering graph size: " << result.str().size();
+  uLOG(utl::info) << "serialized ordering graph size: "
+                  << (result.str().size() / (1024UL * 1024UL)) << " mB";
 
   return result.str();
 }
@@ -129,6 +130,29 @@ utls::result<std::vector<tt::train::id>> comma_values_to_train_ids(
   }
 
   return result;
+}
+
+utls::result<simulation::ordering_graph::filter> params_to_filter(
+    std::vector<std::string> const& params) {
+  simulation::ordering_graph::filter filter;
+
+  auto const from = str_to_absolute_time(params[2]);
+  if (!from) return utls::propagate(from);
+  filter.interval_.start_ = *from;
+
+  auto const to = str_to_absolute_time(params[3]);
+  if (!to) return utls::propagate(to);
+  filter.interval_.end_ = *to;
+
+  if (!filter.interval_.valid()) {
+    return utls::unexpected(std::errc::invalid_argument);
+  }
+
+  auto train_ids = comma_values_to_train_ids(params[4]);
+  if (!train_ids) return utls::propagate(train_ids);
+  filter.trains_ = std::move(*train_ids);
+
+  return filter;
 }
 
 // no static
@@ -152,23 +176,11 @@ net::web_server::string_res_t ordering_module::serve_ordering_graph(
     return net::not_found_response(req);
   }
 
-  simulation::ordering_graph::filter filter;
+  auto const filter = params_to_filter(req.path_params_);
+  if (!filter) return net::bad_request_response(req);
 
-  auto const from = str_to_absolute_time(req.path_params_[2]);
-  if (!from) return net::bad_request_response(req);
-  filter.interval_.start_ = *from;
-
-  auto const to = str_to_absolute_time(req.path_params_[3]);
-  if (!to) return net::bad_request_response(req);
-  filter.interval_.end_ = *to;
-
-  if (!filter.interval_.valid()) return net::bad_request_response(req);
-
-  auto train_ids = comma_values_to_train_ids(req.path_params_[4]);
-  if (!train_ids) return net::bad_request_response(req);
-  filter.trains_ = std::move(*train_ids);
-
-  simulation::ordering_graph const ordering_graph(**infra, **timetable, filter);
+  simulation::ordering_graph const ordering_graph(**infra, **timetable,
+                                                  *filter);
 
   return json_response(req,
                        serialize_ordering_graph(ordering_graph, **timetable));

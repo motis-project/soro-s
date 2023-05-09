@@ -144,14 +144,6 @@ export default defineComponent({
 
       tim.printElapsed('set node attributes');
 
-      // const positions = noverlap(this.graph, {
-      //   maxIterations: 50,
-      //   settings: { ratio: 2 }
-      // });
-
-      // console.log(positions);
-      noverlap.assign(this.graph, 100);
-
       this.sigma = new Sigma(
         this.graph,
         this.$refs.graph as HTMLElement,
