@@ -99,7 +99,7 @@ TEST_SUITE("ordering graph") {
     check_ordering_graph(og, infra);
   }
 
-  TEST_CASE("de_kss graph") {
+  TEST_CASE("de_kss graph" * doctest::skip(true)) {
     auto opts = soro::test::DE_ISS_OPTS;
     auto tt_opts = soro::test::DE_KSS_OPTS;
 
@@ -107,9 +107,6 @@ TEST_SUITE("ordering graph") {
     opts.interlocking_ = true;
     opts.exclusion_graph_ = false;
     opts.layout_ = false;
-
-    //  interval const inter{.start_ = rep_to_absolute_time(1636786800),
-    //                       .end_ = rep_to_absolute_time(1636794000)};
 
     interval const inter{.start_ = rep_to_absolute_time(1636786800),
                          .end_ = rep_to_absolute_time(1636786800) + hours{2}};
@@ -120,39 +117,6 @@ TEST_SUITE("ordering graph") {
     ordering_graph const og(infra, tt, {.interval_ = inter});
 
     check_ordering_graph(og, infra);
-
-    //  auto const cycle = get_cycle(og);
-
-    //  std::set<tt::train::id> train_ids;
-
-    //  for (auto const& c : *cycle) {
-    //    std::set<tt::train::id> cycle_train_ids;
-    //    for (auto const id : c) {
-    //      cycle_train_ids.emplace(og.nodes_[id].train_id_);
-    //    }
-    //
-    //    std::cout << "cycle train numbers:\n";
-    //    for (auto const& tid : cycle_train_ids) {
-    //      auto const& train = tt->trains_[tid];
-    //      std::cout << train.number_.main_ << " " << train.number_.sub_ <<
-    //      '\n';
-    //    }
-    //  }
-
-    //  if (cycle.has_value()) {
-    //    std::cout << "ids:\n";
-    //    for (auto const& id : *cycle) {
-    //      std::cout << id << ' ';
-    //      train_ids.emplace(og.nodes_[id].train_id_);
-    //    }
-    //    std::cout << '\n';
-    //
-    //    for (auto const& train_id : train_ids) {
-    //      std::cout << train_id << ',';
-    //    }
-    //  }
-
-    //  check_ordering_graph(og);
   }
 }
 

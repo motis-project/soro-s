@@ -219,7 +219,7 @@ std::span<const ordering_node> ordering_graph::trip_nodes(
 }
 
 ordering_node const& ordering_node::next(ordering_graph const& og) const {
-  utls::sasserts([&, this] {
+  utls::sasserts([this, &og] {
     utls::sassert(!out_.empty(), "no next node");
     auto const& next = og.nodes_[out_.front()];
     utls::sassert(next.train_id_ == train_id_, "next node not same train");
