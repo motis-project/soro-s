@@ -68,7 +68,8 @@ describe('infrastructure-map', async () => {
     currentTimetable: '',
     currentSearchResults: [],
     highlightedStationRoutes: [],
-    highlightedInterlockingRoutes: []
+    highlightedInterlockingRoutes: [],
+    trainIdsFilter: []
   };
 
   const defaults = {

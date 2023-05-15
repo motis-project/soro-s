@@ -218,4 +218,14 @@ std::span<const ordering_node> ordering_graph::trip_nodes(
   return {&nodes_[it->second.first], it->second.second - it->second.first};
 }
 
+ordering_node const& ordering_node::next(ordering_graph const& og) const {
+  utls::sasserts([&, this] {
+    utls::sassert(!out_.empty(), "no next node");
+    auto const& next = og.nodes_[out_.front()];
+    utls::sassert(next.train_id_ == train_id_, "next node not same train");
+  });
+
+  return og.nodes_[out_.front()];
+}
+
 }  // namespace soro::simulation

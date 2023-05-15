@@ -7,9 +7,13 @@
 
 namespace soro::simulation {
 
+struct ordering_graph;
+
 struct ordering_node {
   using id = uint32_t;
   static constexpr id INVALID = std::numeric_limits<id>::max();
+
+  ordering_node const& next(ordering_graph const& og) const;
 
   id id_{INVALID};
   infra::interlocking_route::id ir_id_{infra::interlocking_route::INVALID};
