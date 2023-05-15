@@ -10,28 +10,13 @@ import { mapActions, mapState } from 'vuex';
 
 import { Sigma } from 'sigma';
 import { DirectedGraph } from 'graphology';
-import noverlap from 'graphology-layout-noverlap';
 
 import { SidebarNamespace, UnixRange } from '@/stores/sidebar-store';
 
 import { nodeColor, rendererSettings } from '@/components/ordering/settings';
 import { Attributes } from 'graphology-types';
 
-class timer {
-  constructor() {
-    this.start = Date.now();
-  }
-
-  elapsed(): number {
-    return Date.now() - this.start;
-  }
-
-  printElapsed(message: string): void {
-    console.log('[' + message + ']:', this.elapsed());
-  }
-
-  start: number;
-}
+import { timer } from '@/util/timer';
 
 export default defineComponent({
   name: 'OrderingGraph',
@@ -122,10 +107,6 @@ export default defineComponent({
       tim.printElapsed('imported ordering graph');
 
       const totalTrains = this.graph.getAttribute('totalTrains');
-      const maxTrainLength = this.graph.getAttribute('maxTrainLength');
-
-      const xSpacing = 500;
-      const ySpacing = 500;
 
       this.graph.forEachNode((node: string, attr: Attributes) => {
         attr['x'] = attr['offset'] * 1000 * totalTrains;
