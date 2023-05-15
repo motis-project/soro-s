@@ -1,5 +1,7 @@
 #include "soro/timetable/parsers/kss/parse_kss_timetable.h"
 
+#include <string_view>
+
 #include "pugixml.hpp"
 
 #include "utl/concat.h"
@@ -203,9 +205,10 @@ duration2 parse_duration(char const* const dur_str) {
 }
 
 bool parse_boolean(std::string_view const bool_str) {
-  utls::expect(equal(bool_str, "true") || equal(bool_str, "false"),
+  using namespace std::literals;
+  utls::expect(equal(bool_str, "true"sv) || equal(bool_str, "false"sv),
                "bool string was neither 'true' nor 'false', but {}", bool_str);
-  return equal(bool_str, "true");
+  return equal(bool_str, "true"sv);
 }
 
 additional_stop parse_additional_stop(xml_node const additional_stop_xml) {

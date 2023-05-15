@@ -43,10 +43,6 @@ inline bool equal(char const* const s1, soro::string const& s2) {
   return equal(s1, s2.data());
 }
 
-inline bool equal(soro::string const& s1, soro::string const& s2) {
-  return equal(s1.data(), s2.data());
-}
-
 inline bool equal(soro::string_view s1, char const* const s2) {
   return equal(s1.data(), s2);
 }
