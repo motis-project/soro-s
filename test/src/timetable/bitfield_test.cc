@@ -4,10 +4,9 @@
 
 #include "soro/timetable/bitfield.h"
 
-using namespace date;
+namespace soro::tt {
 
-using namespace soro;
-using namespace soro::tt;
+using namespace date;
 
 TEST_SUITE("bitfield") {
 
@@ -382,3 +381,5 @@ TEST_SUITE("bitfield") {
   }
 #endif
 }
+
+}  // namespace soro::tt

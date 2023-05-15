@@ -19,7 +19,8 @@ describe('sidebar-store', async () => {
       currentTimetable: '',
       currentSearchResults: [],
       highlightedStationRoutes: [],
-      highlightedInterlockingRoutes: []
+      highlightedInterlockingRoutes: [],
+      trainIdsFilter: []
     };
     commit = vi.fn((mutationName: string, args: any) =>
       SidebarStore.mutations?.[mutationName]?.(state, args)

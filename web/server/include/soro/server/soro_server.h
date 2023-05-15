@@ -3,6 +3,7 @@
 #include "net/web_server/query_router.h"
 
 #include "soro/server/modules/infrastructure/infrastructure_module.h"
+#include "soro/server/modules/ordering/ordering_module.h"
 #include "soro/server/modules/search/search_module.h"
 #include "soro/server/modules/tiles/tiles_module.h"
 #include "soro/server/modules/timetable/timetable_module.h"
@@ -24,6 +25,7 @@ private:
   tiles_module tiles_module_;
   search_module search_module_;
   timetable_module timetable_module_;
+  ordering_module ordering_module_;
 };
 
 }  // namespace soro::server

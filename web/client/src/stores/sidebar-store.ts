@@ -7,6 +7,8 @@ import {
   StationRoute
 } from '@/util/SoroClient';
 
+export type UnixRange = [number, number];
+
 export type SidebarState = {
   // infrastructure state
   infrastructures: string[];
@@ -14,6 +16,8 @@ export type SidebarState = {
   // timetable state
   timetables: string[];
   currentTimetable?: string;
+  // date state
+  currentDateRange?: UnixRange;
   // sidebar search state
   currentSearchResults: SearchResult[];
   currentBoundingBox?: LngLatBounds;
@@ -22,6 +26,8 @@ export type SidebarState = {
   currentStation?: number;
   highlightedStationRoutes: GeoJSONFeature[];
   highlightedInterlockingRoutes: GeoJSONFeature[];
+  // dev tools state
+  trainIdsFilter: number[];
 };
 
 function routeToGeoJSON(route: StationRoute | InterlockingRoute) {
@@ -52,6 +58,8 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
       // timetable state
       timetables: [],
       currentTimetable: undefined,
+      // date state
+      currentDateRange: undefined,
       // search state
       currentSearchResults: [],
       currentBoundingBox: undefined,
@@ -60,7 +68,9 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
       currentStation: undefined,
       // map state
       highlightedStationRoutes: [],
-      highlightedInterlockingRoutes: []
+      highlightedInterlockingRoutes: [],
+      // dev tools state:
+      trainIdsFilter: []
     };
   },
 
@@ -79,6 +89,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
 
     setCurrentTimetable(state, currentTimetable) {
       state.currentTimetable = currentTimetable;
+    },
+
+    setCurrentDateRange(state, currentDateRange: UnixRange) {
+      state.currentDateRange = currentDateRange;
     },
 
     setCurrentSearchResults(state, currentSearchResults) {
@@ -116,6 +130,10 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
         state.highlightedInterlockingRoutes.filter(
           (route) => route.properties.id !== routeId
         );
+    },
+
+    setTrainIdsFilter(state, trainIdsFilter) {
+      state.trainIdsFilter = trainIdsFilter;
     }
   },
 
@@ -177,8 +195,32 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
         .catch(console.error);
     },
 
-    loadTimetable({ commit }, timetableName) {
+    loadTimetable({ commit, rootState, state }, timetableName) {
+      if (!state.currentInfrastructure) {
+        return;
+      }
+
+      rootState.soroClient
+        .infrastructure(state.currentInfrastructure)
+        .timetable(timetableName)
+        .get()
+        .then((response) => {
+          commit('setCurrentDateRange', [
+            response.timetable.interval.start,
+            response.timetable.interval.end
+          ]);
+        })
+        .catch(console.error);
+
       commit('setCurrentTimetable', timetableName);
+    },
+
+    setCurrentDateRange({ commit }, dateRange: UnixRange) {
+      commit('setCurrentDateRange', dateRange);
+    },
+
+    setTrainIdsFilter({ commit }, trainIdsFilter: number[]) {
+      commit('setTrainIdsFilter', trainIdsFilter);
     }
   }
 };

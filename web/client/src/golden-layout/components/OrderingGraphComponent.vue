@@ -1,17 +1,30 @@
 <template>
   <div>
-    <h2>Graph coming soon tm.</h2>
+    <ordering-graph ref="orderingGraph" />
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue';
-
-export default defineComponent({ name: 'OrderingGraphComponent' });
+<script setup lang="ts">
+import OrderingGraph from '@/components/ordering/ordering-graph.vue';
 </script>
 
-<style scoped>
-h2 {
-  text-align: center;
-}
-</style>
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  name: 'OrderingGraphComponent',
+
+  provide() {
+    return {
+      goldenLayoutKeyInjection: this.goldenLayoutKey
+    };
+  },
+
+  props: {
+    goldenLayoutKey: {
+      type: String,
+      required: true
+    }
+  }
+});
+</script>

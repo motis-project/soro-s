@@ -7,7 +7,8 @@ import { ThemeDefinition } from 'vuetify';
 export const customLightTheme: ThemeDefinition = {
   colors: {
     primary: '#2196F3',
-    'golden-layout-tab-background': '#F4F4F4'
+    goldenLayoutTabBackground: '#ECE9E9',
+    'golden-layout-tab-background': '#ECE9E9'
   },
   variables: {
     highEmphasisOpacity: 1,
@@ -18,6 +19,7 @@ export const customLightTheme: ThemeDefinition = {
 export const customDarkTheme: ThemeDefinition = {
   colors: {
     primary: '#2196F3',
+    goldenLayoutTabBackground: '#282828',
     'golden-layout-tab-background': '#282828'
   },
   variables: {

@@ -22,3 +22,11 @@ runs:
         cd ./build/${{ matrix.config.preset }}
         ./soro-server -t 
         cd ../../
+
+    # run it twice to check cista deserialization
+    - name: run soro-server in test mode again
+      shell: bash
+      run: |
+        cd ./build/${{ matrix.config.preset }}
+        ./soro-server -t 
+        cd ../../

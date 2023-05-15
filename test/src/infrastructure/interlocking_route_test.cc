@@ -43,7 +43,7 @@ void check_interlocking_route_count(infrastructure const& infra) {
       }
     };
 
-    utls::dfs(sr, handle_node, get_neighbours);
+    utls::dfs(sr, get_neighbours, handle_node);
 
     path_sr_count += reachable_ms;
 

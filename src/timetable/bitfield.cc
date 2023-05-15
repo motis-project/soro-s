@@ -4,6 +4,7 @@
 
 #include "utl/verify.h"
 
+#include "soro/utls/narrow.h"
 #include "soro/utls/sassert.h"
 
 namespace soro::tt {
@@ -224,7 +225,29 @@ bitfield bitfield::operator|=(bitfield const& o) noexcept {
   return *this;
 }
 
-std::size_t bitfield::count() const noexcept { return this->bitset_.count(); }
+soro::size_t bitfield::count() const noexcept {
+  return utls::narrow<soro::size_t>(this->bitset_.count());
+}
+
+absolute_time bitfield::first_set_date() const noexcept {
+  utls::expect(bitset_.any(), "no bits set in bitfield, procedure will fail");
+
+  std::size_t first_set_idx = 0;
+
+  while (!bitset_.test(first_set_idx)) ++first_set_idx;
+
+  return absolute_time{idx_to_date(first_date_, first_set_idx)};
+}
+
+absolute_time bitfield::last_set_date() const noexcept {
+  utls::expect(bitset_.any(), "no bits set in bitfield, procedure will fail");
+
+  std::size_t last_set_idx = distance(first_date_, last_date_);
+
+  while (!bitset_.test(last_set_idx)) --last_set_idx;
+
+  return absolute_time{idx_to_date(first_date_, last_set_idx)};
+}
 
 bitfield make_bitfield(bitfield::anchor_time const first_date,
                        bitfield::anchor_time const last_date,

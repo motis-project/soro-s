@@ -9,4 +9,5 @@ source deps/cista/tools/pretty-printers/gdb/cista_bitset.py
 
 source tools/pretty-printers/gdb/si_units.py
 source tools/pretty-printers/gdb/serializable.py
+source tools/pretty-printers/gdb/absolute_time.py
 

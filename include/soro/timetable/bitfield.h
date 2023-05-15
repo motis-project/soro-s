@@ -2,6 +2,7 @@
 
 #include "cista/containers/bitset.h"
 
+#include "soro/base/soro_types.h"
 #include "soro/base/time.h"
 
 namespace soro::tt {
@@ -62,7 +63,10 @@ struct bitfield {
   bitfield operator|=(bitfield const& o) noexcept;
   friend bitfield operator|(bitfield const& lhs, bitfield const& rhs) noexcept;
 
-  std::size_t count() const noexcept;
+  soro::size_t count() const noexcept;
+
+  absolute_time first_set_date() const noexcept;
+  absolute_time last_set_date() const noexcept;
 
   anchor_time first_date_{anchor_time::max()};
   anchor_time last_date_{anchor_time::max()};

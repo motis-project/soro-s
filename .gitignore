@@ -9,6 +9,7 @@
 /pkg
 .pkg.lock
 .pkg.mutex
+/web/client/node_modules
 /CMakeSettings.json
 /.clangd
 /.cache

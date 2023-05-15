@@ -40,7 +40,7 @@ export const createInfrastructureMapStyle = ({
         id: 'background',
         type: 'background',
         paint: {
-          'background-color': currentTheme.colors?.background
+          'background-color': currentTheme.colors?.goldenLayoutTabBackground
         }
       },
       {

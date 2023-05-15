@@ -1,14 +1,19 @@
 #pragma once
 
-#include "soro/infrastructure/infrastructure.h"
-#include "soro/timetable/timetable.h"
 #include "soro/utls/unixtime.h"
 
+#include "soro/infrastructure/infrastructure.h"
+#include "soro/timetable/timetable.h"
+
 namespace soro::simulation {
+
+struct ordering_graph;
 
 struct ordering_node {
   using id = uint32_t;
   static constexpr id INVALID = std::numeric_limits<id>::max();
+
+  ordering_node const& next(ordering_graph const& og) const;
 
   id id_{INVALID};
   infra::interlocking_route::id ir_id_{infra::interlocking_route::INVALID};
@@ -18,10 +23,18 @@ struct ordering_node {
   std::vector<id> out_;
 };
 
+using ordering_edge = std::pair<ordering_node::id, ordering_node::id>;
+
 struct ordering_graph {
+  struct filter {
+    tt::interval interval_{};
+    std::vector<tt::train::id> trains_{};
+  };
+
+  ordering_graph() = default;
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt,
-                 tt::interval const& interval);
+                 filter const& filter);
 
   std::span<const ordering_node> trip_nodes(tt::train::trip const trip) const;
 

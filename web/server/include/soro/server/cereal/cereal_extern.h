@@ -9,6 +9,8 @@
 
 #include "soro/utls/coordinates/gps.h"
 
+#include "soro/timetable/interval.h"
+
 namespace soro::utls {
 
 template <typename Archive>

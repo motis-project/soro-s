@@ -18,7 +18,8 @@ describe('sidebar-menu', async () => {
     currentTimetable: '',
     currentSearchResults: [],
     highlightedStationRoutes: [],
-    highlightedInterlockingRoutes: []
+    highlightedInterlockingRoutes: [],
+    trainIdsFilter: []
   };
 
   const defaults = {

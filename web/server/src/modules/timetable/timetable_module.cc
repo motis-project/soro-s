@@ -10,6 +10,26 @@ namespace soro::server {
 
 namespace fs = std::filesystem;
 
+tt::timetable::optional_ptr timetable_module::get_timetable(
+    std::string_view const infrastructure_name,
+    std::string_view const timetable_name) const {
+
+  auto const context_it = contexts_.find(infrastructure_name);
+
+  if (context_it == std::end(contexts_)) {
+    return std::nullopt;
+  }
+
+  auto const& context = context_it->second;
+
+  auto tt_it = context.timetables_.find(timetable_name);
+  if (tt_it == std::end(context.timetables_)) {
+    return std::nullopt;
+  }
+
+  return tt::timetable::optional_ptr(tt_it->second.get());
+}
+
 std::vector<fs::path> get_timetable_todo_list(server_settings const& settings) {
   std::vector<fs::path> timetable_todo_list;
 

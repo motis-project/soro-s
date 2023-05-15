@@ -1,7 +1,9 @@
 #include "soro/timetable/train.h"
 
-#include "soro/infrastructure/path/length.h"
+#include "soro/utls/narrow.h"
 #include "soro/utls/std_wrapper/count_if.h"
+
+#include "soro/infrastructure/path/length.h"
 
 namespace soro::tt {
 
@@ -81,6 +83,15 @@ relative_time train::last_arrival() const {
   return result;
 }
 
+absolute_time train::first_absolute_departure() const {
+  return relative_to_absolute(service_days_.first_set_date(),
+                              first_departure());
+}
+
+absolute_time train::last_absolute_arrival() const {
+  return relative_to_absolute(service_days_.last_set_date(), last_arrival());
+}
+
 interval train::event_interval(absolute_time const midnight) const {
   utls::sasserts([&]() {
     auto const& floored = sc::floor<days>(midnight);
@@ -95,12 +106,12 @@ interval train::event_interval(absolute_time const midnight) const {
           .end_ = relative_to_absolute(midnight, last_arrival())};
 }
 
-std::size_t train::total_halts() const {
+soro::size_t train::total_halts() const {
   return utls::count_if(sequence_points_,
                         [](auto&& sp) { return sp.is_halt(); });
 }
 
-std::size_t train::trip_count() const { return service_days_.count(); }
+soro::size_t train::trip_count() const { return service_days_.count(); }
 
 std::vector<train::trip> train::trips() const {
   std::vector<train::trip> result;

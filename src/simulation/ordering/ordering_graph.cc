@@ -1,15 +1,22 @@
-#include "soro/simulation/ordering_graph.h"
+#include "soro/simulation/ordering/ordering_graph.h"
 
-#include <random>
+#include "range/v3/range/conversion.hpp"
+#include "range/v3/view/filter.hpp"
+#include "range/v3/view/transform.hpp"
 
+#include "utl/concat.h"
+#include "utl/erase.h"
 #include "utl/erase_duplicates.h"
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
 
+#include "soro/utls/graph/traversal.h"
+#include "soro/utls/std_wrapper/contains.h"
 #include "soro/utls/std_wrapper/count_if.h"
 #include "soro/utls/std_wrapper/sort.h"
 
 #include "soro/runtime/runtime.h"
+#include "soro/simulation/ordering/remove_transitive_edges.h"
 
 namespace soro::simulation {
 
@@ -42,6 +49,9 @@ void print_ordering_graph_stats(ordering_graph const& og) {
   for (auto const& [edge_count, nodes] : out_edge_counts) {
     uLOG(utl::info) << "nodes with " << edge_count << " out edges: " << nodes;
   }
+
+  uLOG(utl::info) << "Total trips in ordering graph: "
+                  << og.trip_to_nodes_.size();
 }
 
 struct route_usage {
@@ -52,11 +62,10 @@ struct route_usage {
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
                                tt::timetable const& tt)
-    : ordering_graph(infra, tt, interval{}) {}
+    : ordering_graph(infra, tt, filter{}) {}
 
 ordering_graph::ordering_graph(infra::infrastructure const& infra,
-                               tt::timetable const& tt,
-                               tt::interval const& interval) {
+                               tt::timetable const& tt, filter const& filter) {
   utl::scoped_timer const timer("creating ordering graph");
 
   ordering_node::id glob_current_node_id = 0;
@@ -74,7 +83,7 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   auto const generate_route_orderings = [&](train const& train) {
     soro::vector<timestamp> times;
 
-    for (auto const anchor : train.departures(interval)) {
+    for (auto const anchor : train.departures(filter.interval_)) {
       if (times.empty()) {
         times = runtime_calculation(train, infra, {type::MAIN_SIGNAL}).times_;
 
@@ -164,6 +173,10 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
 
   // generate the nodes and route usage orderings (1 node == 1 usage)
   for (auto const& train : tt->trains_) {
+    if (!filter.trains_.empty() && !utls::contains(filter.trains_, train.id_)) {
+      continue;
+    }
+
     generate_route_orderings(train);
   }
 
@@ -176,6 +189,10 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
   // create edges according to the sorted orderings
   for (auto const& usage_order : orderings) {
     for (auto [from, to] : utl::pairwise(usage_order)) {
+      // if the .from timestamps for the orderings are equal then we are just
+      // betting that we don't introduce a cycle into the ordering graph
+      //      utls::sassert(from.from_ != to.from_, "from and to are equal");
+
       nodes_[from.id_].out_.emplace_back(to.id_);
       nodes_[to.id_].in_.emplace_back(from.id_);
     }
@@ -185,6 +202,8 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
     utl::erase_duplicates(node.out_);
     utl::erase_duplicates(node.in_);
   }
+
+  remove_transitive_edges(*this);
 
   print_ordering_graph_stats(*this);
 }
@@ -197,6 +216,16 @@ std::span<const ordering_node> ordering_graph::trip_nodes(
                 "could not find nodes for trip {}", trip);
 
   return {&nodes_[it->second.first], it->second.second - it->second.first};
+}
+
+ordering_node const& ordering_node::next(ordering_graph const& og) const {
+  utls::sasserts([this, &og] {
+    utls::sassert(!out_.empty(), "no next node");
+    auto const& next = og.nodes_[out_.front()];
+    utls::sassert(next.train_id_ == train_id_, "next node not same train");
+  });
+
+  return og.nodes_[out_.front()];
 }
 
 }  // namespace soro::simulation

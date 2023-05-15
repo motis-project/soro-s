@@ -84,10 +84,14 @@ struct train {
 
   relative_time first_departure() const;
   relative_time last_arrival() const;
+
+  absolute_time first_absolute_departure() const;
+  absolute_time last_absolute_arrival() const;
+
   interval event_interval(absolute_time const midnight) const;
 
-  std::size_t total_halts() const;
-  std::size_t trip_count() const;
+  soro::size_t total_halts() const;
+  soro::size_t trip_count() const;
 
   std::vector<trip> trips() const;
 

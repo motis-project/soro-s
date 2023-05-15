@@ -45,7 +45,7 @@ auto get_neighbours_with_coords(station::ptr const station,
                                           : s->neighbours();
   };
 
-  utls::bfs(station, handle_node, get_neighbours);
+  utls::bfs(station, get_neighbours, handle_node);
 
   return neighbours_with_coords;
 }
