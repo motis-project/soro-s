@@ -35,32 +35,32 @@ constexpr bool is_narrowing() {
 
 template <std::integral Out, std::integral In>
   requires(!is_narrowing<Out, In>())
-constexpr bool fits(In&&) {
+constexpr bool fits(In const) {
   return true;
 }
 
 template <std::unsigned_integral Out, std::signed_integral In>
   requires(is_narrowing<Out, In>() && sizeof(Out) < sizeof(In))
-constexpr bool fits(In&& in) {
+constexpr bool fits(In const in) {
   return in >= 0 && in <= std::numeric_limits<Out>::max();
 }
 
 template <std::unsigned_integral Out, std::signed_integral In>
   requires(is_narrowing<Out, In>() && sizeof(Out) >= sizeof(In))
-constexpr bool fits(In&& in) {
+constexpr bool fits(In const in) {
   return in >= 0;
 }
 
 template <std::signed_integral Out, std::unsigned_integral In>
   requires(is_narrowing<Out, In>())
-constexpr bool fits(In&& in) {
+constexpr bool fits(In const in) {
   return in <= std::numeric_limits<Out>::max();
 }
 
 template <std::integral Out, std::integral In>
   requires(is_narrowing<Out, In>() &&
            std::is_signed_v<Out> == std::is_signed_v<In>)
-constexpr bool fits(In&& in) {
+constexpr bool fits(In const in) {
   In const out_max = std::numeric_limits<Out>::max();
   In const out_min = std::numeric_limits<Out>::min();
 
@@ -70,11 +70,10 @@ constexpr bool fits(In&& in) {
 }  // namespace detail
 
 template <std::integral Out, std::integral In>
-[[nodiscard]] constexpr Out narrow(In&& in) {
-  utls::sassert(detail::fits<Out>(std::forward<In>(in)),
-                "failed narrowing conversion for {}", in);
+[[nodiscard]] constexpr Out narrow(In const i) {
+  utls::sassert(detail::fits<Out>(i), "failed narrowing conversion for {}", i);
 
-  return static_cast<Out>(std::forward<In>(in));
+  return static_cast<Out>(i);
 }
 
 }  // namespace soro::utls

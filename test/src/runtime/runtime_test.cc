@@ -87,21 +87,25 @@ void check_delays(infrastructure const& infra, timetable const& tt) {
         continue;
       }
 
+      // halts must have arrival/departure times
+      CHECK(sp.arrival_.has_value());
+      CHECK(sp.departure_.has_value());
+
       auto const& ts = timestamps.times_[timestamps.halt_indices_[halt_id]];
 
       ++total_count;
-      if (valid(ts.departure_) && ts.departure_ > sp.departure_) {
+      if (valid(ts.departure_) && ts.departure_ > *sp.departure_) {
         ++delayed_count;
-        auto const delay = ts.departure_ - sp.departure_;
+        auto const delay = ts.departure_ - *sp.departure_;
         max_delay = std::max(max_delay, delay);
-        avg_delay += ts.departure_ - sp.departure_;
+        avg_delay += ts.departure_ - *sp.departure_;
       }
 
-      if (valid(ts.arrival_) && ts.arrival_ < sp.arrival_) {
+      if (valid(ts.arrival_) && ts.arrival_ < *sp.arrival_) {
         ++too_early_count;
-        auto const too_early = sp.arrival_ - ts.arrival_;
+        auto const too_early = *sp.arrival_ - ts.arrival_;
         max_too_early = std::max(max_too_early, too_early);
-        avg_too_early += sp.arrival_ - ts.arrival_;
+        avg_too_early += *sp.arrival_ - ts.arrival_;
       }
 
       ++halt_id;

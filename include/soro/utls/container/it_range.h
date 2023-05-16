@@ -19,6 +19,9 @@ struct it_range {
 };
 
 template <typename Iterator>
+it_range(Iterator begin, Iterator end) -> it_range<Iterator>;
+
+template <typename Iterator>
 constexpr it_range<Iterator> make_range(Iterator begin, Iterator end) noexcept {
   return it_range<Iterator>(begin, end);
 }

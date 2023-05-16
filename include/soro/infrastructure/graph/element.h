@@ -34,7 +34,7 @@ using kilometrage = si::length;
 constexpr auto const INVALID_LINE_ID = std::numeric_limits<line::id>::max();
 
 struct end_element {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   end_element() = default;
   end_element(end_element&&) = default;
   end_element(end_element const&) = delete;
@@ -71,7 +71,7 @@ struct end_element {
 };
 
 struct simple_element {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   simple_element() = default;
   simple_element(simple_element&&) = default;
   simple_element(simple_element const&) = delete;
@@ -116,7 +116,7 @@ struct simple_element {
 };
 
 struct track_element {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   track_element() = default;
   track_element(track_element&&) = default;
   track_element(track_element const&) = delete;
@@ -149,7 +149,7 @@ struct track_element {
 };
 
 struct undirected_track_element {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   undirected_track_element() = default;
   undirected_track_element(undirected_track_element&&) = default;
   undirected_track_element(undirected_track_element const&) = delete;
@@ -190,7 +190,7 @@ struct undirected_track_element {
 };
 
 struct simple_switch {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   simple_switch() = default;
   simple_switch(simple_switch&&) = default;
   simple_switch(simple_switch const&) = delete;
@@ -240,7 +240,7 @@ struct simple_switch {
 
 // used for crosses and crossswitches
 struct cross {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !(defined(SERIALIZE))
   cross() = default;
   cross(cross&&) = default;
   cross(cross const&) = delete;
@@ -303,7 +303,7 @@ struct cross {
 };
 
 struct element {
-#if !(defined(SERIALIZE) || defined(__EMSCRIPTEN__))
+#if !defined(SERIALIZE)
   element() = default;
   element(element&&) = default;
   element(element const&) = delete;
@@ -320,6 +320,8 @@ struct element {
   using member_t =
       soro::variant<end_element, track_element, undirected_track_element,
                     simple_element, simple_switch, cross>;
+
+  static constexpr element_id INVALID = std::numeric_limits<element_id>::max();
 
   template <typename T>
   T& as() {

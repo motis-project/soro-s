@@ -5,6 +5,7 @@
 #include "cista/containers/hash_set.h"
 #include "cista/containers/optional.h"
 #include "cista/containers/variant.h"
+#include "cista/containers/vecvec.h"
 
 #include "soro/utls/container/optional.h"
 #include "soro/utls/function_alias.h"
@@ -65,10 +66,18 @@ using set = data::hash_set<T>;
 template <typename T>
 using vector = data::vector<T>;
 
+template <typename K, typename V>
+using vecvec = data::vecvec<K, V>;
+
+template <typename T>
+using svo_vector = std::basic_string<T>;
+
 template <typename Data, typename Index>
 using fws_multimap = data::fws_multimap<Data, Index>;
 
 using size_t = uint32_t;
+
+using ssize_t = int32_t;
 
 template <typename T, std::size_t Size>
 using array = data::array<T, Size>;
@@ -132,6 +141,9 @@ using set = data::hash_set<T>;
 
 template <typename ValueType>
 using vector = std::vector<ValueType>;
+
+template <typename K, typename V>
+using vecvec = data::vecvec<K, V>;
 
 template <typename Data, typename Index>
 using fws_multimap = data::fws_multimap<Data, Index>;

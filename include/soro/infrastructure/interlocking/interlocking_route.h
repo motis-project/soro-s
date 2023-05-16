@@ -54,6 +54,9 @@ struct interlocking_route {
   node::ptr first_node(infrastructure const& infra) const;
   node::ptr last_node(infrastructure const& infra) const;
 
+  // TODO(julian) element_id vs element_idx ?
+  element::ptr nth_element(element_id, infrastructure const& infra) const;
+
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
 

@@ -86,12 +86,12 @@ void check_train_sequence_points(train const& train,
   }
 
   for (auto const& sp : train.sequence_points_) {
-    CHECK_MESSAGE(valid(sp.departure_),
-                  "Every sequence point needs a valid departure");
+    CHECK_MESSAGE(sp.departure_.has_value(),
+                  "every sequence point needs a valid departure");
 
     if (sp.is_halt()) {
-      CHECK_MESSAGE(valid(sp.arrival_),
-                    "Every halt sequence point needs a valid arrival");
+      CHECK_MESSAGE(sp.arrival_.has_value(),
+                    "every halt sequence point needs a valid arrival");
     }
 
     if (sp.is_halt(sequence_point::type::PASSENGER)) {

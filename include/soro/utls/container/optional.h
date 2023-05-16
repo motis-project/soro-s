@@ -3,26 +3,48 @@
 #include <cassert>
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <utility>
 
 #include "cista/serialization.h"
 
+#include "soro/base/time.h"
+
 namespace soro::utls {
 
 template <typename T>
+  requires cista::is_pointer_v<T>
 constexpr T get_default_invalid() {
-  if constexpr (cista::is_pointer_v<T>) {
-    return T{nullptr};
-  }
-
-  if constexpr (std::is_integral_v<T>) {
-    return std::numeric_limits<T>::max();
-  }
+  return T{nullptr};
 }
 
-template <typename T, T INVALID = get_default_invalid<T>()>
-  requires std::is_integral_v<T> || cista::is_pointer_v<T>
+template <std::integral T>
+constexpr T get_default_invalid() {
+  return std::numeric_limits<T>::max();
+}
+
+template <typename T>
+  requires soro::soro_time<T>
+constexpr T get_default_invalid() {
+  return T::max();
+}
+
+// template <typename T>
+// constexpr T get_default_invalid() {
+//   if constexpr (cista::is_pointer_v<T>) {
+//     return T{nullptr};
+//   }
+//
+//   if constexpr (std::is_integral_v<T>) {
+//     return std::numeric_limits<T>::max();
+//   }
+// }
+
+template <typename T>
+//  requires std::is_integral_v<T> || cista::is_pointer_v<T>
 struct optional {
+  constexpr static T INVALID = get_default_invalid<T>();
+
   optional() noexcept = default;
   optional(std::nullopt_t) {}
   explicit optional(T const val) noexcept : val_{val} {}  // NOLINT
@@ -34,7 +56,7 @@ struct optional {
   optional& operator=(optional&&) noexcept = default;
 
   static_assert(
-      std::is_integral_v<T> || cista::is_pointer_v<T>,
+      std::is_trivially_destructible_v<std::decay_t<T>>,
       "if T would be a more complicated type we'd need to ensure destruction");
   ~optional() = default;
 
@@ -105,22 +127,25 @@ struct optional {
 
   template <typename ThenFunction>
   auto and_then(ThenFunction&& then_function) const noexcept {
+    using return_t =
+        std::remove_cvref_t<std::invoke_result_t<ThenFunction, T const&>>;
+
     if (has_value()) {
       return then_function(value());
     } else {
-      return std::remove_cvref_t<
-          std::invoke_result_t<ThenFunction, T const&>>();
+      return return_t{};
     }
   }
 
   template <typename TransformFunction>
-  std::invoke_result_t<TransformFunction, T&> transform(
-      TransformFunction&& transform_function) const noexcept {
+  auto transform(TransformFunction&& transform_function) const noexcept {
+    using return_t =
+        optional<std::invoke_result_t<TransformFunction, T const&>>;
+
     if (has_value()) {
-      return transform_function(this->value());
+      return return_t{transform_function(this->value())};
     } else {
-      return std::remove_cvref_t<
-          std::invoke_result_t<TransformFunction, T const&>>();
+      return return_t{std::nullopt};
     }
   }
 
@@ -157,19 +182,19 @@ private:
 template <typename T>
 optional(T) -> optional<T>;
 
-template <typename T, T INVALID>
+template <typename T>
   requires std::is_integral_v<T> || std::is_pointer_v<T>
-optional<T, INVALID> make_optional(T&& value) {
-  return optional<T, INVALID>(std::forward<T>(value));
+optional<T> make_optional(T&& value) {
+  return optional<T>(std::forward<T>(value));
 }
 
 template <typename Ctx, typename T, T INVALID>
-inline void serialize(Ctx& context, optional<T, INVALID> const* opt,
+inline void serialize(Ctx& context, optional<T> const* opt,
                       cista::offset_t const offset) {
   using cista::serialize;
 
   // otherwise offsetof is not working
-  static_assert(std::is_standard_layout_v<optional<T, INVALID>>);
+  static_assert(std::is_standard_layout_v<optional<T>>);
 
   serialize(context, &opt->val_,
             offset + static_cast<cista::offset_t>(
@@ -177,13 +202,13 @@ inline void serialize(Ctx& context, optional<T, INVALID> const* opt,
 }
 
 template <typename Ctx, typename T, T INVALID>
-inline void deserialize(Ctx const& context, optional<T, INVALID>* opt) {
+inline void deserialize(Ctx const& context, optional<T>* opt) {
   using cista::deserialize;
   deserialize(context, &opt->val_);
 }
 
 template <typename T, T INVALID>
-cista::hash_t type_hash(optional<T, INVALID> const&, cista::hash_t h,
+cista::hash_t type_hash(optional<T> const&, cista::hash_t h,
                         std::map<cista::hash_t, unsigned>& done) noexcept {
   h = cista::hash_combine(h, cista::hash("soro::utls::optional"));
   h = cista::type_hash(T{}, h, done);

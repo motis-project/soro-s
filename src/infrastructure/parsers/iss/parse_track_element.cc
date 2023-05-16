@@ -87,7 +87,7 @@ speed_limit get_speed_limit(xml_node const& speed_limit_xml,
         speed_limit_xml.child_value("Geschw")));
   }
 
-  if (valid(spl.limit_) && spl.limit_ == si::ZERO<si::speed>) {
+  if (si::valid(spl.limit_) && spl.limit_ == si::ZERO<si::speed>) {
     uLOG(utl::warn) << "Got speed limit with 0 km/h limit.";
   }
 

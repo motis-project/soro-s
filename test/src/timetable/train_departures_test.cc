@@ -8,6 +8,8 @@ namespace soro::test {
 using namespace date;
 using namespace soro::tt;
 
+using opt_t = utls::optional<relative_time>;
+
 std::vector<absolute_time> gather_midnights(std::vector<train> const& trains,
                                             interval const& interval) {
   std::vector<absolute_time> result;
@@ -29,8 +31,8 @@ train test_train1() {
 
   std::string const bits1 = "111111111";
 
-  sequence_point const first_dep1 = {.departure_ = hours{8}};
-  sequence_point const last_arr1 = {.arrival_ = hours{16}};
+  sequence_point const first_dep1 = {.departure_ = opt_t{hours{8}}};
+  sequence_point const last_arr1 = {.arrival_ = opt_t{hours{16}}};
 
   train t1;
   t1.id_ = 1;
@@ -47,8 +49,8 @@ train test_train2() {
 
   std::string const bits2 = "101010101";
 
-  sequence_point const first_dep2 = {.departure_ = hours{8}};
-  sequence_point const last_arr2 = {.arrival_ = hours{16}};
+  sequence_point const first_dep2 = {.departure_ = opt_t{hours{8}}};
+  sequence_point const last_arr2 = {.arrival_ = opt_t{hours{16}}};
 
   train t2;
   t2.id_ = 2;
@@ -65,8 +67,8 @@ train test_train3() {
 
   std::string const bits3 = "000000001";
 
-  sequence_point const first_dep3 = {.departure_ = hours{22}};
-  sequence_point const last_arr3 = {.arrival_ = hours{26}};
+  sequence_point const first_dep3 = {.departure_ = opt_t{hours{22}}};
+  sequence_point const last_arr3 = {.arrival_ = opt_t{hours{26}}};
 
   train t3;
   t3.id_ = 3;
@@ -83,8 +85,8 @@ train test_train4() {
 
   std::string const bits4 = "100000000";
 
-  sequence_point const first_dep4 = {.departure_ = hours{0}};
-  sequence_point const last_arr4 = {.arrival_ = hours{10}};
+  sequence_point const first_dep4 = {.departure_ = opt_t{hours{0}}};
+  sequence_point const last_arr4 = {.arrival_ = opt_t{hours{10}}};
 
   train t4;
   t4.id_ = 4;
@@ -101,8 +103,8 @@ train test_train5() {
 
   std::string const bits5 = "010101010";
 
-  sequence_point const first_dep5 = {.departure_ = hours{8}};
-  sequence_point const last_arr5 = {.arrival_ = hours{16}};
+  sequence_point const first_dep5 = {.departure_ = opt_t{hours{8}}};
+  sequence_point const last_arr5 = {.arrival_ = opt_t{hours{16}}};
 
   train t5;
   t5.id_ = 5;

@@ -11,7 +11,7 @@ TEST_SUITE("optional") {
 
   TEST_CASE("optional simple") {
     using t = std::size_t;
-    optional<t, std::numeric_limits<t>::max()> opt;
+    optional<t> opt;
 
     CHECK(!opt.has_value());
 
@@ -32,7 +32,7 @@ TEST_SUITE("optional") {
   TEST_CASE("make optional") {
     using t = std::size_t;
 
-    auto opt = make_optional<t, std::numeric_limits<t>::max()>(400);
+    auto opt = make_optional<t>(400);
 
     CHECK(opt.has_value());
     CHECK_NE(opt.value(), std::numeric_limits<t>::max());
@@ -45,10 +45,9 @@ TEST_SUITE("optional") {
 
   TEST_CASE("optional value_or") {
     using t = std::size_t;
-    auto const max = std::numeric_limits<t>::max();
 
-    auto const opt = make_optional<t, max>(400);
-    optional<t, max> const empty;
+    auto const opt = make_optional<t>(400);
+    optional<t> const empty;
 
     auto const result1 = opt.value_or(42);
     auto const result2 = empty.value_or(42);
@@ -59,13 +58,12 @@ TEST_SUITE("optional") {
 
   TEST_CASE("optional or_else") {
     using t = std::size_t;
-    auto const max = std::numeric_limits<t>::max();
 
-    auto const opt = make_optional<t, max>(400);
-    optional<t, max> const empty;
+    auto const opt = make_optional<t>(400);
+    optional<t> const empty;
 
-    auto const result1 = opt.or_else([]() { return optional<t, max>{42}; });
-    auto const result2 = empty.or_else([]() { return optional<t, max>{42}; });
+    auto const result1 = opt.or_else([]() { return optional<t>{42}; });
+    auto const result2 = empty.or_else([]() { return optional<t>{42}; });
 
     CHECK(result1.has_value());
     CHECK_EQ(*result1, 400);
@@ -76,15 +74,14 @@ TEST_SUITE("optional") {
 
   TEST_CASE("optional transform") {
     using t = std::size_t;
-    auto const max = std::numeric_limits<t>::max();
 
-    auto const opt = make_optional<t, max>(400);
-    optional<t, max> const empty;
+    auto const opt = make_optional<t>(400);
+    optional<t> const empty;
 
-    auto const result1 = opt.transform(
-        [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
-    auto const result2 = empty.transform(
-        [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
+    auto const result1 =
+        opt.transform([](auto&& o) { return static_cast<int>(o); });
+    auto const result2 =
+        empty.transform([](auto&& o) { return static_cast<int>(o); });
 
     CHECK(result1.has_value());
     CHECK_EQ(*result1, int{400});
@@ -94,15 +91,14 @@ TEST_SUITE("optional") {
 
   TEST_CASE("optional and_then") {
     using t = std::size_t;
-    auto const max = std::numeric_limits<t>::max();
 
-    auto const opt = make_optional<t, max>(400);
-    optional<t, max> const empty;
+    auto const opt = make_optional<t>(400);
+    optional<t> const empty;
 
     auto const result1 = opt.and_then(
-        [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
+        [](auto&& o) { return optional<int>{static_cast<int>(o)}; });
     auto const result2 = empty.and_then(
-        [](auto&& o) { return optional<int, -1>{static_cast<int>(o)}; });
+        [](auto&& o) { return optional<int>{static_cast<int>(o)}; });
 
     CHECK(result1.has_value());
     CHECK_EQ(*result1, int{400});

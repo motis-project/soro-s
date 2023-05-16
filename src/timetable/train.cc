@@ -73,14 +73,14 @@ si::length train::path_length(infrastructure const& infra) const {
 
 relative_time train::first_departure() const {
   auto const result = sequence_points_.front().departure_;
-  utls::sassert(valid(result));
-  return result;
+  utls::sassert(result.has_value(), "first departure has no value");
+  return *result;
 }
 
 relative_time train::last_arrival() const {
   auto const result = sequence_points_.back().arrival_;
-  utls::sassert(valid(result));
-  return result;
+  utls::sassert(result.has_value(), "last arrival has no value");
+  return *result;
 }
 
 absolute_time train::first_absolute_departure() const {

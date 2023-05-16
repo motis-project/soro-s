@@ -34,11 +34,15 @@ struct sequence_point {
     return has_transit_time() || is_halt();
   }
 
-  absolute_time absolute_arrival(
+  soro::optional<absolute_time> absolute_arrival(
+      date::year_month_day departure_day) const noexcept;
+  soro::optional<absolute_time> absolute_departure(
       date::year_month_day departure_day) const noexcept;
 
-  absolute_time absolute_departure(
-      date::year_month_day departure_day) const noexcept;
+  soro::optional<absolute_time> absolute_arrival(
+      absolute_time const midnight) const noexcept;
+  soro::optional<absolute_time> absolute_departure(
+      absolute_time const midnight) const noexcept;
 
   infra::node::optional_idx get_node_idx(
       rs::FreightTrain const freight, infra::infrastructure const& infra) const;
@@ -48,8 +52,8 @@ struct sequence_point {
   type type_{type::TRANSIT};
 
   // relative to departure day of the train at 00:00
-  relative_time arrival_{INVALID<relative_time>};
-  relative_time departure_{INVALID<relative_time>};
+  soro::optional<relative_time> arrival_{std::nullopt};
+  soro::optional<relative_time> departure_{std::nullopt};
   duration2 min_stop_time_{INVALID<duration2>};
 
   infra::station_route::id station_route_{infra::station_route::INVALID};

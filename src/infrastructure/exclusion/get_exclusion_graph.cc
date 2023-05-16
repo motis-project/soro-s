@@ -60,6 +60,8 @@ exclusion_graph get_exclusion_graph(
     g.nodes_[ir_id] = make_exclusion_set(finished_set);
   });
 
+  utls::sassert(false, "implement creation of exclusion data");
+
   return g;
 }
 

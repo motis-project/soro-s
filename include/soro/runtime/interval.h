@@ -49,8 +49,10 @@ struct interval {
   }
 
   relative_time departure() const {
-    utls::sassert(is_halt(), "Asking for departure time on non-halt interval");
-    return (*sequence_point_)->departure_;
+    utls::sassert(is_halt(), "asking for departure time on non-halt interval");
+    utls::sassert((*sequence_point_)->departure_.has_value(),
+                  "no departure time value");
+    return (*(*sequence_point_)->departure_);
   }
 
   si::speed target_speed() const {

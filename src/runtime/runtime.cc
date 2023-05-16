@@ -197,15 +197,17 @@ template <typename EventReachedFn>
 void runtime_calculation(train const& tr, infrastructure const& infra,
                          EventReachedFn const& event_reached,
                          type_set const& allowed_events) {
-  utls::sassert(!tr.break_in_ && !tr.break_out_, "Not supported.");
+  utls::sassert(!tr.break_in_ && !tr.break_out_, "not supported.");
 
   auto const il = get_interval_list(tr, allowed_events, infra);
 
   auto const start_time = tr.first_departure();
   for (auto const& event : il.front().events_) {
     utls::sassert(il.front().is_halt(),
-                  "First event must be the departure halt.");
-    event_reached(tr.sequence_points_.front().departure_, start_time,
+                  "first event must be the departure halt.");
+    utls::sassert(tr.sequence_points_.front().departure_.has_value(),
+                  "first departure halt must have a departure time");
+    event_reached(*tr.sequence_points_.front().departure_, start_time,
                   event.node_->element_);
   }
 

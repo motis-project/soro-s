@@ -5,6 +5,7 @@
 
 #include "pugixml.hpp"
 
+#include "soro/infrastructure/super_section.h"
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
 #include "utl/get_or_create.h"
@@ -1250,6 +1251,8 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
 
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
+
+  //  iss.super_sections_ = get_super_sections(iss.graph_.sections_);
 
   if (options.interlocking_) {
     iss.interlocking_ = get_interlocking(iss);

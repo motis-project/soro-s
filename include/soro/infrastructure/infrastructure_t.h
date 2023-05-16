@@ -9,6 +9,7 @@
 #include "soro/infrastructure/line.h"
 #include "soro/infrastructure/station/station.h"
 #include "soro/infrastructure/station/station_route_graph.h"
+#include "soro/infrastructure/super_section.h"
 #include "soro/rolling_stock/rolling_stock.h"
 
 namespace soro::infra {
@@ -46,6 +47,8 @@ struct infrastructure_t {
 
   interlocking interlocking_{};
   exclusion exclusion_{};
+
+  super_sections super_sections_{};
 
   soro::vector<soro::string> full_station_names_{};
 

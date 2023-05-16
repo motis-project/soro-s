@@ -12,6 +12,7 @@
 
 #include "soro/base/error.h"
 
+#include "soro/utls/narrow.h"
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/parse_int.h"
 #include "soro/utls/sassert.h"
@@ -254,12 +255,12 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
       return std::unexpected(error::kss::STATION_ROUTE_NOT_FOUND);
     }
 
-    if (auto arr = point_xml.child("arrival"); arr) {
-      st.arrival_ = parse_time_offset(arr);
+    if (auto const arr = point_xml.child("arrival"); arr) {
+      st.arrival_ = soro::optional<relative_time>{parse_time_offset(arr)};
     }
 
-    if (auto dep = point_xml.child("departure"); dep) {
-      st.departure_ = parse_time_offset(dep);
+    if (auto const dep = point_xml.child("departure"); dep) {
+      st.departure_ = soro::optional<relative_time>{parse_time_offset(dep)};
     }
 
     auto const stop_mode_xml = point_xml.child("stopMode");
@@ -275,11 +276,13 @@ utls::result<stop_sequence> parse_sequence(xml_node const sequence_xml,
       st.min_stop_time_ = duration2::zero();
     }
 
-    if (st.is_transit() && valid(st.departure_)) {
-      utls::sassert(route_it->second->runtime_checkpoint_.has_value(),
-                    "Found departure time value, but not valid runtime "
-                    "checkpoint in station route");
-    }
+    utls::sasserts([&] {
+      if (st.is_transit() && st.departure_.has_value()) {
+        utls::sassert(route_it->second->runtime_checkpoint_.has_value(),
+                      "found departure time value, but not valid runtime "
+                      "checkpoint in station route in transit sequence point");
+      }
+    });
 
     // ignore additional stops for now
     /*
@@ -498,9 +501,75 @@ utls::result<soro::vector<train>> parse_timetable_file(
   return result;
 }
 
+struct unique_key {
+  CISTA_COMPARABLE()
+  absolute_time time_;
+  station_route::id station_route_;
+};
+
+void duplicate_finder(soro::vector<train> const& trains) {
+  utl::scoped_timer const timer("find duplicates");
+
+  //  auto const& t = trains.front();
+  //  t.sequence_points_.front().
+
+  //  auto const cmp = [](unique_key const& k1, unique_key const& k2) {
+  //    return k1.time_ == k2.time_ ? k1.station_route_ < k2.station_route_
+  //                                : k1.time_ < k2.time_;
+  //    //
+  //    //    if (k1.time_ < k2.time_) {
+  //    //      return true;
+  //    //    }
+  //    //
+  //    //    if (k1.time_ > k2.time_) {
+  //    //      return false;
+  //    //    }
+  //    //
+  //    //    return k1.station_route_ < k2.station_route_;
+  //  };
+
+  std::map<unique_key, soro::vector<train::id>> duplicates;
+
+  for (auto const& train : trains) {
+    for (auto const midnight : train.departures()) {
+
+      for (auto const& sp : train.sequence_points_) {
+
+        if (auto const arr = sp.absolute_arrival(midnight); arr.has_value()) {
+          unique_key const key{.time_ = *arr,
+                               .station_route_ = sp.station_route_};
+          duplicates[key].emplace_back(train.id_);
+        }
+
+        if (auto const dep = sp.absolute_departure(midnight); dep.has_value()) {
+          unique_key const key{.time_ = *dep,
+                               .station_route_ = sp.station_route_};
+          duplicates[key].emplace_back(train.id_);
+        }
+      }
+    }
+  }
+
+  std::set<std::pair<train::id, train::id>> unique_duplicates;
+
+  soro::size_t dup_count = 0;
+  for (auto const& [_, dups] : duplicates) {
+    if (dups.size() == 2 && dups[0] != dups[1]) {
+      ++dup_count;
+      unique_duplicates.emplace(dups[0], dups[1]);
+    }
+  }
+
+  for (auto const& unique_dup : unique_duplicates) {
+    std::cout << "unique: " << unique_dup.first << " " << unique_dup.second
+              << "\n";
+  }
+  std::cout << "total dup pairs: " << dup_count << "\n";
+}
+
 void set_ids(soro::vector<train>& trains) {
   for (auto [id, train] : utl::enumerate(trains)) {
-    train.id_ = static_cast<train::id>(id);
+    train.id_ = utls::narrow<train::id>(id);
   }
 }
 
@@ -586,6 +655,8 @@ utls::result<base_timetable> parse_kss_timetable(
   }
 
   set_ids(bt.trains_);
+
+  duplicate_finder(bt.trains_);
 
   bt.interval_ = get_interval(bt.trains_);
 

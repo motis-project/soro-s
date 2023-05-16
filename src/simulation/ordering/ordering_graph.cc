@@ -218,6 +218,15 @@ std::span<const ordering_node> ordering_graph::trip_nodes(
   return {&nodes_[it->second.first], it->second.second - it->second.first};
 }
 
+ordering_node::id ordering_node::get_id(
+    soro::simulation::ordering_graph const& og) const {
+  utls::expect(!og.nodes_.empty(), "ordering graph has no nodes");
+  utls::expect(this >= og.nodes_.data(), "node is not in ordering graph");
+  utls::expect(this <= og.nodes_.data() + og.nodes_.size() - 1);
+
+  return utls::narrow<id>(this - og.nodes_.data());
+}
+
 ordering_node const& ordering_node::next(ordering_graph const& og) const {
   utls::sasserts([this, &og] {
     utls::sassert(!out_.empty(), "no next node");
