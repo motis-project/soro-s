@@ -20,6 +20,8 @@ struct section {
   using id = uint32_t;
   using ids = soro::vector<id>;
 
+  static constexpr id INVALID = std::numeric_limits<id>::max();
+
   template <direction Dir, skip Skip = skip::Yes>
   utls::generator<element::ptr> iterate() const {
     auto const& elements =
@@ -76,6 +78,10 @@ struct section {
 
   element::ptr first_falling() const { return falling_order_.front(); }
   element::ptr last_falling() const { return falling_order_.back(); }
+
+  element::ptr opposite_end(element::ptr const from) const {
+    return from == first_rising() ? last_rising() : first_rising();
+  }
 
   soro::vector<element::ptr> rising_order_;
   soro::vector<element::ptr> falling_order_;

@@ -16,6 +16,7 @@ struct simulation_graph {
   };
 
   using vecvec_idx = uint32_t;
+  using ordering_group = std::span<node>;
 
   simulation_graph() = default;
   simulation_graph(infra::infrastructure const& infra,
@@ -30,7 +31,7 @@ struct simulation_graph {
   soro::vecvec<vecvec_idx, node::id> out_;
 
   // ordering graph node id indexed
-  soro::vector<std::span<node>> ordering_groups_;
+  soro::vector<ordering_group> ordering_groups_;
 
   // span into nodes_, indexed with train id
   soro::vector<std::span<node>> trips_;

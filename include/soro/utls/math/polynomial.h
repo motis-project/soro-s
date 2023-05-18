@@ -52,6 +52,8 @@ struct polynomial<> {
 
 template <typename... Factors>
 struct polynomial {
+  auto operator<=>(polynomial const&) const = default;
+
   template <typename InputT>
   using result_t =
       decltype(std::declval<polynomial<Factors...>>()(std::declval<InputT>()));

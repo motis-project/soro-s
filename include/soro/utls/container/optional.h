@@ -60,6 +60,8 @@ struct optional {
       "if T would be a more complicated type we'd need to ensure destruction");
   ~optional() = default;
 
+  auto operator<=>(optional const&) const = default;
+
   T const* operator->() const noexcept {
     assert(has_value());
     return &val_;

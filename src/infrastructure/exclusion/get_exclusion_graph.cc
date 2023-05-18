@@ -1,6 +1,7 @@
 #include "soro/infrastructure/exclusion/get_exclusion_graph.h"
 
 #include "utl/concat.h"
+#include "utl/enumerate.h"
 #include "utl/erase_duplicates.h"
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
@@ -10,6 +11,41 @@
 #include "soro/utls/std_wrapper/set_difference.h"
 
 namespace soro::infra {
+
+utls::optional<element_id> get_route_eotd(interlocking_route const& from,
+                                          interlocking_route const& to) {
+  utls::sassert(false, "not implemented");
+
+  std::ignore = from;
+  std::ignore = to;
+  return {};
+}
+
+soro::vector<utls::offset_container<soro::vector<exclusion_data>>>
+get_exclusion_data(soro::vector<exclusion_set> const& nodes,
+                   infrastructure const& infra) {
+
+  soro::vector<utls::offset_container<soro::vector<exclusion_data>>> result;
+  result.reserve(infra->interlocking_.routes_.size());
+
+  for (auto const& [from_id, set] : utl::enumerate(nodes)) {
+    auto const& from_ir = infra->interlocking_.routes_[from_id];
+
+    soro::vector<exclusion_data> data;
+
+    for (auto const to_id : set) {
+      auto const& to_ir = infra->interlocking_.routes_[to_id];
+
+      data.emplace_back(get_route_eotd(from_ir, to_ir));
+    }
+
+    //    result.emplace_back(std::move(exclusion_data));
+  }
+
+  utls::sassert(false, "implement creation of exclusion data");
+
+  return result;
+}
 
 exclusion_graph get_exclusion_graph(
     soro::vector<element::ids> const& closed_exclusion_elements,
@@ -60,7 +96,7 @@ exclusion_graph get_exclusion_graph(
     g.nodes_[ir_id] = make_exclusion_set(finished_set);
   });
 
-  utls::sassert(false, "implement creation of exclusion data");
+  g.data_ = get_exclusion_data(g.nodes_, infra);
 
   return g;
 }

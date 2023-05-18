@@ -6,6 +6,7 @@
 
 #include "utl/concat.h"
 #include "utl/enumerate.h"
+#include "utl/erase_if.h"
 #include "utl/logging.h"
 #include "utl/parallel_for.h"
 #include "utl/timer.h"
@@ -444,9 +445,174 @@ utls::result<train> parse_construction_train(
   return t;
 }
 
-utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
-                                                  infrastructure const& infra) {
-  soro::vector<train> result;
+void print_mode_stats(std::map<connection::mode, size_t> const& stats) {
+  // print mode names and occurences
+  for (auto const& [mode, count] : stats) {
+    switch (mode) {
+      case connection::mode::invalid: std::cout << "invalid: "; break;
+      case connection::mode::continuation: std::cout << "continuation: "; break;
+      case connection::mode::continuation_with_break:
+        std::cout << "continuation_with_break: ";
+        break;
+      case connection::mode::uturn: std::cout << "uturn: "; break;
+      case connection::mode::uturn_with_break:
+        std::cout << "uturn_with_break: ";
+        break;
+      case connection::mode::through: std::cout << "through: "; break;
+      case connection::mode::through_with_break:
+        std::cout << "through_with_break: ";
+        break;
+      case connection::mode::circular: std::cout << "circular: "; break;
+      case connection::mode::circular_with_break:
+        std::cout << "circular_with_break: ";
+        break;
+      case connection::mode::park: std::cout << "park: "; break;
+      case connection::mode::connection: std::cout << "connection: "; break;
+      case connection::mode::trim: std::cout << "trim: "; break;
+      case connection::mode::tact: std::cout << "tact: "; break;
+      case connection::mode::alternative: std::cout << "alternative: "; break;
+      case connection::mode::exclusion: std::cout << "exclusion: "; break;
+    }
+
+    std::cout << count << '\n';
+  }
+}
+
+connection::mode parse_connection_mode(xml_node const connection_mode_xml) {
+  switch (str_hash(connection_mode_xml.child_value())) {
+    case str_hash("Direkte Fortsetzung"): return connection::mode::continuation;
+    case str_hash("Nicht-direkte Fortsetzung"):
+      return connection::mode::continuation_with_break;
+    case str_hash("Direktes Kopfmachen"): return connection::mode::uturn;
+    case str_hash("Nicht-direktes Kopfmachen"):
+      return connection::mode::uturn_with_break;
+    case str_hash("Direkte Durchbindung"): return connection::mode::through;
+    case str_hash("Nicht-direkte Durchbindung"):
+      return connection::mode::through_with_break;
+    case str_hash("Direkter Umlauf"): return connection::mode::circular;
+    case str_hash("Nicht-direkter Umlauf"):
+      return connection::mode::circular_with_break;
+    case str_hash("Abstellung"): return connection::mode::park;
+    case str_hash("Anschluss"): return connection::mode::connection;
+    case str_hash("Trimmung"): return connection::mode::trim;
+    case str_hash("Takt"): return connection::mode::tact;
+    case str_hash("Alternative"): return connection::mode::alternative;
+    case str_hash("Ausschluss"): return connection::mode::exclusion;
+
+    default: utls::sassert(false, "unknown connection mode");
+  }
+
+  std::unreachable();
+  throw utl::fail("not reachable");
+}
+
+utls::result<station::ptr> ds100_to_station(std::string_view const ds100,
+                                            infrastructure const& infra) {
+  auto const station_it = infra->ds100_to_station_.find(ds100);
+  if (station_it == std::end(infra->ds100_to_station_)) {
+    return std::unexpected(error::kss::STATION_NOT_FOUND);
+  }
+
+  return station_it->second;
+}
+
+static std::map<connection::mode, size_t> mode_stats;
+
+utls::result<connection> parse_connection(xml_node const connection_xml,
+                                          infrastructure const& infra) {
+  connection c;
+
+  c.mode_ = parse_connection_mode(connection_xml.child("connectionMode"));
+
+  mode_stats[c.mode_]++;
+
+  c.first_train_number_ =
+      parse_train_number(connection_xml.child("firstTrain"));
+  c.second_train_number_ =
+      parse_train_number(connection_xml.child("secondTrain"));
+
+  auto const first_station =
+      ds100_to_station(connection_xml.child_value("firstServicePoint"), infra);
+  if (!first_station) return utls::propagate(first_station);
+  c.first_station_ = (*first_station)->id_;
+
+  // parse second station, if it is present
+  if (auto second = connection_xml.child("secondServicePoint"); second) {
+    auto const second_station = ds100_to_station(second.child_value(), infra);
+    if (!second_station) return utls::propagate(second_station);
+    c.second_station_ = soro::optional<station::id>{(*second_station)->id_};
+  }
+
+  if (auto time_xml = connection_xml.child("timeValue"); time_xml) {
+    c.time_ = soro::optional<duration2>{parse_duration(time_xml.child_value())};
+  }
+
+  return c;
+}
+
+soro::vector<connection> parse_connections(xml_node const fine_construction_xml,
+                                           infrastructure const& infra) {
+  soro::vector<connection> result;
+
+  for (auto const conn_xml : fine_construction_xml.children("connection")) {
+    if (!starts_with(conn_xml.child_value("status"), "Erf")) {
+      continue;
+    }
+
+    auto const connection = parse_connection(conn_xml, infra);
+    result.emplace_back(std::move(*connection));
+  }
+
+  return result;
+}
+
+void connect_continuation(soro::vector<train>& trains,
+                          connection const& connection) {
+  utls::expect(connection.mode_ == connection::mode::continuation ||
+               connection.mode_ == connection::mode::continuation_with_break);
+
+  auto const first_train = utls::find_if(trains, [&](auto&& t) {
+    return t.number_ == connection.first_train_number_;
+  });
+  auto const second_train = utls::find_if(trains, [&](auto&& t) {
+    return t.number_ == connection.second_train_number_;
+  });
+
+  utls::sassert(first_train != std::end(trains), "first train not found");
+  utls::sassert(second_train != std::end(trains), "second train not found");
+
+  utls::sassert(first_train->physics_ == second_train->physics_,
+                "trains have different physics");
+  utls::sassert(first_train->path_.back() == second_train->path_.front(),
+                "trains are not connected");
+  utls::sassert(first_train->sequence_points_.back() ==
+                    second_train->sequence_points_.front(),
+                "trains are not connected");
+  utls::sassert(first_train->service_days_ == second_train->service_days_,
+                "trains have different service days");
+}
+
+void connect_trains(soro::vector<train>& trains,
+                    soro::vector<connection> const& connections) {
+
+  for (auto const& connection : connections) {
+    switch (connection.mode_) {
+      case connection::mode::continuation:
+        connect_continuation(trains, connection);
+        break;
+      default: break;
+    }
+  }
+}
+
+struct parsed_kss_train {
+  soro::vector<train> trains_;
+  soro::vector<connection> connections_;
+};
+
+utls::result<parsed_kss_train> parse_kss_train(xml_node const train_xml,
+                                               infrastructure const& infra) {
+  parsed_kss_train result;
 
   // don't parse worked on trains
   auto const train_status = train_xml.attribute("trainStatus").value();
@@ -454,8 +620,10 @@ utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
     return std::unexpected(error::kss::WORKED_ON_TRAIN);
   }
 
+  auto const fine_construction_xml = train_xml.child("fineConstruction");
+
   for (auto const construction_train_xml :
-       train_xml.child("fineConstruction").children("constructionTrain")) {
+       fine_construction_xml.children("constructionTrain")) {
 
     auto const train = parse_construction_train(construction_train_xml, infra);
 
@@ -463,16 +631,23 @@ utls::result<soro::vector<train>> parse_kss_train(xml_node const train_xml,
       return utls::propagate(train);
     }
 
-    result.emplace_back(*train);
+    result.trains_.emplace_back(*train);
   }
+
+  result.connections_ = parse_connections(fine_construction_xml, infra);
 
   return result;
 }
 
-utls::result<soro::vector<train>> parse_timetable_file(
+struct timetable_file_parse_result {
+  soro::vector<train> trains_;
+  soro::vector<connection> connections_;
+};
+
+timetable_file_parse_result parse_timetable_file(
     std::filesystem::path const& fp, infrastructure const& infra,
     error::stats& stats) {
-  soro::vector<train> result;
+  timetable_file_parse_result result;
 
   auto const loaded_file = utls::load_file(fp);
 
@@ -488,14 +663,15 @@ utls::result<soro::vector<train>> parse_timetable_file(
       file_xml.child("KSS").child("railml").child("timetable");
 
   for (auto const train_xml : timetable_xml.children("train")) {
-    auto const trains = parse_kss_train(train_xml, infra);
+    auto const parsed_kss_train = parse_kss_train(train_xml, infra);
 
-    if (!trains) {
-      stats.count(trains);
+    if (!parsed_kss_train) {
+      stats.count(parsed_kss_train);
       continue;
     }
 
-    utl::concat(result, *trains);
+    utl::concat(result.trains_, parsed_kss_train->trains_);
+    utl::concat(result.connections_, parsed_kss_train->connections_);
   }
 
   return result;
@@ -507,8 +683,40 @@ struct unique_key {
   station_route::id station_route_;
 };
 
-void duplicate_finder(soro::vector<train> const& trains) {
+struct sr_usage {
+  CISTA_COMPARABLE();
+
+  absolute_time start_;
+  train::id train_;
+};
+
+void duplicate_finder(soro::vector<train> const& trains,
+                      infrastructure const& infra) {
   utl::scoped_timer const timer("find duplicates");
+
+  std::vector<std::vector<sr_usage>> sr_usages(infra->station_routes_.size());
+
+  for (auto const& train : trains) {
+    for (auto const midnight : train.departures()) {
+      for (auto const& sp : train.sequence_points_) {
+
+        if (auto const arr = sp.absolute_arrival(midnight); arr.has_value()) {
+          sr_usages[sp.station_route_].emplace_back(sr_usage{*arr, train.id_});
+        }
+
+        //        if (auto const dep = sp.absolute_departure(midnight);
+        //        dep.has_value()) {
+        //          unique_key const key{.time_ = *dep,
+        //                               .station_route_ = sp.station_route_};
+        //          duplicates[key].emplace_back(train.id_);
+        //        }
+      }
+    }
+  }
+
+  for (auto& v : sr_usages) {
+    std::sort(std::begin(v), std::end(v));
+  }
 
   //  auto const& t = trains.front();
   //  t.sequence_points_.front().
@@ -612,6 +820,78 @@ interval get_interval(soro::vector<train> const& trains) {
   return result;
 }
 
+std::map<train::number, std::vector<train::id>> get_train_number_to_ids(
+    soro::vector<train> const& trains) {
+  std::map<train::number, std::vector<train::id>> result;
+
+  for (auto const& train : trains) {
+    result[train.number_].emplace_back(train.id_);
+  }
+
+  return result;
+}
+
+utls::result<train::id> resolve_train_number(
+    train::number const& number, soro::vector<train> const& trains,
+    std::map<train::number, std::vector<train::id>> candidates) {
+
+  std::ignore = trains;
+
+  auto const& candidate_ids = candidates[number];
+
+  //  utls::sassert(candidate_ids.size() == 1);
+
+  if (candidate_ids.size() == 1) {
+    return candidate_ids.front();
+  }
+
+  if (candidate_ids.empty()) {
+    return utls::unexpected(error::kss::TRAIN_NUMBER_NOT_FOUND);
+  }
+
+  if (candidate_ids.size() > 1) {
+    return utls::unexpected(error::kss::TRAIN_NUMBER_AMBIGUOUS);
+  }
+
+  std::unreachable();
+}
+
+void resolve_connections(soro::vector<connection>& connections,
+                         soro::vector<train> const& trains,
+                         error::stats& stats) {
+
+  auto const train_number_to_ids = get_train_number_to_ids(trains);
+
+  for (auto& conn : connections) {
+    auto const first_id = resolve_train_number(conn.first_train_number_, trains,
+                                               train_number_to_ids);
+    if (!first_id) {
+      stats.count(first_id);
+      continue;
+    }
+
+    conn.first_train_ = *first_id;
+
+    auto const second_id = resolve_train_number(conn.second_train_number_,
+                                                trains, train_number_to_ids);
+    if (!second_id) {
+      stats.count(second_id);
+      continue;
+    }
+
+    conn.first_train_ = *second_id;
+  }
+
+  uLOG(utl::info) << "total connections: " << connections.size();
+
+  utl::erase_if(connections, [](auto const& conn) {
+    return conn.first_train_ == train::INVALID ||
+           conn.second_train_ == train::INVALID;
+  });
+
+  uLOG(utl::info) << "resolved connections: " << connections.size();
+}
+
 utls::result<base_timetable> parse_kss_timetable(
     timetable_options const& opts, infra::infrastructure const& infra) {
   auto const required_version = get_required_infra_version(opts);
@@ -621,14 +901,15 @@ utls::result<base_timetable> parse_kss_timetable(
   }
 
   utl::scoped_timer const timetable_timer("parsing kss timetable");
-  error::stats stats("parsing kss timetable");
 
   base_timetable bt;
   bt.source_ = opts.timetable_path_.filename().string();
 
+  error::stats stats("parsing kss timetable");
+
   struct work_item {
     fs::path timetable_file_;
-    utls::result<soro::vector<train>> result_;
+    timetable_file_parse_result result_;
   };
 
   std::vector<work_item> work_todo;
@@ -647,22 +928,20 @@ utls::result<base_timetable> parse_kss_timetable(
   });
 
   for (auto const& work_item : work_todo) {
-    if (!work_item.result_) {
-      return utls::propagate(work_item.result_);
-    }
-
-    utl::concat(bt.trains_, *work_item.result_);
+    utl::concat(bt.trains_, work_item.result_.trains_);
+    utl::concat(bt.connections_, work_item.result_.connections_);
   }
 
   set_ids(bt.trains_);
+  resolve_connections(bt.connections_, bt.trains_, stats);
 
-  duplicate_finder(bt.trains_);
+  uLOG(utl::info) << "total trains successfully parsed: " << bt.trains_.size();
+  stats.report();
+
+  //  duplicate_finder(bt.trains_);
+  print_mode_stats(mode_stats);
 
   bt.interval_ = get_interval(bt.trains_);
-
-  uLOG(utl::info) << "total trains runs successfully parsed: "
-                  << bt.trains_.size();
-  stats.report();
 
   return bt;
 }

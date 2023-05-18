@@ -1252,7 +1252,7 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
 
-  //  iss.super_sections_ = get_super_sections(iss.graph_.sections_);
+  iss.super_sections_ = get_super_sections(iss.graph_);
 
   if (options.interlocking_) {
     iss.interlocking_ = get_interlocking(iss);

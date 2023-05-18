@@ -35,6 +35,10 @@ std::string kss_error_category::message(int ev) const {
       return "break out not supported";
     case soro::error::kss::INFRASTRUCTURE_VERSION_MISMATCH:
       return "infrastructure version mismatch";
+    case soro::error::kss::TRAIN_NUMBER_NOT_FOUND:
+      return "train number not found";
+    case soro::error::kss::TRAIN_NUMBER_AMBIGUOUS:
+      return "train number ambiguous";
   }
 
   return "not reachable";

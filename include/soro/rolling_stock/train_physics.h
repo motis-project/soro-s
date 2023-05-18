@@ -32,6 +32,8 @@ struct train_physics {
 
   rs::FreightTrain freight() const;
 
+  bool operator==(train_physics const&) const = default;
+
 #if !defined(SERIALIZE)
   // if we don't need to serialize these members are private
   // since we do not want users to access them directly,

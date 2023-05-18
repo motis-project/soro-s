@@ -109,7 +109,7 @@ TEST_SUITE("ordering graph") {
     opts.layout_ = false;
 
     infrastructure const infra(opts);
-    timetable const tt(tt_opts, infra);
+    //    timetable const tt(tt_opts, infra);
 
     //    interval const inter{.start_ = rep_to_absolute_time(1636786800),
     //                         .end_ = rep_to_absolute_time(1636786800) +

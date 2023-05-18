@@ -23,6 +23,8 @@ struct sequence_point {
 
   enum struct type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
 
+  auto operator<=>(sequence_point const&) const = default;
+
   bool is_halt() const noexcept;
   bool is_halt(type const t) const noexcept;
 

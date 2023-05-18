@@ -20,6 +20,8 @@ template <typename Polynomial, typename InputType>
 struct piece {
   using input_t = InputType;
   using result_t = typename Polynomial::template result_t<InputType>;
+ 
+  auto operator<=>(piece const&) const = default;
 
   auto operator()(InputType const x) const { return piece_(x); }
 
@@ -46,6 +48,7 @@ inline bool is_continuous(Pieces const& pieces) {
 
 template <typename PieceType>
 struct piecewise_function {
+  auto operator<=>(piecewise_function const&) const = default;
 
   template <typename InputType>
   auto operator()(InputType const x) const {

@@ -39,6 +39,8 @@ using resistance_curve_t =
                            rolling_resistance_t>;
 
 struct traction_vehicle {
+  bool operator==(traction_vehicle const&) const = default;
+
   soro::string name_;
 
   si::weight weight_{si::INVALID<si::weight>};

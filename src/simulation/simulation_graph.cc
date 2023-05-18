@@ -20,14 +20,11 @@ simulation_graph::node::id simulation_graph::node::get_id(
 }
 
 simulation_graph::node::id find_element_in_ordering_group(
-    element::ptr const e,
-    std::span<simulation_graph::node> const ordering_group,
-    simulation_graph const& sg, infrastructure const& infra) {
+    element_id const e, simulation_graph::ordering_group const ordering_group,
+    simulation_graph const& sg) {
 
-  auto const it = utls::find_if(ordering_group, [&](auto&& node) {
-    auto const& element = infra->graph_.elements_[node.element_id_];
-    return element->id() == e->id();
-  });
+  auto const it = utls::find_if(
+      ordering_group, [&](auto&& node) { return node.element_id_ == e; });
 
   utls::sassert(it != std::end(ordering_group));
 
@@ -77,88 +74,65 @@ void construct_nodes(simulation_graph* sg, infrastructure const& infra,
       }
       soro::size_t const end = sg->nodes_.size();
 
-      sg->ordering_groups_.emplace_back(std::span{
-          std::begin(sg->nodes_) + start, std::begin(sg->nodes_) + end});
+      sg->ordering_groups_.emplace_back(std::begin(sg->nodes_) + start,
+                                        std::begin(sg->nodes_) + end);
     }
 
     soro::size_t const trip_end = sg->nodes_.size();
-    sg->trips_.emplace_back(std::span{std::begin(sg->nodes_) + trip_start,
-                                      std::begin(sg->nodes_) + trip_end});
+    sg->trips_.emplace_back(std::begin(sg->nodes_) + trip_start,
+                            std::begin(sg->nodes_) + trip_end);
   }
 }
 
-void construct_edges(simulation_graph*, infrastructure const&, timetable const&,
-                     ordering_graph const&) {
+void construct_edges(simulation_graph* sg, infrastructure const& infra,
+                     timetable const& tt, ordering_graph const& og) {
 
-  //  // TODO(julian) don't iterate over a map, use a vector instead
-  //  // we don't need the trips here anyways
-  //  for (auto const& [trip, trip_nodes] : og.trip_to_nodes_) {
-  //    utls::it_range const node_range{std::begin(og.nodes_) +
-  //    trip_nodes.first,
-  //                                    std::begin(og.nodes_) +
-  //                                    trip_nodes.second};
-  //
-  //    for (auto const [from, to] : utl::pairwise(node_range)) {
-  //
-  //      //
-  //      //          v---- in
-  //      // from -> to
-  //
-  //      for (auto const in : to.in_) {
-  //        if (from.id_ == in) {
-  //          continue;
-  //        }
-  //
-  //        auto const& in_node = og.nodes_[in];
-  //
-  //        auto const excl = exclusion_graph.nodes_[in_node.ir_id_][to.ir_id_];
-  //
-  //        if (excl.node_offset_.has_value()) {
-  //          auto const& in_ir = infra->interlocking_.routes_[in_node.ir_id_];
-  //          auto const element = in_ir.nth_element(*excl.node_offset_, infra);
-  //
-  //          find_element_in_interlocking_group(element, sg, infra);
-  //          auto const from_node = find_element_in_sim_node(infra_node, );
-  //
-  //          // add from -> to
-  //
-  //        } else {
-  //
-  //          auto const after_in = in_node.next(og);
-  //          auto const from_node = find_signal_eotd_in_ordering_group(
-  //              sg->ordering_groups_[after_in.id_], sg, infra);
-  //
-  //          // add normal edge
-  //        }
-  //      }
-  //    }
-  //  }
-  //
-  //  // generate edges
-  //  for (auto const& train : sg.trains_) {
-  //
-  //    for (auto const& ir_group : train.interlocking_groups_) {
-  //      for (auto const& node_id : ir_group.nodes_) {
-  //
-  //        auto const& node = infra->graph_.nodes_[sg.nodes_[node_id]];
-  //        auto const& element = node->element_;
-  //
-  //        type_set in_types = {type::MAIN_SIGNAL, type::APPROACH_SIGNAL};
-  //
-  //        switch (element->type()) {
-  //          case type::MAIN_SIGNAL:
-  //          case type::APPROACH_SIGNAL:
-  //          case type::HALT: break;
-  //
-  //          default:
-  //        }
-  //
-  //        if (in_types.contains(element->type())) {
-  //          // needs an in edge
-  //        }
-  //      }
-  //    }
-  //  }
+  std::ignore = sg;
+  std::ignore = infra;
+  std::ignore = tt;
+  std::ignore = og;
+
+  // TODO(julian) don't iterate over a map, use a vector instead
+  // we don't need the trips here anyways
+  for (auto const& [trip, trip_nodes] : og.trip_to_nodes_) {
+    utls::it_range const node_range{std::begin(og.nodes_) + trip_nodes.first,
+                                    std::begin(og.nodes_) + trip_nodes.second};
+
+    for (auto const [from, to] : utl::pairwise(node_range)) {
+      std::vector<simulation_graph::node::id> in_edges;
+
+      //
+      //          v---- in
+      // from -> to
+
+      for (auto const in : to.in_) {
+        if (from.id_ == in) {
+          continue;
+        }
+
+        auto const& in_node = og.nodes_[in];
+
+        auto const& ex = infra->exclusion_.exclusion_graph_
+                             .data_[from.ir_id_][in_node.ir_id_];
+
+        if (ex.route_eotd_.has_value()) {
+          auto const from_node = find_element_in_ordering_group(
+              *ex.route_eotd_, sg->ordering_groups_[in], *sg);
+
+          in_edges.emplace_back(from_node);
+        } else {
+
+          auto const after_in = in_node.next(og);
+          auto const from_node = find_signal_eotd_in_ordering_group(
+              sg->ordering_groups_[after_in.id_], *sg, infra);
+
+          in_edges.emplace_back(from_node);
+        }
+      }
+
+      sg->in_.emplace_back(in_edges);
+    }
+  }
 }
 
 simulation_graph::simulation_graph(infrastructure const& infra,
