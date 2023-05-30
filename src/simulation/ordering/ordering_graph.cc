@@ -180,6 +180,22 @@ ordering_graph::ordering_graph(infra::infrastructure const& infra,
     generate_route_orderings(train);
   }
 
+  // generate next_ and prev_ lookups
+  next_.resize(nodes_.size());
+  prev_.resize(nodes_.size());
+  for (auto& n : nodes_) {
+    utls::sassert(n.out_.size() <= 1, "ordering node has more than one out");
+    utls::sassert(n.in_.size() <= 1, "ordering node has more than one in");
+
+    next_[n.id_] = n.out_.empty()
+                       ? soro::optional<ordering_node::id>{std::nullopt}
+                       : soro::optional<ordering_node::id>{n.out_.front()};
+
+    prev_[n.id_] = n.in_.empty()
+                       ? soro::optional<ordering_node::id>{std::nullopt}
+                       : soro::optional<ordering_node::id>{n.in_.front()};
+  }
+
   utl::parallel_for(orderings, [](auto&& usage_order) {
     utls::sort(usage_order, [](auto&& usage1, auto&& usage2) {
       return usage1.from_ < usage2.from_;
@@ -227,14 +243,13 @@ ordering_node::id ordering_node::get_id(
   return utls::narrow<id>(this - og.nodes_.data());
 }
 
-ordering_node const& ordering_node::next(ordering_graph const& og) const {
-  utls::sasserts([this, &og] {
-    utls::sassert(!out_.empty(), "no next node");
-    auto const& next = og.nodes_[out_.front()];
-    utls::sassert(next.train_id_ == train_id_, "next node not same train");
-  });
+bool ordering_node::has_next(ordering_graph const& og) const {
+  return og.next_[id_].has_value();
+}
 
-  return og.nodes_[out_.front()];
+ordering_node const& ordering_node::next(ordering_graph const& og) const {
+  utls::sassert(has_next(og), "no next node");
+  return og.nodes_[og.next_[id_].value()];
 }
 
 }  // namespace soro::simulation

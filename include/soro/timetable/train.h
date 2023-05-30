@@ -130,6 +130,8 @@ struct train {
 
   bitfield service_days_;
   rs::train_physics physics_;
+
+  soro::map<infra::element_id, sequence_point::ptr> halt_to_sequence_point_;
 };
 
 }  // namespace soro::tt

@@ -16,6 +16,30 @@ bool interlocking_route::ends_on_section(infrastructure const& infra) const {
   return this->last_node(infra)->element_->is_section_element();
 }
 
+critical_section::id interlocking_route::get_start_critical_section(
+    infrastructure const& infra) const {
+  auto const& bucket =
+      infra->critical_sections_
+          .element_to_critical_sections_[first_element(infra)->id()];
+
+  utls::sassert(bucket.size() == 1,
+                "element must be in exactly one critical section");
+
+  return bucket.front();
+}
+
+critical_section::id interlocking_route::get_end_critical_section(
+    infrastructure const& infra) const {
+  auto const& bucket =
+      infra->critical_sections_
+          .element_to_critical_sections_[last_element(infra)->id()];
+
+  utls::sassert(bucket.size() == 1,
+                "element must be in exactly one critical section");
+
+  return bucket.front();
+}
+
 bool interlocking_route::valid_end(type const t) {
   return interlocking_route::valid_ends().contains(t);
 }
@@ -96,6 +120,16 @@ node::ptr interlocking_route::first_node(infrastructure const& infra) const {
 
 node::ptr interlocking_route::last_node(infrastructure const& infra) const {
   return last_sr(infra)->nodes(end_offset_ - 1);
+}
+
+element::ptr interlocking_route::first_element(
+    infrastructure const& infra) const {
+  return first_node(infra)->element_;
+}
+
+element::ptr interlocking_route::last_element(
+    infrastructure const& infra) const {
+  return last_node(infra)->element_;
 }
 
 bool interlocking_route::starts_on_ms(infrastructure const& infra) const {

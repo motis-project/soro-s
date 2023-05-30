@@ -50,6 +50,9 @@ struct station_route {
 
     soro::vector<node::idx> etcs_starts_{};
     soro::vector<node::idx> etcs_ends_{};
+
+    soro::vector<node::idx> lzb_starts_{};
+    soro::vector<node::idx> lzb_ends_{};
   };
 
   node::idx size() const noexcept;
@@ -70,6 +73,7 @@ struct station_route {
   bool can_end_an_interlocking(station_route_graph const&) const;
 
   bool requires_etcs(lines const& lines) const;
+  bool requires_lzb(lines const& lines) const;
 
   bool operator==(station_route const& o) const;
   bool operator!=(station_route const& o) const;

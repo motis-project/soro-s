@@ -2,6 +2,7 @@
 
 #include "soro/utls/container/id_iterator.h"
 
+#include "soro/infrastructure/critical_section.h"
 #include "soro/infrastructure/graph/type_set.h"
 #include "soro/infrastructure/station/station_route.h"
 #include "soro/rolling_stock/freight.h"
@@ -54,11 +55,19 @@ struct interlocking_route {
   node::ptr first_node(infrastructure const& infra) const;
   node::ptr last_node(infrastructure const& infra) const;
 
+  element::ptr first_element(infrastructure const& infra) const;
+  element::ptr last_element(infrastructure const& infra) const;
+
   bool starts_on_ms(infrastructure const&) const;
   bool ends_on_ms(infrastructure const&) const;
 
   bool starts_on_section(infrastructure const&) const;
   bool ends_on_section(infrastructure const&) const;
+
+  critical_section::id get_start_critical_section(
+      infrastructure const& infra) const;
+  critical_section::id get_end_critical_section(
+      infrastructure const& infra) const;
 
   utls::recursive_generator<route_node> from_to(station_route::id, node::idx,
                                                 station_route::id, node::idx,

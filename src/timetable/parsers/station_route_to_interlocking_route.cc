@@ -199,13 +199,7 @@ utls::result<interlocking_transformation> transform_to_interlocking(
 
   auto const& irs = infra->interlocking_;
 
-  //  auto [first_ir_id, ss_cover] = get_first_ir(stop_sequence, freight,
-  //  infra);
   auto const first_ir = get_first_ir(stop_sequence, freight, infra);
-
-  //  if (!interlocking_route::valid(first_ir_id)) {
-  //    return {};
-  //  }
 
   if (!first_ir) {
     return utls::propagate(first_ir);

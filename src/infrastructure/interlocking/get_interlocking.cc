@@ -191,7 +191,7 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
                               station_route::ptr const& route,
                               interlocking_route ir,
                               auto const& get_paths_ref) {
-    if (route->requires_etcs(lines)) {
+    if (route->requires_etcs(lines) || route->requires_lzb(lines)) {
       return;
     }
 
@@ -225,6 +225,19 @@ soro::vector<interlocking_route> get_interlocking_routes_from_sr(
   return routes;
 }
 
+soro::vector<element_id> get_critical_points(interlocking_route const& ir,
+                                             infrastructure const& infra) {
+  soro::vector<element_id> result;
+
+  for (auto rn : ir.iterate(infra)) {
+    if (rn.node_->is(type::SIMPLE_SWITCH) || rn.node_->is(type::CROSS)) {
+      result.emplace_back(rn.node_->element_->id());
+    }
+  }
+
+  return result;
+}
+
 soro::vector<interlocking_route> get_interlocking_routes(
     infrastructure const& infra) {
   utl::scoped_timer const routes_timer("Generating Interlocking Routes");
@@ -234,9 +247,9 @@ soro::vector<interlocking_route> get_interlocking_routes(
 
   for (auto const& sr : infra->station_routes_) {
     // add all interlocking routes that start with this station route.
-    // do not generate them when etcs is required to use the station route.
+    // do not generate them when etcs/lzb is required to use the station route.
     if (sr->can_start_an_interlocking(infra->station_route_graph_) &&
-        !sr->requires_etcs(infra->lines_)) {
+        !sr->requires_etcs(infra->lines_) && !sr->requires_lzb(infra->lines_)) {
       utl::concat(interlocking_routes,
                   get_interlocking_routes_from_sr(
                       sr, infra->station_route_graph_, infra->lines_));
@@ -303,6 +316,41 @@ auto get_station_to_interlocking_routes(
   return station_to_irs;
 }
 
+critical_points get_critical_points(
+    soro::vector<interlocking_route> const& routes,
+    infrastructure const& infra) {
+  utl::scoped_timer const timer("creating critical points");
+
+  critical_points result;
+
+  for (auto const& ir : routes) {
+    soro::vector<critical_point> cps;
+
+    bool found_seotd = false;
+    for (auto const& rn : ir.iterate(infra)) {
+      auto const type = rn.node_->type();
+
+      if (type == type::SIMPLE_SWITCH || type == type::CROSS) {
+        cps.emplace_back(rn.node_->element_->id(), type);
+      }
+
+      if (type == type::EOTD) {
+        auto const& eotd = infra->graph_.element_data<struct eotd>(rn.node_);
+
+        if (eotd.signal_) {
+          found_seotd = true;
+        } else if (found_seotd) {
+          cps.emplace_back(rn.node_->element_->id(), type::EOTD);
+        }
+      }
+    }
+
+    result.emplace_back(std::move(cps));
+  }
+
+  return result;
+}
+
 interlocking get_interlocking(infrastructure_t const& infra_t) {
   infrastructure const infra(&infra_t);
 
@@ -320,6 +368,8 @@ interlocking get_interlocking(infrastructure_t const& infra_t) {
   irs.sr_to_participating_irs_ =
       get_sr_to_participating_irs(irs.routes_, infra);
   irs.station_to_irs_ = get_station_to_interlocking_routes(irs.routes_, infra);
+
+  irs.critical_points_ = get_critical_points(irs.routes_, infra);
 
   print_interlocking_stats(irs.routes_);
 

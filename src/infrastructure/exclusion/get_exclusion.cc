@@ -100,7 +100,8 @@ soro::vector<interlocking_route::ids> get_closed_element_used_by(
 exclusion get_exclusion(infrastructure_t const& infra_t,
                         std::filesystem::path const& clique_path,
                         option<exclusion_elements> const exclusion_elements,
-                        option<exclusion_graph> const exclusion_graph) {
+                        option<exclusion_graph> const exclusion_graph,
+                        option<exclusion_sets_tag> const exclusion_sets) {
   infrastructure const infra(&infra_t);
 
   exclusion ex;
@@ -119,7 +120,9 @@ exclusion get_exclusion(infrastructure_t const& infra_t,
                                               closed_element_used_by, infra);
   }
 
-  ex.exclusion_sets_ = read_cliques(clique_path);
+  if (exclusion_sets) {
+    ex.exclusion_sets_ = read_cliques(clique_path);
+  }
 
   ex.irs_to_exclusion_sets_ = get_irs_to_exclusion_sets(
       ex.exclusion_sets_, infra->interlocking_.routes_.size());

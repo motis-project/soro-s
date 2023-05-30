@@ -43,4 +43,8 @@ bool line::has_etcs(kilometrage const km) const {
   return get_segment(*this, km).etcs_;
 }
 
+bool line::has_lzb(kilometrage const km) const {
+  return get_segment(*this, km).lzb_;
+}
+
 }  // namespace soro::infra

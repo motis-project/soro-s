@@ -14,6 +14,8 @@ struct ordering_node {
   static constexpr id INVALID = std::numeric_limits<id>::max();
 
   id get_id(ordering_graph const& og) const;
+
+  bool has_next(ordering_graph const& og) const;
   ordering_node const& next(ordering_graph const& og) const;
 
   id id_{INVALID};
@@ -32,8 +34,6 @@ struct ordering_graph {
     std::vector<tt::train::id> trains_{};
   };
 
-  using vecvec_idx_t = uint32_t;
-
   ordering_graph() = default;
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt);
   ordering_graph(infra::infrastructure const& infra, tt::timetable const& tt,
@@ -42,9 +42,12 @@ struct ordering_graph {
   std::span<const ordering_node> trip_nodes(tt::train::trip const trip) const;
 
   std::vector<ordering_node> nodes_;
-  soro::vecvec<vecvec_idx_t, ordering_node::id> in_;
-  soro::vecvec<vecvec_idx_t, ordering_node::id> out_;
 
+  soro::vector<soro::optional<ordering_node::id>> next_;
+  soro::vector<soro::optional<ordering_node::id>> prev_;
+
+  // TODO(julian) create trip ids for ordering graph
+  // and use a vector instead of a map here?
   std::map<tt::train::trip, std::pair<ordering_node::id, ordering_node::id>>
       trip_to_nodes_;
 };

@@ -11,14 +11,20 @@ namespace fs = std::filesystem;
 namespace soro::infra {
 
 void add_iss_file(iss_files& iss_fs, std::filesystem::path const& fp) {
+
   if (fp.filename().string().starts_with(RAIL_PLAN_STATIONS)) {
     iss_fs.rail_plan_files_.emplace_back(fp);
   } else if (fp.filename().string().starts_with("Stammdaten")) {
     iss_fs.core_data_files_.emplace_back(fp);
-  } else if (fp.filename().string().starts_with("Ordnungsrahmen_ORBtrst")) {
-    iss_fs.regulatory_station_files_.emplace_back(fp);
-  } else if (fp.filename().string().starts_with("Ordnungsrahmen_ORStr")) {
-    iss_fs.regulatory_line_files_.emplace_back(fp);
+  } else if (fp.filename().string().starts_with("Ordnungsrahmen")) {
+
+    if (fp.filename().string().contains("ORBtrst")) {
+      iss_fs.regulatory_station_files_.emplace_back(fp);
+    }
+    if (fp.filename().string().contains("ORStr")) {
+      iss_fs.regulatory_line_files_.emplace_back(fp);
+    }
+
   } else if (fp.filename().string().starts_with("BaubetrieblicheMassnahmen")) {
     // ignore for now
   } else {

@@ -4,6 +4,18 @@
 
 namespace soro::infra {
 
+struct critical_point {
+  auto operator<=>(critical_point const&) const = default;
+
+  enum type type(infrastructure const&) const { return type_; }
+
+  element_id element_;
+  // is either: switch, cross, route eotd
+  enum type type_;
+};
+
+using critical_points = soro::vecvec<interlocking_route::id, critical_point>;
+
 struct interlocking {
   soro::vector<interlocking_route> routes_;
 
@@ -17,6 +29,8 @@ struct interlocking {
 
   soro::vector<interlocking_route::ids> sr_to_participating_irs_;
   soro::vector<interlocking_route::ids> station_to_irs_;
+
+  critical_points critical_points_;
 };
 
 }  // namespace soro::infra

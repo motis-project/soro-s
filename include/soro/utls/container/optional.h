@@ -29,19 +29,7 @@ constexpr T get_default_invalid() {
   return T::max();
 }
 
-// template <typename T>
-// constexpr T get_default_invalid() {
-//   if constexpr (cista::is_pointer_v<T>) {
-//     return T{nullptr};
-//   }
-//
-//   if constexpr (std::is_integral_v<T>) {
-//     return std::numeric_limits<T>::max();
-//   }
-// }
-
 template <typename T>
-//  requires std::is_integral_v<T> || cista::is_pointer_v<T>
 struct optional {
   constexpr static T INVALID = get_default_invalid<T>();
 

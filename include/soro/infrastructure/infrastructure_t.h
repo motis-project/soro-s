@@ -2,6 +2,7 @@
 
 #include "soro/utls/coordinates/gps.h"
 
+#include "soro/infrastructure/critical_section.h"
 #include "soro/infrastructure/exclusion/exclusion.h"
 #include "soro/infrastructure/graph/graph.h"
 #include "soro/infrastructure/infrastructure_options.h"
@@ -9,7 +10,6 @@
 #include "soro/infrastructure/line.h"
 #include "soro/infrastructure/station/station.h"
 #include "soro/infrastructure/station/station_route_graph.h"
-#include "soro/infrastructure/super_section.h"
 #include "soro/rolling_stock/rolling_stock.h"
 
 namespace soro::infra {
@@ -48,7 +48,7 @@ struct infrastructure_t {
   interlocking interlocking_{};
   exclusion exclusion_{};
 
-  super_sections super_sections_{};
+  critical_sections critical_sections_{};
 
   soro::vector<soro::string> full_station_names_{};
 

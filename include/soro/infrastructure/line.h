@@ -18,6 +18,7 @@ struct line {
 
   bool has_signalling(kilometrage const km) const;
   bool has_etcs(kilometrage const km) const;
+  bool has_lzb(kilometrage const km) const;
 
   id id_;
 

@@ -5,7 +5,7 @@
 
 #include "pugixml.hpp"
 
-#include "soro/infrastructure/super_section.h"
+#include "soro/infrastructure/critical_section.h"
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
 #include "utl/get_or_create.h"
@@ -642,6 +642,24 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
     return {etcs_starts, etcs_ends};
   };
 
+  auto const get_lzb = [&](soro::vector<node::ptr> const& nodes)
+      -> std::pair<soro::vector<node::idx>, soro::vector<node::idx>> {
+    soro::vector<node::idx> lzb_starts, lzb_ends;
+
+    for (node::idx idx = 0; idx < static_cast<node::idx>(nodes.size()); ++idx) {
+      auto const& node = nodes[idx];
+      if (node->is(type::LZB_START)) {
+        lzb_starts.emplace_back(idx);
+      }
+
+      if (node->is(type::LZB_END)) {
+        lzb_ends.emplace_back(idx);
+      }
+    }
+
+    return {lzb_starts, lzb_ends};
+  };
+
   auto const& graph = infra.graph_;
 
   deduplicated_paths result;
@@ -674,6 +692,7 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
         get_path(i_sr, get_node(start, true), get_node(end, false)->id_);
     auto main_signals = get_main_signals(i_sr, nodes);
     auto [etcs_starts, etcs_ends] = get_etcs(nodes);
+    auto [lzb_starts, lzb_ends] = get_lzb(nodes);
 
     result.path_store_.emplace_back();
     result.path_store_.back() = soro::make_unique<station_route::path>(
@@ -683,7 +702,9 @@ deduplicated_paths get_station_route_paths(infrastructure_t const& infra,
                             .nodes_ = std::move(nodes),
                             .main_signals_ = std::move(main_signals),
                             .etcs_starts_ = std::move(etcs_starts),
-                            .etcs_ends_ = std::move(etcs_ends)});
+                            .etcs_ends_ = std::move(etcs_ends),
+                            .lzb_starts_ = std::move(lzb_starts),
+                            .lzb_ends_ = std::move(lzb_ends)});
     auto const path_ptr = result.path_store_.back().get();
     result.paths_.emplace_back(path_ptr);
 
@@ -1252,7 +1273,7 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   std::tie(iss.defaults_, iss.rolling_stock_) =
       parse_core_data(iss_files.core_data_files_);
 
-  iss.super_sections_ = get_super_sections(iss.graph_);
+  iss.critical_sections_ = get_critical_sections(iss.graph_);
 
   if (options.interlocking_) {
     iss.interlocking_ = get_interlocking(iss);
@@ -1261,7 +1282,8 @@ infrastructure_t parse_iss(infrastructure_options const& options) {
   if (options.interlocking_ && options.exclusions_) {
     iss.exclusion_ =
         get_exclusion(iss, options.infrastructure_path_ / "exclusion_sets",
-                      options.exclusion_elements_, options.exclusion_graph_);
+                      options.exclusion_elements_, options.exclusion_graph_,
+                      options.exclusion_sets_);
   }
 
   log_stats(iss);

@@ -179,6 +179,10 @@ target_compile_definitions(soro-test PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_link_libraries(soro-test PUBLIC utl doctest date soro-lib soro-server-lib)
 target_include_directories(soro-test PUBLIC test/include)
 
+# Tools
+
+add_subdirectory(tools)
+
 # Make clang-tidy only output on soro-s files, not on dependencies.
 
 # returns all targets except targets defined in deps/-

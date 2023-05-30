@@ -69,7 +69,9 @@ int main(int argc, char const** argv) {
   opts.layout_ = false;
   opts.interlocking_ = true;
   opts.exclusions_ = true;
+  opts.exclusion_elements_ = true;
   opts.exclusion_graph_ = true;
+  opts.exclusion_sets_ = false;
 
   infrastructure const infra(opts);
 

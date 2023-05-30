@@ -11,6 +11,16 @@ struct interval {
     return start_ <= other.end_ && other.start_ <= end_;
   }
 
+  duration2 length() const {
+    utls::sassert(valid(), "asking for length of invalid interval");
+
+    return valid() ? end_ - start_ : duration2::zero();
+  }
+
+  hours length_hours() const {
+    return std::chrono::duration_cast<hours>(length());
+  }
+
   bool operator==(interval const& other) const = default;
   bool operator!=(interval const& other) const = default;
 

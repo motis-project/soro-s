@@ -1,4 +1,4 @@
-#include "soro/infrastructure/super_section.h"
+#include "soro/infrastructure/critical_section.h"
 
 #include "utl/enumerate.h"
 #include "utl/timer.h"
@@ -19,20 +19,20 @@ constexpr auto make_array(T const& init) {
   return result;
 }
 
-auto initialize_element_to_super_sections(graph const& graph) {
-  soro::vecvec<soro::size_t, super_section::id> result;
+auto initialize_element_to_critical_sections(graph const& graph) {
+  soro::vecvec<soro::size_t, critical_section::id> result;
 
   for (auto const& e : graph.elements_) {
     switch (e->type()) {
       case type::SIMPLE_SWITCH: {
         result.emplace_back(
-            make_array<super_section::id, 3>(super_section::INVALID));
+            make_array<critical_section::id, 3>(critical_section::INVALID));
         break;
       }
 
       case type::CROSS: {
         result.emplace_back(
-            make_array<super_section::id, 4>(super_section::INVALID));
+            make_array<critical_section::id, 4>(critical_section::INVALID));
         break;
       }
 
@@ -40,7 +40,7 @@ auto initialize_element_to_super_sections(graph const& graph) {
       case type::BUMPER:
       default: {
         result.emplace_back(
-            make_array<super_section::id, 1>(super_section::INVALID));
+            make_array<critical_section::id, 1>(critical_section::INVALID));
         break;
       }
     }
@@ -49,22 +49,23 @@ auto initialize_element_to_super_sections(graph const& graph) {
   return result;
 }
 
-static const type_set super_section_elements = {
+static const type_set critical_section_elements = {
     type::SIMPLE_SWITCH, type::CROSS, type::TRACK_END, type::BUMPER};
 
-super_section get_super_section(section::id section_id, graph const& graph,
-                                element::ptr const& from) {
+critical_section get_critical_section(section::id section_id,
+                                      graph const& graph,
+                                      element::ptr const& from) {
   // section_id is not const, we are going to use it as a variable
 
   utls::expects([&] {
     auto const& section = graph.sections_[section_id];
     utls::expect(
-        super_section_elements.contains(section.first_rising()->type()) ||
-            super_section_elements.contains(section.last_rising()->type()),
+        critical_section_elements.contains(section.first_rising()->type()) ||
+            critical_section_elements.contains(section.last_rising()->type()),
         "section_id does not start a super section");
   });
 
-  super_section result;
+  critical_section result;
 
   result.start_ = from->id();
   result.sections_ = {section_id};
@@ -88,19 +89,20 @@ super_section get_super_section(section::id section_id, graph const& graph,
       to = graph.sections_[section_id].opposite_end(to);
       result.sections_.emplace_back(section_id);
     }
-  } while (!super_section_elements.contains(to->type()));
+  } while (!critical_section_elements.contains(to->type()));
 
   result.end_ = to->id();
 
   return result;
 }
 
-utls::optional<element::ptr> get_super_section_start(section const& section) {
-  if (super_section_elements.contains(section.first_rising()->type())) {
+utls::optional<element::ptr> get_critical_section_start(
+    section const& section) {
+  if (critical_section_elements.contains(section.first_rising()->type())) {
     return utls::optional<element::ptr>{section.first_rising()};
   }
 
-  if (super_section_elements.contains(section.first_falling()->type())) {
+  if (critical_section_elements.contains(section.first_falling()->type())) {
     return utls::optional<element::ptr>{section.first_falling()};
   }
 
@@ -172,49 +174,52 @@ soro::size_t get_bucket_idx(element::ptr const& element,
   return 0;
 }
 
-void set_element_to_super_section_bucket(
-    super_section::id const super_section_id,
-    super_section const& super_section,
-    soro::vecvec<soro::size_t, super_section::id>& element_to_super_sections,
+void set_element_to_critical_section_bucket(
+    critical_section::id const critical_section_id,
+    critical_section const& critical_section,
+    soro::vecvec<soro::size_t, critical_section::id>&
+        element_to_critical_sections,
     graph const& graph) {
 
-  for (auto const section_id : super_section.sections_) {
+  for (auto const section_id : critical_section.sections_) {
     auto const& section = graph.sections_[section_id];
 
     for (auto const& e : section.iterate<direction::Rising, skip::No>()) {
       utls::sasserts([&] {
         auto const bucket_idx = get_bucket_idx(e, section);
-        auto const current_id = element_to_super_sections[e->id()][bucket_idx];
+        auto const current_id =
+            element_to_critical_sections[e->id()][bucket_idx];
 
         // no overwriting
-        utls::sassert(current_id == super_section::INVALID ||
-                      current_id == super_section_id);
+        utls::sassert(current_id == critical_section::INVALID ||
+                      current_id == critical_section_id);
       });
 
-      element_to_super_sections[e->id()][get_bucket_idx(e, section)] =
-          super_section_id;
+      element_to_critical_sections[e->id()][get_bucket_idx(e, section)] =
+          critical_section_id;
     }
   }
 }
 
-super_sections get_super_sections(graph const& graph) {
+critical_sections get_critical_sections(graph const& graph) {
   utl::scoped_timer const timer{"generating super sections"};
 
-  super_sections ss;
+  critical_sections ss;
 
-  ss.section_to_super_section_.resize(graph.sections_.size(),
-                                      super_section::INVALID);
-  ss.element_to_super_sections_ = initialize_element_to_super_sections(graph);
+  ss.section_to_critical_section_.resize(graph.sections_.size(),
+                                         critical_section::INVALID);
+  ss.element_to_critical_sections_ =
+      initialize_element_to_critical_sections(graph);
 
   // loop over the sections and every time we find a section that starts a
   // super section, we create a new super section and assign all the sections
   for (auto const& [section_id, section] : utl::enumerate(graph.sections_)) {
     // already assigned to a super section
-    if (ss.section_to_super_section_[section_id] != section::INVALID) {
+    if (ss.section_to_critical_section_[section_id] != section::INVALID) {
       continue;
     }
 
-    auto const ss_start = get_super_section_start(section);
+    auto const ss_start = get_critical_section_start(section);
 
     // does not start a super section
     if (!ss_start) {
@@ -222,70 +227,72 @@ super_sections get_super_sections(graph const& graph) {
     }
 
     // create new super section and assign all the sections
-    auto super_section = get_super_section(section_id, graph, *ss_start);
-    for (auto const& s_id : super_section.sections_) {
+    auto critical_section = get_critical_section(section_id, graph, *ss_start);
+    for (auto const& s_id : critical_section.sections_) {
       utls::sassert(
-          ss.section_to_super_section_[s_id] == super_section::INVALID,
+          ss.section_to_critical_section_[s_id] == critical_section::INVALID,
           "section already assigned to a super section");
-      ss.section_to_super_section_[s_id] = ss.super_sections_.size();
+      ss.section_to_critical_section_[s_id] = ss.critical_sections_.size();
     }
-    set_element_to_super_section_bucket(ss.super_sections_.size(),
-                                        super_section,
-                                        ss.element_to_super_sections_, graph);
-    ss.super_sections_.emplace_back(std::move(super_section));
+    set_element_to_critical_section_bucket(
+        ss.critical_sections_.size(), critical_section,
+        ss.element_to_critical_sections_, graph);
+    ss.critical_sections_.emplace_back(std::move(critical_section));
   }
 
   utls::ensures([&ss, &graph] {
-    utls::ensure(!ss.super_sections_.empty());
+    utls::ensure(!ss.critical_sections_.empty());
 
-    for (auto const& super_section : ss.super_sections_) {
-      utls::ensure(super_section.start_ != element::INVALID);
-      utls::ensure(super_section.end_ != element::INVALID);
+    for (auto const& critical_section : ss.critical_sections_) {
+      utls::ensure(critical_section.start_ != element::INVALID);
+      utls::ensure(critical_section.end_ != element::INVALID);
 
-      auto const& start_element = graph.elements_[super_section.start_];
-      utls::ensure(super_section_elements.contains(start_element->type()));
+      auto const& start_element = graph.elements_[critical_section.start_];
+      utls::ensure(critical_section_elements.contains(start_element->type()));
 
-      auto const& end_element = graph.elements_[super_section.end_];
-      utls::ensure(super_section_elements.contains(end_element->type()));
+      auto const& end_element = graph.elements_[critical_section.end_];
+      utls::ensure(critical_section_elements.contains(end_element->type()));
 
       auto const& first_section =
-          graph.sections_[super_section.sections_.front()];
-      utls::ensure(first_section.first_rising()->id() == super_section.start_ ||
-                   first_section.last_rising()->id() == super_section.start_);
+          graph.sections_[critical_section.sections_.front()];
+      utls::ensure(
+          first_section.first_rising()->id() == critical_section.start_ ||
+          first_section.last_rising()->id() == critical_section.start_);
 
       auto const& last_section =
-          graph.sections_[super_section.sections_.back()];
-      utls::ensure(last_section.last_rising()->id() == super_section.end_ ||
-                   last_section.last_falling()->id() == super_section.end_);
+          graph.sections_[critical_section.sections_.back()];
+      utls::ensure(last_section.last_rising()->id() == critical_section.end_ ||
+                   last_section.last_falling()->id() == critical_section.end_);
 
-      auto const super_section_element_count = utls::accumulate(
-          super_section.sections_, soro::size_t{0},
+      auto const critical_section_element_count = utls::accumulate(
+          critical_section.sections_, soro::size_t{0},
           [&](auto&& acc, auto&& section_id) {
             auto const& section = graph.sections_[section_id];
 
-            auto const starts =
-                super_section_elements.contains(section.first_rising()->type());
-            auto const ends =
-                super_section_elements.contains(section.last_rising()->type());
+            auto const starts = critical_section_elements.contains(
+                section.first_rising()->type());
+            auto const ends = critical_section_elements.contains(
+                section.last_rising()->type());
 
             return acc + static_cast<soro::size_t>(starts) +
                    static_cast<soro::size_t>(ends);
           });
 
-      utls::ensure(super_section_element_count == 2);
+      utls::ensure(critical_section_element_count == 2);
     }
 
-    utls::ensure(ss.section_to_super_section_.size() == graph.sections_.size());
+    utls::ensure(ss.section_to_critical_section_.size() ==
+                 graph.sections_.size());
     for (section::id s_id = 0; s_id < graph.sections_.size(); ++s_id) {
       auto const& section = graph.sections_[s_id];
       std::ignore = section;
-      utls::ensure(ss.section_to_super_section_[s_id] !=
-                   super_section::INVALID);
+      utls::ensure(ss.section_to_critical_section_[s_id] !=
+                   critical_section::INVALID);
     }
 
-    for (auto const& super_sections : ss.element_to_super_sections_) {
-      for (auto const& ss_id : super_sections) {
-        utls::ensure(ss_id != super_section::INVALID);
+    for (auto const& critical_sections : ss.element_to_critical_sections_) {
+      for (auto const& ss_id : critical_sections) {
+        utls::ensure(ss_id != critical_section::INVALID);
       }
     }
   });

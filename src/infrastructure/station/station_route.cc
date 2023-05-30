@@ -66,6 +66,17 @@ bool station_route::requires_etcs(lines const& lines) const {
   return false;
 }
 
+bool station_route::requires_lzb(soro::infra::lines const& lines) const {
+  if (!path_->lzb_starts_.empty()) {
+    auto const& lzb_start =
+        nodes(path_->lzb_starts_.back())->element_->as<track_element>();
+    auto const& line = lines.at(lzb_start.line_);
+    return !line.has_signalling(lzb_start.km_);
+  }
+
+  return false;
+}
+
 bool station_route::can_start_an_interlocking(
     station_route_graph const& srg) const {
   return !this->path_->main_signals_.empty() || srg.predeccesors_[id_].empty();

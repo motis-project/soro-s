@@ -10,13 +10,13 @@
 
 namespace soro::infra {
 
-// super sections connect the following elements:
+// critical sections connect the following elements:
 // - bumpers
 // - track ends
 // - switches
 // - crosses
 
-struct super_section {
+struct critical_section {
   using id = uint32_t;
 
   static constexpr id INVALID = std::numeric_limits<id>::max();
@@ -26,22 +26,23 @@ struct super_section {
   soro::vector<section::id> sections_;
 };
 
-struct super_sections {
-  soro::vector<super_section> super_sections_;
+struct critical_sections {
+  soro::vector<critical_section> critical_sections_;
 
-  // section::id -> super_section::id
-  soro::vector<super_section::id> section_to_super_section_;
+  // section::id -> critical_section::id
+  soro::vector<critical_section::id> section_to_critical_section_;
 
-  // infra::element::id -> [super_section::id]
+  // infra::element::id -> [critical_section::id]
   // layout for the element types:
   //  - bumpers: [id]
   //  - track_ends: [id]
   //  - switches: [start id, stem id, branch id]
   //  - crosses: [start left id, start right id, end left id, end right id]
   //  - rest: [id]
-  soro::vecvec<soro::size_t, super_section::id> element_to_super_sections_;
+  soro::vecvec<soro::size_t, critical_section::id>
+      element_to_critical_sections_;
 };
 
-super_sections get_super_sections(graph const& graph);
+critical_sections get_critical_sections(graph const& graph);
 
 }  // namespace soro::infra

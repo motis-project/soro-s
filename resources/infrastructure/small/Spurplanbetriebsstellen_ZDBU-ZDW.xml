@@ -406,6 +406,13 @@
 							<Wirkungsort>Hier</Wirkungsort>
 							<Zugbeeinflussung>Alle</Zugbeeinflussung>
 						</GeschwZulaessigS>
+						<SignalZugschlussstelleF>
+							<ID>000</ID>
+							<ExterneID>895344833</ExterneID>
+							<Kilometrierung>31,231</Kilometrierung>
+							<LetzteAenderung>08.03.2021 14:33:57</LetzteAenderung>
+							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>35</ID>
 							<ExterneID>895344333</ExterneID>
@@ -1369,13 +1376,13 @@
 								<Y>12,0</Y>
 							</Bildkoordinaten>
 						</Weichenanfang>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>115</ID>
 							<ExterneID>895294033</ExterneID>
 							<Kilometrierung>39,252</Kilometrierung>
 							<LetzteAenderung>09.12.2020 14:19:25</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>116</ID>
 							<ExterneID>895294333</ExterneID>
@@ -1689,13 +1696,13 @@
 							<LetzteAenderung>09.12.2020 14:19:25</LetzteAenderung>
 							<Partner Typ="Weichenanfang" ID="147">13-W3</Partner>
 						</Weichenstamm>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>148</ID>
 							<ExterneID>895291333</ExterneID>
 							<Kilometrierung>39,194</Kilometrierung>
 							<LetzteAenderung>09.12.2020 14:19:25</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>149</ID>
 							<ExterneID>895291933</ExterneID>
@@ -2255,13 +2262,13 @@
 							<Wirkungsort>Hier</Wirkungsort>
 							<Zugbeeinflussung>Alle</Zugbeeinflussung>
 						</GeschwZulaessigS>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>186</ID>
 							<ExterneID>895353033</ExterneID>
 							<Kilometrierung>28,140</Kilometrierung>
 							<LetzteAenderung>08.03.2021 16:26:02</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>187</ID>
 							<ExterneID>895349433</ExterneID>
@@ -4089,13 +4096,13 @@
 							<Fallend>0,0</Fallend>
 							<Steigend>4,48</Steigend>
 						</Neigung>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>393</ID>
 							<ExterneID>895354333</ExterneID>
 							<Kilometrierung>29,322</Kilometrierung>
 							<LetzteAenderung>08.03.2021 16:35:56</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>394</ID>
 							<ExterneID>895349533</ExterneID>
@@ -9069,13 +9076,13 @@
 							<LetzteAenderung>09.12.2020 13:56:34</LetzteAenderung>
 							<Partner Typ="Weichenanfang" ID="600">11-W10</Partner>
 						</WeichenabzweigLinks>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>640</ID>
 							<ExterneID>895318533</ExterneID>
 							<Kilometrierung>34,287</Kilometrierung>
 							<LetzteAenderung>09.12.2020 13:56:34</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>641</ID>
 							<ExterneID>895318133</ExterneID>
@@ -9352,13 +9359,13 @@
 							<LetzteAenderung>09.12.2020 14:11:39</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
 						</FstrZugschlussstelleS>
-						<FstrZugschlussstelleS>
+						<SignalZugschlussstelleF>
 							<ID>665</ID>
 							<ExterneID>895307433</ExterneID>
 							<Kilometrierung>35,927</Kilometrierung>
 							<LetzteAenderung>09.12.2020 14:11:39</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</SignalZugschlussstelleF>
 						<HauptsignalF>
 							<ID>666</ID>
 							<ExterneID>895307533</ExterneID>
@@ -10000,13 +10007,13 @@
 								<Y>10,0</Y>
 							</Bildkoordinaten>
 						</Weichenanfang>
-						<FstrZugschlussstelleS>
+						<FstrZugschlussstelleF>
 							<ID>719</ID>
 							<ExterneID>895319633</ExterneID>
 							<Kilometrierung>35,494</Kilometrierung>
 							<LetzteAenderung>30.11.2020 14:16:22</LetzteAenderung>
 							<FstrAufloesezeit Einheit="s">3</FstrAufloesezeit>
-						</FstrZugschlussstelleS>
+						</FstrZugschlussstelleF>
 						<Weichenstamm>
 							<ID>497</ID>
 							<ExterneID>895314033</ExterneID>

@@ -18,6 +18,7 @@ struct option {
 };
 
 struct layout_tag;
+struct exclusion_sets_tag;
 
 struct infrastructure_options {
   CISTA_COMPARABLE()
@@ -27,6 +28,7 @@ struct infrastructure_options {
   option<exclusion_graph> exclusion_graph_{false};
   option<exclusion_elements> exclusion_elements_{false};
   option<layout_tag> layout_{true};
+  option<exclusion_sets_tag> exclusion_sets_{true};
 
   std::filesystem::path infrastructure_path_{""};
   std::filesystem::path gps_coord_path_{""};

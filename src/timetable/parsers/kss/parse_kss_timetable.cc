@@ -4,6 +4,8 @@
 
 #include "pugixml.hpp"
 
+#include "soro/rolling_stock/freight.h"
+#include "soro/timetable/sequence_point.h"
 #include "utl/concat.h"
 #include "utl/enumerate.h"
 #include "utl/erase_if.h"
@@ -401,6 +403,26 @@ train::number parse_train_number(xml_node const train_number_xml) {
   return tn;
 }
 
+soro::map<element_id, sequence_point::ptr> get_interlocking_to_sequence_point(
+    soro::vector<sequence_point> const& sequence_points,
+    rs::FreightTrain const freight, infrastructure const& infra) {
+  soro::map<element_id, sequence_point::ptr> halt_to_sequence_point;
+
+  for (auto const& sp : sequence_points) {
+    if (!sp.is_halt()) {
+      continue;
+    }
+
+    auto const node = sp.get_node(freight, infra);
+
+    utls::sassert(node.has_value(), "sequence point has no associated node");
+
+    halt_to_sequence_point.emplace((*node)->element_->id(), &sp);
+  }
+
+  return halt_to_sequence_point;
+};
+
 utls::result<train> parse_construction_train(
     xml_node const construction_train_xml, infrastructure const& infra) {
   train t;
@@ -441,6 +463,9 @@ utls::result<train> parse_construction_train(
 
   t.path_ = std::move(transformed->path_);
   t.sequence_points_ = std::move(transformed->sequence_points_);
+
+  t.halt_to_sequence_point_ = get_interlocking_to_sequence_point(
+      t.sequence_points_, t.freight(), infra);
 
   return t;
 }
@@ -933,7 +958,7 @@ utls::result<base_timetable> parse_kss_timetable(
   }
 
   set_ids(bt.trains_);
-  resolve_connections(bt.connections_, bt.trains_, stats);
+  //  resolve_connections(bt.connections_, bt.trains_, stats);
 
   uLOG(utl::info) << "total trains successfully parsed: " << bt.trains_.size();
   stats.report();
