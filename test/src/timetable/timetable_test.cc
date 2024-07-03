@@ -1,14 +1,19 @@
 #include "doctest/doctest.h"
 
 #include "range/v3/range/conversion.hpp"
-#include "range/v3/view/filter.hpp"
 #include "range/v3/view/transform.hpp"
 
-#include "soro/utls/coroutine/coro_map.h"
+#include "soro/base/soro_types.h"
+#include "soro/base/time.h"
 
+#include "soro/infrastructure/graph/node.h"
 #include "soro/infrastructure/infrastructure.h"
-#include "soro/infrastructure/path/length.h"
+#include "soro/infrastructure/interlocking/interlocking_route.h"
+#include "soro/infrastructure/station/station_route.h"
+
+#include "soro/timetable/sequence_point.h"
 #include "soro/timetable/timetable.h"
+#include "soro/timetable/train.h"
 
 #include "test/file_paths.h"
 #include "test/timetable/train_iterator_test.h"
@@ -26,29 +31,19 @@ void check_no_invalids(train const& train) {
   }
 
   for (auto const& sp : train.sequence_points_) {
-    CHECK(station_route::valid(sp.station_route_));
+    CHECK_NE(sp.station_route_, station_route::invalid());
   }
-}
-
-void check_train_path_length(train const& train, infrastructure const& infra) {
-  auto const e1 = get_path_length_from_elements(
-      utls::coro_map(train.iterate(infra), [](auto&& rn) { return rn.node_; }));
-
-  CHECK_MESSAGE((train.length_ == e1),
-                "Different lengths from the two length calculation funs");
 }
 
 void check_train_path_sequence_points(train const& train,
                                       infrastructure const& infra) {
   using namespace ranges;
 
-  auto const sequence_point_nodes =
-      train.sequence_points_ | views::transform([&](auto&& seq_point) {
-        return seq_point.get_node(train.freight(), infra);
-      }) |
-      views::filter([](auto&& node_opt) { return node_opt.has_value(); }) |
-      views::transform([](auto&& node_opt) { return node_opt.value(); }) |
-      to<soro::vector<node::ptr>>();
+  auto const sequence_point_nodes = train.sequence_points_ |
+                                    views::transform([&](auto&& seq_point) {
+                                      return seq_point.get_node(infra);
+                                    }) |
+                                    to<soro::vector<node::ptr>>();
 
   // all sequence points in a train must refer to a node
   CHECK_EQ(sequence_point_nodes.size(), train.sequence_points_.size());
@@ -58,7 +53,7 @@ void check_train_path_sequence_points(train const& train,
     if (spn_idx < sequence_point_nodes.size() &&
         tn.node_ == sequence_point_nodes[spn_idx]) {
       CHECK(tn.sequence_point_.has_value());
-      CHECK_EQ(*(*tn.sequence_point_)->get_node(train.freight(), infra),
+      CHECK_EQ((*tn.sequence_point_)->get_node(infra),
                sequence_point_nodes[spn_idx]);
       ++spn_idx;
     }
@@ -76,49 +71,65 @@ void check_train_sequence_points(train const& train,
   if (!train.break_in_) {
     CHECK_MESSAGE(
         train.sequence_points_.front().is_halt(),
-        "Train that is not breaking in needs a stop at first sequence point");
+        "Train that is not breaking in needs a halt at first sequence point");
   }
 
   if (!train.break_out_) {
     CHECK_MESSAGE(
         train.sequence_points_.back().is_halt(),
-        "Train that is not breaking out needs a stop at last sequence point");
+        "Train that is not breaking out needs a halt at last sequence point");
   }
 
   for (auto const& sp : train.sequence_points_) {
-    CHECK_MESSAGE(sp.departure_.has_value(),
-                  "every sequence point needs a valid departure");
+    CHECK_MESSAGE((sp.idx_ != station_route::invalid_idx()),
+                  "every point needs a valid node");
+    CHECK_MESSAGE((sp.station_route_ != station_route::invalid()),
+                  "every point needs a valid station route");
+    auto const sr = infra->station_routes_[sp.station_route_];
+    CHECK_MESSAGE((sp.idx_ < sr->size()),
+                  "every point needs a valid node index");
 
-    if (sp.is_halt()) {
+    CHECK_MESSAGE(valid(sp.min_stop_time_),
+                  "every point needs a valid min stop time");
+
+    CHECK_MESSAGE(((sp.arrival_.has_value() && sp.departure_.has_value()) ||
+                   (!sp.arrival_.has_value() && !sp.departure_.has_value())),
+                  "either arrival and departure are set or none");
+
+    if (sp.is_halt_type(sequence_point::type::PASSENGER)) {
       CHECK_MESSAGE(sp.arrival_.has_value(),
-                    "every halt sequence point needs a valid arrival");
+                    "passenger halt point needs a valid arrival");
+      CHECK_MESSAGE(sp.departure_.has_value(),
+                    "passenger halt point needs a valid departure");
     }
 
-    if (sp.is_halt(sequence_point::type::PASSENGER)) {
-      CHECK_MESSAGE(
-          valid(sp.min_stop_time_),
-          "Passenger halt sequence point needs a valid minimum stop time");
+    if (sp.is_halt_type(sequence_point::type::OPERATIONS)) {
+      CHECK_MESSAGE((sp.min_stop_time_ == duration::zero()),
+                    "operations halt point must have zero min stop time");
     }
 
-    if (sp.is_halt(sequence_point::type::OPERATIONS)) {
-      CHECK_MESSAGE(
-          (sp.min_stop_time_ == duration2::zero()),
-          "Operations halt sequence point have only zero minimum stop time");
+    if (sp.is_halt_type(sequence_point::type::ADDITIONAL)) {
+      CHECK_MESSAGE(!sp.arrival_.has_value(),
+                    "additional halt points don't have a arrival time");
+      CHECK_MESSAGE(!sp.departure_.has_value(),
+                    "additional halt points don't have a departure time");
     }
 
-    auto const sp_node = sp.get_node(train.freight(), infra);
-    CHECK_MESSAGE(sp_node.has_value(),
-                  "Every sequence point needs a valid node");
-    auto const sp_node_type = sp_node.value()->type();
-    CHECK_MESSAGE(
-        (is_runtime_checkpoint(sp_node_type) || is_halt(sp_node_type)),
-        "Sequence points are only allowed for halts and runtime checkpoints.");
+    if (sp.is_halt_type(sequence_point::type::TRANSIT)) {
+      CHECK_MESSAGE(sp.arrival_.has_value(),
+                    "transit points need a arrival time");
+      CHECK_MESSAGE(sp.departure_.has_value(),
+                    "transit points need a departure time");
+      CHECK_MESSAGE((sp.min_stop_time_ == duration::zero()),
+                    "transit points must have a min stop time of 0");
+      CHECK_MESSAGE((sp.departure_.value() == sp.arrival_.value()),
+                    "transit points require arrival == departure");
+    }
   }
 }
 
 void check_train(train const& train, infrastructure const& infra) {
   check_no_invalids(train);
-  //  check_train_path_length(train, infra);
   check_train_sequence_points(train, infra);
   check_train_path_sequence_points(train, infra);
 

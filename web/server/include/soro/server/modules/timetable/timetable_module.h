@@ -12,11 +12,11 @@ namespace soro::server {
 
 struct timetable_module {
   struct infra_context {
-    std::unordered_map<std::string_view, std::unique_ptr<tt::timetable>>
-        timetables_;
+    std::unordered_map<std::string, std::unique_ptr<tt::timetable>> timetables_;
   };
 
-  auto all(std::string_view const infrastructure_source) const {
+  // in header file, because auto is really convenient here ...
+  auto all(std::string const& infrastructure_source) const {
     // helper to return an empty range when the infrastructure is not found
     static auto empty_context = infra_context{};
 
@@ -30,8 +30,8 @@ struct timetable_module {
   }
 
   tt::timetable::optional_ptr get_timetable(
-      std::string_view const infrastructure_name,
-      std::string_view const timetable_name) const;
+      std::string const& infrastructure_name,
+      std::string const& timetable_name) const;
 
   net::web_server::string_res_t serve_timetable_names(
       net::query_router::route_request const& req) const;
@@ -39,7 +39,11 @@ struct timetable_module {
   net::web_server::string_res_t serve_timetable(
       net::query_router::route_request const& req) const;
 
-  std::unordered_map<std::string_view, infra_context> contexts_;
+  net::web_server::string_res_t serve_intervals(
+      net::query_router::route_request const& req,
+      infrastructure_module const& infra_m) const;
+
+  std::unordered_map<std::string, infra_context> contexts_;
 };
 
 timetable_module get_timetable_module(server_settings const& s,

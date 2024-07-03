@@ -7,18 +7,18 @@ namespace soro::tt {
 struct interval {
   bool valid() const { return start_ <= end_; }
 
+  bool contains(absolute_time const at) const {
+    return start_ <= at && at <= end_;
+  }
+
   bool overlaps(interval const& other) const {
     return start_ <= other.end_ && other.start_ <= end_;
   }
 
-  duration2 length() const {
+  duration length() const {
     utls::sassert(valid(), "asking for length of invalid interval");
 
-    return valid() ? end_ - start_ : duration2::zero();
-  }
-
-  hours length_hours() const {
-    return std::chrono::duration_cast<hours>(length());
+    return valid() ? end_ - start_ : duration::zero();
   }
 
   bool operator==(interval const& other) const = default;

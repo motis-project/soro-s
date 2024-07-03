@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <type_traits>
 
 // for tiles::render_ctx
 #include "tiles/get_tile.h"
@@ -33,7 +34,7 @@ struct tiles_module {
   std::unordered_map<std::string_view, context> tile_contexts_;
 };
 
-tiles_module get_tile_module(server_settings const& settings,
-                             infrastructure_module const& infra_m);
+tiles_module get_tiles_module(server_settings const& settings,
+                              infrastructure_module const& infra_m);
 
 }  // namespace soro::server

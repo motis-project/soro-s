@@ -1,5 +1,8 @@
 #include "soro/rolling_stock/rolling_stock_error.h"
 
+#include <string>
+#include <system_error>
+
 namespace {
 
 struct rs_error_category : std::error_category {
@@ -11,7 +14,7 @@ const char* rs_error_category::name() const noexcept { return "rs"; }
 
 std::string rs_error_category::message(int ev) const {
   switch (static_cast<soro::error::rolling_stock>(ev)) {
-    case soro::error::rolling_stock::TRACTION_VEHICLE_NOT_FOUND:;
+    case soro::error::rolling_stock::TRACTION_VEHICLE_NOT_FOUND:
       return "could not find rolling stock vehicle";
   }
 

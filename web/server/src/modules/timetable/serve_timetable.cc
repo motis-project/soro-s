@@ -1,8 +1,19 @@
 #include "soro/server/modules/timetable/timetable_module.h"
 
-#include "net/web_server/responses.h"
+#include "cereal/cereal.hpp"
 
-#include "soro/server/cereal/cereal_extern.h"
+#include "net/web_server/query_router.h"
+#include "net/web_server/responses.h"
+#include "net/web_server/web_server.h"
+
+#include "soro/base/time.h"
+
+#include "soro/utls/sassert.h"
+
+#include "soro/timetable/interval.h"
+#include "soro/timetable/timetable.h"
+
+#include "soro/server/cereal/cereal_extern.h"  // NOLINT
 #include "soro/server/cereal/json_archive.h"
 
 namespace soro::tt {

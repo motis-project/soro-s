@@ -1,11 +1,17 @@
 #include "doctest/doctest.h"
 
+#include <cstddef>
+#include <vector>
+
 #include "utl/to_set.h"
+
+#include "soro/base/fp_precision.h"
 
 #include "soro/utls/unixtime.h"
 
-#include "soro/base/fp_precision.h"
-#include "soro/simulation/dpd.h"
+#include "soro/simulation/common/dpd.h"
+#include "soro/simulation/common/granularity.h"
+#include "soro/simulation/common/kilometer_per_hour.h"
 
 using namespace soro::utls;
 using namespace soro::simulation;

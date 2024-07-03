@@ -29,6 +29,8 @@ struct search_module {
     type type_;
     std::string name_{};
     utls::bounding_box bounding_box_;
+    // TODO(julian) this could be a typesafe union / std::variant
+    // now ids (station, station route, interlocking route) decay to std::size_t
     std::size_t id_{std::numeric_limits<std::size_t>::max()};
     std::string element_type_{};
   };

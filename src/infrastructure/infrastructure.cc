@@ -1,5 +1,9 @@
 #include "soro/infrastructure/infrastructure.h"
 
+#include <memory>
+
+#include "soro/infrastructure/infrastructure_options.h"
+#include "soro/infrastructure/infrastructure_t.h"
 #include "soro/infrastructure/parsers/iss/parse_iss.h"
 
 namespace soro::infra {

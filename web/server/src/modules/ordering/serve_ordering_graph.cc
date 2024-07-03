@@ -1,91 +1,115 @@
 #include "soro/base/time.h"
 
+#include <cstdint>
+#include <algorithm>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <utility>
+#include <vector>
+
+#include "utl/logging.h"
 #include "utl/timer.h"
 
+#include "net/web_server/query_router.h"
 #include "net/web_server/responses.h"
+#include "net/web_server/web_server.h"
 
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/parse_int.h"
 #include "soro/utls/result.h"
+#include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/sort.h"
 #include "soro/utls/string.h"
 
-#include "soro/simulation/ordering/ordering_graph.h"
+#include "soro/timetable/timetable.h"
+#include "soro/timetable/train.h"
+
+#include "soro/ordering/graph.h"
 
 #include "soro/server/cereal/json_archive.h"
+
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
+
+#include "soro/server/modules/timetable/timetable_module.h"
+
 #include "soro/server/modules/ordering/ordering_module.h"
 
 namespace soro::server {
 
-std::string serialize_ordering_graph(simulation::ordering_graph const& og,
+std::string serialize_ordering_graph(ordering::graph const& og,
                                      tt::timetable const& tt) {
   using namespace rapidjson;
 
   utl::scoped_timer const timer("serializing ordering graph");
 
-  std::vector<
-      std::pair<tt::train::trip, std::pair<simulation::ordering_node::id,
-                                           simulation::ordering_node::id>>>
-      cpy(std::begin(og.trip_to_nodes_), std::end(og.trip_to_nodes_));
+  auto trips_copy = og.trips_;
 
-  utls::sort(cpy, [&](auto&& p1, auto&& p2) {
-    auto const& t1 = tt->trains_[p1.first.train_id_];
-    auto const& t2 = tt->trains_[p2.first.train_id_];
-    return soro::relative_to_absolute(p1.first.anchor_, t1.first_departure()) <
-           soro::relative_to_absolute(p2.first.anchor_, t2.first_departure());
+  utls::sort(trips_copy, [&](auto&& p1, auto&& p2) {
+    auto const& t1 = tt->trains_[p1.train_id_];
+    auto const& t2 = tt->trains_[p2.train_id_];
+    return soro::relative_to_absolute(p1.anchor_, t1.start_time_) <
+           soro::relative_to_absolute(p2.anchor_, t2.start_time_);
   });
 
   uint32_t total_trains = 0;
   uint32_t max_train_length = 0;
 
-  StringBuffer node_buffer;
-  Writer<StringBuffer> node_writer(node_buffer);
+  StringBuffer node_buffer;  // NOLINT
+  Writer<StringBuffer> node_writer(node_buffer);  // NOLINT
   node_writer.StartArray();
 
-  StringBuffer edge_buffer;
-  Writer<StringBuffer> edge_writer(edge_buffer);
+  StringBuffer edge_buffer;  // NOLINT
+  Writer<StringBuffer> edge_writer(edge_buffer);  // NOLINT
   edge_writer.StartArray();
 
-  StringBuffer graph_attributes_buffer;
-  Writer<StringBuffer> graph_attributes_writer(graph_attributes_buffer);
+  StringBuffer graph_attributes_buffer;  // NOLINT
+  Writer<StringBuffer> graph_attributes_writer(  // NOLINT
+      graph_attributes_buffer);
   graph_attributes_writer.StartObject();
 
   tt::train::id relative_train_id = 0;
-  for (auto const& [trip, trip_nodes] : cpy) {
+  for (auto const& trip : trips_copy) {
     ++total_trains;
 
-    max_train_length =
-        std::max(max_train_length, trip_nodes.second - trip_nodes.first);
+    max_train_length = std::max(max_train_length, (trip.to_ - trip.from_).v_);
 
-    for (auto n_id = trip_nodes.first; n_id < trip_nodes.second; ++n_id) {
+    for (auto n_id = trip.from_; n_id < trip.to_; ++n_id) {
       auto const& node = og.nodes_[n_id];
 
       node_writer.StartObject();
       node_writer.String("key");
-      node_writer.Uint(node.id_);
+      node_writer.Uint(node.get_id(og).v_);
 
       node_writer.String("attributes");
       node_writer.StartObject();
 
+      node_writer.String("trip");
+      node_writer.Uint(node.trip_id_.v_);
+
       node_writer.String("train");
-      node_writer.Uint(node.train_id_);
+      node_writer.Uint(og.trips_[node.trip_id_].train_id_);
 
       node_writer.String("offset");
-      node_writer.Uint(node.id_ - trip_nodes.first);
+      node_writer.Uint(node.get_id(og).v_ - trip.from_.v_);
 
       node_writer.String("relativeTrainId");
       node_writer.Uint(relative_train_id);
 
       node_writer.String("route");
-      node_writer.Uint(node.ir_id_);
+      node_writer.Uint(as_val(node.ir_id_));
 
       node_writer.EndObject();
 
       node_writer.EndObject();
-      for (auto const to : node.out_) {
+      for (auto const to : node.out(og)) {
         edge_writer.StartObject();
         edge_writer.String("source");
-        edge_writer.Uint(node.id_);
+        edge_writer.Uint(node.get_id(og).v_);
         edge_writer.String("target");
-        edge_writer.Uint(to);
+        edge_writer.Uint(to.v_);
         edge_writer.EndObject();
       }
     }
@@ -132,9 +156,9 @@ utls::result<std::vector<tt::train::id>> comma_values_to_train_ids(
   return result;
 }
 
-utls::result<simulation::ordering_graph::filter> params_to_filter(
+utls::result<ordering::graph::filter> params_to_filter(
     std::vector<std::string> const& params) {
-  simulation::ordering_graph::filter filter;
+  ordering::graph::filter filter;
 
   auto const from = str_to_absolute_time(params[2]);
   if (!from) return utls::propagate(from);
@@ -150,7 +174,7 @@ utls::result<simulation::ordering_graph::filter> params_to_filter(
 
   auto train_ids = comma_values_to_train_ids(params[4]);
   if (!train_ids) return utls::propagate(train_ids);
-  filter.trains_ = std::move(*train_ids);
+  filter.include_trains_ = std::move(*train_ids);
 
   return filter;
 }
@@ -163,27 +187,20 @@ net::web_server::string_res_t ordering_module::serve_ordering_graph(
     timetable_module const& timetable_m) const {
   utls::expect(req.path_params_.size() == 5);
 
-  std::string_view const infra_name = req.path_params_.front();
+  auto const& infra_name = req.path_params_.front();
+  auto const ctx = infra_m.get_context(infra_name);
+  if (!ctx.has_value()) return net::not_found_response(req);
 
-  auto const infra = infra_m.get_infra(infra_name);
-  if (!infra.has_value()) {
-    return net::not_found_response(req);
-  }
-
-  std::string_view const timetable_name = req.path_params_[1];
-  auto const timetable = timetable_m.get_timetable(infra_name, timetable_name);
-  if (!timetable.has_value()) {
-    return net::not_found_response(req);
-  }
+  auto const& tt_name = req.path_params_[1];
+  auto const tt = timetable_m.get_timetable(infra_name, tt_name);
+  if (!tt.has_value()) return net::not_found_response(req);
 
   auto const filter = params_to_filter(req.path_params_);
   if (!filter) return net::bad_request_response(req);
 
-  simulation::ordering_graph const ordering_graph(**infra, **timetable,
-                                                  *filter);
+  ordering::graph const ordering_graph((*ctx)->infra_, **tt, *filter);
 
-  return json_response(req,
-                       serialize_ordering_graph(ordering_graph, **timetable));
+  return json_response(req, serialize_ordering_graph(ordering_graph, **tt));
 }
 
 }  // namespace soro::server

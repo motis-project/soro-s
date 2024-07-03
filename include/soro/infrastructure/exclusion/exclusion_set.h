@@ -1,15 +1,17 @@
 #pragma once
 
-#include "soro/base/soro_types.h"
-
 #include "cista/containers/bitvec.h"
 
+#include "soro/base/soro_types.h"
+
 #include "soro/utls/sassert.h"
+
+#include "soro/infrastructure/interlocking/interlocking_route.h"
 
 namespace soro::infra {
 
 struct exclusion_set {
-  using value_type = uint32_t;
+  using value_type = interlocking_route::id::value_t;
   using id = uint32_t;
   using bitvec_t = soro::data::bitvec;
 
@@ -21,41 +23,21 @@ struct exclusion_set {
 
   struct iterator {
     using iterator_category = typename std::input_iterator_tag;
-    using value_type = exclusion_set::value_type;
+    using value_type = interlocking_route::id;
     using difference_type = value_type;
     using pointer = value_type*;
     using reference = value_type;
 
-    iterator(exclusion_set const* const set, bitvec_t::size_type const idx)
-        : set_{set}, idx_{idx} {
-      utls::expect(idx_ <= set_->bits_.size(),
-                   "initializing idx larger than size");
-    }
+    iterator(exclusion_set const* const set, bitvec_t::size_type const idx);
 
-    iterator operator+(std::size_t n) {
-      auto result = *this;
+    iterator operator+(std::size_t n);
 
-      while (n != 0) {
-        ++result;
-        --n;
-      }
-
-      return result;
-    }
-
-    iterator& operator++() {
-      ++idx_;
-      while (idx_ < set_->bits_.size() && !set_->bits_[idx_]) {
-        ++idx_;
-      }
-
-      return *this;
-    }
+    iterator& operator++();
 
     bool operator==(iterator const& other) const = default;
     bool operator!=(iterator const& other) const = default;
 
-    value_type operator*() const { return set_->first_ + idx_; }
+    value_type operator*() const;
     pointer operator->() = delete;
 
   private:
@@ -66,11 +48,11 @@ struct exclusion_set {
   auto begin() const { return iterator{this, first_bit_set_ - first_}; }
   auto end() const { return iterator{this, bits_.size()}; }
 
-  soro::vector<value_type> expanded_set() const;
+  soro::vector<interlocking_route::id> expanded_set() const;
 
-  bool operator[](value_type const idx) const;
+  bool operator[](interlocking_route::id const ir_id) const;
 
-  void set(value_type const idx);
+  void set(interlocking_route::id const ir_id);
 
   exclusion_set& operator-=(exclusion_set const& other);
   exclusion_set& operator|=(exclusion_set const& other);
@@ -106,9 +88,9 @@ struct exclusion_set {
 
 exclusion_set make_exclusion_set(
     exclusion_set::id const id,
-    soro::vector<exclusion_set::value_type> const& sorted_ids);
+    soro::vector<interlocking_route::id> const& sorted_ids);
 
 exclusion_set make_exclusion_set(
-    soro::vector<exclusion_set::value_type> const& sorted_ids);
+    soro::vector<interlocking_route::id> const& sorted_ids);
 
 }  // namespace soro::infra

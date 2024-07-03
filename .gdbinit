@@ -10,4 +10,7 @@ source deps/cista/tools/pretty-printers/gdb/cista_bitset.py
 source tools/pretty-printers/gdb/si_units.py
 source tools/pretty-printers/gdb/serializable.py
 source tools/pretty-printers/gdb/absolute_time.py
-
+source tools/pretty-printers/gdb/relative_time.py
+source tools/pretty-printers/gdb/static_vector.py
+source tools/pretty-printers/gdb/cista_strong.py
+source tools/pretty-printers/gdb/soro_optional.py

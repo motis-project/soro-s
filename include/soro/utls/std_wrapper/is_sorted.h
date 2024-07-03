@@ -10,13 +10,13 @@ using std::begin;
 using std::end;
 
 template <typename Iterable>
-constexpr bool is_sorted(Iterable&& i) {
+constexpr bool is_sorted(Iterable const& i) {
   return std::is_sorted(begin(i), end(i));
 }
 
 template <typename Iterable, typename Comp>
-constexpr bool is_sorted(Iterable&& i, Comp&& cmp) {
-  return std::is_sorted(begin(i), end(i), cmp);
+constexpr bool is_sorted(Iterable const& i, Comp&& cmp) {
+  return std::is_sorted(begin(i), end(i), std::forward<Comp>(cmp));
 }
 
 }  // namespace detail

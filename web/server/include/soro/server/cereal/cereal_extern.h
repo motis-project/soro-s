@@ -1,8 +1,6 @@
 #pragma once
 
 #include "cereal/archives/json.hpp"
-#include "cereal/cereal.hpp"
-#include "cereal/types/array.hpp"
 
 #include "range/v3/range.hpp"
 #include "range/v3/range/concepts.hpp"
@@ -24,6 +22,12 @@ inline void CEREAL_SERIALIZE_FUNCTION_NAME(Archive& archive,
   archive(cereal::make_size_tag(2));
   archive(bb.south_west_);
   archive(bb.north_east_);
+}
+
+template <typename Archive, Fraction Fraction>
+inline std::string CEREAL_SAVE_MINIMAL_FUNCTION_NAME(Archive&,
+                                                     Fraction const& f) {
+  return std::to_string(si::as_si(f));
 }
 
 }  // namespace soro::utls
@@ -53,10 +57,23 @@ inline void CEREAL_SERIALIZE_FUNCTION_NAME(
   for (auto&& v : vector) ar(v);
 }
 
+template <class Archive, typename K, typename V>
+inline void CEREAL_SERIALIZE_FUNCTION_NAME(
+    Archive& ar, soro::data::vector_map<K, V> const& vector) {
+  ar(cereal::make_size_tag(static_cast<cereal::size_type>(vector.size())));
+  for (auto&& v : vector) ar(v);
+}
+
 template <typename Archive>
 inline std::string_view CEREAL_SAVE_MINIMAL_FUNCTION_NAME(
     Archive&, cista::basic_string<soro::data::ptr<const char>> const& str) {
   return str.view();
+}
+
+template <typename Archive, typename T, typename Tag>
+inline std::string CEREAL_SAVE_MINIMAL_FUNCTION_NAME(
+    Archive&, soro::strong<T, Tag> const& v) {
+  return std::to_string(to_idx(v));
 }
 
 }  // namespace cista

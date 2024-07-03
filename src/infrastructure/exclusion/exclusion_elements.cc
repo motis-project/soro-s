@@ -8,8 +8,16 @@
 #include "utl/erase.h"
 #include "utl/erase_duplicates.h"
 
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/parallel_for.h"
+#include "soro/utls/sassert.h"
+
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/section.h"
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
+#include "soro/infrastructure/kilometrage.h"
 
 namespace soro::infra {
 
@@ -19,9 +27,9 @@ bool is_exclusion_element(element::ptr e) {
 }
 
 template <typename Range>
-auto filter_transform_collect(Range&& r) {
+auto filter_transform_collect(Range const& r) {
   return r | ranges::views::filter(is_exclusion_element) |
-         ranges::views::transform([](auto&& e) { return e->id(); }) |
+         ranges::views::transform([](auto&& e) { return e->get_id(); }) |
          ranges::to<soro::vector<element_id>>();
 }
 
@@ -31,18 +39,18 @@ element::ids get_exclusion_elements(section const& section) {
 
 element::ids get_exclusion_elements_from(section const& section,
                                          element::ptr from,
-                                         direction const dir) {
+                                         mileage_dir const dir) {
   return filter_transform_collect(section.from(from, dir));
 }
 
 element::ids get_exclusion_elements_to(section const& section, element::ptr to,
-                                       direction const dir) {
+                                       mileage_dir const dir) {
   return filter_transform_collect(section.to(to, dir));
 }
 
 element::ids get_exclusion_elements_from_to(section const& section,
                                             element::ptr from, element::ptr to,
-                                            direction const dir) {
+                                            mileage_dir const dir) {
   return filter_transform_collect(section.from_to(from, to, dir));
 }
 
@@ -56,7 +64,7 @@ section::ids get_used_sections(interlocking_route const& ir,
     }
 
     auto const& sec_ids =
-        infra->graph_.element_id_to_section_ids_[element->id()];
+        infra->graph_.sections_.element_to_section_ids_[element->get_id()];
     utls::sassert(sec_ids.size() == 1,
                   "track element with more than one section?");
     auto const section_id = sec_ids.front();
@@ -77,12 +85,12 @@ element::ids get_exclusion_elements_one_section(interlocking_route const& ir,
   auto const& first_element = ir.first_node(infra)->element_;
   auto const& last_element = ir.last_node(infra)->element_;
 
-  direction dir = direction::Rising;
+  mileage_dir dir = mileage_dir::rising;
 
   if (first_element->is_track_element()) {
-    dir = static_cast<direction>(first_element->as<track_element>().rising_);
+    dir = static_cast<mileage_dir>(first_element->as<track_element>().dir_);
   } else if (last_element->is_track_element()) {
-    dir = static_cast<direction>(last_element->as<track_element>().rising_);
+    dir = static_cast<mileage_dir>(last_element->as<track_element>().dir_);
   }
 
   utl::concat(exclusion_elements,
@@ -115,7 +123,7 @@ element::ids get_exclusion_elements(interlocking_route const& ir,
 
   if (!ir.starts_on_section(infra)) {
     auto const starts_rising =
-        static_cast<direction>(first_element->as<track_element>().rising_);
+        static_cast<mileage_dir>(first_element->as<track_element>().dir_);
 
     utl::concat(exclusion_elements,
                 get_exclusion_elements_from(first_section, first_element,
@@ -133,7 +141,7 @@ element::ids get_exclusion_elements(interlocking_route const& ir,
   if (!ir.ends_on_section(infra)) {
     // the last section is not traversed in total, only gather one part
     auto const ends_rising =
-        static_cast<direction>(last_element->as<track_element>().rising_);
+        static_cast<mileage_dir>(last_element->as<track_element>().dir_);
 
     utl::concat(
         exclusion_elements,
@@ -147,15 +155,23 @@ element::ids get_exclusion_elements(interlocking_route const& ir,
   return exclusion_elements;
 }
 
-soro::vector<element::ids> get_closed_exclusion_elements(
+soro::vector_map<ir_id, element::ids> get_closed_exclusion_elements(
     infrastructure const& infra) {
-  return soro::to_vec(infra->interlocking_.routes_, [&](auto&& ir) {
-    return get_exclusion_elements(ir, infra);
+  soro::vector_map<ir_id, element::ids> closed_exclusion_elements(
+      infra->interlocking_.routes_.size());
+
+  utls::parallel_for(closed_exclusion_elements.size(), [&](auto&& job_id) {
+    interlocking_route::id const ir_id{job_id};
+    closed_exclusion_elements[ir_id] =
+        get_exclusion_elements(infra->interlocking_.routes_[ir_id], infra);
   });
+
+  return closed_exclusion_elements;
 }
 
-soro::vector<element::ids> get_open_exclusion_elements(
-    soro::vector<element::ids> const& closed_exclusion_elements,
+soro::vector_map<ir_id, element::ids> get_open_exclusion_elements(
+    soro::vector_map<interlocking_route::id, element::ids> const&
+        closed_exclusion_elements,
     infrastructure const& infra) {
   auto open_exclusion_elements = closed_exclusion_elements;
 
@@ -163,8 +179,8 @@ soro::vector<element::ids> get_open_exclusion_elements(
     auto const first_element = ir.first_node(infra)->element_;
     auto const last_element = ir.last_node(infra)->element_;
 
-    utl::erase(open_exclusion_elements[ir.id_], first_element->id());
-    utl::erase(open_exclusion_elements[ir.id_], last_element->id());
+    utl::erase(open_exclusion_elements[ir.id_], first_element->get_id());
+    utl::erase(open_exclusion_elements[ir.id_], last_element->get_id());
   }
 
   return open_exclusion_elements;

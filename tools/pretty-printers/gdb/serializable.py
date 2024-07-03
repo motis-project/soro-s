@@ -14,21 +14,21 @@ class SerializablePrinter:
 
 
 def match_infrastructure(val):
-    if not str(val.type.strip_typedefs().unqualified()).startswith(
-            "soro::infra::infrastructure") or str(
-        val.type.strip_typedefs().unqualified()).startswith(
-        "soro::infra::infrastructure_t"):
-        return
+    type = str(val.type.strip_typedefs().unqualified())
 
-    return SerializablePrinter(val)
+    if type == "soro::infra::infrastructure":
+        return SerializablePrinter(val)
+
+    return
 
 
 def match_timetable(val):
-    if not str(val.type.strip_typedefs().unqualified()).startswith(
-            "soro::tt::timetable"):
-        return
+    type = str(val.type.strip_typedefs().unqualified())
 
-    return SerializablePrinter(val)
+    if type == "soro::tt::timetable":
+        return SerializablePrinter(val)
+
+    return
 
 
 gdb.pretty_printers.append(match_infrastructure)

@@ -1,18 +1,29 @@
 #include "soro/server/modules/timetable/timetable_module.h"
 
+#include <filesystem>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "utl/logging.h"
 
-#include "soro/server/server_settings.h"
 #include "soro/timetable/timetable.h"
 #include "soro/timetable/timetable_options.h"
+
+#include "soro/server/server_settings.h"
+
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 namespace soro::server {
 
 namespace fs = std::filesystem;
 
 tt::timetable::optional_ptr timetable_module::get_timetable(
-    std::string_view const infrastructure_name,
-    std::string_view const timetable_name) const {
+    std::string const& infrastructure_name,
+    std::string const& timetable_name) const {
 
   auto const context_it = contexts_.find(infrastructure_name);
 
@@ -68,12 +79,12 @@ timetable_module get_timetable_module(server_settings const& s,
 
   auto const timetable_todo_list = get_timetable_todo_list(s);
 
-  for (auto const& infra : infra_m.all()) {
+  for (auto const& infra_context : infra_m.all()) {
     timetable_module::infra_context context;
 
     for (auto const& tt_item : timetable_todo_list) {
-      auto tt =
-          tt::try_parsing_timetable(tt::make_timetable_opts(tt_item), infra);
+      auto tt = tt::try_parsing_timetable(tt::make_timetable_opts(tt_item),
+                                          infra_context.infra_);
 
       if (!tt) {
         continue;
@@ -88,7 +99,7 @@ timetable_module get_timetable_module(server_settings const& s,
       context.timetables_.emplace((*tt_ptr)->source_, std::move(tt_ptr));
     }
 
-    result.contexts_.emplace(infra->source_, std::move(context));
+    result.contexts_.emplace(infra_context.infra_->source_, std::move(context));
   }
 
   return result;

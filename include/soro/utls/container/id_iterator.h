@@ -13,12 +13,14 @@ namespace soro::utls {
 // operator[]
 // .size() (only for asserts)
 
-template <typename IdIt, typename Container>
+template <typename IdContainer, typename Container>
 struct id_iterator {
 #if defined(SERIALIZE)
   using difference_type = std::ptrdiff_t;
 #else
-  static_assert(std::contiguous_iterator<IdIt>);
+  using IdIt = typename IdContainer::iterator;
+
+  static_assert(std::contiguous_iterator<typename IdContainer::iterator>);
   static_assert(std::contiguous_iterator<typename Container::iterator>);
 
   using iterator_concept = typename IdIt::iterator_concept;
@@ -114,16 +116,17 @@ struct id_iterator {
   container_t c_;
 };
 
-template <typename IdIt, typename Container>
-id_iterator(IdIt, Container const*) -> id_iterator<IdIt, Container>;
-
-template <typename T>
+template <typename T, typename Container>
 using id_it = id_iterator<typename soro::vector<typename T::id>::const_iterator,
                           soro::vector<T>>;
 
-template <typename T>
+template <typename T, typename Container>
 using id_it_ptr =
     id_iterator<typename soro::vector<typename T::id>::const_iterator,
                 soro::vector<typename T::ptr>>;
+
+template <typename T, typename Container>
+using id_it_ptr2 = id_iterator<typename Container::const_iterator,
+                               soro::vector<typename T::ptr>>;
 
 }  // namespace soro::utls

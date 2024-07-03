@@ -1,6 +1,9 @@
 #include "doctest/doctest.h"
 
+#include <type_traits>
+
 #include "soro/base/fp_precision.h"
+
 #include "soro/utls/math/polynomial.h"
 
 #if defined(SERIALIZE)

@@ -1,13 +1,18 @@
 #pragma once
 
+#include <concepts>
+
 #include "cista/containers/array.h"
 #include "cista/containers/fws_multimap.h"
 #include "cista/containers/hash_set.h"
 #include "cista/containers/optional.h"
 #include "cista/containers/variant.h"
 #include "cista/containers/vecvec.h"
+#include "cista/strong.h"
 
 #include "soro/utls/container/optional.h"
+#include "soro/utls/container/small_vector.h"
+#include "soro/utls/container/static_vector.h"
 #include "soro/utls/function_alias.h"
 
 #if defined(SERIALIZE)
@@ -66,9 +71,6 @@ using set = data::hash_set<T>;
 template <typename T>
 using vector = data::vector<T>;
 
-template <typename K, typename V>
-using vecvec = data::vecvec<K, V>;
-
 template <typename T>
 using svo_vector = std::basic_string<T>;
 
@@ -85,13 +87,8 @@ using array = data::array<T, Size>;
 template <typename... T>
 using variant = data::variant<T...>;
 
-#if defined(__clang__)
 template <typename T>
 using optional = utls::optional<T>;
-#else
-template <typename T>
-using optional = cista::optional<T>;
-#endif
 
 using string = data::string;
 
@@ -142,13 +139,12 @@ using set = data::hash_set<T>;
 template <typename ValueType>
 using vector = std::vector<ValueType>;
 
-template <typename K, typename V>
-using vecvec = data::vecvec<K, V>;
-
 template <typename Data, typename Index>
 using fws_multimap = data::fws_multimap<Data, Index>;
 
-using size_t = std::size_t;
+using size_t = uint32_t;
+
+using ssize_t = int32_t;
 
 template <typename ValueType, std::size_t Size>
 using array = data::array<ValueType, Size>;
@@ -183,5 +179,32 @@ template <typename T>
 using remove_pointer_t = std::remove_pointer_t<T>;
 
 #endif
+
+// always active, independent whether SERIALIZE is set or not
+
+template <typename T, typename Tag>
+using strong = cista::strong<T, Tag>;
+
+template <typename T, typename Tag>
+constexpr auto as_val(strong<T, Tag> const& s) {
+  return cista::to_idx(s);
+}
+
+template <std::integral I>
+constexpr auto as_val(I const& i) {
+  return i;
+}
+
+template <typename K, typename V>
+using vector_map = data::vector_map<K, V>;
+
+template <typename K, typename V>
+using vecvec = data::vecvec<K, V>;
+
+template <typename T>
+using small_vector = utls::small_vector<T>;
+
+template <typename T, soro::size_t MaxSize>
+using static_vector = utls::static_vector<T, MaxSize>;
 
 }  // namespace soro

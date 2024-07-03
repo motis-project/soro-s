@@ -5,6 +5,8 @@
 #include "soro/base/soro_types.h"
 #include "soro/base/time.h"
 
+#include "soro/timetable/interval.h"
+
 namespace soro::tt {
 
 // covers the range [first_date_, last_date_]

@@ -1,7 +1,15 @@
 #include "soro/infrastructure/station/station_route_graph.h"
 
+#include <iterator>
+
 #include "utl/timer.h"
 
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/std_wrapper/transform.h"
+
+#include "soro/infrastructure/graph/graph.h"
+#include "soro/infrastructure/graph/type.h"
 #include "soro/infrastructure/station/station.h"
 
 namespace soro::infra {
@@ -12,10 +20,10 @@ auto get_successors_from_through_route(station_route::ptr sr) {
     return soro::vector<station_route::ptr>();
   }
 
-  auto const& to_border = sr->nodes().back()->next_node_->element_;
+  auto const& to_border = sr->nodes().back()->next_->element_;
 
   if (auto it =
-          sr->to_station_.value()->element_to_routes_.find(to_border->id());
+          sr->to_station_.value()->element_to_routes_.find(to_border->get_id());
       it != std::end(sr->to_station_.value()->element_to_routes_)) {
     return it->second;
   } else {
@@ -104,17 +112,18 @@ soro::vector<station_route::ptr> get_successors(station_route::ptr sr,
 }
 
 station_route_graph get_station_route_graph(
-    soro::vector<station_route::ptr> const& station_routes,
+    soro::vector_map<station_route::id, station_route::ptr> const&
+        station_routes,
     graph const& network) {
   utl::scoped_timer const srg_timer("Building Station Route Graph");
 
   station_route_graph srg;
 
-  srg.successors_ = soro::to_vec(station_routes, [&network](auto const& sr) {
-    return get_successors(sr, network);
-  });
+  srg.successors_.reserve(station_routes.size());
+  utls::transform(station_routes, std::back_inserter(srg.successors_),
+                  [&](auto&& sr) { return get_successors(sr, network); });
 
-  srg.predeccesors_.resize(srg.successors_.size());
+  srg.predeccesors_.resize(station_routes.size());
   for (auto const& sr : station_routes) {
     auto const& succs = srg.successors_[sr->id_];
     for (auto const& succ : succs) {

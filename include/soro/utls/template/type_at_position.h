@@ -13,7 +13,4 @@ struct type_at_position<0, T, Ts...> {
 template <std::size_t I, typename... Ts>
 using type_at_position_t = typename type_at_position<I, Ts...>::type;
 
-template <typename... Ts>
-using first_t = typename type_at_position<0, Ts...>::type;
-
 }  // namespace soro::utls

@@ -1,6 +1,6 @@
-#include "test/infrastructure/graph_test.h"
-
 #include "doctest/doctest.h"
+
+#include "soro/infrastructure/infrastructure.h"
 
 namespace soro::infra::test {
 

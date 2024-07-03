@@ -67,6 +67,8 @@ type Switch = {
 
 type Element = EOTD | Slope | Halt | SpeedLimit | Switch;
 
+type Node = string;
+
 export enum SearchResultType {
   Station = 'station',
   Element = 'element',
@@ -114,6 +116,7 @@ type Infrastructure = {
   interlockingRoute: (id: number) => Promise<InterlockingRoute>;
   stationRoute: (id: number) => Promise<StationRoute>;
   element: (id: number) => Promise<Element>;
+  node: (id: number) => Promise<Node>;
   search: (query: string) => Promise<SearchResult[]>;
   timetables: () => Promise<TimetableList>;
   timetable: (ttName: string) => TimetableModule;
@@ -142,6 +145,7 @@ class SoroClient extends HttpClient {
       stationRoute: (id: number) => this.stationRoute(name, id),
       interlockingRoute: (id: number) => this.interlockingRoute(name, id),
       element: (id: number) => this.element(name, id),
+      node: (id: number) => this.node(name, id),
       search: (query: string) => this.search(name, query),
       timetables: () => this.timetables(name),
       timetable: (ttName: string) => this.timetable(name, ttName)
@@ -197,6 +201,12 @@ class SoroClient extends HttpClient {
   element(infrastructureName: string, elementId: number): Promise<Element> {
     return this.get(
       '/infrastructure/' + infrastructureName + '/element/' + elementId
+    );
+  }
+
+  node(infrastructureName: string, nodeId: number): Promise<Node> {
+    return this.get(
+      '/infrastructure/' + infrastructureName + '/node/' + nodeId
     );
   }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <compare>
 
 #include "date/date.h"
 #include "fmt/format.h"
@@ -29,7 +30,14 @@ using absolute_time = date::sys_time<i32_seconds>;
 // given as a count of non-leap seconds since an absolute time (the anchor)
 using relative_time = i32_seconds;
 
-using duration2 = i32_seconds;
+struct times {
+  auto operator<=>(times const&) const = default;
+
+  relative_time arrival_{relative_time::max()};
+  relative_time departure_{relative_time::max()};
+};
+
+using duration = i32_seconds;
 
 [[nodiscard]] constexpr absolute_time relative_to_absolute(
     absolute_time const anchor, relative_time const relative) {
@@ -70,14 +78,57 @@ using duration2 = i32_seconds;
 }
 
 template <typename T>
-concept soro_time = utls::is_any_of<T, absolute_time, relative_time, duration2>;
+concept soro_time = utls::is_any_of<T, absolute_time, relative_time, duration>;
 
 template <soro_time T>
 constexpr T const INVALID = T::max();
 
 template <soro_time T>
+constexpr T const ZERO = T{T::duration::zero()};
+
+template <soro_time T>
 constexpr bool valid(T const t) {
   return t != INVALID<T>;
+}
+
+inline date::year_month_day parse_date(const char* const c) {
+  utls::expect(strlen(c) >= strlen("2022-11-19"),
+               "date {} has not the expected minimum length.", c);
+
+  date::year const y{utls::parse_int<int>(c, c + 4)};
+  date::month const m{utls::parse_int<unsigned>(c + 5, c + 7)};
+  date::day const d{utls::parse_int<unsigned>(c + 8, c + 10)};
+
+  date::year_month_day date{y, m, d};
+
+  utls::ensure(date.ok(), "date {} - {} - {} is not ok!", date.year(),
+               date.month(), date.day());
+
+  return date;
+};
+
+inline soro::absolute_time parse_dmy_hms(const char* const c) {
+  utls::expect(strlen(c) <= strlen("20-02-2024 17:32:30"),
+               "datetime {} has not the expected minimum length.", c);
+
+  date::day const day{utls::parse_int<unsigned>(c, c + 2)};
+  date::month const month{utls::parse_int<unsigned>(c + 3, c + 5)};
+  date::year const year{utls::parse_int<int>(c + 6, c + 10)};
+
+  date::year_month_day const date{year, month, day};
+
+  utls::ensure(date.ok(), "date {} - {} - {} is not ok!", date.year(),
+               date.month(), date.day());
+
+  soro::hours h{utls::parse_int<soro::hours::rep>(c + 11, c + 13)};
+  soro::minutes m{utls::parse_int<soro::minutes::rep>(c + 14, c + 16)};
+  soro::seconds s{utls::parse_int<soro::seconds::rep>(c + 17, c + 19)};
+
+  utls::ensure(h.count() < 24, "hour {} is not valid!", h.count());
+  utls::ensure(m.count() < 60, "minute {} is not valid!", m.count());
+  utls::ensure(s.count() < 60, "second {} is not valid!", s.count());
+
+  return ymd_to_abs(date) + h + m + s;
 }
 
 }  // namespace soro
@@ -96,8 +147,8 @@ struct formatter<soro::absolute_time> {
   }
 
   template <typename FormatContext>
-  auto format(soro::absolute_time const at, FormatContext& ctx) const
-      -> decltype(ctx.out()) {
+  auto format(soro::absolute_time const at,
+              FormatContext& ctx) const -> decltype(ctx.out()) {
     return format_to(ctx.out(), date::format("%FT%T", at));
   }
 };

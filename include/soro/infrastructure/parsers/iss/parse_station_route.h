@@ -13,7 +13,6 @@ namespace soro::infra {
 
 intermediate_station_route parse_station_route(
     station_route::id const id, pugi::xml_node const& xml_station_route,
-    soro::ptr<station>, graph const& network,
-    construction_materials const& mats);
+    soro::ptr<station>);
 
 }  // namespace soro::infra

@@ -1,6 +1,10 @@
 #include "doctest/doctest.h"
 
+#include <cstddef>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #include "soro/utls/tuple/slice.h"
 

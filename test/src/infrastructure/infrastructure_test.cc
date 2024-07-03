@@ -1,11 +1,15 @@
 #include "doctest/doctest.h"
 
-#include <string>
-
-#include "utl/enumerate.h"
+#include <cstddef>
 
 #include "soro/utls/execute_if.h"
+#include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/accumulate.h"
+#include "soro/utls/std_wrapper/find_if.h"
 
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/element_data.h"
+#include "soro/infrastructure/graph/section.h"
 #include "soro/infrastructure/infrastructure.h"
 
 #include "test/file_paths.h"
@@ -35,8 +39,8 @@ void check_speed_limit_values(infrastructure const& infra) {
   // if a special speed limit band is ending, it does not need a speed value
   for (auto const& data : infra->graph_.element_data_) {
     execute_if<speed_limit>(data, [](auto&& spl) {
-      if (spl.type_ != speed_limit::type::END_SPECIAL) {
-        CHECK(si::valid(spl.limit_));
+      if (spl.type_ != speed_limit::type::end_special) {
+        CHECK(spl.limit_.is_valid());
       }
     });
   }
@@ -46,9 +50,9 @@ void check_border_number(infrastructure const& infra) {
   if (infra->stations_.size() == 1) {
     return;  // no border checking with a single station
   }
-  auto const total_borders = std::accumulate(
-      std::cbegin(infra->stations_), std::cend(infra->stations_),
-      std::size_t{0},
+
+  auto const total_borders = utls::accumulate(
+      infra->stations_, std::size_t{0},
       [](auto&& acc, auto&& s) { return acc + s->borders_.size(); });
 
   CHECK_MESSAGE((total_borders != 0),
@@ -63,28 +67,32 @@ void check_border_pairs(infrastructure const& infra) {
             return border.get_id_tuple() == border_a.get_id_tuple();
           });
 
-      bool const matching_orientation =
-          border_a.low_border_ != border_b.low_border_;
+      CHECK_MESSAGE((border_a.pos_ != section::position::middle),
+                    "borders must have position");
+      CHECK_MESSAGE((border_b.pos_ != section::position::middle),
+                    "borders must have position");
+      bool const matching_orientation = border_a.pos_ != border_b.pos_;
       CHECK_MESSAGE(matching_orientation,
-                    "Two connected borders should never have opposing mileage");
+                    "two connected borders should always be different");
     }
   }
 }
 
 void check_orientation_flags_on_track_elements(infrastructure const& infra) {
   auto const check_node_line = [](node_ptr node) {
-    while (node->next_node_ != nullptr &&
-           node->next_node_->element_->is_track_element()) {
+    while (node->next_ != nullptr &&
+           node->next_->element_->is_track_element()) {
+      utls::sassert(node->element_->is_track_element());
+      utls::sassert(node->next_->element_->is_track_element());
 
-      bool const same_orientation =
-          node->element_->rising() == node->next_node_->element_->rising() ||
-          node->element_->is_undirected_track_element() ||
-          node->next_node_->element_->is_undirected_track_element();
-      CHECK_MESSAGE(same_orientation,
-                    "Consecutive track elements must have the same orientation "
-                    "determined by the rising flag");
+      auto const& from = node->element_->as<track_element>();
+      auto const& to = node->next_->element_->as<track_element>();
 
-      node = node->next_node_;
+      CHECK_MESSAGE(
+          (from.dir() == to.dir()),
+          "consecutive track elements must have the same orientation");
+
+      node = node->next_;
     }
   };
 
@@ -94,14 +102,13 @@ void check_orientation_flags_on_track_elements(infrastructure const& infra) {
     }
 
     for (auto const& node : element->nodes()) {
-      if (node->next_node_ != nullptr &&
-          node->next_node_->element_->is_track_element()) {
-        check_node_line(node->next_node_);
+      if (node->next_ != nullptr && node->next_->element_->is_track_element()) {
+        check_node_line(node->next_);
       }
 
-      if (node->branch_node_ != nullptr &&
-          node->branch_node_->element_->is_track_element()) {
-        check_node_line(node->branch_node_);
+      if (node->branch_ != nullptr &&
+          node->branch_->element_->is_track_element()) {
+        check_node_line(node->branch_);
       }
     }
   }
@@ -110,7 +117,7 @@ void check_orientation_flags_on_track_elements(infrastructure const& infra) {
 void check_infra(infrastructure const& infra) {
   SUBCASE("speed limit values tests") { check_speed_limit_values(infra); }
 
-  SUBCASE("graph tests") { do_graph_tests(infra); }
+  SUBCASE("graph tests") { check_graph(infra->graph_); }
 
   SUBCASE("track element tests") {
     check_orientation_flags_on_track_elements(infra);

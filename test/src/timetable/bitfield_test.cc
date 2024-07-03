@@ -1,5 +1,12 @@
 #include "doctest/doctest.h"
 
+#include <string>
+#include <vector>
+
+#include "date/date.h"
+
+#include "soro/base/time.h"
+
 #include "soro/utls/std_wrapper/count.h"
 
 #include "soro/timetable/bitfield.h"

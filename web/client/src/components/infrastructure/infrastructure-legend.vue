@@ -14,13 +14,13 @@
       :elevation="5"
     >
       <div class="infrastructure-map-reset">
-        <a href="/" @click.prevent="$emit('reset')"> Reset </a>
+        <a href="/" @click.prevent="emitReset()"> Reset </a>
       </div>
 
-      <template v-for="(elementType, index) in legendControlTypes" :key="index">
+      <template v-for="(elementType, index) in ElementTypes()" :key="index">
         <v-checkbox
           :ref="elementType"
-          :model-value="checkedControls"
+          v-model="currentLegendControls.selectedElementTypes"
           :name="elementType"
           :value="elementType"
           class="legend-key"
@@ -28,78 +28,243 @@
           density="compact"
           min-height="0px"
           hide-details
-          @input="emitChange"
+          @input="emitElementTypeChange"
         >
           <template #label>
             <img
-              v-if="hasImage(elementType)"
               class="legend-key-icon"
-              :src="iconUrl + elementType + iconExtension"
+              :src="iconUrl() + elementType + iconExtension()"
               alt=""
             />
-            {{ getElementLabel(elementType) }}
+            {{ ElementTypeLabel[elementType] }}
           </template>
         </v-checkbox>
       </template>
+
+      <v-checkbox
+        ref="Station"
+        v-model="currentLegendControls.showStationIcons"
+        name="Station"
+        class="legend-key"
+        color="primary"
+        density="compact"
+        min-height="0px"
+        hide-details
+        @input="emitShowStationsChange"
+      >
+        <template #label>
+          <img
+            class="legend-key-icon"
+            :src="iconUrl() + 'station' + iconExtension()"
+            alt=""
+          />
+          {{ 'Station' }}
+        </template>
+      </v-checkbox>
+
+      <template v-for="(mileageDir, index) in MileageDirections()" :key="index">
+        <v-checkbox
+          :ref="mileageDir"
+          v-model="currentLegendControls.selectedMileageDirections"
+          :name="mileageDir"
+          :value="mileageDir"
+          class="legend-key"
+          color="primary"
+          density="compact"
+          min-height="0px"
+          hide-details
+          @input="emitMileageDirectionChange"
+        >
+          <template #label>
+            {{ MileageDirectionLabel[mileageDir] }}
+          </template>
+        </v-checkbox>
+      </template>
+
+      <div>
+        <v-radio-group
+          v-model="currentLegendControls.selectedDisplayMode"
+          inline
+          label="Display Mode"
+          @input="emitDisplayModeChange"
+        >
+          <template v-for="(displayMode, index) in DisplayModes()" :key="index">
+            <v-radio
+              :label="DisplayModeLabel[displayMode]"
+              :value="displayMode"
+            ></v-radio>
+          </template>
+        </v-radio-group>
+      </div>
     </v-sheet>
   </div>
 </template>
 
 <script lang="ts">
 import {
-  ElementTypeLabels,
+  ElementType,
+  ElementTypeLabel,
   ElementTypes
 } from '@/components/infrastructure/element-types.js';
+import {
+  DisplayMode,
+  DisplayModeLabel,
+  DisplayModes
+} from '@/components/infrastructure/display-modes.js';
 import { iconExtension, iconUrl } from './add-icons';
 import { defineComponent } from 'vue';
+import {
+  MileageDirection,
+  MileageDirectionLabel,
+  MileageDirections
+} from '@/components/infrastructure/mileage-direction';
 
-export const SpecialLegendControl = {
-  RISING: 'Rising',
-  FALLING: 'Falling'
+export type LegendControls = {
+  selectedElementTypes: ElementType[];
+  showStationIcons: boolean;
+  selectedMileageDirections: MileageDirection[];
+  selectedDisplayMode: DisplayMode;
 };
-export const SpecialLegendControls = Object.values(SpecialLegendControl);
-const legendControlTypes = [...ElementTypes, ...SpecialLegendControls];
+
+const initialLegendControls: LegendControls = {
+  selectedElementTypes: [
+    ElementType.Halt,
+    ElementType.MainSignal,
+    ElementType.ApproachSignal,
+    ElementType.EndOfTrainDetector
+  ],
+
+  showStationIcons: true,
+
+  selectedMileageDirections: [
+    MileageDirection.Falling,
+    MileageDirection.Rising,
+    MileageDirection.Undirected
+  ],
+
+  selectedDisplayMode: DisplayMode.Element
+};
 
 export default defineComponent({
   name: 'InfrastructureLegend',
 
-  props: {
-    checkedControls: {
-      type: Array,
-      required: true
+  inject: {
+    goldenLayoutKeyInjection: {
+      default: ''
     }
   },
 
-  emits: ['change', 'reset'],
+  emits: [
+    'legendControlChange',
+    'elementTypeChange',
+    'showStationChange',
+    'mileageDirectionChange',
+    'displayModeChange',
+    'reset'
+  ],
 
-  data() {
+  data(): {
+    isExpanded: boolean;
+    currentLegendControls: LegendControls;
+  } {
     return {
-      legendControlTypes,
-      iconUrl,
-      iconExtension,
-      isExpanded: false
+      isExpanded: false,
+      currentLegendControls: initialLegendControls
     };
   },
 
   computed: {
+    MileageDirectionLabel() {
+      return MileageDirectionLabel;
+    },
+
+    legendStateLocalStorageKey() {
+      return `infrastructure[${this.goldenLayoutKeyInjection}].legendState`;
+    },
+
+    ElementTypeLabel() {
+      return ElementTypeLabel;
+    },
+
+    DisplayModeLabel() {
+      return DisplayModeLabel;
+    },
+
     collapseIcon() {
       return this.isExpanded ? 'chevron_right' : 'legend_toggle';
     }
   },
 
+  created() {
+    const storedLegendState = window.localStorage.getItem(
+      this.legendStateLocalStorageKey
+    );
+
+    if (storedLegendState) {
+      this.currentLegendControls = JSON.parse(storedLegendState);
+    }
+  },
+
+  mounted() {
+    this.$emit('legendControlChange', this.currentLegendControls);
+  },
+
   methods: {
-    hasImage(elementType: string) {
-      return !SpecialLegendControls.includes(elementType);
+    ElementTypes() {
+      return ElementTypes;
     },
 
-    getElementLabel(elementType: string) {
-      return ElementTypeLabels[elementType] ?? elementType;
+    MileageDirections() {
+      return MileageDirections;
     },
 
-    emitChange(event: Event) {
-      const eventTarget = event.target as HTMLInputElement;
+    iconExtension() {
+      return iconExtension;
+    },
 
-      this.$emit('change', eventTarget.value, eventTarget.checked);
+    iconUrl() {
+      return iconUrl;
+    },
+
+    DisplayModes() {
+      return DisplayModes;
+    },
+
+    saveControls() {
+      window.localStorage.setItem(
+        this.legendStateLocalStorageKey,
+        JSON.stringify(this.currentLegendControls)
+      );
+    },
+
+    emit(s: any, t: HTMLInputElement) {
+      this.$emit(s, t.value, t.checked, this.currentLegendControls);
+    },
+
+    emitElementTypeChange(event: Event) {
+      this.saveControls();
+      this.emit('elementTypeChange', event.target as HTMLInputElement);
+    },
+
+    emitShowStationsChange(event: Event) {
+      this.saveControls();
+      this.emit('showStationChange', event.target as HTMLInputElement);
+    },
+
+    emitMileageDirectionChange(event: Event) {
+      this.saveControls();
+      this.emit('mileageDirectionChange', event.target as HTMLInputElement);
+    },
+
+    emitDisplayModeChange() {
+      this.saveControls();
+      this.$emit('displayModeChange', this.currentLegendControls);
+    },
+
+    emitReset() {
+      Object.assign(this.$data.currentLegendControls, initialLegendControls);
+      this.saveControls();
+      this.$emit('reset', this.currentLegendControls);
     }
   }
 });

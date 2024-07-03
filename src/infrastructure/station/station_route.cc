@@ -1,24 +1,49 @@
 #include "soro/infrastructure/station/station_route.h"
 
-#include "soro/infrastructure/station/station.h"
+#include <algorithm>
+#include <iterator>
+#include <optional>
+
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/coroutine/recursive_generator.h"
+#include "soro/utls/narrow.h"
+#include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/distance.h"
+#include "soro/utls/std_wrapper/upper_bound.h"
+
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/element_data.h"
+#include "soro/infrastructure/graph/node.h"
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/infrastructure.h"
+#include "soro/infrastructure/line.h"
+#include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 #include "soro/infrastructure/station/station_route_graph.h"
 
-#include "soro/utls/coroutine/coro_map.h"
-#include "soro/utls/sassert.h"
-#include "soro/utls/std_wrapper/find_if_position.h"
+#include "soro/rolling_stock/stop_mode.h"
 
 namespace soro::infra {
 
-node::idx station_route::size() const noexcept {
-  utls::sassert(
-      this->path_->nodes_.size() < node::INVALID_IDX,
-      "More nodes in a station route than node::idx is capable to hold.");
+speed_limit::ptr route_node::get_speed_limit(
+    infrastructure const& infra) const {
+  utls::sassert(node_->is(type::SPEED_LIMIT), "no speed limit at node");
 
-  return static_cast<node::idx>(nodes().size());
+  if (alternate_spl_.has_value()) {
+    return alternate_spl_.value();
+  }
+
+  auto const& spl = infra->graph_.get_element_data<speed_limit>(node_);
+
+  return &spl;
 }
 
-node::ptr station_route::nodes(node::idx const idx) const {
-  return this->path_->nodes_[idx];
+station_route::idx station_route::size() const noexcept {
+  return utls::narrow<idx>(nodes().size());
+}
+
+node::ptr station_route::nodes(station_route::idx const idx) const {
+  return this->path_->nodes_[utls::narrow<soro::size_t>(idx)];
 }
 
 soro::vector<node::ptr> const& station_route::nodes() const {
@@ -59,8 +84,8 @@ bool station_route::requires_etcs(lines const& lines) const {
   if (!path_->etcs_starts_.empty()) {
     auto const& etcs_start =
         nodes(path_->etcs_starts_.back())->element_->as<track_element>();
-    auto const& line = lines.at(etcs_start.line_);
-    return !line.has_signalling(etcs_start.km_);
+    auto const& line = lines.at(etcs_start.get_line());
+    return !line.has_signalling(etcs_start.km());
   }
 
   return false;
@@ -70,8 +95,8 @@ bool station_route::requires_lzb(soro::infra::lines const& lines) const {
   if (!path_->lzb_starts_.empty()) {
     auto const& lzb_start =
         nodes(path_->lzb_starts_.back())->element_->as<track_element>();
-    auto const& line = lines.at(lzb_start.line_);
-    return !line.has_signalling(lzb_start.km_);
+    auto const& line = lines.at(lzb_start.get_line());
+    return !line.has_signalling(lzb_start.km());
   }
 
   return false;
@@ -96,109 +121,185 @@ bool station_route::operator!=(station_route const& o) const {
   return !(*this == o);
 }
 
-node::optional_idx station_route::get_halt_idx(
-    rs::FreightTrain const freight) const {
-  return static_cast<bool>(freight) ? freight_halt_ : passenger_halt_;
+station_route::optional_idx station_route::get_halt_idx(
+    rs::stop_mode const stop_mode) const {
+  return is_passenger_stop_mode(stop_mode) ? passenger_halt_ : freight_halt_;
 }
 
 node::optional_ptr station_route::get_halt_node(
-    rs::FreightTrain const f) const {
-  auto const opt_idx = get_halt_idx(f);
+    rs::stop_mode const stop_mode) const {
+  auto const opt_idx = get_halt_idx(stop_mode);
   return opt_idx.has_value() ? node::optional_ptr(nodes(*opt_idx))
                              : node::optional_ptr(std::nullopt);
 }
 
+station_route::optional_idx station_route::get_runtime_checkpoint_idx() const {
+  return runtime_checkpoint_;
+}
+
 node::optional_ptr station_route::get_runtime_checkpoint_node() const {
-  return runtime_checkpoint_.has_value()
-             ? node::optional_ptr(nodes(*runtime_checkpoint_))
-             : node::optional_ptr(std::nullopt);
+  return runtime_checkpoint_.transform([&](auto&& idx) { return nodes(idx); });
 }
 
-std::pair<node::idx, node::idx> fast_forward_indices(station_route const& r,
-                                                     node::idx const ff_to) {
-  std::pair<node::idx, node::idx> indices{
-      r.omitted_nodes_.empty() ? node::INVALID_IDX : 0,
-      r.extra_speed_limits_.empty() ? node::INVALID_IDX : 0};
+struct iterating_indices {
+  iterating_indices(station_route::idx const omit,
+                    station_route::idx const espl,
+                    station_route::idx const aspl)
+      : omit_{omit}, espl_{espl}, aspl_{aspl} {}
 
-  if (ff_to == 0) {
-    return indices;
-  }
+  soro::size_t omit() const { return utls::narrow<soro::size_t>(omit_); }
+  soro::size_t espl() const { return utls::narrow<soro::size_t>(espl_); }
+  soro::size_t aspl() const { return utls::narrow<soro::size_t>(aspl_); }
 
-  if (!r.omitted_nodes_.empty()) {
-    auto const omit_idx = utls::find_if_position(
-        r.omitted_nodes_,
-        [&ff_to](node::idx const omitted_idx) { return omitted_idx >= ff_to; });
-    indices.first = static_cast<node::idx>(omit_idx);
-  }
+  station_route::idx omit_;
+  station_route::idx espl_;  // extra speed limits
+  station_route::idx aspl_;  // alternative speed limits
+};
 
-  if (r.extra_speed_limits_.empty()) {
-    return indices;
-  }
+iterating_indices fast_forward_indices(station_route const& sr,
+                                       station_route::idx const ff_to) {
+  iterating_indices result{0, 0, 0};
 
-  node::idx spl_idx = 0;
-  for (node::idx n_idx = 0; n_idx < ff_to; ++n_idx) {
-    auto const& spl = r.extra_speed_limits_[spl_idx];
-    if (spl.node_ == r.nodes(n_idx)) {
-      ++spl_idx;
-    }
+  if (ff_to == 0) return result;
 
-    if (spl_idx == r.extra_speed_limits_.size()) {
-      break;
-    }
-  }
+  auto const omit_it = utls::upper_bound(sr.omitted_nodes_, ff_to - 1);
+  result.omit_ = utls::distance<station_route::idx>(
+      std::begin(sr.omitted_nodes_), omit_it);
 
-  indices.second = spl_idx;
+  auto const idx_spl = [](auto&& idx, auto&& spl) { return idx < spl.idx_; };
 
-  return indices;
+  auto const espl_it =
+      utls::upper_bound(sr.extra_speed_limits_, ff_to - 1, idx_spl);
+  result.espl_ = utls::distance<station_route::idx>(
+      std::begin(sr.extra_speed_limits_), espl_it);
+
+  auto const aspl_it =
+      utls::upper_bound(sr.alt_speed_limits_, ff_to - 1, idx_spl);
+  result.aspl_ = utls::distance<station_route::idx>(
+      std::begin(sr.alt_speed_limits_), aspl_it);
+
+  return result;
 }
 
-utls::recursive_generator<route_node> station_route::iterate() const {
-  co_yield from_to(0, size());
+iterating_indices fast_backward_indices(station_route const& sr,
+                                        station_route::idx const fb_to) {
+  using idx = station_route::idx;
+
+  iterating_indices result(utls::narrow<idx>(sr.omitted_nodes_.size()) - 1,
+                           utls::narrow<idx>(sr.extra_speed_limits_.size()) - 1,
+                           utls::narrow<idx>(sr.alt_speed_limits_.size()) - 1);
+
+  if (fb_to == sr.size() - 1) return result;
+
+  auto const omit_it = std::upper_bound(
+      std::rbegin(sr.omitted_nodes_), std::rend(sr.omitted_nodes_), fb_to + 1,
+      [](auto&& idx, auto&& omitted) { return idx > omitted; });
+  auto const odist = std::distance(std::rbegin(sr.omitted_nodes_), omit_it);
+  auto const omit_idx = utls::narrow<idx>(sr.omitted_nodes_.size()) - odist - 1;
+  result.omit_ = utls::narrow<idx>(omit_idx);
+
+  auto const idx_spl = [](auto&& idx, auto&& spl) { return idx > spl.idx_; };
+  auto const espl_it =
+      std::upper_bound(std::rbegin(sr.extra_speed_limits_),
+                       std::rend(sr.extra_speed_limits_), fb_to + 1, idx_spl);
+  auto const edist =
+      std::distance(std::rbegin(sr.extra_speed_limits_), espl_it);
+  auto const espl_idx =
+      utls::narrow<idx>(sr.extra_speed_limits_.size()) - edist - 1;
+  result.espl_ = utls::narrow<idx>(espl_idx);
+
+  auto const aspl_it =
+      std::upper_bound(std::rbegin(sr.alt_speed_limits_),
+                       std::rend(sr.alt_speed_limits_), fb_to + 1, idx_spl);
+  auto const adist = std::distance(std::rbegin(sr.alt_speed_limits_), aspl_it);
+  auto const aspl_idx =
+      utls::narrow<idx>(sr.alt_speed_limits_.size()) - adist - 1;
+  result.aspl_ = utls::narrow<idx>(aspl_idx);
+
+  return result;
 }
 
-utls::recursive_generator<route_node> station_route::from_to(
-    node::idx const from, node::idx const to) const {
-  utls::sassert(from <= to, "To: {} is smaller than from: {}.", to, from);
-
-  if (from >= size()) {
-    co_return;
-  }
+template <typename AdvanceFn, typename InitialIndicesFn>
+utls::recursive_generator<route_node> from_to_impl(
+    station_route const& sr, station_route::idx const from,
+    station_route::idx const to, AdvanceFn const& advance,
+    InitialIndicesFn const& get_initial_indices) {
+  using idx = station_route::idx;
 
   route_node result;
-  node::idx node_idx = from;
+  idx node_idx = from;
 
-  auto [omit_idx, spl_idx] = fast_forward_indices(*this, from);
+  iterating_indices ii = get_initial_indices(sr, from);
 
-  for (; node_idx < to; ++node_idx) {
-    result.node_ = nodes(node_idx);
+  for (; node_idx != to; node_idx = advance(node_idx)) {
+    result.node_ = sr.nodes(node_idx);
 
-    result.omitted_ = omit_idx < omitted_nodes_.size() &&
-                      omitted_nodes_[omit_idx] == node_idx;
+    result.omitted_ = ii.omit_ < utls::narrow<idx>(sr.omitted_nodes_.size()) &&
+                      ii.omit_ >= 0 && sr.omitted_nodes_[ii.omit()] == node_idx;
 
     if (result.omitted_) {
-      ++omit_idx;
-    } else {
-      bool const extra_spl =
-          spl_idx < extra_speed_limits_.size() &&
-          extra_speed_limits_[spl_idx].node_->id_ == result.node_->id_;
+      ii.omit_ = advance(ii.omit_);
+    }
 
-      if (extra_spl) {
-        result.extra_spl_ =
-            speed_limit::optional_ptr(&extra_speed_limits_[spl_idx++]);
-      }
+    result.extra_spls_.clear();
+    while (ii.espl_ < utls::narrow<idx>(sr.extra_speed_limits_.size()) &&
+           ii.espl_ >= 0 &&
+           sr.extra_speed_limits_[ii.espl()].idx_ == node_idx) {
+      result.extra_spls_.push_back(&sr.extra_speed_limits_[ii.espl()].spl_);
+      ii.espl_ = advance(ii.espl_);
+    }
+
+    result.alternate_spl_.reset();
+    if (ii.aspl_ < utls::narrow<idx>(sr.alt_speed_limits_.size()) &&
+        ii.aspl_ >= 0 && sr.alt_speed_limits_[ii.aspl()].idx_ == node_idx) {
+      result.alternate_spl_.emplace(&sr.alt_speed_limits_[ii.aspl()].spl_);
+      ii.aspl_ = advance(ii.aspl_);
     }
 
     co_yield result;
   }
 }
 
-utls::recursive_generator<route_node> station_route::from(
-    node::idx from) const {
+utls::recursive_generator<route_node> station_route::from_to(
+    station_route::idx const from, station_route::idx const to) const {
+
+  if (from <= to) {
+    if (from >= size() || to > size()) co_return;
+    auto const increment = [](idx const i) -> idx { return i + 1; };
+    co_yield from_to_impl(*this, from, to, increment, fast_forward_indices);
+  } else {
+    if (from >= size() || to < -1) co_return;
+    auto const decrement = [](idx const i) -> idx { return i - 1; };
+    co_yield from_to_impl(*this, from, to, decrement, fast_backward_indices);
+  }
+}
+
+utls::recursive_generator<route_node> station_route::iterate() const {
+  co_yield from_to(0, size());
+}
+
+utls::recursive_generator<route_node> station_route::backwards() const {
+  co_yield from_to(size() - 1, -1);
+}
+
+utls::recursive_generator<route_node> station_route::from_fwd(
+    station_route::idx from) const {
   co_yield from_to(from, size());
 }
 
-utls::recursive_generator<route_node> station_route::to(node::idx to) const {
+utls::recursive_generator<route_node> station_route::from_bwd(
+    station_route::idx from) const {
+  co_yield from_to(from, -1);
+}
+
+utls::recursive_generator<route_node> station_route::to_fwd(
+    station_route::idx to) const {
   co_yield from_to(0, to);
+}
+
+utls::recursive_generator<route_node> station_route::to_bwd(
+    station_route::idx to) const {
+  co_yield from_to(size() - 1, to);
 }
 
 }  // namespace soro::infra

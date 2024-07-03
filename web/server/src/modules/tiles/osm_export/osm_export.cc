@@ -1,9 +1,29 @@
 #include "soro/server/modules/tiles/osm_export/osm_export.h"
 
+#include <cstddef>
+#include <algorithm>
+#include <filesystem>
+#include <functional>
 #include <future>
+#include <map>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include "utl/logging.h"
 #include "utl/overloaded.h"
+#include "utl/timer.h"
+
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/coordinates/gps.h"
+
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/node.h"
+#include "soro/infrastructure/infrastructure.h"
+#include "soro/infrastructure/station/station.h"
+
+#include "soro/server/modules/infrastructure/positions.h"
 
 #include "soro/server/modules/tiles/osm_export/interpolation.h"
 #include "soro/server/modules/tiles/osm_export/osm_tag_names.h"
@@ -12,6 +32,51 @@ using namespace utl;
 
 using namespace soro::utls;
 using namespace soro::infra;
+
+namespace soro::server::osm_export {
+
+/**
+ * elem_ the element
+ * station_ the station the element belongs to
+ */
+struct osm_element {
+  element::ptr elem_;
+  station::ptr station_;
+};
+
+struct osm_node {
+  node::ptr node_;
+  station::ptr station_;
+};
+
+struct osm_information {
+
+  // all nodes in the xml
+  // size_t id
+  std::vector<std::pair<size_t, soro::variant<station::ptr, osm_element>>>
+      nodes_;
+
+  // the ways in the xml, between two elements in nodes_
+  std::vector<std::pair<element::id, element::id>> ways_;
+
+  // the interpolations
+  std::vector<interpolation> interpolations_;
+
+  // the connection between nodes
+  // prevents duplicate ways
+  std::map<element::id, std::vector<element::id>> element_to_way_;
+
+  // key: id of border element
+  // value: id of border element in other station and xml id of interpolation
+  // nodes
+  // can be used for signal station routes
+  std::map<element::id, std::pair<element::id, std::vector<std::size_t>>>
+      element_to_interpolation_nodes_;
+  // ids of elements in station route, id of station_route_way
+  std::vector<std::pair<std::vector<size_t>, size_t>> station_route_nodes_;
+};
+
+}  // namespace soro::server::osm_export
 
 namespace soro::server::osm_export::detail {
 
@@ -37,107 +102,94 @@ void osm_add_coordinates(gps const& gps, auto& node) {
   osm_add_key_value(lat_str, gps.lat_, node);
 }
 
-void create_station_osm(pugi::xml_node& osm, station::ptr station,
-                        std::size_t const osm_id,
-                        soro::vector<gps> const& station_coords) {
+void create_station_osm(
+    pugi::xml_node& osm, station::ptr station, std::size_t const osm_id,
+    soro::vector_map<station::id, gps> const& station_coords) {
   auto station_node = osm.append_child(node_str);
   station_node.append_attribute(id_str).set_value(osm_id);
   osm_add_coordinates(station_coords[station->id_], station_node);
   osm_add_tag(type_str, station_str, station_node);
-  osm_add_tag(id_str, station->id_, station_node);
+  osm_add_tag(id_str, as_val(station->id_), station_node);
   osm_add_tag(name_str, station->ds100_.data(), station_node);
 }
 
-void create_element_osm(pugi::xml_node& osm, element_ptr e,
-                        soro::vector<gps> const& element_coords) {
+void create_element_osm(
+    pugi::xml_node& osm, element::ptr const e,
+    soro::vector_map<element::id, gps> const& element_coords) {
+
   auto element_node = osm.append_child(node_str);
-  element_node.append_attribute(id_str).set_value(e->id());
-  osm_add_coordinates(element_coords[e->id()], element_node);
+
+  element_node.append_attribute(id_str).set_value(as_val(e->get_id()));
+
+  osm_add_coordinates(element_coords[e->get_id()], element_node);
+
   osm_add_tag(type_str, element_str, element_node);
   osm_add_tag(subtype_str, e->get_type_str().c_str(), element_node);
-  osm_add_tag(id_str, e->id(), element_node);
-  osm_add_tag(direction_str, e->rising() ? rising_str : falling_str,
-              element_node);
+  osm_add_tag(id_str, as_val(e->get_id()), element_node);
+
+  if (e->is_track_element()) {
+    osm_add_tag(direction_str,
+                e->as<track_element>().rising() ? rising_str : falling_str,
+                element_node);
+  }
 }
 
-void create_way_osm(pugi::xml_node& osm_node, element_id const first,
-                    element_id const second, size_t const id) {
+void create_way_osm(pugi::xml_node& osm_node, element::id const first,
+                    element::id const second, size_t const id) {
   auto way = osm_node.append_child(way_str);
   way.append_attribute(id_str).set_value(id);
-  osm_add_node_with_key_value(ref_str, first, nd_str, way);
-  osm_add_node_with_key_value(ref_str, second, nd_str, way);
+  osm_add_node_with_key_value(ref_str, as_val(first), nd_str, way);
+  osm_add_node_with_key_value(ref_str, as_val(second), nd_str, way);
   osm_add_tag(railway_str, rail_str, way);
 }
 
-infra::element_id create_interpolation_osm(pugi::xml_node osm,
-                                           interpolation const& interpolation,
-                                           infra::element_id const id,
-                                           osm_information& osm_info) {
-  std::vector<soro::size_t> ids;
-  osm_info.ways_.emplace_back(interpolation.first_elem_, id);
-  for (auto i = 0UL; i < interpolation.points_.size(); i++) {
-    if (i < interpolation.points_.size() - 1) {
-      osm_info.ways_.emplace_back(std::pair(id + i, id + i + 1));
-    }
-    ids.push_back(static_cast<soro::size_t>(id + i));
-    auto auxiliary_node = osm.append_child("node");
-    auxiliary_node.append_attribute("id").set_value(id + i);
-    auto auxiliary_coords = interpolation.points_.at(i);
-    osm_add_coordinates(auxiliary_coords, auxiliary_node);
-    osm_add_tag(type_str, interpolation_str, auxiliary_node);
-  }
-  osm_info.ways_.emplace_back(
-      static_cast<infra::element_id>(id + interpolation.points_.size() - 1),
-      interpolation.second_elem_);
-  osm_info.element_to_interpolation_nodes_[interpolation.first_elem_] =
-      std::make_pair(interpolation.second_elem_, ids);
-  return static_cast<element_id>(id + interpolation.points_.size());
-}
-
-void create_ways(auto& osm_info, infrastructure_t const& iss, element_ptr e) {
-  auto const e_station = iss.element_to_station_.at(e->id());
+void create_ways(auto& osm_info, infrastructure const& infra,
+                 element::ptr const e, positions const& positions) {
+  auto const e_station = infra->element_to_station_.at(e->get_id());
 
   for (auto neigh : e->neighbours()) {
     if (neigh == nullptr) {
       continue;
     }
 
-    if (osm_info.element_to_way_.contains(neigh->id())) {
-      auto vec = osm_info.element_to_way_.at(neigh->id());
-      if (std::find(vec.begin(), vec.end(), e->id()) != vec.end()) {
+    if (osm_info.element_to_way_.contains(neigh->get_id())) {
+      auto vec = osm_info.element_to_way_.at(neigh->get_id());
+      if (std::find(vec.begin(), vec.end(), e->get_id()) != vec.end()) {
         continue;
       }
     }
 
-    auto n_station = iss.element_to_station_.at(neigh->id());
+    auto n_station = infra->element_to_station_.at(neigh->get_id());
     if (n_station != e_station) {
       osm_info.interpolations_.push_back(
-          compute_interpolation(e, neigh, iss.element_positions_));
-      osm_info.element_to_way_[neigh->id()].push_back(e->id());
-      osm_info.element_to_way_[e->id()].push_back(neigh->id());
+          compute_interpolation(e, neigh, positions.elements_));
+      osm_info.element_to_way_[neigh->get_id()].push_back(e->get_id());
+      osm_info.element_to_way_[e->get_id()].push_back(neigh->get_id());
     } else {
-      osm_info.ways_.emplace_back(std::pair(e->id(), neigh->id()));
-      osm_info.element_to_way_[neigh->id()].push_back(e->id());
-      osm_info.element_to_way_[e->id()].push_back(neigh->id());
+      osm_info.ways_.emplace_back(std::pair(e->get_id(), neigh->get_id()));
+      osm_info.element_to_way_[neigh->get_id()].push_back(e->get_id());
+      osm_info.element_to_way_[e->get_id()].push_back(neigh->get_id());
     }
   }
 }
 
 pugi::xml_document export_osm_nodes(std::size_t const min,
                                     std::size_t const max,
-                                    infrastructure_t const& iss,
-                                    osm_information& osm_info) {
+                                    osm_information& osm_info,
+                                    positions const& positions) {
   pugi::xml_document osm_node;
+
   for (std::size_t i = min; i < max; i++) {
     auto val = osm_info.nodes_.at(i);
     val.second.apply(utl::overloaded{
-        [&](station::ptr s) {
-          create_station_osm(osm_node, s, val.first, iss.station_positions_);
+        [&](station::ptr const s) {
+          create_station_osm(osm_node, s, val.first, positions.stations_);
         },
         [&](osm_element const& e) {
-          create_element_osm(osm_node, e.elem_, iss.element_positions_);
+          create_element_osm(osm_node, e.elem_, positions.elements_);
         }});
   }
+
   return osm_node;
 }
 
@@ -153,8 +205,10 @@ void append_fragment(pugi::xml_node target,
   }
 }
 
-pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
-  uLOG(info) << "[ OSM Export ] Starting OSM export.";
+pugi::xml_document export_to_osm(infrastructure const& infra,
+                                 positions const& positions) {
+  utl::scoped_timer const timer("exporting osm");
+
   pugi::xml_document document;
   pugi::xml_node osm_node = document.append_child("osm");
   auto version = osm_node.append_attribute("version");
@@ -163,14 +217,14 @@ pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
   osm_information osm_info;
 
   uLOG(info) << "[ OSM Export ] Parsing stations.";
-  auto const station_id_offset = iss.graph_.elements_.size();
-  for (auto station : iss.stations_) {
-    size_t const station_id = station->id_ + station_id_offset;
-    osm_info.nodes_.emplace_back(std::pair(station_id, station));
-    for (auto elem : station->elements_) {
+  auto const station_id_offset = infra->graph_.elements_.size();
+  for (auto const& station : infra->stations_) {
+    auto const station_id = station->id_ + station_id_offset;
+    osm_info.nodes_.emplace_back(std::pair(as_val(station_id), station));
+    for (auto const& elem : station->elements_) {
       osm_element const osm_elem = {elem, station};
-      osm_info.nodes_.emplace_back(std::pair(elem->id(), osm_elem));
-      detail::create_ways(osm_info, iss, elem);
+      osm_info.nodes_.emplace_back(std::pair(as_val(elem->get_id()), osm_elem));
+      detail::create_ways(osm_info, infra, elem, positions);
     }
   }
 
@@ -191,19 +245,13 @@ pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
       max = node_length;
     }
     docs.push_back(std::async(&detail::export_osm_nodes, min, max,
-                              std::cref(iss), std::ref(osm_info)));
+                              std::ref(osm_info), positions));
   }
   for (auto& e : docs) {
     append_fragment(osm_node, e.get());
   }
 
-  auto id = static_cast<element_id>(osm_info.nodes_.back().first + 1);
-
-  uLOG(info) << "[ OSM Export ] Interpolations to OSM.";
-  for (const auto& interpolation : osm_info.interpolations_) {
-    id =
-        detail::create_interpolation_osm(osm_node, interpolation, id, osm_info);
-  }
+  auto id = osm_info.nodes_.back().first + 1;
 
   uLOG(info) << "[ OSM Export ] Ways to OSM.";
   for (auto way : osm_info.ways_) {
@@ -213,13 +261,18 @@ pugi::xml_document export_to_osm(soro::infra::infrastructure_t const& iss) {
   return document;
 }
 
-void write_osm_to_file(pugi::xml_document const& osm_xml, fs::path const& out) {
+void write_osm_to_file(pugi::xml_document const& osm_xml,
+                       std::filesystem::path const& out) {
+  utl::scoped_timer const timer("writing osm file");
+
   osm_xml.save_file(out.c_str());
-  uLOG(info) << "[ OSM Export ] Exported file successfully to " << out << ".";
+
+  uLOG(info) << "exported file successfully to " << out;
 }
 
-void export_and_write(infrastructure_t const& iss, fs::path const& out) {
-  write_osm_to_file(export_to_osm(iss), out);
+void export_and_write(infrastructure const& infra, positions const& positions,
+                      std::filesystem::path const& out) {
+  write_osm_to_file(export_to_osm(infra, positions), out);
 }
 
 }  // namespace soro::server::osm_export

@@ -4,7 +4,6 @@
 
 namespace soro::si {
 
-acceleration const constexpr GRAVITATIONAL = from_m_s2(9.81);
-unitless const constexpr MASS_FACTOR = unitless{1.06};
+accel const constexpr GRAVITATIONAL = from_m_s2(9.81);
 
 }  // namespace soro::si

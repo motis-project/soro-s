@@ -1,12 +1,19 @@
 #include "doctest/doctest.h"
 
+#include <cstdint>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "soro/base/soro_types.h"
+
 #include "soro/utls/algo/multi_set_merge.h"
 
 using namespace soro::utls;
 
 TEST_SUITE("multi set merge") {
   template <typename Vec, typename... Vecs>
-  auto create_ranges(Vec && vec, Vecs && ... vecs) {
+  auto create_ranges(Vec const& vec, Vecs const&... vecs) {
     auto const vec_to_pair = [](auto&& v) {
       return std::pair{std::begin(v), std::end(v)};
     };

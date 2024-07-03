@@ -5,8 +5,6 @@
 #include "utl/pairwise.h"
 #include "utl/verify.h"
 
-#include "soro/base/fp_precision.h"
-
 #include "soro/utls/math/polynomial.h"
 #include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/all_of.h"
@@ -20,14 +18,14 @@ template <typename Polynomial, typename InputType>
 struct piece {
   using input_t = InputType;
   using result_t = typename Polynomial::template result_t<InputType>;
- 
+
   auto operator<=>(piece const&) const = default;
 
   auto operator()(InputType const x) const { return piece_(x); }
 
   Polynomial piece_;
-  InputType from_{};
-  InputType to_{};
+  InputType from_;
+  InputType to_;
 };
 
 template <typename Polynomial, typename InputType>
@@ -38,11 +36,13 @@ auto make_piece(Polynomial poly_piece, InputType from, InputType to) {
 
 template <typename Pieces>
 inline bool is_continuous(Pieces const& pieces) {
-  using soro::equal;
-  using std::abs;
-
   return utls::all_of(utl::pairwise(pieces), [](auto&& pair) {
-    return equal(abs(std::get<0>(pair).to_ - std::get<1>(pair).from_), 0.0);
+    if constexpr (std::is_floating_point_v<decltype(std::get<0>(pair).to_)> &&
+                  std::is_floating_point_v<decltype(std::get<1>(pair).from_)>) {
+      return soro::equal(std::get<0>(pair).to_, std::get<1>(pair).from_);
+    } else {
+      return std::get<0>(pair).to_ == std::get<1>(pair).from_;
+    }
   });
 }
 
@@ -52,16 +52,11 @@ struct piecewise_function {
 
   template <typename InputType>
   auto operator()(InputType const x) const {
-    auto it = std::cend(pieces_);
-    if constexpr (std::is_floating_point_v<InputType>) {
-      it = utls::find_if(pieces_, [&](auto const& p) { return x < p.to_; });
-    } else {
-      it = utls::find_if(pieces_,
-                         [&](auto const& p) { return x.val_ < p.to_.val_; });
-    }
+    auto const it =
+        utls::find_if(pieces_, [&](auto&& p) { return x <= p.to_; });
 
     utl::verify(it != std::cend(pieces_),
-                "Could not find fitting piece from the piecewise function "
+                "could not find fitting piece from the piecewise function "
                 "defined from {} to {} and x = {}",
                 pieces_.front().from_, pieces_.back().to_, x);
 

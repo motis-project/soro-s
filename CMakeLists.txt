@@ -9,17 +9,14 @@ option(SERIALIZE "Enable serialization with cista." OFF)
 option(USE_CISTA_RAW "Use cista::raw instead of cista::offset." OFF)
 
 if(SERIALIZE)
-  set(SORO_COMPILE_DEFINITIONS SERIALIZE ${SORO_COMPILE_DEFINITIONS})
+  list(APPEND SORO_COMPILE_DEFINITIONS SERIALIZE)
 else()
-  set(SORO_COMPILE_DEFINITIONS STD ${SORO_COMPILE_DEFINITIONS})
+  list(APPEND SORO_COMPILE_DEFINITIONS STD)
 endif()
 
 if(USE_CISTA_RAW)
-  set(SORO_COMPILE_DEFINITIONS USE_CISTA_RAW ${SORO_COMPILE_DEFINITIONS})
+  list(APPEND SORO_COMPILE_DEFINITIONS USE_CISTA_RAW)
 endif()
-
-# rename the cereal serialization function to avoid naming conflicts with cista
-set(SORO_COMPILE_DEFINITIONS CEREAL_SERIALIZE_FUNCTION_NAME=cereal_serialize ${SORO_COMPILE_DEFINITIONS})
 
 # --- CLANG SUITE OPTIONS --- #
 option(SORO_SAN "Run clang with sanitizers." OFF)
@@ -39,13 +36,14 @@ endif()
 # --- MISC OPTIONS --- #
 option(SORO_DEBUG "Build the code with debug information." OFF)
 option(SORO_CUDA "Enable GPU-accelerated computing." OFF)
+option(SORO_TBB "Enable Intel Thread Building Blocks." OFF)
 
 if(SORO_DEBUG)
-  set(SORO_COMPILE_DEFINITIONS SORO_DEBUG ${SORO_COMPILE_DEFINITIONS})
+  list(APPEND SORO_COMPILE_DEFINITIONS SORO_DEBUG)
 endif()
 
 if(SORO_CUDA)
-  set(SORO_COMPILE_DEFINITIONS SORO_CUDA ${SORO_COMPILE_DEFINITIONS})
+  list(APPEND SORO_COMPILE_DEFINITIONS SORO_CUDA)
 
   set(SORO_CUDA_ARCH "-gencode arch=compute_75,code=sm_75 -gencode arch=compute_61,code=sm_61")
   if(MSVC)
@@ -54,6 +52,10 @@ if(SORO_CUDA)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${SORO_CUDA_ARCH} --compiler-options -static")
   endif()
   enable_language(CUDA)
+endif()
+
+if(SORO_TBB)
+  list(APPEND SORO_COMPILE_DEFINITIONS SORO_TBB)
 endif()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -91,12 +93,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     -Wno-c99-designator
     -Wno-zero-as-null-pointer-constant
     -Wno-missing-noreturn
-    -Wno-deprecated-experimental-coroutine
+    #    -Wno-deprecated-experimental-coroutine
     -Werror
-    -fcoroutines-ts
-    -fexperimental-library
     ${SORO_LINK_STATIC}
-    )
+  )
 
   if(CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 15)
     set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
@@ -115,7 +115,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 elseif(MSVC)
   set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
     /WX
-    )
+  )
 else()
   set(SORO_COMPILE_OPTIONS ${SORO_COMPILE_OPTIONS}
     -Wall
@@ -124,7 +124,7 @@ else()
     -fcoroutines
     -fconcepts-diagnostics-depth=10
     ${SORO_LINK_STATIC}
-    )
+  )
 endif()
 
 set(SORO_COMPILE_FEATURES cxx_std_23)
@@ -154,7 +154,7 @@ target_compile_options(soro-lib PRIVATE ${SORO_COMPILE_OPTIONS})
 target_compile_features(soro-lib PRIVATE ${SORO_COMPILE_FEATURES})
 target_compile_definitions(soro-lib PRIVATE ${SORO_COMPILE_DEFINITIONS})
 target_include_directories(soro-lib PUBLIC include)
-target_link_libraries(soro-lib PUBLIC utl cista date pugixml range-v3 Threads::Threads)
+target_link_libraries(soro-lib PUBLIC utl cista date pugixml range-v3 Threads::Threads tbb)
 
 if(SORO_CUDA)
   target_link_libraries(soro-lib PUBLIC infrastructure-cuda)
@@ -205,7 +205,7 @@ if(SORO_LINT)
   foreach(target ${all-targets})
     set_target_properties(${target} PROPERTIES
       CXX_CLANG_TIDY ${SORO_CLANG_TIDY}
-      )
+    )
   endforeach()
 endif()
 

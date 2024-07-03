@@ -1,29 +1,42 @@
 #include "test/infrastructure/section_test.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <map>
+#include <set>
+#include <vector>
+
 #include "doctest/doctest.h"
 
 #include "utl/get_or_create.h"
+#include "utl/pairwise.h"
 
 #include "soro/utls/coroutine/collect.h"
 #include "soro/utls/std_wrapper/count_if.h"
+#include "soro/utls/std_wrapper/distance.h"
 #include "soro/utls/std_wrapper/is_sorted.h"
 
-#include "soro/infrastructure/infrastructure.h"
+#include "soro/infrastructure/graph/are_neighbours.h"
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/section.h"
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/kilometrage.h"
 #include "soro/infrastructure/path/is_path.h"
 #include "soro/infrastructure/path/length.h"
 
 namespace soro::infra::test {
 
 void sections_are_paths(section const& sec) {
-  CHECK(is_path(sec.iterate<direction::Rising, skip::Yes>()));
-  CHECK(is_path(sec.iterate<direction::Falling, skip::Yes>()));
+  CHECK(is_path(sec.iterate<mileage_dir::rising, skip::Yes>()));
+  CHECK(is_path(sec.iterate<mileage_dir::falling, skip::Yes>()));
 }
 
 void section_iterators_have_all_elements(section const& sec) {
   auto const rising_elements = utls::collect<std::vector<element::ptr>>(
-      sec.iterate<direction::Rising>());
+      sec.iterate<mileage_dir::rising>());
   auto const falling_elements = utls::collect<std::vector<element::ptr>>(
-      sec.iterate<direction::Falling>());
+      sec.iterate<mileage_dir::falling>());
 
   std::set<element::ptr> iterated_elements;
   for (auto const& e : rising_elements) {
@@ -43,19 +56,8 @@ void section_iterators_have_all_elements(section const& sec) {
     expected_elements.insert(e);
   }
 
-  auto const undirected_count_rising =
-      utls::count_if(sec.iterate<direction::Rising>(),
-                     [](auto&& e) { return e->is_undirected_track_element(); });
-
-  auto const undirected_count_falling =
-      utls::count_if(sec.iterate<direction::Falling>(),
-                     [](auto&& e) { return e->is_undirected_track_element(); });
-
-  CHECK_EQ(undirected_count_rising, undirected_count_falling);
-
-  std::size_t const iterated_element_count = (rising_elements.size() - 2) +
-                                             (falling_elements.size() - 2) + 2 -
-                                             undirected_count_rising;
+  std::size_t const iterated_element_count =
+      (rising_elements.size() - 2) + (falling_elements.size() - 2) + 2;
 
   CHECK_EQ(iterated_element_count, sec.rising_order_.size());
   CHECK_EQ(iterated_elements, expected_elements);
@@ -63,33 +65,39 @@ void section_iterators_have_all_elements(section const& sec) {
 
 void check_section_element_types(section const& section) {
   auto const total_track_elements_rising =
-      utls::count_if(section.iterate<direction::Rising, skip::Yes>(),
-                     [](auto&& e) { return e->is_directed_track_element(); });
+      utls::count_if(section.iterate<mileage_dir::rising, skip::Yes>(),
+                     [](auto&& e) { return e->is_track_element(); });
 
   auto const total_track_elements_falling =
-      utls::count_if(section.iterate<direction::Falling, skip::Yes>(),
-                     [](auto&& e) { return e->is_directed_track_element(); });
+      utls::count_if(section.iterate<mileage_dir::falling, skip::Yes>(),
+                     [](auto&& e) { return e->is_track_element(); });
 
-  auto const total_undirected =
-      utls::count_if(section.iterate<direction::Falling, skip::Yes>(),
+  auto const total_undirected_rising =
+      utls::count_if(section.iterate<mileage_dir::rising, skip::Yes>(),
                      [](auto&& e) { return e->is_undirected_track_element(); });
 
-  auto const total_track_elements = total_track_elements_falling +
-                                    total_track_elements_rising +
-                                    total_undirected;
+  auto const total_undirected_falling =
+      utls::count_if(section.iterate<mileage_dir::falling, skip::Yes>(),
+                     [](auto&& e) { return e->is_undirected_track_element(); });
+
+  auto const total_track_elements =
+      total_track_elements_falling + total_track_elements_rising;
+
+  // same amount of undirected track elements in both directions
+  CHECK_EQ(total_undirected_rising, total_undirected_falling);
 
   // Only the first and the last element are non-track elements (=section
   // elements)
   CHECK_EQ(total_track_elements, section.falling_order_.size() - 2);
   CHECK_EQ(total_track_elements, section.rising_order_.size() - 2);
-  CHECK(!section.first_rising()->is_track_element());
-  CHECK(!section.first_falling()->is_track_element());
-  CHECK(!section.last_rising()->is_track_element());
-  CHECK(!section.last_falling()->is_track_element());
+  CHECK(section.first_rising()->is_section_element());
+  CHECK(section.first_falling()->is_section_element());
+  CHECK(section.last_rising()->is_section_element());
+  CHECK(section.last_falling()->is_section_element());
 }
 
 void check_section_increasing_kmp(section const& section) {
-  auto generator = section.iterate<direction::Rising>();
+  auto generator = section.iterate<mileage_dir::rising>();
 
   auto it = std::begin(generator);
   auto last_element = *it;
@@ -102,11 +110,10 @@ void check_section_increasing_kmp(section const& section) {
     // contains two section elements, the first and the last element of the
     // section
     auto const km1 = last_element->is_section_element()
-                         ? last_element->get_km(element)
-                         : last_element->get_km(nullptr);
-    auto const km2 = element->is_section_element()
-                         ? element->get_km(last_element)
-                         : element->get_km(nullptr);
+                         ? last_element->km(element)
+                         : last_element->km(nullptr);
+    auto const km2 = element->is_section_element() ? element->km(last_element)
+                                                   : element->km(nullptr);
 
     CHECK_MESSAGE(
         (km1 <= km2),
@@ -119,9 +126,9 @@ void check_section_increasing_kmp(section const& section) {
 void check_section_length(section const& sec) {
   {  // Check rising path
     auto const l1 =
-        get_path_length_from_elements(sec.iterate<direction::Rising>());
+        get_path_length_from_elements(sec.iterate<mileage_dir::rising>());
     auto const l2 =
-        get_path_length_from_sections(sec.iterate<direction::Rising>());
+        get_path_length_from_sections(sec.iterate<mileage_dir::rising>());
 
     CHECK_MESSAGE((l1 == l2),
                   "Different lengths from the two length calculation funs");
@@ -129,9 +136,9 @@ void check_section_length(section const& sec) {
 
   {  // Check falling path
     auto const l1 =
-        get_path_length_from_elements(sec.iterate<direction::Falling>());
+        get_path_length_from_elements(sec.iterate<mileage_dir::falling>());
     auto const l2 =
-        get_path_length_from_sections(sec.iterate<direction::Falling>());
+        get_path_length_from_sections(sec.iterate<mileage_dir::falling>());
 
     CHECK_MESSAGE((l1 == l2),
                   "Different lengths from the two length calculation funs");
@@ -140,18 +147,18 @@ void check_section_length(section const& sec) {
 
 void check_section_iteration_direction(section const& sec) {
   auto const rising_elements = utls::collect<std::vector<element::ptr>>(
-      sec.iterate<direction::Rising>());
+      sec.iterate<mileage_dir::rising>());
 
   for (auto const [from, to] : utl::pairwise(rising_elements)) {
-    CHECK_LE(from->get_km(to), to->get_km(from));
-    CHECK_GE(to->get_km(from), from->get_km(to));
+    CHECK_LE(from->km(to), to->km(from));
+    CHECK_GE(to->km(from), from->km(to));
   }
 
   auto const falling_elements = utls::collect<std::vector<element::ptr>>(
-      sec.iterate<direction::Falling>());
+      sec.iterate<mileage_dir::falling>());
   for (auto const [from, to] : utl::pairwise(falling_elements)) {
-    CHECK_GE(from->get_km(to), to->get_km(from));
-    CHECK_LE(to->get_km(from), from->get_km(to));
+    CHECK_GE(from->km(to), to->km(from));
+    CHECK_LE(to->km(from), from->km(to));
   }
 }
 
@@ -160,9 +167,9 @@ void check_track_elements_are_ordered_correctly(section const& section) {
       {type::TUNNEL, 0},
       {type::SLOPE, 1},
       {type::ENTRY, 2},
-      {type::RUNTIME_CHECKPOINT_UNDIRECTED, 3},
-      {type::RUNTIME_CHECKPOINT, 4},
-      {type::HALT, 5},
+      {type::HALT, 3},
+      {type::RUNTIME_CHECKPOINT_UNDIRECTED, 4},
+      {type::RUNTIME_CHECKPOINT, 5},
       {type::MAIN_SIGNAL, 6},
       {type::APPROACH_SIGNAL, 7},
       {type::PROTECTION_SIGNAL, 8},
@@ -181,19 +188,12 @@ void check_track_elements_are_ordered_correctly(section const& section) {
       {type::LEVEL_CROSSING, 21},
   };
 
-  auto const check_order = [&]<direction Dir>(struct section const& sec) {
+  auto const check_order = [&]<mileage_dir Dir>(struct section const& sec) {
     std::map<kilometrage, std::vector<element::ptr>> same_kilometrages;
 
     for (auto const& element : sec.iterate<Dir>()) {
-      if (element->is_undirected_track_element()) {
-        auto const km = element->template as<undirected_track_element>().km_;
-        utl::get_or_create(same_kilometrages, km, [&]() {
-          return std::vector<element::ptr>{};
-        }).emplace_back(element);
-      }
-
-      if (element->is_directed_track_element()) {
-        auto const km = element->template as<track_element>().km_;
+      if (element->is_track_element()) {
+        auto const km = element->template as<track_element>().km();
         utl::get_or_create(same_kilometrages, km, [&]() {
           return std::vector<element::ptr>{};
         }).emplace_back(element);
@@ -201,42 +201,32 @@ void check_track_elements_are_ordered_correctly(section const& section) {
     }
 
     for (auto const& [_, elements] : same_kilometrages) {
-      if (elements.size() == 1) {
-        continue;
-      }
-
       CHECK(utls::is_sorted(elements, [&](auto&& e1, auto&& e2) {
         return sorted_map[e1->type()] < sorted_map[e2->type()];
       }));
     }
   };
 
-  check_order.operator()<direction::Rising>(section);
-  check_order.operator()<direction::Falling>(section);
+  check_order.operator()<mileage_dir::rising>(section);
+  check_order.operator()<mileage_dir::falling>(section);
 }
 
 void check_section_is_not_empty(section const& sec) {
   // sections between two borders can be empty
   if (sec.first_rising()->is(type::BORDER) &&
       sec.last_rising()->is(type::BORDER) &&
-      neighbours(sec.first_rising(), sec.last_rising()) &&
-      sec.first_rising()->get_km(sec.last_rising()) ==
-          sec.last_rising()->get_km(sec.first_rising())) {
+      are_neighbours(sec.first_rising(), sec.last_rising()) &&
+      sec.first_rising()->km(sec.last_rising()) ==
+          sec.last_rising()->km(sec.first_rising())) {
     return;
   }
 
-  std::size_t rising_elements = 0;
-  for (auto const& e : sec.iterate<direction::Rising>()) {
-    std::ignore = e;
-    ++rising_elements;
-  }
+  auto const rising_elements =
+      utls::distance<std::size_t>(sec.iterate<mileage_dir::rising>());
   CHECK_GT(rising_elements, 2);
 
-  std::size_t falling_elements = 0;
-  for (auto const& e : sec.iterate<direction::Falling>()) {
-    std::ignore = e;
-    ++falling_elements;
-  }
+  auto const falling_elements =
+      utls::distance<std::size_t>(sec.iterate<mileage_dir::falling>());
   CHECK_GT(falling_elements, 2);
 }
 
@@ -251,7 +241,7 @@ void check_section(section const& sec) {
   check_section_is_not_empty(sec);
 }
 
-void do_section_tests(soro::vector<section> const& sections) {
+void do_section_tests(sections const& sections) {
   for (auto const& section : sections) {
     check_section(section);
   }

@@ -4,14 +4,10 @@
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/std_wrapper/any_of.h"
 
+#include "soro/infrastructure/graph/are_neighbours.h"
 #include "soro/infrastructure/graph/graph.h"
 
 namespace soro::infra {
-
-inline bool neighbours(element::ptr e1, element::ptr e2) {
-  return utls::any_of(e1->neighbours(),
-                      [&](auto&& neigh) { return neigh->id() == e2->id(); });
-}
 
 template <typename Iterable>
   requires utls::yields<element::ptr, Iterable>
@@ -22,7 +18,7 @@ inline bool is_path(Iterable&& iterable) {
   ++it;
 
   for (; it != std::end(iterable); ++it) {
-    if (!neighbours(last_element, *it)) {
+    if (!are_neighbours(last_element, *it)) {
       return false;
     }
 

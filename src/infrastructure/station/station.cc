@@ -1,5 +1,7 @@
 #include "soro/infrastructure/station/station.h"
 
+#include "soro/base/soro_types.h"
+
 #include "range/v3/action/sort.hpp"
 #include "range/v3/action/unique.hpp"
 #include "range/v3/range/conversion.hpp"

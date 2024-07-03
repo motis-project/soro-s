@@ -1,12 +1,18 @@
 #include "soro/infrastructure/exclusion/read_cliques.h"
 
+#include <filesystem>
 #include <fstream>
+#include <string>
 
 #include "utl/timer.h"
+
+#include "soro/base/soro_types.h"
 
 #include "soro/utls/parse_int.h"
 #include "soro/utls/std_wrapper/sort.h"
 #include "soro/utls/string.h"
+
+#include "soro/infrastructure/interlocking/interlocking_route.h"
 
 namespace soro::infra {
 
@@ -22,7 +28,8 @@ soro::vector<interlocking_route::ids> read_cliques(
     auto const split = utls::split(line, " ");
 
     cliques.emplace_back(soro::to_vec(split, [](auto&& s) {
-      return utls::parse_int<interlocking_route::id>(s);
+      return interlocking_route::id{
+          utls::parse_int<interlocking_route::id::value_t>(s)};
     }));
   }
 

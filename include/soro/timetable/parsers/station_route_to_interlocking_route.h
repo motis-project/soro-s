@@ -3,20 +3,13 @@
 #include "soro/utls/result.h"
 
 #include "soro/infrastructure/infrastructure.h"
-#include "soro/rolling_stock/freight.h"
-#include "soro/timetable/stop_sequence.h"
+
+#include "soro/timetable/train.h"
 
 namespace soro::tt {
 
-struct interlocking_transformation {
-  soro::vector<infra::interlocking_route::id> path_;
-  soro::vector<sequence_point> sequence_points_;
-};
-
-utls::result<interlocking_transformation> transform_to_interlocking(
-    stop_sequence const& stop_sequence, rs::FreightTrain freight,
-    infra::infrastructure const& infra);
-
-void print_ir_generating_failures();
+utls::result<soro::vector<infra::interlocking_route::id>>
+transform_to_interlocking(train const& train,
+                          infra::infrastructure const& infra);
 
 }  // namespace soro::tt

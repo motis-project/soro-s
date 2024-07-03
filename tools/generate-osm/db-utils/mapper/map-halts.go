@@ -8,7 +8,7 @@ import (
 )
 
 // MapHalts processes all halts.
-// This includes freight as well as passenger train halts.
+// This includes stop_mode as well as passenger train halts.
 func MapHalts(
 	osmData *osmUtils.Osm,
 	anchors map[float64]([]*osmUtils.Node),

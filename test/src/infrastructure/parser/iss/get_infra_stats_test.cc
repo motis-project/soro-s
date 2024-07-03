@@ -1,21 +1,29 @@
 #include "doctest/doctest.h"
 
+#include <cstddef>
+#include <filesystem>
+
+#include "soro/utls/std_wrapper/fill.h"
+
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/infra_stats.h"
 #include "soro/infrastructure/infrastructure.h"
+#include "soro/infrastructure/infrastructure_options.h"
 #include "soro/infrastructure/parsers/iss/get_infra_stats.h"
+#include "soro/infrastructure/parsers/iss/iss_files.h"
 
 #include "test/file_paths.h"
 
 namespace soro::infra::test {
 
 void check_infrastructure_stats(infrastructure_options const& opts) {
-  auto const iss_files = get_iss_files(opts.infrastructure_path_);
+  iss_files const iss_files(opts.infrastructure_path_);
   auto const infra_stats = get_infra_stats(iss_files);
 
   infrastructure const infra(opts);
 
   infra_stats::element_counts_t infra_element_numbers;
-  std::fill(std::begin(infra_element_numbers), std::end(infra_element_numbers),
-            0);
+  utls::fill(infra_element_numbers, 0);
 
   CHECK_EQ(infra_stats.stations_, infra->stations_.size());
   CHECK_EQ(infra_stats.sections_, infra->graph_.sections_.size());
@@ -39,10 +47,7 @@ void check_infrastructure_stats(infrastructure_options const& opts) {
 
 TEST_CASE("get_infra_stats") {
   for (auto const& opts : soro::test::ALL_INFRA_OPTS) {
-    if (!std::filesystem::exists(opts.infrastructure_path_)) {
-      continue;
-    }
-
+    if (!std::filesystem::exists(opts.infrastructure_path_)) continue;
     check_infrastructure_stats(opts);
   }
 }

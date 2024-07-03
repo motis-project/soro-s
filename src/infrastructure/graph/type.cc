@@ -1,9 +1,12 @@
 #include "soro/infrastructure/graph/type.h"
 
+#include <string>
+
 #include "utl/verify.h"
 
-#include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 #include "soro/utls/string.h"
+
+#include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 
 namespace soro::infra {
 
@@ -23,8 +26,10 @@ type get_type(const char* const str) {
     case str_hash(TRACK_END):
       return type::TRACK_END;
       // directed track elements
+    case str_hash(APPROACH_SIGNAL):
     case str_hash(APPROACH_SIGNAL_RISING):
     case str_hash(APPROACH_SIGNAL_FALLING): return type::APPROACH_SIGNAL;
+    case str_hash(MAIN_SIGNAL):
     case str_hash(MAIN_SIGNAL_FALLING):
     case str_hash(MAIN_SIGNAL_RISING): return type::MAIN_SIGNAL;
     case str_hash(PROTECTION_SIGNAL_FALLING):
@@ -33,6 +38,8 @@ type get_type(const char* const str) {
     case str_hash(ROUTE_EOTD_RISING):
     case str_hash(SIGNAL_EOTD_FALLING):
     case str_hash(SIGNAL_EOTD_RISING): return type::EOTD;
+    case str_hash(SPEED_LIMIT_DIVERGENT_FALLING):
+    case str_hash(SPEED_LIMIT_DIVERGENT_RISING):
     case str_hash(SPECIAL_SPEED_LIMIT_END_FALLING):
     case str_hash(SPECIAL_SPEED_LIMIT_END_RISING):
     case str_hash(SPEED_LIMIT_RISING):
@@ -43,8 +50,11 @@ type get_type(const char* const str) {
     case str_hash(FORCED_HALT_FALLING): return type::FORCED_HALT;
     case str_hash(RUNTIME_CHECKPOINT_FALLING):
     case str_hash(RUNTIME_CHECKPOINT_RISING): return type::RUNTIME_CHECKPOINT;
+    case str_hash(HALT_FREIGHT):
     case str_hash(HALT_FREIGHT_FALLING):
     case str_hash(HALT_FREIGHT_RISING):
+    case str_hash(HALT_PASSENGER_LEFT):
+    case str_hash(HALT_PASSENGER_RIGHT):
     case str_hash(HALT_PASSENGER_LEFT_RISING):
     case str_hash(HALT_PASSENGER_LEFT_FALLING):
     case str_hash(HALT_PASSENGER_RIGHT_RISING):
@@ -58,6 +68,9 @@ type get_type(const char* const str) {
       return type::BRAKE_PATH;
       // undirected track elements
     case str_hash(SLOPE): return type::SLOPE;
+    case str_hash(ELECTRIFICATION): return type::ELECTRIFICATION;
+    case str_hash(ELECTRIFICATION_REPEATER):
+      return type::ELECTRIFICATION_REPEATER;
     case str_hash(TUNNEL): return type::TUNNEL;
     case str_hash(TRACK_NAME): return type::TRACK_NAME;
     case str_hash(LEVEL_CROSSING): return type::LEVEL_CROSSING;
@@ -86,16 +99,18 @@ type get_type(const char* const str) {
     case str_hash(LZB_END_FALLING): return type::LZB_END;
     case str_hash(LZB_BLOCK_SIGN_RISING):
     case str_hash(LZB_BLOCK_SIGN_FALLING): return type::LZB_BLOCK_SIGN;
+    case str_hash(LZB_EOTD_RISING):
+    case str_hash(LZB_EOTD_FALLING): return type::LZB_EOTD;
     case str_hash(ETCS_START_RISING):
     case str_hash(ETCS_START_FALLING): return type::ETCS_START;
     case str_hash(ETCS_END_RISING):
     case str_hash(ETCS_END_FALLING): return type::ETCS_END;
     case str_hash(ETCS_BLOCK_SIGN_RISING):
-    case str_hash(ETCS_BLOCK_SIGN_FALLING):
-      return type::ETCS_BLOCK_SIGN;
-      // ignore these  for the moment
+    case str_hash(ETCS_BLOCK_SIGN_FALLING): return type::ETCS_BLOCK_SIGN;
+    case str_hash("META"): return type::META;
+    case str_hash(PICTURE_POINT): return type::PICTURE_POINT;
     default:
-    case str_hash(PICTURE_POINT):
+      // ignore these  for the moment
     case str_hash(LINE_CLASS): return type::INVALID;
   }
 }
@@ -130,11 +145,15 @@ std::string get_type_str(type const& t) {
     case type::CROSS: return "cross";
     case type::LZB_END: return "lzb_end";
     case type::LZB_START: return "lzb_start";
-    case type::LZB_BLOCK_SIGN: return "lzb_block_sign";
     case type::ETCS_END: return "etcs_end";
+    case type::LZB_BLOCK_SIGN: return "lzb_block_sign";
+    case type::LZB_EOTD: return "lzb_eotd";
     case type::ETCS_START: return "etcs_start";
     case type::ETCS_BLOCK_SIGN: return "etcs_block_sign";
+    case type::PICTURE_POINT: return "pp";
     case type::META: return "meta";
+    case type::ELECTRIFICATION: return "electrification";
+    case type::ELECTRIFICATION_REPEATER: return "electrification_repeater";
   }
   throw utl::fail("No type string found in infrastructure element");
 }

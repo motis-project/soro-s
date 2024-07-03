@@ -1,8 +1,12 @@
 #pragma once
 
-#include "soro/base/soro_types.h"
-#include "soro/infrastructure/line.h"
+#include "pugixml.hpp"
+
 #include "soro/utls/file/loaded_file.h"
+
+#include "soro/base/soro_types.h"
+
+#include "soro/infrastructure/line.h"
 
 namespace soro::infra {
 
@@ -11,9 +15,9 @@ struct regulatory_station_data {
 };
 
 regulatory_station_data parse_regulatory_stations(
-    std::vector<utls::loaded_file> const& regulatory_station_files);
+    std::vector<pugi::xml_document> const& regulatory_station_files);
 
 soro::map<line::id, line> parse_lines(
-    std::vector<utls::loaded_file> const& regulatory_line_files);
+    std::vector<pugi::xml_document> const& regulatory_line_files);
 
 }  // namespace soro::infra

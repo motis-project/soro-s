@@ -1,5 +1,7 @@
 #include "doctest/doctest.h"
 
+#include <vector>
+
 #include "soro/utls/algo/remove_after.h"
 
 TEST_SUITE("remove after suite") {

@@ -15,22 +15,20 @@
 	<Spurplanbetriebsstellen>
         
         <Spurplanbetriebsstelle>
-			<Betriebsstelle>BS_1</Betriebsstelle>
+			<Betriebsstelle>BS1</Betriebsstelle>
 			<Spurplanabschnitte>
 				<Spurplanabschnitt>
 					<Strecke>1234</Strecke>
 					<Spurplanknoten>
-						<Betriebsstellengrenze>
-							<ID>1</ID>
-							<Kilometrierung>37,000</Kilometrierung>
-							<LetzteAenderung>11.02.2022: 14:00:00</LetzteAenderung>
-							<PartnerBtrst>KMES</PartnerBtrst>
-							<Bildkoordinaten>
-								<X>1,0</X>
-								<Y>3,0</Y>
-							</Bildkoordinaten>
-							<Gleiskennzeichen>2</Gleiskennzeichen>
-						</Betriebsstellengrenze>
+                        <Gleisende>
+                            <ID>1</ID>
+                            <Kilometrierung>37,000</Kilometrierung>
+                            <Name>Ende1</Name>
+                            <Bildkoordinaten>
+                                <X>1,0</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                        </Gleisende>
 						<HalteplatzRzLinksS>
 							<ID>3</ID>
 							<Kilometrierung>37,500</Kilometrierung>
@@ -51,7 +49,7 @@
 							<ID>2</ID>
 							<Kilometrierung>38,000</Kilometrierung>
 							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
-							<PartnerBtrst>BS_2</PartnerBtrst>
+							<PartnerBtrst>BS2</PartnerBtrst>
 							<Bildkoordinaten>
 								<X>2,0</X>
 								<Y>3,0</Y>
@@ -88,7 +86,7 @@
 		</Spurplanbetriebsstelle>
         
 		<Spurplanbetriebsstelle>
-			<Betriebsstelle>BS_2</Betriebsstelle>
+			<Betriebsstelle>BS2</Betriebsstelle>
 			<Spurplanabschnitte>
 				<Spurplanabschnitt>
 					<Strecke>1234</Strecke>
@@ -97,7 +95,7 @@
 							<ID>4</ID>
 							<Kilometrierung>38,000</Kilometrierung>
 							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
-							<PartnerBtrst>BS_1</PartnerBtrst>
+							<PartnerBtrst>BS1</PartnerBtrst>
 							<Bildkoordinaten>
 								<X>6,92822</X>
 								<Y>1,0</Y>
@@ -157,7 +155,7 @@
 							<ID>5</ID>
 							<Kilometrierung>42,000</Kilometrierung>
 							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
-							<PartnerBtrst>BS_3</PartnerBtrst>
+							<PartnerBtrst>BS3</PartnerBtrst>
 							<Bildkoordinaten>
 								<X>0,57697</X>
 								<Y>0,0</Y>
@@ -196,7 +194,7 @@
         
         
         <Spurplanbetriebsstelle>
-			<Betriebsstelle>BS_3</Betriebsstelle>
+			<Betriebsstelle>BS3</Betriebsstelle>
 			<Spurplanabschnitte>
 				<Spurplanabschnitt>
 					<Strecke>1234</Strecke>
@@ -205,7 +203,7 @@
 							<ID>10</ID>
 							<Kilometrierung>42,000</Kilometrierung>
 							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
-							<PartnerBtrst>BS_2</PartnerBtrst>
+							<PartnerBtrst>BS2</PartnerBtrst>
 							<Bildkoordinaten>
 								<X>5,77312</X>
 								<Y>3,0</Y>
@@ -228,17 +226,15 @@
 							<Name>HS98</Name>
 							<DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
 						</HauptsignalS>
-						<Betriebsstellengrenze>
-							<ID>11</ID>
-							<Kilometrierung>43,000</Kilometrierung>
-							<LetzteAenderung>11.02.2022 14:00:00</LetzteAenderung>
-							<PartnerBtrst>KEIT</PartnerBtrst>
-							<Bildkoordinaten>
-								<X>1,15432</X>
-								<Y>3,0</Y>
-							</Bildkoordinaten>
-							<Gleiskennzeichen>2</Gleiskennzeichen>
-						</Betriebsstellengrenze>
+                        <Gleisende>
+                            <ID>11</ID>
+                            <Kilometrierung>43,000</Kilometrierung>
+                            <Name>Ende2</Name>
+                            <Bildkoordinaten>
+                                <X>1,15432</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                        </Gleisende>
 					</Spurplanknoten>
 				</Spurplanabschnitt>
 			</Spurplanabschnitte>

@@ -2,11 +2,10 @@
 
 #include "pugixml.hpp"
 
-#include "utl/verify.h"
-
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/infra_stats.h"
+#include "soro/infrastructure/parsers/iss/iss_files.h"
 #include "soro/infrastructure/parsers/iss/iss_string_literals.h"
-
-#include "soro/utls/string.h"
 
 namespace soro::infra {
 
@@ -30,14 +29,9 @@ void count_elements_in_station(pugi::xml_node xml_station, infra_stats& is) {
   }
 }
 
-void count_elements_in_file(utls::loaded_file const& xml_file,
+void count_elements_in_file(pugi::xml_document const& file_xml,
                             infra_stats& is) {
-  pugi::xml_document d;
-  auto success = d.load_buffer(reinterpret_cast<void const*>(xml_file.begin()),
-                               xml_file.size());
-  utl::verify(success, "bad xml: {}", success.description());
-
-  for (auto const& xml_station : d.child(XML_ISS_DATA)
+  for (auto const& xml_station : file_xml.child(XML_ISS_DATA)
                                      .child(RAIL_PLAN_STATIONS)
                                      .children(RAIL_PLAN_STATION)) {
     count_elements_in_station(xml_station, is);
@@ -47,8 +41,8 @@ void count_elements_in_file(utls::loaded_file const& xml_file,
 infra_stats get_infra_stats(iss_files const& files) {
   infra_stats is;
 
-  for (auto const& file : files.rail_plan_files_) {
-    count_elements_in_file(file, is);
+  for (auto const& file_xml : files.rail_plan_files_) {
+    count_elements_in_file(file_xml, is);
   }
 
   // for every border pair there is an extra (empty) section
@@ -61,6 +55,10 @@ infra_stats get_infra_stats(iss_files const& files) {
     // TODO(julian) maybe remove half of all border elements?
     if (is_simple_element(t) && t != type::BORDER) {
       is.number(t) /= 2;
+    }
+
+    if (is_undirected_track_element(t)) {
+      is.number(t) *= 2;
     }
 
     // every switch is represented three times in the infrastructure data

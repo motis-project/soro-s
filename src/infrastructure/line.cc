@@ -2,6 +2,11 @@
 
 #include "utl/logging.h"
 
+#include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/lower_bound.h"
+
+#include "soro/infrastructure/kilometrage.h"
+
 namespace soro::infra {
 
 line::segment const& get_segment(line const& l, kilometrage const km) {
@@ -22,11 +27,11 @@ line::segment const& get_segment(line const& l, kilometrage const km) {
     return l.segments_.back();
   }
 
-  auto const it =
-      std::lower_bound(
-          std::begin(l.segments_), std::end(l.segments_), km,
-          [](auto&& segment, auto&& v) { return segment.from_ <= v; }) -
-      1;
+  auto const it = utls::lower_bound(l.segments_, km,
+                                    [](auto&& segment, auto&& v) {
+                                      return segment.from_ <= v;
+                                    }) -
+                  1;
 
   utls::sassert(it->from_ <= km && km <= it->to_,
                 "Segment of line {} does not contain kilometrage {}.", l.id_,

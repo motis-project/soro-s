@@ -3,38 +3,29 @@
 #include <limits>
 #include <span>
 
-#include "soro/utls/container/it_range.h"
-
 #include "soro/base/soro_types.h"
 
 #include "soro/si/units.h"
 
+#include "soro/infrastructure/graph/detail/element_array_idx.h"
 #include "soro/infrastructure/graph/type.h"
 #include "soro/infrastructure/kilometrage.h"
 #include "soro/infrastructure/line.h"
 
 namespace soro::infra {
 
-enum class rising : bool { NO, YES };
-
-enum class direction : bool { Falling, Rising };
-
 struct node;
 using node_ptr = soro::ptr<node>;
 
 struct element;
-using element_id = uint32_t;
+// basically a fwd declaration
+using element_id = soro::strong<uint32_t, struct _element_id>;
 using element_ptr = soro::ptr<infra::element>;
-using non_const_element_ptr = soro::non_const_ptr<infra::element>;
 
-auto const INVALID_ELEMENT_ID = std::numeric_limits<element_id>::max();
-
-using kilometrage = si::length;
-
-constexpr auto const INVALID_LINE_ID = std::numeric_limits<line::id>::max();
+constexpr auto INVALID_ELEMENT_ID = std::numeric_limits<element_id>::max();
 
 struct end_element {
-#if !(defined(SERIALIZE))
+#if !defined(SERIALIZE)
   end_element() = default;
   end_element(end_element&&) = default;
   end_element(end_element const&) = delete;
@@ -45,29 +36,26 @@ struct end_element {
   ~end_element() = default;
 #endif
 
-  bool is(type const t) const noexcept { return type_ == t; }
+  enum class nodes : detail::element_array_idx { top, bot };
+  enum class direction : detail::element_array_idx { oneway, invalid };
 
-  bool rising_{false};
+  node_ptr node(nodes const n) const;
+
+  std::span<element_ptr const> neighbours() const;
+  element_ptr neighbour(mileage_dir const m_dir, direction const dir) const;
+
+  kilometrage km(direction const dir) const;
+  kilometrage km(element_ptr const neighbour) const;
+
+  line::id get_line(direction const dir) const;
+
   type type_{type::INVALID};
   element_id id_{INVALID_ELEMENT_ID};
 
-  auto const& top() { return nodes_[0]; }
-  auto const& bot() { return nodes_[1]; }
-
-  auto const& top() const { return nodes_[0]; }
-  auto const& bot() const { return nodes_[1]; }
-
-  auto& rising_neighbour() { return neighbours_[0]; }
-  auto& falling_neighbour() { return neighbours_[1]; }
-
-  auto const& rising_neighbour() const { return neighbours_[0]; }
-  auto const& falling_neighbour() const { return neighbours_[1]; }
-
-  soro::array<node_ptr, 2> nodes_{nullptr, nullptr};
-  soro::array<element_ptr, 2> neighbours_{nullptr, nullptr};
-
-  kilometrage km_{si::INVALID<kilometrage>};
-  line::id line_{INVALID_LINE_ID};
+  soro::array<node_ptr, 2> nodes_;
+  soro::array<element_ptr, 2> neighbours_;
+  soro::array<kilometrage, 1> km_;
+  soro::array<line::id, 1> lines_;
 };
 
 struct simple_element {
@@ -82,37 +70,27 @@ struct simple_element {
   ~simple_element() = default;
 #endif
 
-  bool is(type const t) const noexcept { return type_ == t; }
+  enum class nodes : detail::element_array_idx { top, bot };
+  enum class direction : detail::element_array_idx { first, second, invalid };
 
-  bool rising_{false};
+  node_ptr node(nodes const n) const;
+
+  std::span<element_ptr const> neighbours() const;
+  std::span<element_ptr const> neighbours(direction const dir) const;
+  element_ptr neighbour(mileage_dir const m_dir, direction const dir) const;
+
+  line::id get_line(direction const dir) const;
+
+  kilometrage km(direction const dir) const;
+  kilometrage km(element_ptr const neighbour) const;
+
   type type_{type::INVALID};
   element_id id_{INVALID_ELEMENT_ID};
 
-  auto& top() { return nodes_[0]; }
-  auto& bot() { return nodes_[1]; }
-
-  auto const& top() const { return nodes_[0]; }
-  auto const& bot() const { return nodes_[1]; }
-
-  auto& start_rising_neighbour() { return neighbours_[0]; }
-  auto& start_falling_neighbour() { return neighbours_[1]; }
-  auto& end_rising_neighbour() { return neighbours_[2]; }
-  auto& end_falling_neighbour() { return neighbours_[3]; }
-
-  auto const& start_rising_neighbour() const { return neighbours_[0]; }
-  auto const& start_falling_neighbour() const { return neighbours_[1]; }
-  auto const& end_rising_neighbour() const { return neighbours_[2]; }
-  auto const& end_falling_neighbour() const { return neighbours_[3]; }
-
-  soro::array<node_ptr, 2> nodes_{nullptr, nullptr};
-  soro::array<element_ptr, 4> neighbours_{nullptr, nullptr, nullptr, nullptr};
-
-  kilometrage end_km_{si::INVALID<kilometrage>};
-  kilometrage start_km_{si::INVALID<kilometrage>};
-  line::id end_line_{INVALID_LINE_ID};
-  line::id start_line_{INVALID_LINE_ID};
-
-  bool end_rising_{false};
+  soro::array<node_ptr, 2> nodes_;
+  soro::array<element_ptr, 4> neighbours_;
+  soro::array<kilometrage, 2> km_;
+  soro::array<line::id, 2> lines_;
 };
 
 struct track_element {
@@ -127,66 +105,34 @@ struct track_element {
   ~track_element() = default;
 #endif
 
-  bool is(type const t) const noexcept { return type_ == t; }
+  enum class nodes : detail::element_array_idx { one };
+  enum class direction : detail::element_array_idx { oneway, invalid };
 
-  bool rising_{false};
+  node_ptr node() const;
+  node_ptr node(nodes const n) const;
+
+  std::span<element_ptr const> neighbours() const;
+  element_ptr neighbour(mileage_dir const m_dir, direction const dir) const;
+
+  line::id get_line() const;
+  line::id get_line(direction const dir) const;
+
+  kilometrage km() const;
+  kilometrage km(direction const dir) const;
+  kilometrage km(element_ptr const neighbour) const;
+
+  mileage_dir dir() const;
+  bool rising() const;
+
   type type_{type::INVALID};
   element_id id_{INVALID_ELEMENT_ID};
 
-  auto const& get_node() const { return nodes_[0]; }
+  soro::array<node_ptr, 1> nodes_;
+  soro::array<element_ptr, 2> neighbours_;
+  soro::array<kilometrage, 1> km_;
+  soro::array<line::id, 1> lines_{};
 
-  auto& behind() { return neighbours_[0]; }
-  auto& ahead() { return neighbours_[1]; }
-
-  auto const& behind() const { return neighbours_[0]; }
-  auto const& ahead() const { return neighbours_[1]; }
-
-  soro::array<node_ptr, 1> nodes_{nullptr};
-  soro::array<element_ptr, 2> neighbours_{nullptr, nullptr};
-
-  kilometrage km_{si::INVALID<kilometrage>};
-  line::id line_{INVALID_LINE_ID};
-};
-
-struct undirected_track_element {
-#if !(defined(SERIALIZE))
-  undirected_track_element() = default;
-  undirected_track_element(undirected_track_element&&) = default;
-  undirected_track_element(undirected_track_element const&) = delete;
-
-  undirected_track_element& operator=(undirected_track_element&&) = default;
-  auto operator=(undirected_track_element const&) = delete;
-
-  ~undirected_track_element() = default;
-#endif
-
-  bool is(type const t) const noexcept { return type_ == t; }
-
-  auto& top() { return nodes_[0]; }
-  auto& bot() { return nodes_[1]; }
-
-  auto const& top() const { return nodes_[0]; }
-  auto const& bot() const { return nodes_[1]; }
-
-  auto& start_rising_neighbour() { return neighbours_[0]; }
-  auto& start_falling_neighbour() { return neighbours_[1]; }
-  auto& end_rising_neighbour() { return neighbours_[2]; }
-  auto& end_falling_neighbour() { return neighbours_[3]; }
-
-  auto const& start_rising_neighbour() const { return neighbours_[0]; }
-  auto const& start_falling_neighbour() const { return neighbours_[1]; }
-  auto const& end_rising_neighbour() const { return neighbours_[2]; }
-  auto const& end_falling_neighbour() const { return neighbours_[3]; }
-
-  bool rising_{false};
-  type type_{type::INVALID};
-  element_id id_{INVALID_ELEMENT_ID};
-
-  soro::array<node_ptr, 2> nodes_{nullptr, nullptr};
-  soro::array<element_ptr, 4> neighbours_{nullptr, nullptr, nullptr, nullptr};
-
-  kilometrage km_{si::INVALID<kilometrage>};
-  line::id line_{INVALID_LINE_ID};
+  mileage_dir dir_{mileage_dir::falling};
 };
 
 struct simple_switch {
@@ -201,41 +147,34 @@ struct simple_switch {
   ~simple_switch() = default;
 #endif
 
-  bool is(type const t) const noexcept { return type_ == t; }
+  enum class nodes : detail::element_array_idx { top, bot };
+  enum class direction : detail::element_array_idx {
+    start,
+    stem,
+    branch,
+    invalid
+  };
 
-  bool rising_{false};
+  node_ptr node(nodes const n) const;
+
+  std::span<element_ptr const> neighbours() const;
+  std::span<element_ptr const> neighbours(direction const dir) const;
+  element_ptr neighbour(mileage_dir const m_dir, direction const dir) const;
+
+  direction get_neighbour_dir(element_ptr const neigh) const;
+
+  line::id get_line(direction const dir) const;
+
+  kilometrage km(direction const dir) const;
+  kilometrage km(element_ptr const neighbour) const;
+
   type type_{type::INVALID};
   element_id id_{INVALID_ELEMENT_ID};
 
-  auto& top() { return nodes_[0]; }
-  auto& bot() { return nodes_[1]; }
-
-  [[nodiscard]] auto const& top() const { return nodes_[0]; }
-  [[nodiscard]] auto const& bot() const { return nodes_[1]; }
-
-  auto& rising_start_neighbour() { return neighbours_[0]; }
-  auto& falling_start_neighbour() { return neighbours_[1]; }
-  auto& rising_stem_neighbour() { return neighbours_[2]; }
-  auto& falling_stem_neighbour() { return neighbours_[3]; }
-  auto& rising_branch_neighbour() { return neighbours_[4]; }
-  auto& falling_branch_neighbour() { return neighbours_[5]; }
-
-  auto const& rising_start_neighbour() const { return neighbours_[0]; }
-  auto const& falling_start_neighbour() const { return neighbours_[1]; }
-  auto const& rising_stem_neighbour() const { return neighbours_[2]; }
-  auto const& falling_stem_neighbour() const { return neighbours_[3]; }
-  auto const& rising_branch_neighbour() const { return neighbours_[4]; }
-  auto const& falling_branch_neighbour() const { return neighbours_[5]; }
-
-  soro::array<node_ptr, 2> nodes_{nullptr, nullptr};
-  soro::array<element_ptr, 6> neighbours_{nullptr, nullptr, nullptr,
-                                          nullptr, nullptr, nullptr};
-
-  line::id start_line_{INVALID_LINE_ID}, stem_line_{INVALID_LINE_ID},
-      branch_line_{INVALID_LINE_ID};
-  kilometrage start_km_{si::INVALID<kilometrage>},
-      stem_km_{si::INVALID<kilometrage>}, branch_km_{si::INVALID<kilometrage>};
-  bool stem_rising_{false}, branch_rising_{false};
+  soro::array<node_ptr, 2> nodes_;
+  soro::array<element_ptr, 6> neighbours_;
+  soro::array<kilometrage, 3> km_;
+  soro::array<line::id, 3> lines_{};
 };
 
 // used for crosses and crossswitches
@@ -251,55 +190,44 @@ struct cross {
   ~cross() = default;
 #endif
 
-  bool is(type const t) const noexcept { return type_ == t; }
+  enum class nodes : detail::element_array_idx {
+    sl_to_el,
+    el_to_sl,
+    sr_to_er,
+    er_to_sr
+  };
 
-  bool rising_{false};
+  enum class direction : detail::element_array_idx {
+    start_left,
+    end_left,
+    start_right,
+    end_right,
+    invalid
+  };
+
+  node_ptr node(nodes const n) const;
+
+  std::span<element_ptr const> neighbours() const;
+  std::span<element_ptr const> neighbours(direction const dir) const;
+  element_ptr neighbour(mileage_dir const m_dir, direction const dir) const;
+
+  direction get_neighbour_dir(element_ptr const e) const;
+
+  line::id get_line(direction const dir) const;
+
+  kilometrage km(direction const dir) const;
+  kilometrage km(element_ptr const neighbour) const;
+
   type type_{type::INVALID};
   element_id id_{INVALID_ELEMENT_ID};
 
-  auto& top() { return nodes_[0]; }
-  auto& bot() { return nodes_[1]; }
-  auto& left() { return nodes_[2]; }
-  auto& right() { return nodes_[3]; }
-
-  auto const& top() const { return nodes_[0]; }
-  auto const& bot() const { return nodes_[1]; }
-  auto const& left() const { return nodes_[2]; }
-  auto const& right() const { return nodes_[3]; }
-
-  auto& rising_start_left() { return neighbours_[0]; }
-  auto& falling_start_left() { return neighbours_[1]; }
-  auto& rising_end_left() { return neighbours_[2]; }
-  auto& falling_end_left() { return neighbours_[3]; }
-  auto& rising_start_right() { return neighbours_[4]; }
-  auto& falling_start_right() { return neighbours_[5]; }
-  auto& rising_end_right() { return neighbours_[6]; }
-  auto& falling_end_right() { return neighbours_[7]; }
-
-  auto const& rising_start_left() const { return neighbours_[0]; }
-  auto const& falling_start_left() const { return neighbours_[1]; }
-  auto const& rising_end_left() const { return neighbours_[2]; }
-  auto const& falling_end_left() const { return neighbours_[3]; }
-  auto const& rising_start_right() const { return neighbours_[4]; }
-  auto const& falling_start_right() const { return neighbours_[5]; }
-  auto const& rising_end_right() const { return neighbours_[6]; }
-  auto const& falling_end_right() const { return neighbours_[7]; }
-
-  soro::array<node_ptr, 4> nodes_{nullptr, nullptr, nullptr, nullptr};
-  soro::array<element_ptr, 8> neighbours_{nullptr, nullptr, nullptr, nullptr,
-                                          nullptr, nullptr, nullptr, nullptr};
+  soro::array<node_ptr, 4> nodes_;
+  soro::array<element_ptr, 8> neighbours_;
+  soro::array<kilometrage, 4> km_;
+  soro::array<line::id, 4> lines_{};
 
   bool start_left_end_right_arc_{false};
   bool start_right_end_left_arc_{false};
-
-  line::id start_left_line_{INVALID_LINE_ID}, end_left_line_{INVALID_LINE_ID};
-  line::id start_right_line_{INVALID_LINE_ID}, end_right_line_{INVALID_LINE_ID};
-  kilometrage start_left_km_{si::INVALID<kilometrage>},
-      end_left_km_{si::INVALID<kilometrage>};
-  kilometrage start_right_km_{si::INVALID<kilometrage>},
-      end_right_km_{si::INVALID<kilometrage>};
-  bool end_left_rising_{false}, start_right_rising_{false},
-      end_right_rising_{false};
 };
 
 struct element {
@@ -314,14 +242,14 @@ struct element {
   ~element() = default;
 #endif
 
+  using id = element_id;
   using ptr = element_ptr;
-  using ids = soro::vector<element_id>;
+  using ids = soro::vector<id>;
 
-  using member_t =
-      soro::variant<end_element, track_element, undirected_track_element,
-                    simple_element, simple_switch, cross>;
+  using member_t = soro::variant<end_element, track_element, simple_element,
+                                 simple_switch, cross>;
 
-  static constexpr element_id INVALID = std::numeric_limits<element_id>::max();
+  static constexpr id invalid() { return std::numeric_limits<id>::max(); }
 
   template <typename T>
   T& as() {
@@ -343,32 +271,24 @@ struct element {
     return e_.apply(std::forward<Fn>(f));
   }
 
-  std::span<const element_ptr> neighbours() const {
-    return this->e_.apply([](auto&& e) -> std::span<const element_ptr> {
-      return {std::cbegin(e.neighbours_), e.neighbours_.size()};
-    });
-  }
+  std::span<element_ptr> neighbours();
 
-  std::span<element_ptr> neighbours() {
-    return this->e_.apply([](auto&& e) -> std::span<element_ptr> {
-      return {std::begin(e.neighbours_), e.neighbours_.size()};
-    });
-  }
+  std::span<element_ptr const> neighbours() const;
 
-  std::span<const node_ptr> nodes() const {
-    return this->e_.apply([](auto&& e) -> std::span<const node_ptr> {
-      return {std::cbegin(e.nodes_), e.nodes_.size()};
-    });
-  }
+  std::span<node_ptr const> nodes() const;
+
+  std::span<line::id const> lines() const;
+
+  std::span<kilometrage const> kms() const;
+
+  kilometrage km(element::ptr neigh) const;
 
   bool is(type const t) const;
+  bool is_any(std::initializer_list<type> const types) const;
 
   std::string get_type_str() const;
 
-  element_id id() const;
-
-  bool rising() const;
-  bool falling() const;
+  id get_id() const;
 
   enum type type() const;
 
@@ -378,11 +298,9 @@ struct element {
 
   bool is_track_element() const;
 
-  bool is_section_element() const;
-
   bool is_undirected_track_element() const;
 
-  bool is_directed_track_element() const;
+  bool is_section_element() const;
 
   bool is_cross_switch() const;
 
@@ -390,7 +308,39 @@ struct element {
 
   bool joins_tracks() const;
 
-  kilometrage get_km(element::ptr neigh) const;
+  soro::size_t direction_count() const;
+
+  template <typename Node>
+  node_ptr node(Node const n) const {
+    auto const node_idx = static_cast<std::underlying_type_t<Node>>(n);
+
+    utls::sassert(node_idx < neighbours().size(), "node idx {} not in range {}",
+                  node_idx, neighbours().size());
+
+    return nodes()[node_idx];
+  }
+
+  template <typename Direction>
+  element::ptr neighbour(mileage_dir const m_dir, Direction const dir) const {
+    auto const neighbour_idx = detail::get_neighbour_idx(m_dir, dir);
+
+    utls::sassert(neighbour_idx < neighbours().size(),
+                  "neighbour idx {} not in range {}", neighbour_idx,
+                  neighbours().size());
+
+    return neighbours()[neighbour_idx];
+  }
+
+  template <typename Direction>
+  line::id get_line(Direction const dir) const {
+    return this->e_.apply([&](auto&& e) { return e.get_line(dir); });
+  }
+
+  template <typename Direction>
+  kilometrage km(Direction const dir) const {
+    return this->e_.apply([&](auto&& e) { return e.km(dir); });
+  }
+
   si::length get_distance(element::ptr const neigh) const;
   node_ptr reverse_ahead(node_ptr n) const;
 

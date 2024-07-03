@@ -21,6 +21,11 @@ struct count_type<Needle, type_list<Haystack...>>
 template <typename Needle, typename... Haystack>
 inline constexpr auto count_v = count_type<Needle, Haystack...>::value;
 
+/// --- contains --- ///
+
+template <typename Needle, typename... Haystack>
+inline constexpr auto contains_v = (count_v<Needle, Haystack...> > 0);
+
 /// --- push type to front of list --- ///
 
 template <typename...>

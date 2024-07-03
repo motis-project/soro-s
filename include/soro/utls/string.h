@@ -59,21 +59,6 @@ inline bool starts_with(char const* const str, char const* const prfx) {
   return strncmp(prfx, str, strlen(prfx)) == 0;
 }
 
-// inline auto split(std::string const& string, std::string const& delim) {
-//   std::vector<std::string> tokens;
-//
-//   std::size_t start = 0;
-//   std::size_t end = string.find(delim);
-//   while (end != std::string::npos) {
-//     tokens.push_back(string.substr(start, end - start));
-//     start = end + delim.size();
-//     end = string.find(delim, start);
-//   }
-//
-//   tokens.push_back(string.substr(start, end));
-//   return tokens;
-// }
-
 constexpr std::vector<std::string_view> split(std::string_view const string,
                                               std::string_view const delim) {
   if (string.empty()) {
@@ -92,6 +77,10 @@ constexpr std::vector<std::string_view> split(std::string_view const string,
 
   tokens.push_back(string.substr(start, end));
   return tokens;
+}
+
+inline bool str_contains(const char* const haystack, const char* const needle) {
+  return static_cast<bool>(strstr(haystack, needle));
 }
 
 }  // namespace soro::utls

@@ -1,11 +1,16 @@
 #include "doctest/doctest.h"
 
-#include <iostream>
+#include <cmath>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
 
-#include "fmt/format.h"
+#include "soro/base/fp_precision.h"
+
+#include "soro/utls/strong_types/fraction.h"
+#include "soro/utls/strong_types/type_list.h"
 
 #include "soro/si/units.h"
-#include "soro/utls/strong_types/fraction.h"
 
 using namespace soro;
 using namespace soro::si;
@@ -38,23 +43,23 @@ TEST_CASE("fraction simplify") {  // NOLINT
   static_assert(speed_one.is<speed>());
 
   auto acceleration_one = speed_one / one_s;
-  static_assert(acceleration_one.is<acceleration>());
+  static_assert(acceleration_one.is<accel>());
 
   auto acceleration_two = acceleration_one * 2.5;
-  static_assert(acceleration_two.is<acceleration>());
-  CHECK(acceleration_two <= acceleration{2.5});
-  CHECK(acceleration_two >= acceleration{2.5});
+  static_assert(acceleration_two.is<accel>());
+  CHECK_LE(acceleration_two, accel{2.5});
+  CHECK_GE(acceleration_two, accel{2.5});
 
   auto speed_two = acceleration_two * soro::si::time{2};
   static_assert(speed_two.is<speed>());
-  CHECK(speed_two <= speed{5});
-  CHECK(speed_two >= speed{5});
+  CHECK_LE(speed_two, speed{5});
+  CHECK_GE(speed_two, speed{5});
 }
 
 TEST_CASE("fraction simplify2 test") {  // NOLINT
   using frac_type_1 =
       fraction<type_list<second_tag>, type_list<meter_tag>, double>;
-  using frac_type_2 = acceleration;
+  using frac_type_2 = accel;
 
   using result_type = fraction<type_list<>, type_list<second_tag>, double>;
 
@@ -86,6 +91,46 @@ TEST_CASE("fraction pow") {  // NOLINT
 
   CHECK(equal(speed_squared.val_, std::pow(one.val_, 2)));
   CHECK(equal(speed_cubed.val_, std::pow(one.val_, 3)));
+}
+
+TEST_CASE("fraction sqrt") {
+  si::speed const two{2};
+  auto const four = two * two;
+  auto const sixteen = four * four;
+
+  auto const two_sqrt = four.sqrt();
+  auto const four_sqrt = sixteen.sqrt();
+
+  static_assert(std::is_same_v<decltype(two_sqrt), si::speed const>);
+  static_assert(std::is_same_v<decltype(four_sqrt), decltype(four)>);
+
+  CHECK_EQ(two_sqrt, two);
+  CHECK_EQ(four_sqrt, four);
+}
+
+TEST_CASE("fraction sqrt mixed") {
+  si::speed const two{2};
+  auto const four = two * two;
+  auto const sixteen = four * four;
+
+  si::weight const one{1};
+  auto const one_squared = one * one;
+
+  auto const mixed = sixteen * one_squared;
+
+  auto const two_sqrt = four.sqrt();
+  auto const four_sqrt = sixteen.sqrt();
+
+  auto const mixed_sqrt = mixed.sqrt();
+
+  static_assert(std::is_same_v<decltype(two_sqrt), si::speed const>);
+  static_assert(std::is_same_v<decltype(four_sqrt), decltype(four)>);
+  static_assert(
+      std::is_same_v<decltype(mixed_sqrt), const decltype(four_sqrt * one)>);
+
+  CHECK_EQ(two_sqrt, two);
+  CHECK_EQ(four_sqrt, four);
+  CHECK_EQ(mixed_sqrt, four * one);
 }
 
 TEST_CASE("is_fraction") {  // NOLINT

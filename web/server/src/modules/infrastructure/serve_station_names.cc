@@ -1,10 +1,14 @@
 #include "soro/server/modules/infrastructure/infrastructure_module.h"
 
-#include "cereal/types/vector.hpp"
+#include "cereal/cereal.hpp"
 
+#include "net/web_server/query_router.h"
 #include "net/web_server/responses.h"
+#include "net/web_server/web_server.h"
 
-#include "soro/server/cereal/cereal_extern.h"
+#include "soro/infrastructure/station/station.h"
+
+#include "soro/server/cereal/cereal_extern.h"  // NOLINT
 #include "soro/server/cereal/json_archive.h"
 
 namespace soro::infra {
@@ -21,13 +25,13 @@ namespace soro::server {
 net::web_server::string_res_t infrastructure_module::serve_station_names(
     net::query_router::route_request const& req) const {
 
-  auto const infra = get_infra(req.path_params_.front());
-  if (!infra.has_value()) {
+  auto const ctx = get_context(req.path_params_.front());
+  if (!ctx.has_value()) {
     return net::not_found_response(req);
   }
 
   json_archive archive;
-  archive.add()(cereal::make_nvp("stations", (**infra)->stations_));
+  archive.add()(cereal::make_nvp("stations", (*ctx)->infra_->stations_));
   return json_response(req, archive);
 }
 

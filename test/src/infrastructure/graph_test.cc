@@ -1,74 +1,63 @@
 #include "test/infrastructure/graph_test.h"
 
-#include "doctest/doctest.h"
-#include "fmt/format.h"
+#include <iterator>
+#include <utility>
 
-#include "soro/utls/container/constexpr_map.h"
+#include "doctest/doctest.h"
+
+#include "utl/verify.h"
+
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/narrow.h"
+#include "soro/utls/sassert.h"
+#include "soro/utls/std_wrapper/accumulate.h"
+#include "soro/utls/std_wrapper/all_of.h"
+#include "soro/utls/std_wrapper/find_if.h"
+
+#include "soro/infrastructure/graph/construction/starts_section.h"
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/graph.h"
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/kilometrage.h"
 
 namespace soro::infra::test {
 
-constexpr std::array<std::pair<type, size_t>,
-                     static_cast<std::size_t>(type::INVALID) + 1> const
-    expected_edges_arr{{// end elements
-                        {type::BUMPER, 1},
-                        {type::TRACK_END, 1},
-                        // simple elements
-                        {type::KM_JUMP, 2},
-                        {type::BORDER, 1},
-                        {type::LINE_SWITCH, 2},
-                        // simple switch
-                        {type::SIMPLE_SWITCH, 3},
-                        // cross
-                        {type::CROSS, 4},
-                        // directed track elements
-                        {type::MAIN_SIGNAL, 1},
-                        {type::PROTECTION_SIGNAL, 1},
-                        {type::APPROACH_SIGNAL, 1},
-                        {type::RUNTIME_CHECKPOINT, 1},
-                        {type::EOTD, 1},
-                        {type::SPEED_LIMIT, 1},
-                        {type::POINT_SPEED, 1},
-                        {type::BRAKE_PATH, 1},
-                        {type::LZB_START, 1},
-                        {type::LZB_END, 1},
-                        {type::LZB_BLOCK_SIGN, 1},
-                        {type::ETCS_START, 1},
-                        {type::ETCS_END, 1},
-                        {type::ETCS_BLOCK_SIGN, 1},
-                        {type::FORCED_HALT, 1},
-                        {type::META, 1},
-                        {type::HALT, 1},
-                        // undirected track elements
-                        {type::TUNNEL, 2},
-                        {type::ENTRY, 2},
-                        {type::TRACK_NAME, 2},
-                        {type::RUNTIME_CHECKPOINT_UNDIRECTED, 2},
-                        {type::LEVEL_CROSSING, 2},
-                        {type::SLOPE, 2},
-                        //
-                        {type::INVALID, 0}}};
+soro::size_t get_expected_outgoing_edges(element::ptr const e) {
+  if (e->is_track_element() || e->is_end_element()) {
+    return 1;
+  }
 
-// Please add the missing types to the expected edges array
-static_assert(expected_edges_arr.back().first == type::INVALID &&
-              expected_edges_arr.back().second == 0);
+  if (e->is_simple_element()) {
+    return 2;
+  }
 
-auto constexpr expected_edges =
-    utls::constexpr_map<type, size_t, expected_edges_arr.size()>{
-        expected_edges_arr};
+  if (e->is(type::SIMPLE_SWITCH)) {
+    return 3;
+  }
 
-void check_switch(simple_switch const& ss, soro::string const& station_name) {
-  using namespace std::string_literals;
-  using namespace std::literals;
+  if (e->is(type::CROSS)) {
+    auto const& c = e->as<cross>();
+    return 4 + utls::narrow<soro::size_t>(c.start_left_end_right_arc_) * 2 +
+           utls::narrow<soro::size_t>(c.start_right_end_left_arc_) * 2;
+  }
 
-  auto in_station = fmt::format("in station {}", station_name);
+  utls::unreachable("element is invalid?");
 
-  auto const get_node = [](element const& e, element_id const id) {
+  return 0;
+}
+
+void check_switch(simple_switch const& ss, graph const& g) {
+  using enum mileage_dir;
+  using enum simple_switch::direction;
+
+  auto const get_node = [](element const& e, element::id const id) {
     for (auto const& n : e.nodes()) {
-      if (n->next_node_ != nullptr && n->next_node_->element_->id() == id) {
+      if (n->next_ != nullptr && n->next_->element_->get_id() == id) {
         return std::pair(n, false);
       }
 
-      if (n->branch_node_ != nullptr && n->branch_node_->element_->id() == id) {
+      if (n->branch_ != nullptr && n->branch_->element_->get_id() == id) {
         return std::pair(n, true);
       }
     }
@@ -77,338 +66,201 @@ void check_switch(simple_switch const& ss, soro::string const& station_name) {
         "Could not find the correct node from the neighbour to the switch!");
   };
 
+  auto const start_pos = g.sections_.get_section_position(ss.id_, start);
+  auto const stem_pos = g.sections_.get_section_position(ss.id_, stem);
+  auto const branch_pos = g.sections_.get_section_position(ss.id_, branch);
+
+  auto const start_dir = section_pos_to_direction(start_pos);
+  auto const stem_dir = section_pos_to_direction(stem_pos);
+  auto const branch_dir = section_pos_to_direction(branch_pos);
+
   {  // check start -> stem and start -> branch
     auto const& [node, take_branch] =
-        get_node((ss.rising_ ? *ss.rising_start_neighbour()
-                             : *ss.falling_start_neighbour()),
-                 ss.id_);
+        get_node(*ss.neighbour(opposite(start_dir), start), ss.id_);
 
-    auto const stem_id =
-        (take_branch ? node->branch_node_ : node->next_node_)  // NOLINT
-            ->next_node_->element_->id();
+    auto const stem_id = (take_branch ? node->branch_ : node->next_)  // NOLINT
+                             ->next_->element_->get_id();
 
-    CHECK_MESSAGE((stem_id == (ss.stem_rising_ ? ss.falling_stem_neighbour()
-                                               : ss.rising_stem_neighbour())
-                                  ->id()),
-                  in_station);
+    CHECK_EQ(stem_id, ss.neighbour(stem_dir, stem)->get_id());
 
-    auto const branch_id = (take_branch ? node->branch_node_ : node->next_node_)
-                               ->branch_node_->element_->id();
-    CHECK_MESSAGE(
-        (branch_id == (ss.branch_rising_ ? ss.falling_branch_neighbour()
-                                         : ss.rising_branch_neighbour())
-                          ->id()),
-        in_station);
+    auto const branch_id = (take_branch ? node->branch_ : node->next_)
+                               ->branch_->element_->get_id();
+    CHECK_EQ(branch_id, ss.neighbour(branch_dir, branch)->get_id());
   }
 
   {  // check stem -> start
     auto const& [node, take_branch] =
-        get_node((ss.stem_rising_ ? *ss.rising_stem_neighbour()
-                                  : *ss.falling_stem_neighbour()),
-                 ss.id_);
+        get_node(*ss.neighbour(opposite(stem_dir), stem), ss.id_);
 
-    auto const start_id = (take_branch ? node->branch_node_ : node->next_node_)
-                              ->next_node_->element_->id();
+    auto const start_id =
+        (take_branch ? node->branch_ : node->next_)->next_->element_->get_id();
 
-    CHECK_MESSAGE((start_id == (ss.rising_ ? ss.falling_start_neighbour()
-                                           : ss.rising_start_neighbour())
-                                   ->id()),
-                  in_station);
+    CHECK_EQ(start_id, ss.neighbour(start_dir, start)->get_id());
   }
 
   {  // check branch -> start
     auto const& [node, take_branch] =
-        get_node((ss.branch_rising_ ? *ss.rising_branch_neighbour()
-                                    : *ss.falling_branch_neighbour()),
-                 ss.id_);
+        get_node(*ss.neighbour(opposite(branch_dir), branch), ss.id_);
 
-    auto const start_id = (take_branch ? node->branch_node_ : node->next_node_)
-                              ->next_node_->element_->id();
+    auto const start_id =
+        (take_branch ? node->branch_ : node->next_)->next_->element_->get_id();
 
-    CHECK_MESSAGE((start_id == (ss.rising_ ? ss.falling_start_neighbour()
-                                           : ss.rising_start_neighbour())
-                                   ->id()),
-                  in_station);
+    CHECK_EQ(start_id, ss.neighbour(start_dir, start)->get_id());
   }
 }
 
-void check_cross(cross const& cross, soro::string const& station_name) {
-  auto const in_station = fmt::format("in station {}", station_name);
+void check_cross(cross const& c, graph const& g) {
+  using enum mileage_dir;
+  using enum cross::direction;
 
-  auto const get_cross_node = [](element const& e, element_id const id) {
-    for (auto const& n : e.nodes()) {
-      if (n->next_node_ != nullptr && n->next_node_->element_->id() == id) {
-        return n->next_node_;
-      }
+  auto const get_cross_node = [](element const& e, element::id const id) {
+    auto it = utls::find_if(e.nodes(), [&](auto&& n) {
+      return n->next_ != nullptr && n->next_->element_->get_id() == id;
+    });
+    if (it != std::end(e.nodes())) return (*it)->next_;
 
-      if (n->branch_node_ != nullptr && n->branch_node_->element_->id() == id) {
-        return n->branch_node_;
-      }
-    }
+    it = utls::find_if(e.nodes(), [&](auto&& n) {
+      return n->branch_ != nullptr && n->branch_->element_->get_id() == id;
+    });
+    if (it != std::end(e.nodes())) return (*it)->branch_;
 
-    throw utl::fail(
-        "Could not find the correct node from the neighbour to the switch!");
+    utls::unreachable(
+        "could not find the correct node from the neighbour to the switch!");
+
+    return node::ptr{};
   };
+
+  auto const sl_pos = g.sections_.get_section_position(c.id_, start_left);
+  auto const el_pos = g.sections_.get_section_position(c.id_, end_left);
+  auto const sr_pos = g.sections_.get_section_position(c.id_, start_right);
+  auto const er_pos = g.sections_.get_section_position(c.id_, end_right);
+
+  auto const sl_dir = section_pos_to_direction(sl_pos);
+  auto const el_dir = section_pos_to_direction(el_pos);
+  auto const sr_dir = section_pos_to_direction(sr_pos);
+  auto const er_dir = section_pos_to_direction(er_pos);
 
   {  // check start_left -> end_left and start_left -> end_right
     auto const cross_node =
-        get_cross_node((cross.rising_ ? *cross.rising_start_left()
-                                      : *cross.falling_start_left()),
-                       cross.id_);
+        get_cross_node(*c.neighbour(opposite(sl_dir), start_left), c.id_);
 
-    auto const end_left_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE(
-        (end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
-                                                : cross.rising_end_left())
-                            ->id()),
-        in_station);
+    auto const end_left_id = cross_node->next_->element_->get_id();
 
-    if (cross.start_left_end_right_arc_) {
-      auto const end_right_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE(
-          (end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
-                                                    : cross.rising_end_right())
-                               ->id()),
-          in_station);
+    CHECK_EQ(end_left_id, c.neighbour(el_dir, end_left)->get_id());
+
+    if (c.start_left_end_right_arc_) {
+      auto const end_right_id = cross_node->branch_->element_->get_id();
+
+      CHECK_EQ(end_right_id, c.neighbour(er_dir, end_right)->get_id());
     }
   }
 
   {  // check end_left -> start_left and end_left -> start_right
     auto const cross_node =
-        get_cross_node((cross.end_left_rising_ ? *cross.rising_end_left()
-                                               : *cross.falling_end_left()),
-                       cross.id_);
+        get_cross_node(*c.neighbour(opposite(el_dir), end_left), c.id_);
 
-    auto const start_left_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE((start_left_id == (cross.rising_ ? cross.falling_start_left()
-                                                   : cross.rising_start_left())
-                                        ->id()),
-                  in_station);
+    auto const start_left_id = cross_node->next_->element_->get_id();
 
-    if (cross.start_right_end_left_arc_) {
-      auto const start_right_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE((start_right_id == (cross.start_right_rising_
-                                            ? cross.falling_start_right()
-                                            : cross.rising_start_right())
-                                           ->id()),
-                    in_station);
+    CHECK_EQ(start_left_id, c.neighbour(sl_dir, start_left)->get_id());
+
+    if (c.start_right_end_left_arc_) {
+      auto const start_right_id = cross_node->branch_->element_->get_id();
+
+      CHECK_EQ(start_right_id, c.neighbour(sr_dir, start_right)->get_id());
     }
   }
 
   {  // check start_right -> end_right and start_right -> end_left
-    auto const cross_node = get_cross_node(
-        (cross.start_right_rising_ ? *cross.rising_start_right()
-                                   : *cross.falling_start_right()),
-        cross.id_);
+    auto const cross_node =
+        get_cross_node(*c.neighbour(opposite(sr_dir), start_right), c.id_);
 
-    auto const end_right_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE(
-        (end_right_id == (cross.end_right_rising_ ? cross.falling_end_right()
-                                                  : cross.rising_end_right())
-                             ->id()),
-        in_station);
+    auto const end_right_id = cross_node->next_->element_->get_id();
+    CHECK_EQ(end_right_id, c.neighbour(er_dir, end_right)->get_id());
 
-    if (cross.start_right_end_left_arc_) {
-      auto const end_left_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE(
-          (end_left_id == (cross.end_left_rising_ ? cross.falling_end_left()
-                                                  : cross.rising_end_left())
-                              ->id()),
-          in_station);
+    if (c.start_right_end_left_arc_) {
+      auto const end_left_id = cross_node->branch_->element_->get_id();
+      CHECK_EQ(end_left_id, c.neighbour(el_dir, end_left)->get_id());
     }
   }
 
   {  // check end_right -> start_right and end_right -> start_left
     auto const cross_node =
-        get_cross_node((cross.end_right_rising_ ? *cross.rising_end_right()
-                                                : *cross.falling_end_right()),
-                       cross.id_);
+        get_cross_node(*c.neighbour(opposite(er_dir), end_right), c.id_);
 
-    auto const start_right_id = cross_node->next_node_->element_->id();
-    CHECK_MESSAGE((start_right_id == (cross.start_right_rising_
-                                          ? cross.falling_start_right()
-                                          : cross.rising_start_right())
-                                         ->id()),
-                  in_station);
+    auto const start_right_id = cross_node->next_->element_->get_id();
+    CHECK_EQ(start_right_id, c.neighbour(sr_dir, start_right)->get_id());
 
-    if (cross.start_left_end_right_arc_) {
-      auto const start_left_id = cross_node->branch_node_->element_->id();
-      CHECK_MESSAGE(
-          (start_left_id == (cross.rising_ ? cross.falling_start_left()
-                                           : cross.rising_start_left())
-                                ->id()),
-          in_station);
+    if (c.start_left_end_right_arc_) {
+      auto const start_left_id = cross_node->branch_->element_->get_id();
+      CHECK_EQ(start_left_id, c.neighbour(sl_dir, start_left)->get_id());
     }
   }
 }
 
-void check_outgoing(element const& element, station const& station) {
-  std::size_t outgoing = 0;
-  for (auto const& node_ptr : element.nodes()) {
-    // Count outgoing edges
-    outgoing += node_ptr->next_node_ != nullptr ? 1 : 0;
-    outgoing += node_ptr->branch_node_ != nullptr ? 1 : 0;
-  }
-  auto expected = expected_edges.at(element.type());
+void check_outgoing(element::ptr const e) {
+  auto const outgoing =
+      utls::accumulate(e->nodes(), soro::size_t{0}, [](auto&& acc, auto&& n) {
+        return acc + utls::narrow<soro::size_t>(n->next_ != nullptr) +
+               utls::narrow<soro::size_t>(n->branch_ != nullptr);
+      });
+  auto const expected = get_expected_outgoing_edges(e);
 
-  // Crosses can also be single or double cross switches, adjust expected
-  if (element.is(type::CROSS)) {
-    if (element.as<cross>().start_left_end_right_arc_) {
-      expected += 2;
-    }
-
-    if (element.as<cross>().start_right_end_left_arc_) {
-      expected += 2;
-    }
-  }
-
-  // Borders can connect to other stations, adjust expected
-  if (element.is(type::BORDER)) {
-    bool realized_border = false;
-    for (auto const& border : station.borders_) {
-      if (border.element_->id() == element.id()) {
-        realized_border = true;
-        break;
-      }
-    }
-
-    if (realized_border) {
-      expected += 1;
-    }
-  }
-
-  CHECK_MESSAGE((expected == outgoing),
-                fmt::format("Expected outgoing edges differ from actual "
-                            "outgoing edges for element with id: {}.",
-                            element.id()));
+  CHECK_EQ(outgoing, expected);
 }
 
-void check_incoming(infrastructure const& infra,
-                    std::vector<std::size_t> const& incoming_edges,
-                    std::vector<std::size_t> const& expected_incoming) {
-  for (auto const& station : infra->stations_) {
-    for (auto const& element : station->elements_) {
+soro::vector_map<element::id, soro::size_t> get_incoming_edges(graph const& g) {
+  soro::vector_map<element::id, soro::size_t> result(g.elements_.size(), 0);
 
-      auto const incoming = incoming_edges[element->id()];
-      auto expected = expected_edges.at(element->type());
-
-      if (element->is(type::CROSS)) {
-        if (element->as<cross>().start_left_end_right_arc_) {
-          expected += 2;
-        }
-
-        if (element->as<cross>().start_right_end_left_arc_) {
-          expected += 2;
-        }
-      }
-
-      // Borders can connect to other stations, adjust expected
-      if (element->is(type::BORDER)) {
-        bool realized_border = false;
-        for (auto const& border : station->borders_) {
-          if (border.element_->id() == element->id()) {
-            realized_border = true;
-            break;
-          }
-        }
-
-        if (realized_border) {
-          expected += 1;
-        }
-
-        expected += expected_incoming[element->id()];
-
-        auto const message = fmt::format(
-            "Expected incoming edges differ from actual incoming edges for "
-            "element with id {} and type {} in station {}.",
-            element->id(), element->get_type_str(), station->ds100_);
-        CHECK_MESSAGE((expected == incoming), message);
-      }
+  for (auto const& node : g.nodes_) {
+    if (node->next_ != nullptr) {
+      ++(result[node->next_->element_->get_id()]);
     }
+
+    if (node->branch_ != nullptr) {
+      ++(result[node->branch_->element_->get_id()]);
+    }
+  }
+
+  return result;
+}
+
+void check_neighbours(element::ptr const e) {
+  CHECK(utls::all_of(e->neighbours(), [](auto&& n) { return n != nullptr; }));
+}
+
+void check_no_trivial_cycle(graph const& graph) {
+  for (auto const& node : graph.nodes_) {
+    // if there is a -> b, then b -> a should not exist
+    auto const no_next_cycle =
+        node->next_ == nullptr ||
+        (node->next_->next_ != node && node->next_->branch_ != node);
+    CHECK(no_next_cycle);
+
+    auto const no_branch_cycle =
+        node->branch_ == nullptr ||
+        (node->branch_->next_ != node && node->branch_->branch_ != node);
+    CHECK(no_branch_cycle);
   }
 }
 
-void check_neighbours(element const& e) {
-  for (auto const& neigh : e.neighbours()) {
-    CHECK_NE(neigh, nullptr);
-  }
-}
+void check_graph(graph const& g) {
+  using enum mileage_dir;
+  using enum cross::direction;
 
-void check_graph(infrastructure const& infra) {
-  std::size_t total_elements = 0;
-  std::vector<std::size_t> incoming_edges(infra->graph_.elements_.size(), 0);
-  std::vector<std::size_t> expected_incoming(infra->graph_.elements_.size(), 0);
+  for (auto const& element : g.elements_) {
+    check_neighbours(element);
+    check_outgoing(element);
 
-  for (auto const& station : infra->stations_) {
-    total_elements += station->elements_.size();
+    if (element->is(type::SIMPLE_SWITCH)) {
+      check_switch(element->as<simple_switch>(), g);
+    }
 
-    for (auto const& element : station->elements_) {
-      check_neighbours(*element);
-
-      check_outgoing(*element, *station);
-
-      if (element->is(type::SIMPLE_SWITCH)) {
-        check_switch(element->as<simple_switch>(), station->ds100_);
-      }
-
-      if (element->is(type::CROSS)) {
-        auto const& cross = element->as<struct cross>();
-
-        if (cross.start_left_end_right_arc_) {
-          ++(expected_incoming[(cross.rising_ ? cross.falling_start_left()
-                                              : cross.rising_start_left())
-                                   ->id()]);
-          ++(expected_incoming[(cross.end_right_rising_
-                                    ? cross.falling_end_right()
-                                    : cross.rising_end_right())
-                                   ->id()]);
-        }
-
-        if (cross.start_right_end_left_arc_) {
-          ++(expected_incoming[(cross.start_right_rising_
-                                    ? cross.falling_start_right()
-                                    : cross.rising_start_right())
-                                   ->id()]);
-          ++(expected_incoming[(cross.end_left_rising_
-                                    ? cross.falling_end_left()
-                                    : cross.rising_end_left())
-                                   ->id()]);
-        }
-
-        check_cross(cross, station->ds100_);
-      }
-
-      for (auto const& node_ptr : element->nodes()) {
-        // Check: if there is a -> b, then b -> a should not exist
-        auto const cycle_message =
-            fmt::format("Found cycle in element with id {} in station {}",
-                        element->id(), station->ds100_);
-        if (node_ptr->next_node_ != nullptr) {
-          ++(incoming_edges[node_ptr->next_node_->element_->id()]);
-
-          CHECK_MESSAGE((node_ptr->next_node_->next_node_ != node_ptr),
-                        cycle_message);
-          CHECK_MESSAGE((node_ptr->next_node_->branch_node_ != node_ptr),
-                        cycle_message);
-        }
-
-        if (node_ptr->branch_node_ != nullptr) {
-          ++(incoming_edges[node_ptr->branch_node_->element_->id()]);
-
-          CHECK_MESSAGE((node_ptr->branch_node_->next_node_ != node_ptr),
-                        cycle_message);
-          CHECK_MESSAGE((node_ptr->branch_node_->branch_node_ != node_ptr),
-                        cycle_message);
-        }
-      }
+    if (element->is(type::CROSS)) {
+      check_cross(element->as<cross>(), g);
     }
   }
 
-  check_incoming(infra, incoming_edges, expected_incoming);
-
-  CHECK_EQ(total_elements, infra->graph_.elements_.size());
+  check_no_trivial_cycle(g);
 }
-
-void do_graph_tests(infrastructure const& infra) { check_graph(infra); }
 
 }  // namespace soro::infra::test

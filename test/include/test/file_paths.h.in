@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 namespace soro::test {
 
 ///////////////////////////////////////////////////////////////////////
-// Check if you are editing file_paths.h.in instead of file_paths.h //
+// Check that you are editing file_paths.h.in instead of file_paths.h //
 //////////////////////////////////////////////////////////////////////
 
 auto const BASE_PATH = fs::path("${CMAKE_CURRENT_SOURCE_DIR}") / "resources";
@@ -27,6 +27,8 @@ auto const SORO_COORD_PATH = BASE_PATH / "misc/btrs_geo.csv";
 
 auto const SMALL_FOLDER = BASE_PATH / "infrastructure/small/";
 auto const DE_ISS_FOLDER = BASE_PATH / "infrastructure/de_iss/";
+auto const HILL_FOLDER = BASE_PATH / "infrastructure/hill/";
+auto const INTER_FOLDER = BASE_PATH / "infrastructure/intersection/";
 
 infra::infrastructure_options const SMALL_OPTS = {
     .infrastructure_path_ = SMALL_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
@@ -34,8 +36,14 @@ infra::infrastructure_options const SMALL_OPTS = {
 infra::infrastructure_options const DE_ISS_OPTS = {
     .infrastructure_path_ = DE_ISS_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
 
-std::vector<infra::infrastructure_options> const ALL_INFRA_OPTS = {SMALL_OPTS,
-                                                                   DE_ISS_OPTS};
+infra::infrastructure_options const HILL_OPTS = {
+    .infrastructure_path_ = HILL_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
+
+infra::infrastructure_options const INTER_OPTS = {
+    .infrastructure_path_ = INTER_FOLDER, .gps_coord_path_ = SORO_COORD_PATH};
+
+std::vector<infra::infrastructure_options> const ALL_INFRA_OPTS = {
+    SMALL_OPTS, DE_ISS_OPTS, HILL_OPTS, INTER_OPTS};
 
 inline std::vector<std::unique_ptr<infra::infrastructure>>
     INFRASTRUCTURE_SCENARIOS;  // NOLINT
@@ -95,6 +103,8 @@ auto const FOLLOW_FOLDER = BASE_PATH / "timetable/follow/";
 auto const CROSS_FOLDER = BASE_PATH / "timetable/cross/";
 auto const OVERTAKE_FOLDER = BASE_PATH / "timetable/overtake/";
 auto const DE_KSS_FOLDER = BASE_PATH / "timetable/de_kss";
+auto const HILL_TT_FOLDER = BASE_PATH / "timetable/hill";
+auto const INTER_TT_FOLDER = BASE_PATH / "timetable/intersection";
 
 // --- Timetable Options --- //
 tt::timetable_options const OVERTAKE_OPTS = {.timetable_path_ =
@@ -102,6 +112,8 @@ tt::timetable_options const OVERTAKE_OPTS = {.timetable_path_ =
 tt::timetable_options const FOLLOW_OPTS = {.timetable_path_ = FOLLOW_FOLDER};
 tt::timetable_options const CROSS_OPTS = {.timetable_path_ = CROSS_FOLDER};
 tt::timetable_options const DE_KSS_OPTS = {.timetable_path_ = DE_KSS_FOLDER};
+tt::timetable_options const HILL_TT_OPTS = {.timetable_path_ = HILL_TT_FOLDER};
+tt::timetable_options const INTER_TT_OPTS = {.timetable_path_ = INTER_TT_FOLDER};
 
 // --- Test Scenarios ---
 

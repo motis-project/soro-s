@@ -10,6 +10,7 @@
 
 namespace soro::utls {
 
+// replace , with .
 enum replace_comma : bool { OFF, ON };
 
 namespace detail {

@@ -1,6 +1,16 @@
 #include "soro/infrastructure/exclusion/exclusion_set.h"
 
+#include <compare>
+#include <cstddef>
+#include <algorithm>
+#include <type_traits>
+
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/is_sorted.h"
+
+#include "soro/infrastructure/interlocking/interlocking_route.h"
 
 namespace soro::infra {
 
@@ -134,8 +144,38 @@ std::partial_ordering contains_impl_same_size(exclusion_set const& a,
   }
 }
 
-soro::vector<exclusion_set::value_type> exclusion_set::expanded_set() const {
-  soro::vector<value_type> result;
+exclusion_set::iterator::iterator(exclusion_set const* const set,
+                                  exclusion_set::bitvec_t::size_type const idx)
+    : set_{set}, idx_{idx} {
+  utls::expect(idx_ <= set_->bits_.size(), "initializing idx larger than size");
+}
+
+exclusion_set::iterator exclusion_set::iterator::operator+(std::size_t n) {
+  auto result = *this;
+
+  while (n != 0) {
+    ++result;
+    --n;
+  }
+
+  return result;
+}
+
+exclusion_set::iterator& exclusion_set::iterator::operator++() {
+  ++idx_;
+  while (idx_ < set_->bits_.size() && !set_->bits_[idx_]) {
+    ++idx_;
+  }
+
+  return *this;
+}
+
+exclusion_set::iterator::value_type exclusion_set::iterator::operator*() const {
+  return exclusion_set::iterator::value_type{set_->first_ + idx_};
+}
+
+soro::vector<interlocking_route::id> exclusion_set::expanded_set() const {
+  soro::vector<interlocking_route::id> result;
 
   for (auto i = 0U; i < bits_.size(); ++i) {
     if (bits_[i]) {
@@ -148,7 +188,9 @@ soro::vector<exclusion_set::value_type> exclusion_set::expanded_set() const {
 
 bool exclusion_set::any() const { return this->bits_.any(); }
 
-bool exclusion_set::operator[](exclusion_set::value_type const idx) const {
+bool exclusion_set::operator[](interlocking_route::id const ir_id) const {
+  auto const idx = as_val(ir_id);
+
   if (idx < first_bit_set_ || idx > last_bit_set_) {
     return false;
   }
@@ -156,7 +198,9 @@ bool exclusion_set::operator[](exclusion_set::value_type const idx) const {
   return this->bits_[idx - first_];
 }
 
-void exclusion_set::set(value_type const idx) {
+void exclusion_set::set(interlocking_route::id const ir_id) {
+  auto const idx = as_val(ir_id);
+
   if (idx < first_) {
     lower_first(this,
                 (idx / bitvec_t::bits_per_block) * bitvec_t::bits_per_block);
@@ -410,7 +454,7 @@ bool exclusion_set::ok() const {
 
 exclusion_set make_exclusion_set(
     exclusion_set::id const id,
-    soro::vector<exclusion_set::value_type> const& sorted_ids) {
+    soro::vector<interlocking_route::id> const& sorted_ids) {
   utls::expect(utls::is_sorted(sorted_ids), "IDs not sorted.");
 
   if (sorted_ids.empty()) {
@@ -422,8 +466,8 @@ exclusion_set make_exclusion_set(
   exclusion_set es;
   es.id_ = id;
 
-  es.first_bit_set_ = sorted_ids.front();
-  es.last_bit_set_ = sorted_ids.back();
+  es.first_bit_set_ = as_val(sorted_ids.front());
+  es.last_bit_set_ = as_val(sorted_ids.back());
 
   es.first_ = (es.first_bit_set_ / exclusion_set::bitvec_t::bits_per_block) *
               exclusion_set::bitvec_t::bits_per_block;
@@ -444,8 +488,9 @@ exclusion_set make_exclusion_set(
 
   return es;
 }
+
 exclusion_set make_exclusion_set(
-    soro::vector<exclusion_set::value_type> const& sorted_ids) {
+    soro::vector<interlocking_route::id> const& sorted_ids) {
   return make_exclusion_set(exclusion_set::INVALID_ID, sorted_ids);
 }
 

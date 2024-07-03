@@ -11,8 +11,6 @@ struct base_timetable {
   // same size as trains_
   soro::vector<connection> connections_;
 
-  soro::map<train::number, train::ptr> number_to_train_;
-
   interval interval_{};
   soro::string source_;
 };

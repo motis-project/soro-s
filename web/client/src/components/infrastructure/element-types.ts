@@ -1,43 +1,51 @@
-export const ElementType = {
-    BUMPER: 'bumper',
-    BORDER: 'border',
-    TRACK_END: 'track_end',
-    SWITCH: 'simple_switch',
-    APPROACH_SIGNAL: 'as',
-    MAIN_SIGNAL: 'ms',
-    PROTECTION_SIGNAL: 'ps',
-    END_OF_TRAIN_DETECTOR: 'eotd',
-    SPEED_LIMIT: 'spl',
-    TUNNEL: 'tunnel',
-    HALT: 'hlt',
-    RTCP: 'rtcp',
-    KM_JUMP: 'km_jump',
-    LINE_SWITCH: 'line_switch',
-    SLOPE: 'slope',
-    CROSS: 'cross',
-    CTC: 'ctc',
-    STATION: 'station',
-};
+export enum ElementType {
+  Bumper = 'bumper',
+  Border = 'border',
+  TrackEnd = 'track_end',
+  Switch = 'simple_switch',
+  ApproachSignal = 'as',
+  MainSignal = 'ms',
+  ProtectionSignal = 'ps',
+  EndOfTrainDetector = 'eotd',
+  SpeedLimit = 'spl',
+  Tunnel = 'tunnel',
+  Halt = 'hlt',
+  RTCP = 'rtcp',
+  RTCP_U = 'rtcp_u',
+  KmJump = 'km_jump',
+  LineSwitch = 'line_switch',
+  Slope = 'slope',
+  Cross = 'cross',
+  CTC = 'ctc',
+  Meta = 'meta',
+  PicturePoint = 'pp'
+}
 
-export const ElementTypes = Object.values(ElementType);
+export const ElementTypes: ElementType[] = Object.values(ElementType);
 
-export const ElementTypeLabels = {
-    [ElementType.BUMPER]: 'Bumper',
-    [ElementType.BORDER]: 'Border',
-    [ElementType.TRACK_END]: 'Track End',
-    [ElementType.SWITCH]: 'Switch',
-    [ElementType.APPROACH_SIGNAL]: 'Approach Signal',
-    [ElementType.MAIN_SIGNAL]: 'Main Signal',
-    [ElementType.PROTECTION_SIGNAL]: 'Protection Signal',
-    [ElementType.END_OF_TRAIN_DETECTOR]: 'End of Train Detector',
-    [ElementType.SPEED_LIMIT]: 'Speed Limit',
-    [ElementType.TUNNEL]: 'Tunnel',
-    [ElementType.HALT]: 'Halt',
-    [ElementType.RTCP]: 'RTCP',
-    [ElementType.KM_JUMP]: 'KM Jump',
-    [ElementType.LINE_SWITCH]: 'Line Switch',
-    [ElementType.SLOPE]: 'Slope',
-    [ElementType.CROSS]: 'Cross',
-    [ElementType.CTC]: 'CTC',
-    [ElementType.STATION]: 'Station',
+export function valueToType(value: string): ElementType {
+  return ElementType[value as keyof typeof ElementType];
+}
+
+export const ElementTypeLabel = {
+  [ElementType.Bumper]: 'Bumper',
+  [ElementType.Border]: 'Border',
+  [ElementType.TrackEnd]: 'Track End',
+  [ElementType.Switch]: 'Switch',
+  [ElementType.ApproachSignal]: 'Approach Signal',
+  [ElementType.MainSignal]: 'Main Signal',
+  [ElementType.ProtectionSignal]: 'Protection Signal',
+  [ElementType.EndOfTrainDetector]: 'End of Train Detector',
+  [ElementType.SpeedLimit]: 'Speed Limit',
+  [ElementType.Tunnel]: 'Tunnel',
+  [ElementType.Halt]: 'Halt',
+  [ElementType.RTCP]: 'RTCP',
+  [ElementType.RTCP_U]: 'RTCP_U',
+  [ElementType.KmJump]: 'KM Jump',
+  [ElementType.LineSwitch]: 'Line Switch',
+  [ElementType.Slope]: 'Slope',
+  [ElementType.Cross]: 'Cross',
+  [ElementType.CTC]: 'CTC',
+  [ElementType.Meta]: 'Meta',
+  [ElementType.PicturePoint]: 'Picture Pont'
 };

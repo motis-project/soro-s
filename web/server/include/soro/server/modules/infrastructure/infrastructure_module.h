@@ -11,17 +11,25 @@
 #include "net/web_server/web_server.h"
 
 #include "soro/infrastructure/infrastructure.h"
+
 #include "soro/server/server_settings.h"
+
+#include "soro/server/modules/infrastructure/positions.h"
 
 namespace soro::server {
 
 struct infrastructure_module {
-  auto all() const {
-    return infrastructures_ | ranges::views::values |
-           ranges::views::transform([](auto&& p) -> auto const& { return *p; });
-  }
+  struct context {
+    using ptr = soro::ptr<context>;
 
-  infra::infrastructure::optional_ptr get_infra(std::string_view const) const;
+    infra::infrastructure infra_;
+    positions positions_;
+  };
+
+  auto all() const { return contexts_ | ranges::views::values; }
+
+  soro::optional<infrastructure_module::context::ptr> get_context(
+      std::string const& context_name) const;
 
   net::web_server::string_res_t serve_infrastructure_names(
       net::query_router::route_request const& req) const;
@@ -47,8 +55,13 @@ struct infrastructure_module {
   net::web_server::string_res_t serve_element(
       net::query_router::route_request const& req) const;
 
-  std::unordered_map<std::string_view, std::unique_ptr<infra::infrastructure>>
-      infrastructures_;
+  net::web_server::string_res_t serve_node(
+      net::query_router::route_request const& req) const;
+
+  std::unordered_map<std::string, context> contexts_;
+
+  // shared among all contexts
+  soro::map<infra::station::ds100, utls::gps> station_positions_;
 };
 
 infrastructure_module get_infrastructure_module(server_settings const& s);

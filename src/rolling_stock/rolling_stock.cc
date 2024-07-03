@@ -1,31 +1,37 @@
 #include "soro/rolling_stock/rolling_stock.h"
 
+#include <iterator>
+
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/result.h"
+
 #include "soro/rolling_stock/rolling_stock_error.h"
+#include "soro/rolling_stock/train_series.h"
 
 namespace soro::rs {
 
-utls::result<traction_vehicle> rolling_stock::get_traction_vehicle(
-    std::string_view const series, std::string_view const owner,
-    variant_id variant_id) const {
-
-  std::string tsk = series.data() + std::string("-") + owner.data();  // NOLINT
-  soro::string const train_series_key{tsk.data()};  // NOLINT
-
-  auto train_series_it = train_series_.find(train_series_key);
-  if (train_series_it == std::cend(train_series_)) {
+utls::result<traction_unit> get_traction_vehicle(
+    rolling_stock const& rs, traction_unit::key const& tuk) {
+  auto const train_series_it = rs.train_series_.find(tuk.train_series_key_);
+  if (train_series_it == std::cend(rs.train_series_)) {
     return utls::unexpected(error::rolling_stock::TRACTION_VEHICLE_NOT_FOUND,
                             "could not find traction vehicle with series '{}', "
                             "owner '{}' and variant '{}', due to train series",
-                            series, owner, variant_id);
+                            tuk.train_series_key_.number_,
+                            tuk.train_series_key_.company_,
+                            as_val(tuk.variant_));
   }
 
   auto const& variants = train_series_it->second.variants_;
-  auto variant_it = variants.find(variant_id);
+  auto const variant_it = variants.find(tuk.variant_);
   if (variant_it == std::cend(variants)) {
     return utls::unexpected(error::rolling_stock::TRACTION_VEHICLE_NOT_FOUND,
                             "could not find traction vehicle with series '{}', "
                             "owner '{}' and variant '{}', due to variant",
-                            series, owner, variant_id);
+                            tuk.train_series_key_.number_,
+                            tuk.train_series_key_.company_,
+                            as_val(tuk.variant_));
   }
 
   return variant_it->second;

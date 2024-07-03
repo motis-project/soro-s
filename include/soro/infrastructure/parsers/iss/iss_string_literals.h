@@ -7,6 +7,7 @@
 namespace soro::infra {
 
 constexpr const char* const STATION = "Betriebsstelle";
+constexpr const char* const STATIONS = "Betriebsstellen";
 
 constexpr const char* const TRACK_NAME = "Gleisbezeichnung";
 constexpr const char* const LEVEL_CROSSING = "Bahnuebergang";
@@ -46,24 +47,34 @@ constexpr const char* const LZB_END_RISING = "LZBEndeS";
 constexpr const char* const LZB_BLOCK_SIGN_RISING = "LZBBlockkennzeichenS";
 constexpr const char* const LZB_BLOCK_SIGN_FALLING = "LZBBlockkennzeichenF";
 
+constexpr const char* const LZB_EOTD_RISING = "LZBZugschlussstelleS";
+constexpr const char* const LZB_EOTD_FALLING = "LZBZugschlussstelleF";
+
+constexpr const char* const SPEED_LIMIT = "GeschwBeschraenkung";
+
 constexpr const char* const SPEED_LIMIT_RISING = "GeschwZulaessigS";
 constexpr const char* const SPEED_LIMIT_FALLING = "GeschwZulaessigF";
 
-constexpr const char* const POINT_SPEED_RISING = "PunktgeschwF";
-constexpr const char* const POINT_SPEED_FALLING = "PunktgeschwS";
-
-constexpr const char* const SPEED_LIMIT = "GeschwBeschraenkung";
+constexpr const char* const SPEED_LIMIT_DIVERGENT_RISING = "GeschwAbweichendS";
+constexpr const char* const SPEED_LIMIT_DIVERGENT_FALLING = "GeschwAbweichendF";
 
 constexpr const char* const SPECIAL_SPEED_LIMIT_END_RISING =
     "GeschwEndeSpeziellS";
 constexpr const char* const SPECIAL_SPEED_LIMIT_END_FALLING =
     "GeschwEndeSpeziellF";
 
+constexpr const char* const POINT_SPEED_RISING = "PunktgeschwF";
+constexpr const char* const POINT_SPEED_FALLING = "PunktgeschwS";
+
+constexpr const char* const MAIN_SIGNAL = "Hauptsignal";
+
 constexpr const char* const MAIN_SIGNAL_RISING = "HauptsignalS";
 constexpr const char* const MAIN_SIGNAL_FALLING = "HauptsignalF";
 
 constexpr const char* const PROTECTION_SIGNAL_RISING = "SchutzsignalS";
 constexpr const char* const PROTECTION_SIGNAL_FALLING = "SchutzsignalF";
+
+constexpr const char* const APPROACH_SIGNAL = "Vorsignal";
 
 constexpr const char* const APPROACH_SIGNAL_RISING = "VorsignalS";
 constexpr const char* const APPROACH_SIGNAL_FALLING = "VorsignalF";
@@ -74,8 +85,13 @@ constexpr const char* const SIGNAL_EOTD_FALLING = "SignalZugschlussstelleF";
 constexpr const char* const ROUTE_EOTD_RISING = "FstrZugschlussstelleS";
 constexpr const char* const ROUTE_EOTD_FALLING = "FstrZugschlussstelleF";
 
+constexpr const char* const HALT_FREIGHT = "HalteplatzGz";
+
 constexpr const char* const HALT_FREIGHT_RISING = "HalteplatzGzS";
 constexpr const char* const HALT_FREIGHT_FALLING = "HalteplatzGzF";
+
+constexpr const char* const HALT_PASSENGER_LEFT = "HalteplatzRzLinks";
+constexpr const char* const HALT_PASSENGER_RIGHT = "HalteplatzRzRechts";
 
 constexpr const char* const HALT_PASSENGER_LEFT_RISING = "HalteplatzRzLinksS";
 constexpr const char* const HALT_PASSENGER_LEFT_FALLING = "HalteplatzRzLinksF";
@@ -99,6 +115,11 @@ constexpr const char* const KM_JUMP_START = "KmSprungAnfang";
 constexpr const char* const KM_JUMP_END = "KmSprungEnde";
 
 constexpr const char* const SLOPE = "Neigung";
+
+constexpr const char* const ELECTRIFICATION = "GrenzeElektrifizierung";
+
+constexpr const char* const ELECTRIFICATION_REPEATER =
+    "GrenzeElektrifizierungWW";
 
 constexpr const char* const WARNING_SIGN = "Warnfeld";
 
@@ -155,6 +176,9 @@ constexpr const char* const RAIL_PLAN_STATIONS = "Spurplanbetriebsstellen";
 constexpr const char* const STATION_ROUTE = "Betriebsstellenfahrweg";
 constexpr const char* const STATION_ROUTES = "Betriebsstellenfahrwege";
 
+constexpr const char* const ALTERNATIVE_VALUES = "AlternativeWerte";
+constexpr const char* const ALTERNATIVE_VALUE = "AlternativerWert";
+
 constexpr const char* const PICTURE_COORDINATES = "Bildkoordinaten";
 constexpr const char* const X = "X";
 constexpr const char* const Y = "Y";
@@ -179,15 +203,41 @@ constexpr const char* const CONVENTIONAL = "Konventionell";
 constexpr const char* const LZB = "LZB";
 
 constexpr const char* const CORE_DATA = "Stammdaten";
+constexpr const char* const REGULATORIES = "Ordnungsrahmen";
 constexpr const char* const REGULATORY_STATIONS = "Ordnungsrahmen_ORBtrst";
 constexpr const char* const REGULATORY_LINES = "Ordnungsrahmen_ORStr";
 
 constexpr const char* const TRAIN_SERIES = "Triebfahrzeugbaureihen";
 
+constexpr const char* const TRAIN_MAIN_CATEGORIES = "Zuggattungshauptnummern";
+constexpr const char* const TRAIN_MAIN_CATEGORY = "Zuggattungshauptnummer";
+
+constexpr const char* const TRAIN_CATEGORY_MAIN_NUMBER = "Hauptnummer";
+constexpr const char* const TRAIN_CATEGORY_SUB_NUMBER = "UnterNr";
+
+constexpr const char* const TRAIN_CATEGORIES = "Zuggattungen";
+constexpr const char* const TRAIN_CATEGORY = "Zuggattung";
+
 constexpr const char* const DEFAULT_VALUES = "Standardwerte";
+
+constexpr const char* const KEY = "Schluessel";
 
 constexpr const char* const BEGIN = "Anfang";
 constexpr const char* const END = "Ende";
+
+constexpr const char* const BRAKETYPE = "Bremsart";
+
+constexpr const char* const BRAKE_PATH_TYPE = "Bremswegart";
+
+constexpr const char* const BRAKE_TABLE = "Bremstafel";
+constexpr const char* const BRAKE_TABLES = "Bremstafeln";
+
+constexpr const char* const BRAKE_TABLE_CORE = "Bremstafelkern";
+constexpr const char* const BRAKE_TABLE_CORES = "Bremstafelkerne";
+
+constexpr const char* const BRAKE_WEIGHT_PERCENTAGE = "Bremshundertstel";
+constexpr const char* const MINIMUM_BRAKE_WEIGHT_PERCENTAGE =
+    "MindestBremshundertstel";
 
 constexpr const char* const PASSENGER_STOP = "Reisezughalt";
 constexpr const char* const FREIGHT_STOP = "Gueterzughalt";
@@ -200,6 +250,10 @@ constexpr const char* const ATTRIBUTES = "Attribute";
 constexpr const char* const COURSE = "Verlauf";
 constexpr const char* const COURSE_STEM = "Stamm";
 
+constexpr const char* const SPEED = "Geschwindigkeit";
+
+constexpr const char* const LENGTH = "Laenge";
+
 constexpr const char* const SPEED_LIMITS = "GeschwBeschraenkungen";
 
 constexpr const char* const NODES = "Knoten";
@@ -208,6 +262,14 @@ constexpr const char* const ROUTE_FORM_TIME = "Fahrstrassenbildezeit";
 constexpr const char* const BRAKE_PATH_LENGTH = "BremswegArt";
 constexpr const char* const STATIONARY_SPEED_LIMIT =
     "ZulaessigeOrtsfesteGeschwindigkeit";
+
+constexpr const char* const UI_IDENTIFIER = "Oberflaechenbezeichner";
+
+constexpr const char* const POSITION = "Position";
+
+constexpr const char* const DS100 = "DS100";
+
+constexpr const char* const UNIT = "Einheit";
 
 // TODO(julian) rename placeholder
 constexpr const char* const NO_STOP_POSSIBLE = "DurchfahrtOhneHaltMoeglich";

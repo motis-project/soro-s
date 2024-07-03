@@ -1,5 +1,8 @@
 #include "soro/timetable/timetable_error.h"
 
+#include <string>
+#include <system_error>
+
 namespace {
 
 struct timetable_error_category : std::error_category {

@@ -4,11 +4,13 @@
 
 #include "soro/utls/coordinates/angle.h"
 #include "soro/utls/coordinates/cartesian.h"
+#include "soro/utls/coordinates/coordinates.h"
 
 namespace soro::utls {
 
 bool gps::valid() const {
-  return std::abs(lat_) <= 360.0 && std::abs(lon_) <= 360.0;
+  return !std::isnan(lat_) && !std::isnan(lon_) && std::abs(lat_) <= 90.0 &&
+         std::abs(lon_) <= 180.0;
 }
 
 // cartesian gps::to_cartesian() const {
@@ -43,7 +45,7 @@ gps::precision gps::distance(gps const& other) const {
   auto const a = pow(sin(delta_lat / 2), 2) + pow(sin(delta_lon / 2), 2) *
                                                   cos(to_rad(lat_)) *
                                                   cos(to_rad(other.lat_));
-  auto const c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  auto const c = 2 * atan2(std::sqrt(a), std::sqrt(1 - a));
 
   return EARTH_RADIUS * c;
 }

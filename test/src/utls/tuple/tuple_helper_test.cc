@@ -1,6 +1,9 @@
 #include "doctest/doctest.h"
 
+#include <cstddef>
+
 #include "soro/base/soro_types.h"
+
 #include "soro/utls/tuple/apply_at.h"
 #include "soro/utls/tuple/find_if.h"
 #include "soro/utls/tuple/for_each.h"

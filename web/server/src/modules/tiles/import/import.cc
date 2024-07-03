@@ -23,8 +23,8 @@ void import_tiles(import_settings const& settings) {
   tiles::clear_pack_file(settings.db_path_.string().c_str());
   timer.print("cleared database");
 
-  lmdb::env db_env = tiles::make_tile_database(
-      settings.db_path_.string().c_str(), tiles::kDefaultSize);
+  auto db_env = tiles::make_tile_database(settings.db_path_.string().c_str(),
+                                          tiles::kDefaultSize);
   tiles::tile_db_handle db_handle{db_env};
   tiles::pack_handle pack_handle{settings.db_path_.string().c_str()};
 

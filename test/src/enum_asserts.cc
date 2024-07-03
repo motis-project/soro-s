@@ -1,37 +1,33 @@
 #include "doctest/doctest.h"
 
+#include <cstdint>
+
 #include "soro/utls/parse_fp.h"
 #include "soro/utls/std_wrapper/all_of.h"
 
-#include "soro/infrastructure/graph/element.h"
-#include "soro/infrastructure/station/station_route.h"
-#include "soro/rolling_stock/ctc.h"
-#include "soro/rolling_stock/freight.h"
+#include "soro/infrastructure/graph/section.h"
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/kilometrage.h"
+
+#include "soro/rolling_stock/stop_mode.h"
 
 using namespace soro::rs;
 using namespace soro::utls;
 using namespace soro::infra;
 
 TEST_SUITE("static asserts") {
-  TEST_CASE("ctc") {
-    static_assert(!static_cast<bool>(CTC::NO));
-    static_assert(static_cast<bool>(CTC::YES));
-    static_assert(static_cast<CTC>(false) == CTC::NO);
-    static_assert(static_cast<CTC>(true) == CTC::YES);
+  TEST_CASE("stop_mode") {
+    static_assert(!static_cast<bool>(stop_mode::passenger));
+    static_assert(static_cast<bool>(stop_mode::freight));
+    static_assert(static_cast<stop_mode>(false) == stop_mode::passenger);
+    static_assert(static_cast<stop_mode>(true) == stop_mode::freight);
   }
 
-  TEST_CASE("freight") {
-    static_assert(!static_cast<bool>(FreightTrain::NO));
-    static_assert(static_cast<bool>(FreightTrain::YES));
-    static_assert(static_cast<FreightTrain>(false) == FreightTrain::NO);
-    static_assert(static_cast<FreightTrain>(true) == FreightTrain::YES);
-  }
-
-  TEST_CASE("rising") {
-    static_assert(!static_cast<bool>(rising::NO));
-    static_assert(static_cast<bool>(rising::YES));
-    static_assert(static_cast<rising>(false) == rising::NO);
-    static_assert(static_cast<rising>(true) == rising::YES);
+  TEST_CASE("mileage_dir") {
+    static_assert(!static_cast<bool>(mileage_dir::falling));
+    static_assert(static_cast<bool>(mileage_dir::rising));
+    static_assert(static_cast<mileage_dir>(false) == mileage_dir::falling);
+    static_assert(static_cast<mileage_dir>(true) == mileage_dir::rising);
   }
 
   TEST_CASE("replace_comma") {
@@ -48,20 +44,12 @@ TEST_SUITE("static asserts") {
     static_assert(static_cast<skip>(true) == skip::Yes);
   }
 
-  TEST_CASE("direction") {
-    static_assert(!static_cast<bool>(direction::Falling));
-    static_assert(static_cast<bool>(direction::Rising));
-    static_assert(static_cast<direction>(false) == direction::Falling);
-    static_assert(static_cast<direction>(true) == direction::Rising);
-  }
-
   constexpr bool true_exactly_once(type const t) {
     auto const trues = static_cast<uint32_t>(is_end_element(t)) +
                        static_cast<uint32_t>(is_simple_element(t)) +
                        static_cast<uint32_t>(is_simple_switch(t)) +
                        static_cast<uint32_t>(is_cross(t)) +
-                       static_cast<uint32_t>(is_directed_track_element(t)) +
-                       static_cast<uint32_t>(is_undirected_track_element(t));
+                       static_cast<uint32_t>(is_track_element(t));
 
     return trues == 1;
   }

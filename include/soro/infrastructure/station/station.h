@@ -1,11 +1,8 @@
 #pragma once
 
-#include "soro/utls/algo/slice.h"
-#include "soro/utls/container/it_range.h"
-#include "soro/utls/coordinates/gps.h"
-#include "soro/utls/coroutine/recursive_generator.h"
+#include "soro/base/soro_types.h"
 
-#include "soro/infrastructure/graph/graph.h"
+#include "soro/infrastructure/graph/section.h"
 
 namespace soro::infra {
 
@@ -13,28 +10,29 @@ struct border;
 struct station_route;
 
 struct station {
-  using id = uint32_t;
+  using id = cista::strong<uint32_t, struct _station_id>;
   using ptr = soro::ptr<station>;
 
-  static constexpr id INVALID = std::numeric_limits<id>::max();
-  static constexpr bool valid(id const id) noexcept { return id != INVALID; }
+  using ds100 = soro::string;
+
+  static constexpr id invalid() { return id::invalid(); }
 
   using optional_ptr = soro::optional<ptr>;
 
   soro::vector<station::ptr> neighbours() const;
 
-  id id_{INVALID};
+  id id_{invalid()};
 
-  soro::string ds100_{};
+  ds100 ds100_{"INVALID_DS100"};
 
-  soro::vector<section::id> sections_{};
-  soro::vector<element::ptr> elements_{};
+  soro::vector<section::id> sections_;
+  soro::vector<element::ptr> elements_;
 
-  soro::map<soro::string, soro::ptr<station_route>> station_routes_{};
+  soro::map<soro::string, soro::ptr<station_route>> station_routes_;
   soro::map<element_id, soro::vector<soro::ptr<station_route>>>
-      element_to_routes_{};
+      element_to_routes_;
 
-  soro::vector<border> borders_{};
+  soro::vector<border> borders_;
 };
 
 struct border {
@@ -61,10 +59,10 @@ struct border {
   station::ptr neighbour_{nullptr};
   element::ptr neighbour_element_{nullptr};
 
-  line::id line_{INVALID_LINE_ID};
+  line::id line_{line::invalid()};
   track_sign track_sign_{INVALID_TRACK_SIGN};
 
-  bool low_border_{false};
+  section::position pos_{section::position::middle};
 };
 
 }  // namespace soro::infra

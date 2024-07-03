@@ -4,6 +4,6 @@
 
 namespace soro::infra::test {
 
-void do_section_tests(soro::vector<infra::section> const& sections);
+void do_section_tests(sections const& sections);
 
 }  // namespace soro::infra::test

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <vector>
 
 #include "soro/utls/concepts/yields.h"
 
@@ -12,15 +13,14 @@ using std::begin;
 using std::end;
 
 template <typename Iterable, typename Pred>
-  requires predicate_yields<bool, Iterable, Pred>
-constexpr auto any_of(Iterable&& i, Pred&& p) {
-  return std::any_of(begin(i), end(i), p);
+constexpr bool any_of(Iterable const& i, Pred&& p) {
+  return std::any_of(begin(i), end(i), std::forward<Pred>(p));
 }
 
 template <typename Iterable>
   requires yields<bool, Iterable> ||
            std::same_as<std::decay_t<Iterable>, std::vector<bool>>
-constexpr auto any_of(Iterable&& i) {
+constexpr bool any_of(Iterable const& i) {
   return std::any_of(begin(i), end(i), [](auto&& v) { return v; });
 }
 

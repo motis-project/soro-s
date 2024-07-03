@@ -1,11 +1,8 @@
 #pragma once
 
-#include "soro/utls/container/id_iterator.h"
-
 #include "soro/infrastructure/critical_section.h"
 #include "soro/infrastructure/graph/type_set.h"
 #include "soro/infrastructure/station/station_route.h"
-#include "soro/rolling_stock/freight.h"
 
 namespace soro::infra {
 
@@ -13,21 +10,23 @@ struct infrastructure_t;
 struct infrastructure;
 
 struct sub_path {
-  bool contains(node::idx const idx) const { return from_ <= idx && idx < to_; }
+  bool contains(station_route::idx const idx) const {
+    return from_ <= idx && idx < to_;
+  }
 
   station_route::ptr station_route_{nullptr};
-  node::idx from_{node::INVALID_IDX};
-  node::idx to_{node::INVALID_IDX};
+  station_route::idx from_{station_route::invalid_idx()};
+  station_route::idx to_{station_route::invalid_idx()};
 };
 
 struct interlocking_route {
-  using id = uint32_t;
+  using id = strong<uint32_t, struct _interlocking_route_id>;
   using ids = soro::vector<id>;
   using ptr = soro::ptr<interlocking_route>;
   using sr_offset = uint8_t;
 
-  static constexpr id INVALID = std::numeric_limits<id>::max();
-  static constexpr bool valid(id const id) noexcept { return id != INVALID; }
+  static constexpr id invalid() { return std::numeric_limits<id>::max(); }
+  static constexpr bool valid(id const id) noexcept { return id != invalid(); }
 
   bool static valid_end(type const t);
   type_set static valid_ends();
@@ -37,12 +36,11 @@ struct interlocking_route {
   bool follows(interlocking_route const& other,
                infrastructure const& infra) const;
 
-  node::idx size(infrastructure const& infra) const;
+  station_route::idx size(infrastructure const& infra) const;
 
-  bool contains(station_route::id, node::idx) const;
+  si::length length(infrastructure const& infra) const;
 
-  utls::it_range<utls::id_it_ptr<station_route>> station_routes(
-      infrastructure const&) const;
+  bool contains(station_route::id, station_route::idx) const;
 
   station_route::id first_sr_id() const;
   station_route::id sr_id(sr_offset) const;
@@ -69,28 +67,33 @@ struct interlocking_route {
   critical_section::id get_end_critical_section(
       infrastructure const& infra) const;
 
-  utls::recursive_generator<route_node> from_to(station_route::id, node::idx,
-                                                station_route::id, node::idx,
+  utls::recursive_generator<route_node> from_to(station_route::id from_sr,
+                                                station_route::idx from_idx,
+                                                station_route::id to_sr,
+                                                station_route::idx to_idx,
                                                 infrastructure const&) const;
 
-  utls::recursive_generator<route_node> from(station_route::id, node::idx,
+  utls::recursive_generator<route_node> from(station_route::id sr_id,
+                                             station_route::idx from_idx,
                                              infrastructure const&) const;
-  utls::recursive_generator<route_node> to(station_route::id, node::idx,
+
+  utls::recursive_generator<route_node> to(station_route::id sr_id,
+                                           station_route::idx to_idx,
                                            infrastructure const&) const;
 
   utls::recursive_generator<route_node> iterate(infrastructure const&) const;
   utls::generator<sub_path> iterate_station_routes(
       infrastructure_t const&) const;
 
-  id id_{INVALID};
+  id id_{invalid()};
 
   // defines the path of the interlocking route
   // from station_routes_.front()[start_offset_]
   // via station_routes[1:-2]
   // to station_routes_.back()[end_offset_ - 1]
-  node::idx start_offset_{node::INVALID_IDX};
-  node::idx end_offset_{node::INVALID_IDX};
-  soro::vector<station_route::id> station_routes_{};
+  station_route::idx start_offset_{station_route::invalid_idx()};
+  station_route::idx end_offset_{station_route::invalid_idx()};
+  soro::vector<station_route::id> station_routes_;
 };
 
 // shorthand aliases

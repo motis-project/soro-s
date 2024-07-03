@@ -1,21 +1,17 @@
 <template>
   <div ref="container">
     <div ref="map" class="map infrastructure-map" />
+
     <infrastructure-legend
-      class="map-overlay"
-      :checked-controls="checkedControls"
-      @change="onLegendControlChanged"
-      @reset="resetLegend"
+      ref="legend"
+      class="infrastructure-legend"
+      @legend-control-change="onLegendControlChange"
+      @element-type-change="onElementTypeChange"
+      @show-station-change="onShowStationChange"
+      @mileage-direction-change="onMileageDirectionChange"
+      @display-mode-change="onDisplayModeChange"
+      @reset="onLegendReset"
     />
-    <div
-      ref="infrastructureTooltip"
-      class="infrastructureTooltip infrastructure-tooltip"
-    >
-      <ul id="infrastructureTooltipList">
-        <li id="kilometerPoint" />
-        <li id="risingOrFalling" />
-      </ul>
-    </div>
   </div>
 </template>
 
@@ -24,33 +20,39 @@ import { mapMutations, mapState } from 'vuex';
 import { SidebarNamespace } from '@/stores/sidebar-store';
 import {
   FilterSpecification,
+  GeoJSONFeature,
+  LngLatBounds,
   Map,
   MapMouseEvent,
-  ResourceTypeEnum,
+  Popup,
   RequestParameters,
-  LngLatBounds,
-  GeoJSONFeature,
+  ResourceTypeEnum,
   Source
 } from 'maplibre-gl';
-import { createInfrastructureMapStyle, mapLayers } from './map-style';
+import { getInfrastructureMapStyle } from './map-style';
 import { addIcons } from './add-icons';
-import { ElementTypes, ElementType } from './element-types';
+import { ElementType } from './element-types';
 import { defineComponent } from 'vue';
-import { ThemeInstance, useTheme } from 'vuetify';
-import {
-  SpecialLegendControls,
-  SpecialLegendControl
+import { useTheme } from 'vuetify';
+import InfrastructureLegend, {
+  LegendControls
 } from '@/components/infrastructure/infrastructure-legend.vue';
-import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
-
-export const initiallyCheckedControls = [
-  ElementType.STATION,
-  ElementType.HALT,
-  ElementType.MAIN_SIGNAL,
-  ElementType.APPROACH_SIGNAL,
-  ElementType.END_OF_TRAIN_DETECTOR,
-  ...SpecialLegendControls
-];
+import {
+  getAllLayers,
+  getLayersForType,
+  getLayersForTypes,
+  getLineLayer,
+  hideLayers,
+  IconLayers,
+  isNodeLayer,
+  isElementLayer,
+  setLayersVisibilities,
+  setLayerVisibility,
+  showLayer,
+  showLayers,
+  stationLayer
+} from '@/components/infrastructure/map-layers';
+import { MileageDirection } from '@/components/infrastructure/mileage-direction';
 
 function mapSourceHelper(
   source: Source | undefined,
@@ -59,6 +61,8 @@ function mapSourceHelper(
   if (!source) {
     return;
   }
+
+  console.log('changing source', source);
 
   // illegal move
   // @ts-ignore
@@ -74,31 +78,21 @@ export default defineComponent({
 
   components: { InfrastructureLegend },
 
-  inject: {
-    goldenLayoutKeyInjection: {
-      default: ''
-    }
-  },
-
   setup() {
     return { currentTheme: useTheme().global };
   },
 
   data(): {
-    libreGLMap?: Map;
-    checkedControls: typeof initiallyCheckedControls;
+    map?: Map;
+    showMapTooltip: boolean;
   } {
     return {
-      libreGLMap: undefined,
-      checkedControls: Array.from(initiallyCheckedControls)
+      map: undefined,
+      showMapTooltip: false
     };
   },
 
   computed: {
-    checkedLegendControlLocalStorageKey() {
-      return `infrastructure[${this.goldenLayoutKeyInjection}].checkedControls`;
-    },
-
     ...mapState(SidebarNamespace, [
       'currentInfrastructure',
       'currentBoundingBox',
@@ -110,9 +104,9 @@ export default defineComponent({
 
   watch: {
     currentInfrastructure(newInfrastructure: string | null) {
-      if (this.libreGLMap) {
-        this.libreGLMap.remove();
-        this.libreGLMap = undefined;
+      if (this.map) {
+        this.map.remove();
+        this.map = undefined;
       }
 
       if (!newInfrastructure) {
@@ -125,21 +119,21 @@ export default defineComponent({
     },
 
     currentBoundingBox(boundingBox: LngLatBounds) {
-      if (!this.libreGLMap) {
+      if (!this.map) {
         return;
       }
 
-      this.libreGLMap.fitBounds(boundingBox, { padding: 100 });
+      this.map.fitBounds(boundingBox, { padding: 100 });
     },
 
     highlightedStationRoutes: {
       handler(highlightedRoutes: GeoJSONFeature[]) {
-        if (!this.libreGLMap) {
+        if (!this.map) {
           return;
         }
 
         mapSourceHelper(
-          this.libreGLMap.getSource('station-routes'),
+          this.map.getSource('station-routes'),
           highlightedRoutes
         );
       },
@@ -148,12 +142,12 @@ export default defineComponent({
 
     highlightedInterlockingRoutes: {
       handler(highlightedRoutes: GeoJSONFeature[]) {
-        if (!this.libreGLMap) {
+        if (!this.map) {
           return;
         }
 
         mapSourceHelper(
-          this.libreGLMap.getSource('interlocking-routes'),
+          this.map.getSource('interlocking-routes'),
           highlightedRoutes
         );
       },
@@ -161,28 +155,12 @@ export default defineComponent({
     },
 
     currentTheme: {
-      handler(newTheme: ThemeInstance) {
-        if (!this.libreGLMap) {
+      handler() {
+        if (!this.map) {
           return;
         }
-
-        this.libreGLMap.setStyle(
-          createInfrastructureMapStyle({
-            currentTheme: newTheme.current.value,
-            activatedElements: this.checkedControls
-          })
-        );
       },
       deep: true
-    }
-  },
-
-  created() {
-    const checkedControlsString = window.localStorage.getItem(
-      this.checkedLegendControlLocalStorageKey
-    );
-    if (checkedControlsString) {
-      this.checkedControls = JSON.parse(checkedControlsString);
     }
   },
 
@@ -198,91 +176,75 @@ export default defineComponent({
     ...mapMutations(SidebarNamespace, ['setCurrentStation']),
     ...mapMutations(['setShowOverlay', 'setSelectedOverlay']),
 
-    onLegendControlChanged(legendControl: string, checked: boolean) {
-      if (checked) {
-        this.checkedControls.push(legendControl);
-      } else {
-        this.checkedControls = this.checkedControls.filter(
-          (control) => control !== legendControl
-        );
-      }
+    // applying all legend control settings to the map
+    onLegendControlChange(current: LegendControls) {
+      if (!this.map) return;
+      // @ts-ignore
+      hideLayers(this.map, getAllLayers());
 
-      this.saveControls();
+      // @ts-ignore
+      setLayerVisibility(this.map, stationLayer, current.showStationIcons);
 
-      if (!this.libreGLMap) {
-        return;
-      }
+      // @ts-ignore
+      showLayer(this.map, getLineLayer(current.selectedDisplayMode));
 
-      if (SpecialLegendControls.includes(legendControl)) {
-        this.evaluateSpecialLegendControls();
+      const layers = getLayersForTypes(
+        current.selectedElementTypes,
+        current.selectedDisplayMode
+      );
+      // @ts-ignore
+      showLayers(this.map, layers);
 
-        return;
-      }
-
-      this.setElementTypeVisibility(legendControl, checked);
+      // const directionFilter: FilterSpecification = [
+      //   'in',
+      //   ['get', 'mileageDirection'],
+      //   legendControls.selectedMileageDirections
+      // ];
+      //
+      // nodeLayers.map((nodeLayer) => map.setFilter(nodeLayer, directionFilter));
+      // elementLayers.map((nodeLayer) => map.setFilter(nodeLayer, directionFilter));
     },
 
-    resetLegend() {
-      this.checkedControls = initiallyCheckedControls;
-      this.saveControls();
-      this.setVisibilityOfAllControls();
+    onElementTypeChange(
+      newType: ElementType,
+      checked: boolean,
+      current: LegendControls
+    ) {
+      if (!this.map) return;
+      const layers = getLayersForType(newType, current.selectedDisplayMode);
+      // @ts-ignore
+      setLayersVisibilities(this.map, layers, checked);
     },
 
-    saveControls() {
-      window.localStorage.setItem(
-        this.checkedLegendControlLocalStorageKey,
-        JSON.stringify(this.checkedControls)
-      );
+    onShowStationChange(targetValue: string, checked: boolean) {
+      if (!this.map) return;
+
+      // @ts-ignore
+      setLayerVisibility(this.map, stationLayer, checked);
     },
 
-    setVisibilityOfAllControls() {
-      ElementTypes.forEach((type) =>
-        this.setElementTypeVisibility(type, this.checkedControls.includes(type))
-      );
-      this.evaluateSpecialLegendControls();
+    onMileageDirectionChange(newDir: MileageDirection, checked: boolean) {
+      if (!this.map) return;
+      // setLayerVisibility(this.map, stationLayer, checked);
     },
 
-    setElementTypeVisibility(elementType: string, visible: boolean) {
-      if (elementType !== ElementType.STATION) {
-        this.libreGLMap?.setLayoutProperty(
-          `circle-${elementType}-layer`,
-          'visibility',
-          visible ? 'visible' : 'none'
-        );
+    onDisplayModeChange(current: LegendControls) {
+      if (!this.map) return;
+      this.onLegendControlChange(current);
+    },
+
+    onLegendReset(currentLegendControls: LegendControls) {
+      this.onLegendControlChange(currentLegendControls);
+    },
+
+    prettify(json: any) {
+      let result = '';
+
+      for (const key in json) {
+        result += key + ': ' + json[key] + '<br>';
       }
 
-      this.libreGLMap?.setLayoutProperty(
-        `${elementType}-layer`,
-        'visibility',
-        visible ? 'visible' : 'none'
-      );
-    },
-
-    evaluateSpecialLegendControls() {
-      const risingChecked = this.checkedControls.includes(
-        SpecialLegendControl.RISING
-      );
-      const fallingChecked = this.checkedControls.includes(
-        SpecialLegendControl.FALLING
-      );
-
-      let filter: FilterSpecification;
-      if (!risingChecked && fallingChecked) {
-        filter = ['!', ['get', 'rising']];
-      } else if (risingChecked && !fallingChecked) {
-        filter = ['get', 'rising'];
-      } else if (!risingChecked && !fallingChecked) {
-        filter = ['boolean', false];
-      }
-
-      ElementTypes.forEach((elementType) => {
-        if (elementType === ElementType.STATION) {
-          return;
-        }
-
-        this.libreGLMap?.setFilter(elementType + '-layer', filter);
-        this.libreGLMap?.setFilter('circle-' + elementType + '-layer', filter);
-      });
+      return result;
     },
 
     async createMap(infraName: string) {
@@ -314,43 +276,40 @@ export default defineComponent({
       };
 
       // @ts-ignore
-      this.libreGLMap = new Map({
+      this.map = new Map({
         attributionControl: false,
         zoom: 10,
         hash: 'location',
         bearing: 0,
         container: this.$refs.map as HTMLElement,
         transformRequest: transformUrl,
-        style: createInfrastructureMapStyle({
-          currentTheme: this.$vuetify.theme.current,
-          activatedElements: this.checkedControls
-        })
+        style: getInfrastructureMapStyle(
+          // @ts-ignore
+          this.$refs.legend.currentLegendControls
+        )
       });
 
-      this.libreGLMap.on('load', async () => {
-        if (!this.libreGLMap) {
-          return;
-        }
+      this.map.on('load', async () => {
+        if (!this.map) return;
 
-        await addIcons(this.libreGLMap as Map);
-        this.setVisibilityOfAllControls();
+        await addIcons(this.map as Map);
 
         // zoom to infrastructure
         const box = await this.$store.state.soroClient
           .infrastructure(infraName)
           .boundingBox();
-        this.libreGLMap.fitBounds(box.boundingBox);
+        this.map.fitBounds(box.boundingBox);
       });
 
-      this.libreGLMap.dragPan.enable({
+      this.map.dragPan.enable({
         linearity: 0.01,
         maxSpeed: 1400,
         deceleration: 2500
       });
 
-      this.libreGLMap.on('click', (e: MapMouseEvent) => {
+      this.map.on('click', async (e: MapMouseEvent) => {
         const features = e.target.queryRenderedFeatures(e.point, {
-          layers: mapLayers
+          layers: IconLayers
         });
 
         if (features.length === 0) {
@@ -371,14 +330,28 @@ export default defineComponent({
           this.setSelectedOverlay('station');
           this.setShowOverlay(true);
           this.setCurrentStation(clickedId);
-        } else {
-          // this.setSelectedOverlay('element');
-          // this.setShowOverlay(true);
-          // this.setCurrentElements(features);
-          console.error(
-            'clicked on element, not implemented',
-            clickedFeature.properties.id
-          );
+        }
+
+        if (isNodeLayer(clickedFeature.layer.id)) {
+          const nodeJson = await this.$store.state.soroClient
+            .infrastructure(infraName)
+            .node(clickedId);
+
+          new Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(this.prettify(nodeJson))
+            .addTo(this.map as Map);
+        }
+
+        if (isElementLayer(clickedFeature.layer.id)) {
+          const nodeJson = await this.$store.state.soroClient
+            .infrastructure(infraName)
+            .element(clickedId);
+
+          new Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(this.prettify(nodeJson))
+            .addTo(this.map as Map);
         }
       });
     }
@@ -387,6 +360,8 @@ export default defineComponent({
 </script>
 
 <style>
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 .infrastructure-map {
   padding: 0;
   margin: 0;
@@ -395,22 +370,10 @@ export default defineComponent({
   width: 100%;
 }
 
-.infrastructure-tooltip {
-  display: none;
-  left: 0;
-  top: 0;
-  background: white;
-  border: 2px;
-  border-radius: 5px;
-}
-
-.map-overlay {
+.infrastructure-legend {
   position: absolute;
   bottom: 0;
   right: 0;
   margin-right: 20px;
 }
 </style>
-
-<style href="..e-gl.css" rel="stylesheet" />
-<style href="..re.css" rel="stylesheet" />

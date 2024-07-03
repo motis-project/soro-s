@@ -1,5 +1,8 @@
 #include "soro/timetable/parsers/route_transform_error.h"
 
+#include <string>
+#include <system_error>
+
 namespace {
 
 struct route_transform_err_category : std::error_category {

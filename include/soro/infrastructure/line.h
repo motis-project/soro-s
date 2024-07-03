@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "soro/base/soro_types.h"
 #include "soro/infrastructure/kilometrage.h"
 
@@ -8,9 +10,11 @@ namespace soro::infra {
 struct line {
   using id = uint16_t;
 
+  constexpr static id invalid() { return std::numeric_limits<id>::max(); }
+
   struct segment {
-    kilometrage from_{si::INVALID<kilometrage>};
-    kilometrage to_{si::INVALID<kilometrage>};
+    kilometrage from_{kilometrage::invalid()};
+    kilometrage to_{kilometrage::invalid()};
     bool etcs_{false};
     bool lzb_{false};
     bool signalling_{false};

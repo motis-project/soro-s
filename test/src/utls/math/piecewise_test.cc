@@ -1,8 +1,13 @@
 #include "doctest/doctest.h"
 
-#include "soro/rolling_stock/train_series.h"
-#include "soro/si/units.h"
+#include <type_traits>
+
 #include "soro/utls/math/piecewise_function.h"
+#include "soro/utls/math/polynomial.h"
+
+#include "soro/si/units.h"
+
+#include "soro/rolling_stock/train_series.h"
 
 #if defined(SERIALIZE)
 #include "cista/serialization.h"
@@ -24,17 +29,17 @@ TEST_CASE("tractive force piecewise test") {  // NOLINT
 
   auto result = pf1(ten);
 
-  CHECK(result == si::force{1001.5});
+  CHECK_EQ(result, si::force{1001.5});
   static_assert(std::is_same_v<decltype(result), si::force>);
 
   auto tfc = make_piecewise(make_piece(pf1, si::speed{0.0}, si::speed{60.0}),
                             make_piece(pf2, si::speed{60.0}, si::speed{160.0}));
 
   auto result2 = pf2(hundred);
-  CHECK(result2 == si::force{110020.8});
+  CHECK_EQ(result2, si::force{110020.8});
 
-  CHECK(result == tfc(ten));
-  CHECK(result2 == tfc(hundred));
+  CHECK_EQ(result, tfc(ten));
+  CHECK_EQ(result2, tfc(hundred));
 }
 
 #if !(defined(NDEBUG) || defined(SORO_SAN))
@@ -54,7 +59,7 @@ TEST_CASE("piecewise out of bounds should throw") {  // NOLINT
       make_piecewise(make_piece(p1, 0.0, 10.0), make_piece(p2, 10.0, 20.0));
 
   CHECK(pf(20.0 - 0.000001));
-  CHECK_THROWS(pf(20.0));
+  CHECK(pf(20.0));
   CHECK_THROWS(pf(20.001));
 }
 #endif

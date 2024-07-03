@@ -1,6 +1,11 @@
+#include <exception>
+#include <filesystem>
+#include <iostream>
+
 #include "utl/cmd_line_parser.h"
 #include "utl/logging.h"
 
+#include "soro/server/server_settings.h"
 #include "soro/server/soro_server.h"
 
 namespace fs = std::filesystem;
@@ -8,7 +13,7 @@ namespace fs = std::filesystem;
 using namespace soro::server;
 
 int main(int argc, char const** argv) {
-  std::cout << "\n\t\t[SORO Server]\n" << std::endl;
+  std::cout << "\n\t\t[SORO Server]\n" << '\n';
 
   server_settings s;
 
@@ -22,7 +27,7 @@ int main(int argc, char const** argv) {
   }
 
   if (s.help_) {
-    std::cout << utl::description<server_settings>() << std::endl;
+    std::cout << utl::description<server_settings>() << '\n';
     return 0;
   }
 

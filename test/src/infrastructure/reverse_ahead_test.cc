@@ -1,15 +1,14 @@
 #include "test/infrastructure/reverse_ahead_test.h"
 
+#include <cstddef>
+
 #include "doctest/doctest.h"
+
+#include "soro/base/soro_types.h"
 
 #include "soro/infrastructure/infrastructure.h"
 
 namespace soro::infra::test {
-
-bool is_final_frontier(element_ptr border) {
-  auto const& b = border->as<simple_element>();
-  return (b.rising_ ? b.top() : b.bot())->next_node_ == nullptr;
-}
 
 void check_reverse_ahead(infrastructure const& infra) {
   size_t nulls = 0;
@@ -17,8 +16,6 @@ void check_reverse_ahead(infrastructure const& infra) {
 
   for (auto const& element : infra->graph_.elements_) {
     ends += static_cast<std::size_t>(element->is_end_element());
-    ends += static_cast<std::size_t>(element->is(type::BORDER) &&
-                                     is_final_frontier(element));
 
     for (auto const& node : element->nodes()) {
       auto const rev = node->reverse_ahead();

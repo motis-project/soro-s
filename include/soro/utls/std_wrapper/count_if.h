@@ -4,6 +4,8 @@
 
 #include "soro/utls/narrow.h"
 
+#include "soro/base/soro_types.h"
+
 namespace soro::utls {
 
 namespace detail {

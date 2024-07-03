@@ -6,37 +6,37 @@ namespace soro::server {
 
 struct server_settings {
   // DS100 -> GPS mapping
-  std ::filesystem::path coord_file() const {
+  std::filesystem::path coord_file() const {
     return server_resource_dir_.val() / "misc" / "btrs_geo.csv";
   }
 
   // OSM profile.lua
-  std ::filesystem::path profile_file() const {
+  std::filesystem::path profile_file() const {
     return server_resource_dir_.val() / "profile" / "profile.lua";
   }
 
   // put serialized infrastructure in this directory
-  std ::filesystem::path server_infra_dir() const {
+  std::filesystem::path server_infra_dir() const {
     return server_resource_dir_.val() / "infrastructure";
   }
 
   // put serialized timetables in this directory
-  std ::filesystem::path server_timetable_dir() const {
+  std::filesystem::path server_timetable_dir() const {
     return server_resource_dir_.val() / "timetable";
   }
 
   // tiles.mdb in this directory
-  std ::filesystem::path tiles_dir() const {
+  std::filesystem::path tiles_dir() const {
     return server_resource_dir_.val() / "tiles";
   }
 
   // infrastructure.osm in this directory
-  std ::filesystem::path osm_dir() const {
+  std::filesystem::path osm_dir() const {
     return server_resource_dir_.val() / "osm";
   }
 
   // temporary files in this directory
-  std ::filesystem::path tmp_dir() const {
+  std::filesystem::path tmp_dir() const {
     return server_resource_dir_.val() / "tmp";
   }
 

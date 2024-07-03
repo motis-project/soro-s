@@ -114,13 +114,13 @@ export default defineComponent({
 
         attr['color'] = nodeColor;
         attr['type'] = 'fast';
-        attr['size'] = 2;
+        attr['size'] = 10;
         attr['label'] = 'Train: ' + attr['train'] + '\nRoute: ' + attr['route'];
       });
 
       this.graph.forEachEdge((edge: string, attr: Attributes) => {
         attr['type'] = 'arrow';
-        attr['size'] = 1;
+        attr['size'] = 5;
       });
 
       tim.printElapsed('set node attributes');
@@ -139,7 +139,8 @@ export default defineComponent({
         );
       });
 
-      this.sigma.on('rightClickNode', ({ node }) => {
+      this.sigma.on('rightClickNode', ({ node, event }) => {
+        event.original.preventDefault();
         this.deleteHighlightedInterlockingRoute(
           this.graph.getNodeAttributes(node)['route']
         );

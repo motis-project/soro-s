@@ -43,8 +43,6 @@ template <typename... Args>
     std::error_code const& e) {
   utls::expect(e != std::error_code{}, "unexpected error with no error code");
 
-  uLOG(utl::err) << fmt::format("error: {}", e.message());
-
   return std::unexpected(e);
 }
 

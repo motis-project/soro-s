@@ -1,6 +1,7 @@
 #include "doctest/doctest.h"
 
-#include <cinttypes>
+#include <cstdint>
+#include <type_traits>
 
 #include "soro/utls/strong_types/type_list.h"
 

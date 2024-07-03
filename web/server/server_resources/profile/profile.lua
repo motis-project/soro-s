@@ -16,21 +16,15 @@ function process_node(node)
     node:add_tag_as_integer("population")
   end
 
-  if node:has_tag("railway", "halt") then
-    node:set_approved_min(5)
-    node:set_target_layer("hlt")
-    node:add_tag_as_string("name")
-  end
-
   if node:has_any_tag("type") then
     node:set_approved_min(5)
     if node:has_any_tag("subtype") then
-        node:set_target_layer(node:get_tag("subtype"))
+        node:set_target_layer(node:get_tag("type") .. "-" .. node:get_tag("subtype"))
         node:add_tag_as_integer("id")
-        node:add_tag_as_string("name")
         if (node:has_tag("direction", "rising")) then
             node:add_bool("rising", true)
-        else
+        end
+        if (node:has_tag("direction", "falling")) then
             node:add_bool("rising", false)
         end
     else
@@ -45,105 +39,110 @@ function process_node(node)
 end
 
 function process_way(way)
-  if way:has_any_tag("highway") then
-    way:set_target_layer("road")
-    way:add_tag_as_string("highway")
-    way:add_tag_as_string("name")
-
-    if way:has_tag("highway", "motorway") or
-       way:has_tag("highway", "trunk") then
-      way:set_approved_min(5)
-      way:add_tag_as_string("ref")
-
-    elseif way:has_tag("highway", "motorway_link") or
-           way:has_tag("highway", "trunk_link") or
-           way:has_tag("highway", "primary") or
-           way:has_tag("highway", "secondary") or
-           way:has_tag("highway", "tertiary") or
-           way:has_tag("highway", "aeroway") then
-      way:set_approved_min(9)
-      way:add_tag_as_string("ref")
-
-    elseif way:has_tag("highway", "residential") or
-           way:has_tag("highway", "living_street") or
-           way:has_tag("highway", "primary_link") or
-           way:has_tag("highway", "secondary_link") or
-           way:has_tag("highway", "tertiary_link") or
-           way:has_tag("highway", "unclassified") or
-           way:has_tag("highway", "service") or
-           way:has_tag("highway", "footway") or
-           way:has_tag("highway", "track") or
-           way:has_tag("highway", "steps") or
-           way:has_tag("highway", "cycleway") or
-           way:has_tag("highway", "path") then
-      way:set_approved_min(12)
-    end
-
-  elseif way:has_any_tag("railway", "rail", "subway", "tram") then
-    if way:has_tag("railway", "disused") or
-       way:has_tag("railway", "abandoned") then
-      way:set_target_layer("rail")
-      way:set_approved_min(14)
-      way:add_string("rail", "old")
-
-    elseif way:has_tag("usage", "industrial") or
-            way:has_tag("usage", "military") or
-            way:has_tag("usage", "test") or
-            way:has_tag("usage", "tourism") or
-            way:has_tag("service", "yard") or
-            way:has_tag("service", "spur") or
-            way:has_tag("railway", "miniature") or
-            way:has_tag("railway:preserved", "yes") then
-      way:set_target_layer("rail")
-      way:set_approved_min(14)
-      way:add_string("rail", "detail")
-
-    elseif way:has_tag("railway", "subway") or
-           way:has_tag("railway", "tram") then
-      way:set_target_layer("rail")
-      way:set_approved_min(10)
-      way:add_string("rail", "secondary")
-    elseif way:has_tag("bridge","yes") then
-      way:set_target_layer("rail")
-      way:set_approved_min(5)
-      way:add_string("rail", "bridges")
-      way:add_tag_as_string("color")
-    elseif way:has_tag("tunnel","yes") then
-      way:set_target_layer("rail")
-      way:set_approved_min(5)
-      way:add_string("rail", "underground")
-      way:add_tag_as_string("color")
-    else
-      way:set_target_layer("rail")
-      way:set_approved_min(5)
-      way:add_string("rail", "primary")
-      way:add_tag_as_string("color")
-    end
-
-  elseif way:has_any_tag("waterway") then
-    way:set_target_layer("waterway")
-
-    if way:has_tag("waterway", "river") or
-       way:has_tag("waterway", "canal") then
-       way:set_approved_min(8)
-    elseif way:has_tag("waterway", "stream") then
-      way:set_approved_min(13)
-    elseif way:has_tag("waterway", "ditch") or
-           way:has_tag("waterway", "drain") then
-      way:set_approved_min(15)
-    end
-  -- elseif way:has_tag("boundary", "administrative") and
-  --        not way:has_tag("maritime", "yes") then
-  --   if way:has_tag("admin_level", "2") then
-  --     way:set_target_layer("border")
-  --     way:set_approved_full()
-  --     way:add_tag_as_integer("admin_level")
-  --   elseif way:has_tag("admin_level", "4") then
-  --     way:set_target_layer("border")
-  --     way:set_approved_full()
-  --     way:add_tag_as_integer("admin_level")
-  --   end
+  if way:has_any_tag("type") then
+    way:set_approved_min(5)
+    way:set_target_layer(way:get_tag("type") .. "-" .. "line-layer")
   end
+
+--   if way:has_any_tag("highway") then
+--     way:set_target_layer("road")
+--     way:add_tag_as_string("highway")
+--     way:add_tag_as_string("name")
+--
+--     if way:has_tag("highway", "motorway") or
+--        way:has_tag("highway", "trunk") then
+--       way:set_approved_min(5)
+--       way:add_tag_as_string("ref")
+--
+--     elseif way:has_tag("highway", "motorway_link") or
+--            way:has_tag("highway", "trunk_link") or
+--            way:has_tag("highway", "primary") or
+--            way:has_tag("highway", "secondary") or
+--            way:has_tag("highway", "tertiary") or
+--            way:has_tag("highway", "aeroway") then
+--       way:set_approved_min(9)
+--       way:add_tag_as_string("ref")
+--
+--     elseif way:has_tag("highway", "residential") or
+--            way:has_tag("highway", "living_street") or
+--            way:has_tag("highway", "primary_link") or
+--            way:has_tag("highway", "secondary_link") or
+--            way:has_tag("highway", "tertiary_link") or
+--            way:has_tag("highway", "unclassified") or
+--            way:has_tag("highway", "service") or
+--            way:has_tag("highway", "footway") or
+--            way:has_tag("highway", "track") or
+--            way:has_tag("highway", "steps") or
+--            way:has_tag("highway", "cycleway") or
+--            way:has_tag("highway", "path") then
+--       way:set_approved_min(12)
+--     end
+--
+--   elseif way:has_any_tag("railway", "rail", "subway", "tram") then
+--     if way:has_tag("railway", "disused") or
+--        way:has_tag("railway", "abandoned") then
+--       way:set_target_layer("rail")
+--       way:set_approved_min(14)
+--       way:add_string("rail", "old")
+--
+--     elseif way:has_tag("usage", "industrial") or
+--             way:has_tag("usage", "military") or
+--             way:has_tag("usage", "test") or
+--             way:has_tag("usage", "tourism") or
+--             way:has_tag("service", "yard") or
+--             way:has_tag("service", "spur") or
+--             way:has_tag("railway", "miniature") or
+--             way:has_tag("railway:preserved", "yes") then
+--       way:set_target_layer("rail")
+--       way:set_approved_min(14)
+--       way:add_string("rail", "detail")
+--
+--     elseif way:has_tag("railway", "subway") or
+--            way:has_tag("railway", "tram") then
+--       way:set_target_layer("rail")
+--       way:set_approved_min(10)
+--       way:add_string("rail", "secondary")
+--     elseif way:has_tag("bridge","yes") then
+--       way:set_target_layer("rail")
+--       way:set_approved_min(5)
+--       way:add_string("rail", "bridges")
+--       way:add_tag_as_string("color")
+--     elseif way:has_tag("tunnel","yes") then
+--       way:set_target_layer("rail")
+--       way:set_approved_min(5)
+--       way:add_string("rail", "underground")
+--       way:add_tag_as_string("color")
+--     else
+--       way:set_target_layer("rail")
+--       way:set_approved_min(5)
+--       way:add_string("rail", "primary")
+--       way:add_tag_as_string("color")
+--     end
+--
+--   elseif way:has_any_tag("waterway") then
+--     way:set_target_layer("waterway")
+--
+--     if way:has_tag("waterway", "river") or
+--        way:has_tag("waterway", "canal") then
+--        way:set_approved_min(8)
+--     elseif way:has_tag("waterway", "stream") then
+--       way:set_approved_min(13)
+--     elseif way:has_tag("waterway", "ditch") or
+--            way:has_tag("waterway", "drain") then
+--       way:set_approved_min(15)
+--     end
+--   -- elseif way:has_tag("boundary", "administrative") and
+--   --        not way:has_tag("maritime", "yes") then
+--   --   if way:has_tag("admin_level", "2") then
+--   --     way:set_target_layer("border")
+--   --     way:set_approved_full()
+--   --     way:add_tag_as_integer("admin_level")
+--   --   elseif way:has_tag("admin_level", "4") then
+--   --     way:set_target_layer("border")
+--   --     way:set_approved_full()
+--   --     way:add_tag_as_integer("admin_level")
+--   --   end
+--   end
 end
 
 function process_area(area)

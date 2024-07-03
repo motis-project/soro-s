@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <array>
 #include <string>
 
@@ -31,7 +32,9 @@ enum class type : type_id {
   BRAKE_PATH,
   LZB_START,
   LZB_END,
+  // TODO(julian) LZBBerKennungWechsel
   LZB_BLOCK_SIGN,
+  LZB_EOTD,
   ETCS_START,
   ETCS_END,
   ETCS_BLOCK_SIGN,
@@ -44,8 +47,12 @@ enum class type : type_id {
   TRACK_NAME,
   RUNTIME_CHECKPOINT_UNDIRECTED,
   LEVEL_CROSSING,
+  PICTURE_POINT,
+  ELECTRIFICATION,
+  ELECTRIFICATION_REPEATER,
   SLOPE,
-  //
+  // end of (undirected) track elements
+  // invalid gives total amount of types
   INVALID
 };
 

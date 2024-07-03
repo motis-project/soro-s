@@ -1,13 +1,18 @@
 #pragma once
 
 #include <chrono>
+#include <exception>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <utility>
 
 // TODO(julian) replace this with the c++20 <format> header when available
 #include "fmt/ostream.h"
+
+#include "soro/utls/trap.h"
 
 namespace soro::utls {
 
@@ -75,6 +80,9 @@ inline void sassert_impl(bool_with_loc assert_this,
     fmt::print(ss, "\n");
 
     std::clog << ss.rdbuf();
+
+    psnip_trap();
+
     throw std::runtime_error(ss.str());
   }
 }
@@ -113,6 +121,12 @@ inline void ensure(bool_with_loc assert_this) {
   sassert_impl(assert_this, "POSTCONDITION", "Unknown");
 }
 
+template <typename Msg, typename... Args>
+inline void unreachable(Msg&& msg, Args... args) noexcept {
+  sassert_impl(false, "UNREACHABLE", msg, args...);
+  std::unreachable();
+};
+
 #if !defined(NDEBUG)
 template <typename F>
 inline void sasserts(F&& f) {
@@ -139,5 +153,15 @@ inline void expects(F&&) {}
 template <typename F>
 inline void ensures(F&&) {}
 #endif
+
+// ENSURE evaluates the given boolean expression
+// it is then ensured and if false the outer function returns false.
+// useful for 'bool ok()' functions
+#define var2(z) _var##z
+#define var(x) var2(x)
+#define ENSURE(expression, msg)          \
+  auto const var(__LINE__) = expression; \
+  utls::ensure(var(__LINE__), msg);      \
+  if (!(var(__LINE__))) return false;
 
 }  // namespace soro::utls

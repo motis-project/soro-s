@@ -1,23 +1,21 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
 
-#include "soro/utls/file/loaded_file.h"
-
-#include "soro/infrastructure/parsers/iss/iss_string_literals.h"
+#include "pugixml.hpp"
 
 namespace soro::infra {
 
 struct iss_files {
-  explicit iss_files(std::filesystem::path const& index);
+  explicit iss_files(std::filesystem::path const& fp);
 
-  utls::loaded_file index_;
-  std::vector<utls::loaded_file> rail_plan_files_;
-  std::vector<utls::loaded_file> core_data_files_;
-  std::vector<utls::loaded_file> regulatory_station_files_;
-  std::vector<utls::loaded_file> regulatory_line_files_;
+  pugi::xml_document index_;
+  std::vector<pugi::xml_document> rail_plan_files_;
+  std::vector<pugi::xml_document> core_data_files_;
+  std::vector<pugi::xml_document> regulatory_station_files_;
+  std::vector<pugi::xml_document> regulatory_line_files_;
+  std::vector<pugi::xml_document> construction_work_files_;
 };
-
-iss_files get_iss_files(std::filesystem::path const& fp);
 
 }  // namespace soro::infra

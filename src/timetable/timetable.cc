@@ -1,11 +1,19 @@
 #include "soro/timetable/timetable.h"
 
+#include <memory>
+#include <utility>
+
+#include "utl/verify.h"
+
 #include "soro/utls/result.h"
 #include "soro/utls/sassert.h"
+
+#include "soro/infrastructure/infrastructure.h"
 
 #include "soro/timetable/base_timetable.h"
 #include "soro/timetable/parsers/kss/parse_kss_timetable.h"
 #include "soro/timetable/timetable_error.h"
+#include "soro/timetable/timetable_options.h"
 
 namespace soro::tt {
 
@@ -63,7 +71,7 @@ utls::result<timetable> try_parsing_timetable(
     }
 
     case timetable_source::NOT_FOUND: {
-      return std::unexpected(error::timetable::UNKNOWN_SOURCE_TYPE);
+      return utls::unexpected(error::timetable::UNKNOWN_SOURCE_TYPE);
     }
   }
 

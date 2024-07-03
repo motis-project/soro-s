@@ -4,9 +4,16 @@
 
 #include "utl/logging.h"
 
-#include "soro/utls/execute_if.h"
+#include "soro/base/soro_types.h"
 
+#include "soro/utls/execute_if.h"
+#include "soro/utls/narrow.h"
+
+#include "soro/si/units.h"
+
+#include "soro/infrastructure/graph/element_data.h"
 #include "soro/infrastructure/infrastructure.h"
+
 #include "soro/timetable/timetable.h"
 
 #include "test/file_paths.h"
@@ -25,7 +32,8 @@ void log_main_signal_in_station_routes_stats(infrastructure const& infra) {
     if (ms_it != std::end(ms_count_to_sr_count)) {
       ++(ms_it->second);
     } else {
-      ms_count_to_sr_count[sr->path_->main_signals_.size()] = 1;
+      ms_count_to_sr_count[narrow<soro::size_t>(
+          sr->path_->main_signals_.size())] = 1;
     }
   }
 
@@ -46,7 +54,7 @@ void log_possible_speed_limit_values(infrastructure const& infra) {
 
   for (auto const& data : infra->graph_.element_data_) {
     execute_if<speed_limit>(data, [&](auto&& spl) {
-      if (soro::si::valid(spl.limit_)) {
+      if (spl.limit_.is_valid()) {
         possible_values.insert(spl.limit_);
       }
     });

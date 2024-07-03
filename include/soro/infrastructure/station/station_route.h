@@ -1,62 +1,77 @@
 #pragma once
 
+#include <limits>
+
 #include "soro/utls/coroutine/recursive_generator.h"
 
+#include "soro/infrastructure/graph/element.h"
 #include "soro/infrastructure/graph/element_data.h"
 #include "soro/infrastructure/graph/node.h"
-#include "soro/infrastructure/graph/section.h"
+
 #include "soro/infrastructure/parsers/iss/iss_string_literals.h"
-#include "soro/rolling_stock/freight.h"
 
 namespace soro::infra {
 
 struct station;
 using station_ptr = soro::ptr<station>;
 struct station_route_graph;
+struct infrastructure;
 
 enum class course_decision : bool { STEM, BRANCH };
 
 struct route_node {
-  bool omitted() const { return omitted_; }
+  speed_limit::ptr get_speed_limit(infrastructure const& infra) const;
+
+  bool operator==(route_node const&) const = default;
 
   node::ptr node_{nullptr};
-  speed_limit::optional_ptr extra_spl_;
+
+  soro::small_vector<speed_limit::ptr> extra_spls_;
+  speed_limit::optional_ptr alternate_spl_;
   bool omitted_{false};
 };
 
-// TODO(julian) parse special overlap
+// TODO() parse special overlap
 struct station_route {
-  using id = uint32_t;
+  using id = strong<uint32_t, struct _station_route_id>;
   using ptr = soro::ptr<station_route>;
 
-  static constexpr id INVALID = std::numeric_limits<id>::max();
-  static constexpr bool valid(id const id) noexcept { return id != INVALID; }
+  using idx = int16_t;
+  using optional_idx = soro::optional<idx>;
+
+  static constexpr id invalid() { return id::invalid(); }
+  static constexpr idx invalid_idx() { return std::numeric_limits<idx>::max(); }
 
   struct path {
-    using id = uint32_t;
+    using id = strong<uint32_t, struct _station_route_path_id>;
     using ptr = soro::ptr<path>;
 
     static constexpr id INVALID = std::numeric_limits<id>::max();
     static constexpr bool valid(id const id) noexcept { return id != INVALID; }
 
-    node::idx size() const { return static_cast<node::idx>(nodes_.size()); }
+    idx size() const { return static_cast<idx>(nodes_.size()); }
 
-    element_ptr start_{nullptr};
-    element_ptr end_{nullptr};
-    soro::vector<course_decision> course_{};
+    element::ptr start_;
+    element::ptr end_;
+    soro::vector<course_decision> course_;
 
-    soro::vector<node::ptr> nodes_{};
-    soro::vector<node::idx> main_signals_{};
+    soro::vector<node::ptr> nodes_;
+    soro::vector<idx> main_signals_;
 
-    soro::vector<node::idx> etcs_starts_{};
-    soro::vector<node::idx> etcs_ends_{};
+    soro::vector<idx> etcs_starts_;
+    soro::vector<idx> etcs_ends_;
 
-    soro::vector<node::idx> lzb_starts_{};
-    soro::vector<node::idx> lzb_ends_{};
+    soro::vector<idx> lzb_starts_;
+    soro::vector<idx> lzb_ends_;
   };
 
-  node::idx size() const noexcept;
-  node::ptr nodes(node::idx const idx) const;
+  struct speed_limit {
+    infra::speed_limit spl_;
+    idx idx_{invalid_idx()};
+  };
+
+  idx size() const noexcept;
+  node::ptr nodes(idx const idx) const;
   soro::vector<node::ptr> const& nodes() const;
 
   bool electrified() const;
@@ -79,32 +94,37 @@ struct station_route {
   bool operator!=(station_route const& o) const;
 
   utls::recursive_generator<route_node> iterate() const;
-  utls::recursive_generator<route_node> from(node::idx from) const;
-  utls::recursive_generator<route_node> to(node::idx to) const;
-  utls::recursive_generator<route_node> from_to(node::idx from,
-                                                node::idx to) const;
+  utls::recursive_generator<route_node> backwards() const;
+  utls::recursive_generator<route_node> from_fwd(idx from) const;
+  utls::recursive_generator<route_node> to_fwd(idx to) const;
+  utls::recursive_generator<route_node> from_bwd(idx from) const;
+  utls::recursive_generator<route_node> to_bwd(idx to) const;
+  utls::recursive_generator<route_node> from_to(idx from, idx to) const;
 
-  node::optional_idx get_halt_idx(rs::FreightTrain freight) const;
-  node::optional_ptr get_halt_node(rs::FreightTrain freight) const;
+  optional_idx get_halt_idx(rs::stop_mode stop_mode) const;
+  node::optional_ptr get_halt_node(rs::stop_mode stop_mode) const;
 
+  optional_idx get_runtime_checkpoint_idx() const;
   node::optional_ptr get_runtime_checkpoint_node() const;
 
-  id id_{INVALID};
+  id id_{invalid()};
   soro::string name_{"INVALID"};
 
-  path::ptr path_{};
-  soro::vector<node::idx> omitted_nodes_{};
-  soro::vector<speed_limit> extra_speed_limits_{};
-  node::optional_idx runtime_checkpoint_{};
+  path::ptr path_;
+  soro::vector<idx> omitted_nodes_;
+  soro::vector<speed_limit> alt_speed_limits_;
+  soro::vector<speed_limit> extra_speed_limits_;
 
-  soro::ptr<station> station_{nullptr};
-  soro::optional<station_ptr> from_station_{};
-  soro::optional<station_ptr> to_station_{};
+  soro::ptr<station> station_;
+  soro::optional<station_ptr> from_station_;
+  soro::optional<station_ptr> to_station_;
 
-  si::length length_{si::INVALID<si::length>};
+  si::length length_{si::length::invalid()};
 
-  node::optional_idx passenger_halt_{};
-  node::optional_idx freight_halt_{};
+  optional_idx runtime_checkpoint_;
+
+  optional_idx passenger_halt_;
+  optional_idx freight_halt_;
 
   soro::array<bool, STATION_ROUTE_ATTRIBUTES.size()> attributes_{
       DEFAULT_ATTRIBUTE_ARRAY};

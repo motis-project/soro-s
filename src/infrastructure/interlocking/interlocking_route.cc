@@ -1,10 +1,25 @@
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 
-#include "utl/concat.h"
+#include <algorithm>
+#include <iterator>
 
+#include "soro/base/soro_types.h"
+
+#include "soro/utls/coroutine/coro_map.h"
+#include "soro/utls/coroutine/generator.h"
+#include "soro/utls/coroutine/recursive_generator.h"
+#include "soro/utls/sassert.h"
 #include "soro/utls/std_wrapper/find.h"
 
+#include "soro/si/units.h"
+
+#include "soro/infrastructure/critical_section.h"
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/node.h"
+#include "soro/infrastructure/graph/type.h"
+#include "soro/infrastructure/graph/type_set.h"
 #include "soro/infrastructure/path/length.h"
+#include "soro/infrastructure/station/station_route.h"
 
 namespace soro::infra {
 
@@ -20,7 +35,7 @@ critical_section::id interlocking_route::get_start_critical_section(
     infrastructure const& infra) const {
   auto const& bucket =
       infra->critical_sections_
-          .element_to_critical_sections_[first_element(infra)->id()];
+          .element_to_critical_sections_[first_element(infra)->get_id()];
 
   utls::sassert(bucket.size() == 1,
                 "element must be in exactly one critical section");
@@ -32,7 +47,7 @@ critical_section::id interlocking_route::get_end_critical_section(
     infrastructure const& infra) const {
   auto const& bucket =
       infra->critical_sections_
-          .element_to_critical_sections_[last_element(infra)->id()];
+          .element_to_critical_sections_[last_element(infra)->get_id()];
 
   utls::sassert(bucket.size() == 1,
                 "element must be in exactly one critical section");
@@ -45,12 +60,13 @@ bool interlocking_route::valid_end(type const t) {
 }
 
 type_set interlocking_route::valid_ends() {
+  // TODO(julian) is type::BORDER actually a valid end?
   return type_set{{type::MAIN_SIGNAL, type::HALT, type::BORDER, type::BUMPER,
                    type::TRACK_END}};
 }
 
-node::idx interlocking_route::size(infrastructure const& infra) const {
-  node::idx result = 0;
+station_route::idx interlocking_route::size(infrastructure const& infra) const {
+  station_route::idx result = 0;
 
   if (this->station_routes_.size() == 1) {
     return this->end_offset_ - this->start_offset_;
@@ -66,8 +82,13 @@ node::idx interlocking_route::size(infrastructure const& infra) const {
   return result;
 }
 
+si::length interlocking_route::length(infrastructure const& infra) const {
+  return get_path_length_from_elements(
+      utls::coro_map(this->iterate(infra), [](auto&& rn) { return rn.node_; }));
+}
+
 bool interlocking_route::contains(station_route::id const needle_sr,
-                                  node::idx const needle_idx) const {
+                                  station_route::idx const needle_idx) const {
 
   if (station_routes_.size() == 1) {
     return station_routes_.front() == needle_sr &&
@@ -140,13 +161,6 @@ bool interlocking_route::ends_on_ms(infrastructure const& infra) const {
   return last_node(infra)->is(type::MAIN_SIGNAL);
 }
 
-utls::it_range<utls::id_it_ptr<station_route>>
-interlocking_route::station_routes(infrastructure const& infra) const {
-  return utls::make_range(
-      utls::id_iterator(std::begin(station_routes_), &infra->station_routes_),
-      utls::id_iterator(std::end(station_routes_), &infra->station_routes_));
-}
-
 bool interlocking_route::follows(interlocking_route const& other,
                                  infrastructure const& infra) const {
   return this->first_node(infra) == other.last_node(infra);
@@ -160,13 +174,14 @@ namespace detail {
 
 utls::recursive_generator<route_node> from_to(
     interlocking_route::ptr const ir,
-    decltype(ir->station_routes_)::const_iterator from_it, node::idx const from,
-    decltype(ir->station_routes_)::const_iterator to_it, node::idx const to,
-    infrastructure const& infra) {
+    decltype(ir->station_routes_)::const_iterator from_it,
+    station_route::idx const from,
+    decltype(ir->station_routes_)::const_iterator to_it,
+    station_route::idx const to, infrastructure const& infra) {
 
   utls::sassert(ir->station_routes_.size() > 1,
                 "Called from_to_impl with a single station route in IR {}, "
-                "call from_to_single_imple instead",
+                "call from_to_single_impl instead",
                 ir->id_);
   utls::sassert(from_it != std::end(ir->station_routes_),
                 "Station route {} is not part of interlocking route {}, but "
@@ -183,21 +198,21 @@ utls::recursive_generator<route_node> from_to(
                 "Don't call this with from == to, "
                 "since it will yield the wrong nodes.");
 
-  co_yield infra->station_routes_[*from_it]->from(from);
+  co_yield infra->station_routes_[*from_it]->from_fwd(from);
   ++from_it;
 
   for (; from_it != to_it; ++from_it) {
     co_yield infra->station_routes_[*from_it]->iterate();
   }
 
-  co_yield infra->station_routes_[*to_it]->to(to);
+  co_yield infra->station_routes_[*to_it]->to_fwd(to);
 }
 
 }  // namespace detail
 
 utls::recursive_generator<route_node> interlocking_route::from_to(
-    station_route::id const from_sr, node::idx const from,
-    station_route::id const to_sr, node::idx const to,
+    station_route::id const from_sr, station_route::idx const from,
+    station_route::id const to_sr, station_route::idx const to,
     infrastructure const& infra) const {
 
   if (this->station_routes_.size() == 1) {
@@ -233,14 +248,14 @@ utls::recursive_generator<route_node> interlocking_route::from_to(
 }
 
 utls::recursive_generator<route_node> interlocking_route::to(
-    station_route::id const sr_id, node::idx const to,
+    station_route::id const sr_id, station_route::idx const to,
     infrastructure const& infra) const {
   co_yield this->from_to(this->station_routes_.front(), start_offset_, sr_id,
                          to, infra);
 }
 
 utls::recursive_generator<route_node> interlocking_route::from(
-    station_route::id const sr_id, node::idx const from,
+    station_route::id const sr_id, station_route::idx const from,
     infrastructure const& infra) const {
   co_yield this->from_to(sr_id, from, station_routes_.back(), end_offset_,
                          infra);

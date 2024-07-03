@@ -3,12 +3,14 @@
 #include <cmath>
 #include <array>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <string>
 
 #include "utl/verify.h"
 
 #include "soro/base/fp_precision.h"
+
 #include "soro/utls/strong_types/type_list.h"
 
 namespace soro::utls {
@@ -23,7 +25,14 @@ struct second_tag {};
 struct kilogram_tag {};
 struct ampere_tag {};
 
+// --- angle tags --- ///
+
+struct degree_tag {};
+struct radian_tag {};
+
 // --- minimum of two integer constants --- //
+
+namespace detail {
 
 template <typename Constant1, typename Constant2>
 struct min : std::conditional_t<
@@ -31,8 +40,10 @@ struct min : std::conditional_t<
                  std::integral_constant<std::size_t, Constant2::value>,
                  std::integral_constant<std::size_t, Constant1::value>> {};
 
+}  // namespace detail
+
 template <typename Constant1, typename Constant2>
-inline auto constexpr min_v = min<Constant1, Constant2>::value;
+inline auto constexpr min_v = detail::min<Constant1, Constant2>::value;
 
 /// --- simplify a single tag --- ///
 
@@ -115,6 +126,7 @@ static constexpr inline bool const is_same_fraction_v =
 template <typename Nominator, typename Denominator, typename Precision>
 struct fraction {
   using precision = Precision;
+  using value_type = precision;
 
   template <
       typename OtherN, typename OtherD, typename OtherP,
@@ -128,13 +140,21 @@ struct fraction {
   auto operator==(fraction const rhs) const {
     return soro::equal(val_, rhs.val_);
   }
+
   auto operator!=(fraction const rhs) const {
     return !soro::equal(val_, rhs.val_);
   }
+
   auto operator<(fraction const rhs) const { return val_ < rhs.val_; }
   auto operator>(fraction const rhs) const { return val_ > rhs.val_; }
-  auto operator<=(fraction const rhs) const { return val_ <= rhs.val_; }
-  auto operator>=(fraction const rhs) const { return val_ >= rhs.val_; }
+
+  auto operator<=(fraction const rhs) const {
+    return *this == rhs || val_ <= rhs.val_;
+  }
+
+  auto operator>=(fraction const rhs) const {
+    return *this == rhs || val_ >= rhs.val_;
+  }
 
   constexpr bool is_fraction() const {
     return !std::is_same_v<Denominator, type_list<>>;
@@ -149,6 +169,33 @@ struct fraction {
   constexpr bool is() const {
     return std::is_same_v<fraction, T>;
   }
+
+  static constexpr fraction zero() noexcept { return {precision{0}}; }
+
+  static constexpr fraction infinity() noexcept {
+    static_assert(std::numeric_limits<precision>::has_infinity);
+    return {precision{std::numeric_limits<precision>::infinity()}};
+  }
+
+  static constexpr fraction min() noexcept {
+    return {std::numeric_limits<precision>::lowest()};
+  }
+
+  static constexpr fraction max() noexcept {
+    return {std::numeric_limits<precision>::max()};
+  }
+
+  static constexpr fraction invalid() noexcept {
+    static_assert(std::numeric_limits<precision>::has_quiet_NaN);
+    return {std::numeric_limits<precision>::quiet_NaN()};
+  }
+
+  constexpr bool is_zero() const noexcept { return *this == zero(); }
+  constexpr bool is_positive() const noexcept { return val_ > 0.0; }
+  constexpr bool is_negative() const noexcept { return val_ < 0.0; }
+  constexpr bool is_infinity() const noexcept { return std::isinf(val_); }
+  constexpr bool is_valid() const noexcept { return !std::isnan(val_); }
+  constexpr bool is_nan() const noexcept { return std::isnan(val_); }
 
   std::string to_string() const {
     return std::to_string(val_) + get_fraction_unit_str(*this);
@@ -191,8 +238,23 @@ struct fraction {
     return lhs;
   }
 
+  auto operator/=(Precision const unitless_scalar) {
+    val_ /= unitless_scalar;
+    return *this;
+  }
+
+  friend fraction operator/(Precision const lhs, fraction rhs) {
+    rhs /= lhs;
+    return rhs;
+  }
+
+  friend fraction operator/(fraction lhs, Precision const rhs) {
+    lhs /= rhs;
+    return lhs;
+  }
+
   template <typename OtherN, typename OtherD, typename OtherP>
-  auto operator*(fraction<OtherN, OtherD, OtherP> const& o) const {
+  constexpr auto operator*(fraction<OtherN, OtherD, OtherP> const& o) const {
     using simplified =
         simplify<concat_t<Nominator, OtherN>, concat_t<Denominator, OtherD>>;
 
@@ -201,12 +263,18 @@ struct fraction {
   }
 
   template <typename OtherN, typename OtherD, typename OtherP>
-  auto operator/(fraction<OtherN, OtherD, OtherP> const& o) const {
+  constexpr auto operator/(fraction<OtherN, OtherD, OtherP> const& o) const {
     using simplified =
         simplify<concat_t<Nominator, OtherD>, concat_t<Denominator, OtherN>>;
 
     return fraction<typename simplified::nominator,
                     typename simplified::denominator, Precision>{val_ / o.val_};
+  }
+
+  auto smooth() const { return fraction{soro::smooth(val_)}; }
+
+  auto abs() const {
+    return fraction<Nominator, Denominator, Precision>{std::abs(val_)};
   }
 
   template <std::size_t Exp>
@@ -217,6 +285,51 @@ struct fraction {
     return fraction<typename simplified::nominator,
                     typename simplified::denominator, Precision>{
         std::pow(val_, static_cast<precision>(Exp))};
+  }
+
+  auto sqrt() const {
+    constexpr auto nom_m_count = count_v<meter_tag, Nominator>;
+    static_assert(nom_m_count % 2 == 0);
+    using nom_m = concat_times_t<nom_m_count / 2, type_list<meter_tag>>;
+
+    constexpr auto nom_s_count = count_v<second_tag, Nominator>;
+    static_assert(nom_s_count % 2 == 0);
+    using nom_s = concat_times_t<nom_s_count / 2, type_list<second_tag>>;
+
+    constexpr auto nom_kg_count = count_v<kilogram_tag, Nominator>;
+    static_assert((nom_kg_count % 2) == 0);
+    using nom_kg = concat_times_t<nom_kg_count / 2, type_list<kilogram_tag>>;
+
+    constexpr auto nom_a_count = count_v<ampere_tag, Nominator>;
+    static_assert((nom_a_count % 2) == 0);
+    using nom_a = concat_times_t<nom_a_count / 2, type_list<ampere_tag>>;
+
+    using nominator = concat_t<nom_m, concat_t<nom_s, concat_t<nom_kg, nom_a>>>;
+
+    constexpr auto de_m_count = count_v<meter_tag, Denominator>;
+    static_assert(de_m_count % 2 == 0);
+    using de_m = concat_times_t<de_m_count / 2, type_list<meter_tag>>;
+
+    constexpr auto de_s_count = count_v<second_tag, Denominator>;
+    static_assert(de_s_count % 2 == 0);
+    using de_s = concat_times_t<de_s_count / 2, type_list<second_tag>>;
+
+    constexpr auto de_kg_count = count_v<kilogram_tag, Denominator>;
+    static_assert(de_kg_count % 2 == 0);
+    using de_kg = concat_times_t<de_kg_count / 2, type_list<kilogram_tag>>;
+
+    constexpr auto de_a_count = count_v<ampere_tag, Denominator>;
+    static_assert(de_a_count % 2 == 0);
+    using de_a = concat_times_t<de_a_count, type_list<ampere_tag>>;
+
+    using denominator = concat_t<de_m, concat_t<de_s, concat_t<de_kg, de_a>>>;
+
+    return fraction<nominator, denominator, Precision>{std::sqrt(val_)};
+  }
+
+  bool is_multiple_of(fraction const& other) const {
+    auto const factor = *this / other;
+    return (factor - round(factor)).abs() == decltype(factor)::zero();
   }
 
   Precision val_{std::numeric_limits<Precision>::quiet_NaN()};
@@ -237,7 +350,13 @@ inline bool equal(Precision const p,
 template <typename Nominator, typename Denominator, typename Precision>
 inline fraction<Nominator, Denominator, Precision> abs(
     fraction<Nominator, Denominator, Precision> const& f) {
-  return {std::abs(f.val_)};
+  return f.abs();
+}
+
+template <typename Nominator, typename Denominator, typename Precision>
+inline fraction<Nominator, Denominator, Precision> smooth(
+    fraction<Nominator, Denominator, Precision> const& f) {
+  return f.smooth();
 }
 
 template <std::size_t Exp, typename Fraction,
@@ -252,6 +371,16 @@ inline auto pow(Fraction const& f) {
   return f * pow<Exp - 1>(f);
 }
 
+template <typename Fraction>
+inline auto sqrt(Fraction const& f) {
+  return f.sqrt();
+}
+
+template <typename Fraction>
+inline Fraction round(Fraction const& f) {
+  return Fraction{std::round(f.val_)};
+}
+
 // --- is_fraction --- //
 
 template <typename T>
@@ -261,7 +390,10 @@ template <typename N, typename D, typename P>
 struct is_fraction<fraction<N, D, P>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool is_fraction_v = is_fraction<T>::value;
+constexpr bool const is_fraction_v = is_fraction<T>::value;
+
+template <typename T>
+concept Fraction = is_fraction_v<T>;
 
 /// --- support for operator<< --- ///
 // TODO(julian) make this constexpr when all std libs made std::string constexpr

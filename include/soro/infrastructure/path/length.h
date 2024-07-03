@@ -14,7 +14,7 @@ template <typename Iterable>
   requires utls::yields<element::ptr, Iterable> &&
            utls::is_input_iterable<Iterable>
 si::length get_path_length_from_elements(Iterable&& element_iter) {
-  si::length distance = si::ZERO<si::length>;
+  auto distance = si::length::zero();
 
   auto it = std::begin(element_iter);
 
@@ -22,10 +22,10 @@ si::length get_path_length_from_elements(Iterable&& element_iter) {
   ++it;
 
   for (; it != std::end(element_iter); ++it) {
-    auto const kmp = last_element->get_km(*it);
-    auto const next_kmp = (*it)->get_km(last_element);
+    auto const kmp = last_element->km(*it);
+    auto const next_kmp = (*it)->km(last_element);
 
-    distance += abs(kmp - next_kmp);
+    distance += (kmp - next_kmp).abs();
 
     last_element = *it;
   }
@@ -47,7 +47,7 @@ template <typename Iterable>
 si::length get_path_length_from_sections(Iterable&& element_iter) {
   auto iter = std::begin(element_iter);
 
-  si::length distance = si::ZERO<si::length>;
+  auto distance = si::length::zero();
 
   element::ptr last_section = *iter;
   element::ptr next_to_last_section = *(++iter);
@@ -63,8 +63,9 @@ si::length get_path_length_from_sections(Iterable&& element_iter) {
       next_section = *iter;
     }
 
-    distance += abs(last_section->get_km(next_to_last_section) -
-                    next_section->get_km(prev_to_next_section));
+    distance += (last_section->km(next_to_last_section) -
+                 next_section->km(prev_to_next_section))
+                    .abs();
 
     if (iter == std::end(element_iter)) {
       break;

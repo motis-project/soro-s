@@ -13,7 +13,7 @@
 [date]
   url=git@github.com:motis-project/date.git
   branch=master
-  commit=17429576f2468e1deb487c1d0fee91d3cfd54814
+  commit=2d2c46a39bbf582dc663be1af926b4d58b2e0c9a
 [pugixml]
   url=git@github.com:motis-project/pugixml.git
   branch=master
@@ -37,7 +37,7 @@
 [net]
   url=git@github.com:motis-project/net.git
   branch=master
-  commit=47a699159ea87e781451ce80e09915e2a8278082
+  commit=44674d2f3917e20b7019a0f7254d332522c36fb7
 [range-v3]
   url=git@github.com:motis-project/range-v3.git
   branch=master
@@ -50,3 +50,7 @@
   url=git@github.com:motis-project/guess.git
   branch=master
   commit=5acaeaacca154bd20987806f9626be5e3b87e1c5
+[tbb]
+  url=git@github.com:julianharbarth/oneTBB.git
+  branch=master
+  commit=1ddebef8ac703ded4d5330f9d2135dfadbc992be

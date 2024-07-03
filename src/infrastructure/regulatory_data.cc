@@ -1,34 +1,32 @@
 #include "soro/infrastructure/regulatory_data.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "pugixml.hpp"
 
 #include "utl/concat.h"
-#include "utl/logging.h"
 #include "utl/timer.h"
 
-#include "soro/utls/parse_fp.h"
+#include "soro/base/soro_types.h"
+
 #include "soro/utls/parse_int.h"
 
+#include "soro/infrastructure/line.h"
 #include "soro/infrastructure/parsers/iss/iss_string_literals.h"
 #include "soro/infrastructure/parsers/iss/parse_helpers.h"
 
 namespace soro::infra {
 
 regulatory_station_data parse_regulatory_stations(
-    std::vector<utls::loaded_file> const& regulatory_station_files) {
-  utl::scoped_timer const regulartory_timer("Parsing Regulatory Data");
+    std::vector<pugi::xml_document> const& regulatory_station_files) {
+  utl::scoped_timer const regulartory_timer("parsing regulatory data");
 
   regulatory_station_data station_data;
 
-  for (auto const& reg_file : regulatory_station_files) {
-    uLOG(utl::info) << "Parsing " << reg_file.path_;
-
-    pugi::xml_document d;
-    auto success = d.load_buffer(reinterpret_cast<void const*>(reg_file.data()),
-                                 reg_file.size());
-    utl::verify(success, "bad xml: {}", success.description());
-
-    for (auto const& regulatory_station : d.child(XML_ISS_DATA)
+  for (auto const& reg_xml : regulatory_station_files) {
+    for (auto const& regulatory_station : reg_xml.child(XML_ISS_DATA)
                                               .child("Ordnungsrahmen")
                                               .child("Betriebsstellen")) {
       soro::string const ds100 = regulatory_station.child_value("DS100");
@@ -60,19 +58,12 @@ static const soro::map<line_type_key, bool> HAS_ETCS = {
     {18, true}, {20, false}, {21, false}, {23, true},  {24, false},
 };
 
-soro::vector<line> parse_lines_from_file(
-    utls::loaded_file const& regulatory_line_file) {
+soro::vector<line> parse_lines_from_file(pugi::xml_document const& lines_xml) {
   soro::vector<line> lines;
 
-  pugi::xml_document d;
-  auto success =
-      d.load_buffer(reinterpret_cast<void const*>(regulatory_line_file.data()),
-                    regulatory_line_file.size());
-  utl::verify(success, "Bad xml: {}", success.description());
-
-  for (auto const& line_xml :
-       d.child(XML_ISS_DATA).child("Ordnungsrahmen").child("Strecken")) {
-
+  for (auto const& line_xml : lines_xml.child(XML_ISS_DATA)
+                                  .child("Ordnungsrahmen")
+                                  .child("Strecken")) {
     line l;
 
     l.id_ = utls::parse_int<line::id>(line_xml.child_value("Nr"));
@@ -104,7 +95,7 @@ soro::vector<line> parse_lines_from_file(
 }
 
 soro::map<line::id, line> parse_lines(
-    std::vector<utls::loaded_file> const& regulatory_line_files) {
+    std::vector<pugi::xml_document> const& regulatory_line_files) {
   soro::vector<line> lines;
 
   for (auto const& f : regulatory_line_files) {

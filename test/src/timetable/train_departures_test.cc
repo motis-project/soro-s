@@ -1,7 +1,19 @@
 #include "doctest/doctest.h"
 
-#include "soro/timetable/train.h"
+#include <string>
+#include <vector>
+
+#include "date/date.h"
+
+#include "soro/base/time.h"
+
+#include "soro/utls/container/optional.h"
 #include "soro/utls/std_wrapper/sort.h"
+
+#include "soro/timetable/bitfield.h"
+#include "soro/timetable/interval.h"
+#include "soro/timetable/sequence_point.h"
+#include "soro/timetable/train.h"
 
 namespace soro::test {
 
@@ -31,14 +43,18 @@ train test_train1() {
 
   std::string const bits1 = "111111111";
 
-  sequence_point const first_dep1 = {.departure_ = opt_t{hours{8}}};
-  sequence_point const last_arr1 = {.arrival_ = opt_t{hours{16}}};
+  sequence_point const dep = {.type_ = sequence_point::type::PASSENGER,
+                              .arrival_ = opt_t{hours{7}},
+                              .departure_ = opt_t{hours{8}}};
+  sequence_point const arr = {.type_ = sequence_point::type::PASSENGER,
+                              .arrival_ = opt_t{hours{16}},
+                              .departure_ = opt_t{hours{17}}};
 
   train t1;
   t1.id_ = 1;
   t1.service_days_ = make_bitfield(start_date, end_date, bits1.data());
-  t1.sequence_points_.push_back(first_dep1);
-  t1.sequence_points_.push_back(last_arr1);
+  t1.sequence_points_.push_back(dep);
+  t1.sequence_points_.push_back(arr);
 
   return t1;
 }
@@ -49,8 +65,12 @@ train test_train2() {
 
   std::string const bits2 = "101010101";
 
-  sequence_point const first_dep2 = {.departure_ = opt_t{hours{8}}};
-  sequence_point const last_arr2 = {.arrival_ = opt_t{hours{16}}};
+  sequence_point const first_dep2 = {.type_ = sequence_point::type::PASSENGER,
+                                     .arrival_ = opt_t{hours{7}},
+                                     .departure_ = opt_t{hours{8}}};
+  sequence_point const last_arr2 = {.type_ = sequence_point::type::PASSENGER,
+                                    .arrival_ = opt_t{hours{16}},
+                                    .departure_ = opt_t{hours{17}}};
 
   train t2;
   t2.id_ = 2;
@@ -67,8 +87,12 @@ train test_train3() {
 
   std::string const bits3 = "000000001";
 
-  sequence_point const first_dep3 = {.departure_ = opt_t{hours{22}}};
-  sequence_point const last_arr3 = {.arrival_ = opt_t{hours{26}}};
+  sequence_point const first_dep3 = {.type_ = sequence_point::type::PASSENGER,
+                                     .arrival_ = opt_t{hours{21}},
+                                     .departure_ = opt_t{hours{22}}};
+  sequence_point const last_arr3 = {.type_ = sequence_point::type::PASSENGER,
+                                    .arrival_ = opt_t{hours{26}},
+                                    .departure_ = opt_t{hours{27}}};
 
   train t3;
   t3.id_ = 3;
@@ -85,8 +109,12 @@ train test_train4() {
 
   std::string const bits4 = "100000000";
 
-  sequence_point const first_dep4 = {.departure_ = opt_t{hours{0}}};
-  sequence_point const last_arr4 = {.arrival_ = opt_t{hours{10}}};
+  sequence_point const first_dep4 = {.type_ = sequence_point::type::PASSENGER,
+                                     .arrival_ = opt_t{hours{0}},
+                                     .departure_ = opt_t{hours{0}}};
+  sequence_point const last_arr4 = {.type_ = sequence_point::type::PASSENGER,
+                                    .arrival_ = opt_t{hours{10}},
+                                    .departure_ = opt_t{hours{10}}};
 
   train t4;
   t4.id_ = 4;
@@ -103,8 +131,12 @@ train test_train5() {
 
   std::string const bits5 = "010101010";
 
-  sequence_point const first_dep5 = {.departure_ = opt_t{hours{8}}};
-  sequence_point const last_arr5 = {.arrival_ = opt_t{hours{16}}};
+  sequence_point const first_dep5 = {.type_ = sequence_point::type::PASSENGER,
+                                     .arrival_ = opt_t{hours{8}},
+                                     .departure_ = opt_t{hours{8}}};
+  sequence_point const last_arr5 = {.type_ = sequence_point::type::PASSENGER,
+                                    .arrival_ = opt_t{hours{16}},
+                                    .departure_ = opt_t{hours{16}}};
 
   train t5;
   t5.id_ = 5;

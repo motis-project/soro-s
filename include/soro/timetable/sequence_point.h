@@ -3,16 +3,10 @@
 #include "soro/utls/container/optional.h"
 
 #include "soro/base/time.h"
+
 #include "soro/infrastructure/infrastructure.h"
 
 namespace soro::tt {
-
-struct additional_stop {
-  constexpr additional_stop() = default;
-
-  duration2 duration_{duration2::max()};
-  bool is_before_halt_{false};
-};
 
 struct sequence_point {
   CISTA_COMPARABLE()
@@ -20,20 +14,30 @@ struct sequence_point {
   using ptr = soro::ptr<sequence_point>;
   using optional_ptr = soro::optional<ptr>;
 
-  enum struct type : uint8_t { TRANSIT, OPERATIONS, PASSENGER, REQUEST };
-
-  auto operator<=>(sequence_point const&) const = default;
+  // TRANSIT is when the train is not required to stop moving
+  // the rest of them are stops (i.e. they require the train to stop moving)
+  // OPERATIONS, PASSENGER, REQUEST are halts, they require the train to stop
+  // and are executed at halt nodes
+  // ADDITIONAL requires the train to stop moving, but can be executed
+  // at arbitrary nodes, there are no times for these in the timetable
+  enum struct type : uint8_t {
+    TRANSIT,
+    OPERATIONS,
+    PASSENGER,
+    REQUEST,
+    ADDITIONAL,
+    INVALID
+  };
 
   bool is_halt() const noexcept;
-  bool is_halt(type const t) const noexcept;
-
-  relative_time transit_time() const noexcept;
+  bool is_stop() const noexcept;
   bool is_transit() const noexcept;
-  bool has_transit_time() const noexcept;
+  bool is_halt_type(type const t) const noexcept;
 
-  bool is_measurable() const noexcept {
-    return has_transit_time() || is_halt();
-  }
+  bool is_measurable() const noexcept;
+
+  duration min_stop_time() const noexcept;
+  duration stop_time() const noexcept;
 
   soro::optional<absolute_time> absolute_arrival(
       date::year_month_day departure_day) const noexcept;
@@ -45,19 +49,21 @@ struct sequence_point {
   soro::optional<absolute_time> absolute_departure(
       absolute_time const midnight) const noexcept;
 
-  infra::node::optional_idx get_node_idx(
-      rs::FreightTrain const freight, infra::infrastructure const& infra) const;
-  infra::node::optional_ptr get_node(rs::FreightTrain freight,
-                                     infra::infrastructure const& infra) const;
+  infra::node::ptr get_node(infra::infrastructure const& infra) const;
 
-  type type_{type::TRANSIT};
+  type type_{type::INVALID};
 
   // relative to departure day of the train at 00:00
-  soro::optional<relative_time> arrival_{std::nullopt};
-  soro::optional<relative_time> departure_{std::nullopt};
-  duration2 min_stop_time_{INVALID<duration2>};
+  // do not necessarily exist, e.g. transits without runtime checkpoint
+  // and additional stops
+  soro::optional<relative_time> arrival_;
+  soro::optional<relative_time> departure_;
 
-  infra::station_route::id station_route_{infra::station_route::INVALID};
+  // zero for transits
+  duration min_stop_time_{duration::max()};
+
+  infra::station_route::idx idx_{infra::station_route::invalid_idx()};
+  infra::station_route::id station_route_{infra::station_route::invalid()};
 };
 
 static const std::map<char, sequence_point::type> KEY_TO_STOP_TYPE = {

@@ -27,13 +27,13 @@ struct connection {
   train::number first_train_number_;
   train::number second_train_number_;
 
-  train::id first_train_{train::INVALID};
-  train::id second_train_{train::INVALID};
+  train::id first_train_{train::invalid()};
+  train::id second_train_{train::invalid()};
 
-  infra::station::id first_station_{infra::station::INVALID};
+  infra::station::id first_station_{infra::station::invalid()};
   soro::optional<infra::station::id> second_station_{};
 
-  soro::optional<duration2> time_{};
+  soro::optional<duration> time_;
 
   mode mode_{mode::invalid};
 };

@@ -1,17 +1,41 @@
 import { ElementType, ElementTypes } from './element-types';
-import { StyleSpecification } from 'maplibre-gl';
-import { ThemeDefinition } from 'vuetify';
+import { LayerSpecification, StyleSpecification } from 'maplibre-gl';
+import {
+  DisplayMode,
+  DisplayModes
+} from '@/components/infrastructure/display-modes';
+import {
+  getLayer,
+  getLineLayer,
+  stationLayer
+} from '@/components/infrastructure/map-layers';
+import { IconMode } from '@/components/infrastructure/icon-modes';
+import { LegendControls } from '@/components/infrastructure/infrastructure-legend.vue';
 
-export const mapLayers = ElementTypes.map((type) => type + '-layer');
+function getSourceLayer(elementType: ElementType, displayMode: DisplayMode) {
+  return displayMode + '-' + elementType;
+}
 
-export const createInfrastructureMapStyle = ({
-  currentTheme,
-  activatedElements
-}: {
-  currentTheme: ThemeDefinition;
-  activatedElements: typeof ElementTypes;
-}) => {
-  const style: StyleSpecification = {
+function getVisibilityForMode(
+  displayMode: DisplayMode,
+  current: LegendControls
+) {
+  return current.selectedDisplayMode == displayMode ? 'visible' : 'none';
+}
+
+function getVisibility(
+  elementType: ElementType,
+  displayMode: DisplayMode,
+  current: LegendControls
+) {
+  return displayMode == current.selectedDisplayMode &&
+    current.selectedElementTypes.includes(elementType)
+    ? 'visible'
+    : 'none';
+}
+
+function getBaseStyle(): StyleSpecification {
+  return {
     version: 8,
     sources: {
       osm: {
@@ -40,51 +64,7 @@ export const createInfrastructureMapStyle = ({
         id: 'background',
         type: 'background',
         paint: {
-          'background-color': currentTheme.colors?.goldenLayoutTabBackground
-        }
-      },
-      {
-        id: 'yards',
-        type: 'line',
-        source: 'osm',
-        'source-layer': 'rail',
-        filter: ['==', 'rail', 'detail'],
-        paint: {
-          'line-color': '#ccc',
-          'line-width': 2.0
-        }
-      },
-      {
-        id: 'tunnel',
-        type: 'line',
-        source: 'osm',
-        'source-layer': 'rail',
-        filter: ['==', 'rail', 'underground'],
-        paint: {
-          'line-color': ['case', ['has', 'color'], ['get', 'color'], '#444'],
-          'line-width': 3.5
-        }
-      },
-      {
-        id: 'rail',
-        type: 'line',
-        source: 'osm',
-        'source-layer': 'rail',
-        filter: ['==', 'rail', 'primary'],
-        paint: {
-          'line-color': ['case', ['has', 'color'], ['get', 'color'], '#444'],
-          'line-width': 2.0
-        }
-      },
-      {
-        id: 'bridges',
-        type: 'line',
-        source: 'osm',
-        'source-layer': 'rail',
-        filter: ['==', 'rail', 'bridges'],
-        paint: {
-          'line-color': ['case', ['has', 'color'], ['get', 'color'], '#444'],
-          'line-width': 3.5
+          'background-color': '#ECE9E9'
         }
       },
       {
@@ -137,76 +117,122 @@ export const createInfrastructureMapStyle = ({
       }
     ]
   };
+}
 
-  ElementTypes.forEach((type) => {
-    if (type === ElementType.STATION) {
-      style.layers.push({
-        id: type + '-layer',
-        source: 'osm',
-        'source-layer': type,
-        type: 'symbol',
-        minzoom: 5,
-        maxzoom: 24,
-        paint: {
-          'icon-color': '#ffffff',
-          'text-halo-width': 1,
-          'text-halo-color': '#ffffff'
-        },
-        layout: {
-          visibility: activatedElements.includes(type) ? 'visible' : 'none',
-          'text-field': ['get', 'name'],
-          'text-anchor': 'top',
-          'text-offset': [0, 1],
-          'text-font': ['Noto Sans Bold'],
-          'icon-image': 'icon-' + type,
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 20, 1.0]
-        }
-      });
-    } else {
-      // gives us the small black dots for icon stand-ins
-      style.layers.push({
-        id: 'circle-' + type + '-layer',
-        source: 'osm',
-        'source-layer': type,
-        type: 'circle',
-        minzoom: 13,
-        maxzoom: 24,
-        paint: {
-          'circle-radius': 3,
-          'circle-color': '#000000',
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#FFFFFF'
-        },
-        layout: {
-          visibility: activatedElements.includes(type) ? 'visible' : 'none'
-        }
-      });
-
-      // gives us the elements as icons
-      style.layers.push({
-        id: type + '-layer',
-        source: 'osm',
-        'source-layer': type,
-        type: 'symbol',
-        minzoom: type === ElementType.HALT ? 10 : 15,
-        maxzoom: 24,
-        paint: {
-          'icon-color': '#ffffff',
-          'text-color': currentTheme.colors?.['on-surface']
-        },
-        layout: {
-          visibility: activatedElements.includes(type) ? 'visible' : 'none',
-          'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
-          'text-anchor': 'top',
-          'text-offset': [0, 1],
-          'text-font': ['Noto Sans Regular'],
-          'icon-image': 'icon-' + type,
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4]
-        }
-        // "filter": ['==', 'direction', 'rising']
-      });
+function getLineLayerSpec(
+  displayMode: DisplayMode,
+  current: LegendControls
+): LayerSpecification {
+  return {
+    id: getLineLayer(displayMode),
+    type: 'line',
+    source: 'osm',
+    'source-layer': getLineLayer(displayMode),
+    paint: {
+      'line-color': '#444',
+      'line-width': 2.0
+    },
+    layout: {
+      visibility: getVisibilityForMode(displayMode, current)
     }
-  });
+  };
+}
+
+function getStationLayer(current: LegendControls): LayerSpecification {
+  return {
+    id: stationLayer,
+    source: 'osm',
+    'source-layer': 'station',
+    type: 'symbol',
+    minzoom: 5,
+    maxzoom: 24,
+    paint: {
+      'icon-color': '#ffffff',
+      'text-halo-width': 1,
+      'text-halo-color': '#ffffff'
+    },
+    layout: {
+      visibility: current.showStationIcons ? 'visible' : 'none',
+      'text-field': ['get', 'name'],
+      'text-anchor': 'top',
+      'text-offset': [0, 1],
+      'text-font': ['Noto Sans Bold'],
+      'icon-image': 'icon-station',
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 20, 1.0]
+    }
+  };
+}
+
+function getDotLayer(
+  elementType: ElementType,
+  displayMode: DisplayMode,
+  current: LegendControls
+): LayerSpecification {
+  return {
+    id: getLayer(IconMode.Dot, elementType, displayMode),
+    source: 'osm',
+    'source-layer': getSourceLayer(elementType, displayMode),
+    type: 'circle',
+    minzoom: 13,
+    maxzoom: 24,
+    paint: {
+      'circle-radius': 3,
+      'circle-color': '#000000',
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#FFFFFF'
+    },
+    layout: {
+      visibility: getVisibility(elementType, displayMode, current)
+    }
+  };
+}
+
+function getIconLayer(
+  elementType: ElementType,
+  displayMode: DisplayMode,
+  current: LegendControls
+): LayerSpecification {
+  return {
+    id: getLayer(IconMode.Icon, elementType, displayMode),
+    source: 'osm',
+    'source-layer': getSourceLayer(elementType, displayMode),
+    type: 'symbol',
+    minzoom: 15,
+    maxzoom: 24,
+    paint: {
+      'icon-color': '#ffffff',
+      'text-color': '#000000'
+    },
+    layout: {
+      visibility: getVisibility(elementType, displayMode, current),
+      'text-field': ['get', 'id'],
+      'text-anchor': 'top',
+      'text-offset': [0, 1],
+      'text-font': ['Noto Sans Regular'],
+      'icon-image': 'icon-' + elementType,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.2, 20, 0.4]
+    }
+  };
+}
+
+export function getInfrastructureMapStyle(
+  current: LegendControls
+): StyleSpecification {
+  const style = getBaseStyle();
+
+  style.layers.push(getStationLayer(current));
+
+  for (const displayMode of DisplayModes) {
+    style.layers.push(getLineLayerSpec(displayMode, current));
+
+    for (const elementType of ElementTypes) {
+      // gives us the small black dots for node icon stand-ins
+      style.layers.push(getDotLayer(elementType, displayMode, current));
+
+      // gives us the nodes as icons
+      style.layers.push(getIconLayer(elementType, displayMode, current));
+    }
+  }
 
   return style;
-};
+}

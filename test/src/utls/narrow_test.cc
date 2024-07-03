@@ -1,5 +1,8 @@
 #include "doctest/doctest.h"
 
+#include <cstdint>
+#include <limits>
+
 #include "soro/utls/narrow.h"
 
 namespace soro::utls::detail {

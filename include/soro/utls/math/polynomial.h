@@ -9,7 +9,7 @@
 
 #include "soro/base/soro_types.h"
 #include "soro/utls/template/decay.h"
-#include "soro/utls/template/type_at_position.h"
+#include "soro/utls/template/first.h"
 #include "soro/utls/tuple/apply_at.h"
 
 namespace soro::utls {

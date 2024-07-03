@@ -1,3 +1,4 @@
+import { toRaw } from 'vue';
 import { Module } from 'vuex';
 import { GlobalState } from '@/stores/stores';
 import { LngLatBounds, GeoJSONFeature } from 'maplibre-gl';
@@ -117,7 +118,7 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
 
     deleteHighlightedStationRoute(state, routeId: number) {
       state.highlightedStationRoutes = state.highlightedStationRoutes.filter(
-        (route) => route.properties.id !== routeId
+        (route) => route.properties.id != routeId
       );
     },
 
@@ -128,7 +129,7 @@ export const SidebarStore: Module<SidebarState, GlobalState> = {
     deleteHighlightedInterlockingRoute(state, routeId: number) {
       state.highlightedInterlockingRoutes =
         state.highlightedInterlockingRoutes.filter(
-          (route) => route.properties.id !== routeId
+          (route) => route.properties.id != routeId
         );
     },
 

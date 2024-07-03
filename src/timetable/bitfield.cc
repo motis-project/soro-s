@@ -1,13 +1,27 @@
 #include "soro/timetable/bitfield.h"
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <algorithm>
 #include <array>
+#include <string_view>
+#include <vector>
 
 #include "utl/verify.h"
+
+#include "soro/base/soro_types.h"
+#include "soro/base/time.h"
 
 #include "soro/utls/narrow.h"
 #include "soro/utls/sassert.h"
 
 namespace soro::tt {
+
+bitfield::anchor_time absolute_time_to_anchor_time(absolute_time const at) {
+  return sc::time_point_cast<bitfield::anchor_time::duration>(midnight(at));
+}
 
 std::size_t distance(bitfield::anchor_time const from,
                      bitfield::anchor_time const to) {

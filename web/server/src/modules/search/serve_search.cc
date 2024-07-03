@@ -1,12 +1,24 @@
 #include "soro/server/modules/search/search_module.h"
 
-#include "cereal/types/vector.hpp"
+#include <string>
+#include <vector>
 
+#include "cereal/archives/json.hpp"
+#include "cereal/cereal.hpp"
+#include "cereal/types/vector.hpp"  // NOLINT
+
+#include "net/web_server/query_router.h"
 #include "net/web_server/responses.h"
+#include "net/web_server/web_server.h"
+
 #include "utl/to_vec.h"
 
-#include "soro/server/cereal/cereal_extern.h"
+#include "soro/infrastructure/infrastructure.h"
+
+#include "soro/server/cereal/cereal_extern.h"  // NOLINT
 #include "soro/server/cereal/json_archive.h"
+
+#include "soro/server/modules/infrastructure/infrastructure_module.h"
 
 namespace soro::server {
 
@@ -38,8 +50,8 @@ net::web_server::string_res_t search_module::serve_search(
     net::query_router::route_request const& req,
     infrastructure_module const& infra_m) const {
 
-  auto const infra = infra_m.get_infra(req.path_params_.front());
-  if (!infra.has_value()) {
+  auto const ctx = infra_m.get_context(req.path_params_.front());
+  if (!ctx.has_value()) {
     return net::not_found_response(req);
   }
 
@@ -53,7 +65,7 @@ net::web_server::string_res_t search_module::serve_search(
   }
 
   auto const search_result =
-      search(req.path_params_.back(), context_it->second, **infra);
+      search(req.path_params_.back(), context_it->second, (*ctx)->infra_);
 
   if (search_result.empty()) {
     return json_response(req, "[]");

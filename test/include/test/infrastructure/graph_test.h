@@ -4,6 +4,6 @@
 
 namespace soro::infra::test {
 
-void do_graph_tests(infrastructure const& infra);
+void check_graph(graph const& g);
 
 }  // namespace soro::infra::test

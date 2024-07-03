@@ -1,5 +1,6 @@
 #include "doctest/doctest.h"
 
+#include <cstddef>
 #include <limits>
 
 #include "soro/utls/container/optional.h"
@@ -104,5 +105,26 @@ TEST_SUITE("optional") {
     CHECK_EQ(*result1, int{400});
 
     CHECK(!result2.has_value());
+  }
+
+  TEST_CASE("optional emplace") {
+    using t = std::size_t;
+
+    auto opt = make_optional<t>(400);
+    optional<t> empty;
+
+    CHECK(opt.has_value());
+    CHECK_EQ(*opt, 400);
+
+    CHECK(!empty.has_value());
+
+    opt.emplace(t{420});
+    empty.emplace(t{420});
+
+    CHECK(opt.has_value());
+    CHECK(empty.has_value());
+
+    CHECK_EQ(opt, empty);
+    CHECK_EQ(*opt, *empty);
   }
 }

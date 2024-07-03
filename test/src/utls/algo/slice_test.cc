@@ -1,8 +1,11 @@
 #include "doctest/doctest.h"
 
-#include "soro/utls/std_wrapper/copy.h"
+#include <iterator>
+
+#include "soro/base/soro_types.h"
 
 #include "soro/utls/algo/slice.h"
+#include "soro/utls/std_wrapper/copy.h"
 
 using namespace soro;
 

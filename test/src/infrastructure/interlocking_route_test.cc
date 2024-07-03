@@ -1,14 +1,19 @@
 #include "test/infrastructure/interlocking_route_test.h"
 
+#include <vector>
+
 #include "doctest/doctest.h"
 
-#include "fmt/format.h"
 #include "utl/enumerate.h"
+
+#include "soro/base/soro_types.h"
 
 #include "soro/utls/coroutine/coro_map.h"
 #include "soro/utls/graph/traversal.h"
 #include "soro/utls/std_wrapper/contains_if.h"
 
+#include "soro/infrastructure/graph/element.h"
+#include "soro/infrastructure/graph/node.h"
 #include "soro/infrastructure/infrastructure.h"
 #include "soro/infrastructure/interlocking/interlocking_route.h"
 #include "soro/infrastructure/path/is_path.h"
@@ -54,10 +59,10 @@ void check_interlocking_route_count(infrastructure const& infra) {
 
   auto const ssr_count = inner_sr_count + path_sr_count;
 
-  CHECK_MESSAGE(
-      (ssr_count <= infra->interlocking_.routes_.size()),
-      fmt::format("Exptected at least {} signal station routes, but got {}",
-                  ssr_count, infra->interlocking_.routes_.size()));
+  CHECK_MESSAGE((ssr_count <= infra->interlocking_.routes_.size()),
+                fmt::format(  // NOLINT
+                    "Exptected at least {} signal station routes, but got {}",
+                    ssr_count, infra->interlocking_.routes_.size()));
 }
 
 void interlocking_route_path_is_valid(interlocking_route const& ir,
@@ -112,7 +117,7 @@ void check_interlocking_route_lengths(infrastructure const& infra) {
 }
 
 void check_halting_at(infrastructure const& infra) {
-  for (node::id node_id = 0; node_id < infra->interlocking_.halting_at_.size();
+  for (node::id node_id{0}; node_id < infra->interlocking_.halting_at_.size();
        ++node_id) {
     for (auto const ir_id : infra->interlocking_.halting_at_[node_id]) {
       auto const& ir = infra->interlocking_.routes_[ir_id];
@@ -134,9 +139,21 @@ void check_starting_at(infrastructure const& infra) {
   }
 }
 
+void check_no_doubles(infrastructure const& infra) {
+  for (auto const& ir1 : infra->interlocking_.routes_) {
+    for (auto const& ir2 : infra->interlocking_.routes_) {
+      auto const different = ir1.station_routes_ == ir2.station_routes_ &&
+                             ir1.start_offset_ == ir2.start_offset_ &&
+                             ir1.end_offset_ == ir2.end_offset_;
+      CHECK(different);
+    }
+  }
+}
+
 void do_interlocking_route_tests(infrastructure const& infra) {
   check_interlocking_route_count(infra);
   check_interlocking_routes(infra);
+  check_no_doubles(infra);
 
   check_interlocking_route_lengths(infra);
 
