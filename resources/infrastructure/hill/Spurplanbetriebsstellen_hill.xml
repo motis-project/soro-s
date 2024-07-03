@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<XmlIssDaten xsi:noNamespaceSchemaLocation="..\schema\xmliss.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Ersteller>TU ALGO</Ersteller>
+    <Erstellzeitpunkt>11.02.2022</Erstellzeitpunkt>
+    <Indexdatei>Index.xml</Indexdatei>
+    <Version>
+        <Name>Jahresfahrplan 2000</Name>
+        <Nummer>1</Nummer>
+        <GueltigAb>01.01.2000</GueltigAb>
+        <GueltigBis>01.01.2100</GueltigBis>
+        <Beschreibung></Beschreibung>
+    </Version>
+    <Spurplanbetriebsstellen>
+
+        <Spurplanbetriebsstelle>
+            <Betriebsstelle>BS1</Betriebsstelle>
+            <Spurplanabschnitte>
+                <Spurplanabschnitt>
+                    <Strecke>1234</Strecke>
+                    <Spurplanknoten>
+                        <Gleisende>
+                            <ID>1</ID>
+                            <Kilometrierung>0,000</Kilometrierung>
+                            <Name>Ende1</Name>
+                            <Bildkoordinaten>
+                                <X>1,0</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                        </Gleisende>
+                        <HalteplatzRzLinksS>
+                            <ID>3</ID>
+                            <Kilometrierung>1,000</Kilometrierung>
+                            <Name>Halt_BS1</Name>
+                            <BezeichnerBetrieb>1</BezeichnerBetrieb>
+                            <BezeichnerExtern>1</BezeichnerExtern>
+                            <Laenge Einheit="m">50</Laenge>
+                        </HalteplatzRzLinksS>
+                        <HauptsignalS>
+                            <ID>100</ID>
+                            <Kilometrierung>1,000</Kilometrierung>
+                            <Name>HS100</Name>
+                            <DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+                        </HauptsignalS>
+                        
+                        <Neigung>
+                            <ID>102</ID>
+                            <Kilometrierung>4,000</Kilometrierung>
+                            <Fallend>0,0</Fallend>
+                            <Steigend>35,0</Steigend>
+                        </Neigung>
+                        
+                        <Neigung>
+                            <ID>103</ID>
+                            <Kilometrierung>5,000</Kilometrierung>
+                            <Fallend>-35,0</Fallend>
+                            <Steigend>0,0</Steigend>
+                        </Neigung>
+                        
+                        <Betriebsstellengrenze>
+                            <ID>2</ID>
+                            <Kilometrierung>5,000</Kilometrierung>
+                            <PartnerBtrst>BS2</PartnerBtrst>
+                            <Bildkoordinaten>
+                                <X>2,0</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                            <Gleiskennzeichen>1</Gleiskennzeichen>
+                        </Betriebsstellengrenze>
+                    </Spurplanknoten>
+                </Spurplanabschnitt>
+            </Spurplanabschnitte>
+            <Betriebsstellenfahrwege>
+                <Betriebsstellenfahrweg>
+                    <Name>BS1_1</Name>
+                    <Anfang Typ="Betriebsstellengrenze" ID="1">1234-1</Anfang>
+                    <Ende Typ="Betriebsstellengrenze" ID="2">124-1</Ende>
+                    <Reisezughalt Typ="HalteplatzRzLinksS" ID="3">HALT_BS1</Reisezughalt>
+                    <Attribute>
+                        <Elektrifiziert/>
+                    </Attribute>
+                    <Verlauf/>
+                </Betriebsstellenfahrweg>
+            </Betriebsstellenfahrwege>
+        </Spurplanbetriebsstelle>
+
+        <Spurplanbetriebsstelle>
+            <Betriebsstelle>BS2</Betriebsstelle>
+            <Spurplanabschnitte>
+                <Spurplanabschnitt>
+                    <Strecke>1234</Strecke>
+                    <Spurplanknoten>
+                        <Betriebsstellengrenze>
+                            <ID>4</ID>
+                            <Kilometrierung>5,000</Kilometrierung>
+                            <PartnerBtrst>BS1</PartnerBtrst>
+                            <Bildkoordinaten>
+                                <X>5,77312</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                            <Gleiskennzeichen>1</Gleiskennzeichen>
+                        </Betriebsstellengrenze>
+                        
+                        <Neigung>
+                            <ID>104</ID>
+                            <Kilometrierung>6,000</Kilometrierung>
+                            <Fallend>0,0</Fallend>
+                            <Steigend>-35,0</Steigend>
+                        </Neigung>
+                        
+                        <Neigung>
+                            <ID>105</ID>
+                            <Kilometrierung>7,000</Kilometrierung>
+                            <Fallend>35,0</Fallend>
+                            <Steigend>0,0</Steigend>
+                        </Neigung>
+                        
+                        <HalteplatzRzLinksS>
+                            <ID>6</ID>
+                            <Kilometrierung>10,000</Kilometrierung>
+                            <Name>BS2</Name>
+                            <BezeichnerBetrieb>1</BezeichnerBetrieb>
+                            <BezeichnerExtern>1</BezeichnerExtern>
+                            <Laenge Einheit="m">50</Laenge>
+                        </HalteplatzRzLinksS>
+                        <HauptsignalS>
+                            <ID>101</ID>
+                            <Kilometrierung>10,000</Kilometrierung>
+                            <Name>HS101</Name>
+                            <DwegAufloesezeit Einheit="s">5</DwegAufloesezeit>
+                        </HauptsignalS>
+                        <Gleisende>
+                            <ID>5</ID>
+                            <Kilometrierung>11,000</Kilometrierung>
+                            <Name>Ende2</Name>
+                            <Bildkoordinaten>
+                                <X>1,15432</X>
+                                <Y>3,0</Y>
+                            </Bildkoordinaten>
+                        </Gleisende>
+                    </Spurplanknoten>
+                </Spurplanabschnitt>
+            </Spurplanabschnitte>
+            <Betriebsstellenfahrwege>
+                <Betriebsstellenfahrweg>
+                    <Name>BS2_1</Name>
+                    <Anfang Typ="Betriebsstellengrenze" ID="4">1234-1</Anfang>
+                    <Ende Typ="Betriebsstellengrenze" ID="5">1234-1</Ende>
+                    <Reisezughalt Typ="HalteplatzRzLinksS" ID="6">HALT_BS2</Reisezughalt>
+                    <Attribute>
+                        <Elektrifiziert/>
+                    </Attribute>
+                    <Verlauf/>
+                </Betriebsstellenfahrweg>
+            </Betriebsstellenfahrwege>
+        </Spurplanbetriebsstelle>
+
+    </Spurplanbetriebsstellen>
+</XmlIssDaten>
